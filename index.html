@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261026093106">
+<meta name="hufc-build" content="20261026094404">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -190,10 +190,15 @@ This typically indicates that your device does not have a healthy Internet conne
   }
 
   /* ---- approval: the admin lets each new coach into the club library ---- */
-  let member = null, memberKnown = Promise.resolve(), memberRes = null, memberUnsub = null;
+  let member = null, memberKnown = Promise.resolve(), memberRes = null, memberUnsub = null, mine = null, mineG = '';
   const approved = new Map();   /* the admin's view: uid -> approval */
   function changed(){ window.dispatchEvent(new Event('hufc-cloud-changed')); }
-  function stopMember(){ try{ memberUnsub && memberUnsub(); }catch(e){} memberUnsub = null; approved.clear(); }
+  function stopMember(){ try{ memberUnsub && memberUnsub(); }catch(e){} memberUnsub = null; approved.clear(); mine = null; mineG = ''; }
+  /* the teams this coach may work in: what the admin confirmed (null: no limit — the admin, or not signed in / not approved yet) */
+  function allowedGroups(){
+    if(!me || me.admin || member !== true) return null;
+    return Array.isArray(mine && mine.groups) ? mine.groups.slice() : [];
+  }
   function startMember(){
     stopMember();
     memberKnown = new Promise(function(res){ memberRes = res; });
@@ -214,7 +219,11 @@ This typically indicates that your device does not have a healthy Internet conne
       memberUnsub = FB.onSnapshot(FB.doc(fs, 'approved', uid), {includeMetadataChanges:true}, function(snap){
         if(snap.metadata.fromCache && !snap.exists()) return;   /* wait for the real answer */
         const now = snap.exists();
+        const g = now ? JSON.stringify((snap.data() || {}).groups || []) : '';
+        mine = now ? (snap.data() || {}) : null;
         if(now !== member){ member = now; startClub(now); changed(); }
+        else if(g !== mineG){ changed(); }
+        mineG = g;
         if(memberRes){ memberRes(); memberRes = null; }
       }, function(){ setTimeout(function(){ if(me && me.uid === uid) sub(); }, 5000); });
     })();
@@ -224,11 +233,13 @@ This typically indicates that your device does not have a healthy Internet conne
     const out = [];
     coaches.forEach(function(c, uid){
       if(me && uid === me.uid) return;
-      out.push({uid:uid, email:c.email || '', at:+c.at || 0, approved:approved.has(uid)});
+      const ap = approved.get(uid);
+      out.push({uid:uid, email:c.email || '', at:+c.at || 0, approved:!!ap,
+        asked:Array.isArray(c.groups) ? c.groups.slice() : [], given:ap && Array.isArray(ap.groups) ? ap.groups.slice() : []});
     });
     return out.sort(function(a, b){ return (a.approved - b.approved) || (b.at - a.at); });
   }
-  async function approve(uid){ adminOnly(); const c = coaches.get(uid) || {}; await timed(FB.setDoc(FB.doc(fs, 'approved', uid), {email:c.email || '', at:Date.now(), by:me.email})); }
+  async function approve(uid, groups){ adminOnly(); const c = coaches.get(uid) || {}; await timed(FB.setDoc(FB.doc(fs, 'approved', uid), {email:c.email || '', groups:groups || [], at:Date.now(), by:me.email})); }
   async function revoke(uid){ adminOnly(); await timed(FB.deleteDoc(FB.doc(fs, 'approved', uid))); }
 
   /* ---- the folder the sync code works with ---- */
@@ -326,6 +337,7 @@ This typically indicates that your device does not have a healthy Internet conne
     who:function(){ return me ? {uid:me.uid, admin:me.admin} : null; },
     knows:function(uid){ return sources.has(uid); },
     member:function(){ return member; },
+    allowedGroups:allowedGroups,
     coaches:coachList, approve:approve, revoke:revoke,
     coachName:function(uid){ const c = coaches.get(uid); return c ? (c.name || String(c.email || '').split('@')[0]) : ''; },
     ready:function(){ return authReady; },
@@ -2225,14 +2237,39 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 .cloud-box .confirm-actions{flex-wrap:wrap; align-items:center;}
 .cloud-gap{flex:1;}
 .btn-link{border:none; background:none; padding:0 4px; text-decoration:underline; font-size:13px; min-height:0; height:auto;}
-.cloud-status{margin-top:6px;}
 .coach-box{max-width:520px;}
 .coach-list{display:flex; flex-direction:column; gap:6px; margin:12px 0 4px; max-height:52vh; overflow:auto;}
-.coach-row{display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--white);}
+.coach-row{display:flex; flex-direction:column; gap:8px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--white);}
+.coach-top{display:flex; flex-direction:column; gap:2px; min-width:0;}
+.coach-groups{display:flex; flex-wrap:wrap; gap:5px;}
+.coach-g{height:28px; min-width:44px; padding:0 8px; border:1px solid var(--line); border-radius:999px; background:var(--white); font:inherit; font-size:13px; font-weight:600; cursor:pointer; color:var(--black);}
+.coach-g.asked{border-color:var(--yellow);}
+.coach-g.on{background:var(--black); color:var(--yellow); border-color:var(--black);}
+.coach-acts{display:flex; justify-content:flex-end; gap:8px;}
+.coach-wait{margin-left:6px; font-size:11px; font-weight:600; color:var(--grey); text-transform:none; letter-spacing:0;}
 .coach-row.waiting{border-color:var(--yellow); box-shadow:inset 3px 0 0 var(--yellow);}
-.coach-email{flex:1; min-width:0; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.coach-state{font-size:12px; color:#5b5f63; white-space:nowrap;}
+.coach-email{min-width:0; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.coach-state{font-size:12px; color:#5b5f63;}
 .coach-empty{font-size:14px; color:#5b5f63;}
+/* the account button and its menu */
+#cloudStatus.cloud-status{position:relative; margin:0;}
+.acct-btn{display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 10px; border:1px solid var(--line); border-radius:999px; background:var(--white); color:var(--black);
+  font:inherit; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;}
+.acct-btn:hover, .acct-btn.on{border-color:var(--black);}
+.acct-btn.acct-quiet{cursor:default; color:var(--grey); font-weight:500;}
+.acct-caret{font-size:10px; color:var(--grey);}
+.acct-badge{min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--yellow); color:var(--black); font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center;}
+.acct-menu{position:absolute; right:0; top:calc(100% + 6px); z-index:60; width:280px; max-width:calc(100vw - 32px); background:var(--white); border:1px solid var(--black); border-radius:12px;
+  box-shadow:0 12px 28px rgba(0,0,0,.16); padding:12px; display:flex; flex-direction:column; gap:4px;}
+.acct-who{display:flex; align-items:center; gap:8px; justify-content:space-between;}
+.acct-email{font-weight:600; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
+.acct-note{font-size:12.5px; color:var(--grey); margin:2px 0 8px; line-height:1.35;}
+.acct-note.warn{color:var(--danger);}
+.acct-item{text-align:left; border:none; background:none; font:inherit; font-size:14px; padding:9px 8px; border-radius:8px; cursor:pointer; color:var(--black);}
+.acct-item:hover{background:#f1f1ee;}
+.acct-item.hot{font-weight:700; box-shadow:inset 3px 0 0 var(--yellow);}
+.folder-side .cfg + .club-status:empty{display:none;}
+@media (max-width:560px){ .folder-side{gap:10px;} }
 </style>
 <script>/* the export makers and club logos, kept in their own files (see the service worker) */
 (function(){
@@ -2352,7 +2389,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 9:31am</p>
+  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 9:44am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -2408,7 +2445,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 <div class="modal confirm-modal" id="coachModal" hidden>
   <div class="modal-box confirm-box coach-box" role="dialog" aria-modal="true" aria-labelledby="coachTitle">
     <h3 id="coachTitle">Coaches</h3>
-    <p>Coaches who make an account with the app link appear here. Approve them to let them see every coach’s work in the Club library. Until then they only see their own.</p>
+    <p>Coaches who make an account with the app link appear here with the age groups they asked for. Pick the teams to give them and press Approve — then they can see the Club library and save work in those teams only.</p>
     <div class="coach-list" id="coachList"></div>
     <div class="confirm-actions"><button type="button" class="btn btn-primary" id="coachClose">Done</button></div>
   </div>
@@ -9871,6 +9908,13 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function setSettings(ch){ const s = Object.assign(getSettings(), ch); try{ localStorage.setItem(SET_KEY, JSON.stringify(s)); }catch(e){} return s; }
   /* the age groups this coach looks after, in the order they picked them (older settings kept just one) */
   function myGroups(){
+    /* signed in and approved: the teams the club admin confirmed */
+    const ag = CLOUD && CLOUD.allowedGroups ? CLOUD.allowedGroups() : null;
+    if(ag) return ag.filter(function(g, i){ return AGE_GROUPS.indexOf(g) !== -1 && ag.indexOf(g) === i; });
+    return localGroups();
+  }
+  /* the teams this coach picked (on the app, a request until the club admin confirms it) */
+  function localGroups(){
     const st = getSettings();
     const gs = Array.isArray(st.groups) ? st.groups : (st.group ? [st.group] : []);
     return gs.filter(function(g, i){ return AGE_GROUPS.indexOf(g) !== -1 && gs.indexOf(g) === i; });
@@ -9951,7 +9995,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   const groupModal = document.getElementById('groupModal');
   let groupPick = [];
   function askGroup(){
-    groupPick = myGroups().slice();
+    groupPick = localGroups().slice();
     const box = document.getElementById('groupChoices'); box.innerHTML = '';
     const done = document.getElementById('groupDone');
     const paint = function(){
@@ -9985,6 +10029,11 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const keep = v === 'all' || (AGE_GROUPS.indexOf(v) !== -1 && (gs.indexOf(v) !== -1 || before.split(',').indexOf(v) === -1));
     setSettings({groups:gs, group:gs[0], view:keep ? v : 'mine'});
     window.dispatchEvent(new CustomEvent('hufc-settings-changed', {detail:{groups:gs}}));   /* online: remembered with the coach's account */
+    if(CLOUD && CLOUD.user() && !CLOUD.user().admin && gs.join(',') !== myGroups().join(',')){
+      renderHome();
+      showToast('Sent to the club admin to confirm · you’ll get ' + groupList(gs) + ' once they do');
+      return;
+    }
     if(first) tagUntagged(gs[0]);
     renderHome();
     if(first || before !== gs.join(',')){
@@ -10022,22 +10071,26 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       chip('all', h('span', null, 'Club library')),
       h('span', {class:'folder-sep', 'aria-hidden':'true'}),
       AGE_GROUPS.map(function(g){ return chip(g, h('span', null, g), isMine(g) ? ' is-mine' : ''); }));
-    const coach = h('button', {type:'button', class:'btn btn-small coach-btn', id:'coachBtn', title:'Choose the age groups you coach — pick as many as you like', onclick:askGroup},
-      ms.length ? ms.join(' · ') : 'Choose…', h('span', {class:'coach-edit', 'aria-hidden':'true', text:'✎'}));
+    const asked = localGroups().filter(function(g){ return ms.indexOf(g) === -1; });
+    const confirmLimited = !!(CLOUD && CLOUD.allowedGroups && CLOUD.allowedGroups());
+    const coach = h('button', {type:'button', class:'btn btn-small coach-btn', id:'coachBtn', title:confirmLimited ? 'Ask for different age groups — the club admin confirms them' : 'Choose the age groups you coach — pick as many as you like', onclick:askGroup},
+      ms.length ? ms.join(' · ') : (confirmLimited ? 'None yet' : 'Choose…'),
+      confirmLimited && asked.length ? h('span', {class:'coach-wait', text:'+' + asked.join(' · ') + ' waiting'}) : '',
+      h('span', {class:'coach-edit', 'aria-hidden':'true', text:'✎'}));
     bar.append(chips, h('div', {class:'folder-side'},
       h('span', {class:'cfg'}, h('span', {class:'lbl', text:'I coach'}), coach),
-      who && who.admin ? h('span', {class:'admin-badge', title:'You own this planner: you can change every coach’s work', text:'Admin'}) : null,
+      who && who.admin && !CLOUD ? h('span', {class:'admin-badge', title:'You own this planner: you can change every coach’s work', text:'Admin'}) : null,
       h('div', {class:'club-status', id:'clubStatus'}),
       CLOUD ? h('div', {class:'club-status cloud-status', id:'cloudStatus'}) : null));
     const note = document.getElementById('folderNote');
     if(note){
-      note.textContent = v === 'all' ? 'Club library — every age group’s sessions, lineups and practices. Other groups’ work is view-only: open it to print, or copy it to your folder.'
-        : v === 'mine' ? (!ms.length ? 'Choose the age groups you coach (top right) to get your own folder.'
-            : ms.length > 1 ? 'Your ' + groupList(ms) + ' folders together — you can change all of it. New work goes in ' + m + ' (open the ' + ms.slice(1).join(' or ') + ' folder to make it there instead).'
-            : 'Your ' + m + ' folder — the sessions, lineups and practices you can change.')
-        : v + ' folder' + (isMine(v) ? ' — yours. New work made here goes in ' + v + '.' : ' — view-only. Open anything to print it, or copy it to your own folder.');
+      /* a few words only where they help */
+      note.textContent = v === 'all' ? 'Every age group. Other coaches’ work is view-only — copy it to your folder to change it.'
+        : v === 'mine' ? (!ms.length ? 'Choose the age groups you coach to get your own folder.' : ms.length > 1 ? 'New work goes in ' + m + '.' : '')
+        : isMine(v) ? '' : 'View-only — copy anything to your folder to change it.';
+      if(who && who.admin && v !== 'mine' && !isMine(v)) note.textContent = 'As the admin you can change every coach’s work here.';
+      note.hidden = !note.textContent;
     }
-    if(note && who && who.admin) note.textContent += ' As the admin you can change every coach’s work.';
     renderClubStatus();
   }
 
@@ -10200,30 +10253,59 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function cloudKey(){ return SYNC_KEY + ':cloud:' + (CLOUD.user() ? CLOUD.user().uid : ''); }
   function cloudHub(){
     /* yours (or the admin's) to change; work brought in from the online planner counts as yours */
-    const canEditCloud = function(x){ const w = CLOUD.who(); return !!w && (w.admin || !x || !x.owner || x.owner === w.uid || !CLOUD.knows(x.owner)); };
+    const canEditCloud = function(x){
+      const w = CLOUD.who(); if(!w) return false;
+      if(w.admin) return true;
+      if(CLOUD.member() !== true) return false;   /* not approved yet: their work waits on this device */
+      const ag = CLOUD.allowedGroups() || [];
+      if(x && x.group && ag.indexOf(x.group) === -1) return false;   /* a team the admin hasn't confirmed for them */
+      return !x || !x.owner || x.owner === w.uid || !CLOUD.knows(x.owner);
+    };
     return {dir:CLOUD.dir, online:true, canEdit:canEditCloud,
       readIndex:function(){ try{ return JSON.parse(localStorage.getItem(cloudKey()) || '{}') || {}; }catch(e){ return {}; } },
       writeIndex:function(ix){ try{ localStorage.setItem(cloudKey(), JSON.stringify(ix)); }catch(e){} }};
   }
+  /* your account: one small button beside "I coach" — its menu holds who you are, Coaches, Sync now and Sign out */
+  let acctOpen = false;
+  function acctClose(){ if(!acctOpen) return; acctOpen = false; renderCloudStatus(); }
+  document.addEventListener('click', function(e){ if(acctOpen && !e.target.closest('#cloudStatus')) acctClose(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') acctClose(); });
   function renderCloudStatus(){
     const box = document.getElementById('cloudStatus'); if(!box || !CLOUD) return;
     box.innerHTML = '';
-    const btn = function(text, fn, cls){ return h('button', {type:'button', class:'btn btn-small' + (cls ? ' ' + cls : ''), text:text, onclick:fn}); };
     const u = CLOUD.user();
-    if(!CLOUD.ready()){ box.append(h('span', {class:'cs-dot off'}), h('span', {class:'cs-text', text:'HUFC account: checking…'})); return; }
+    if(!CLOUD.ready()){ box.append(h('span', {class:'acct-btn acct-quiet'}, h('span', {class:'cs-dot off'}), 'Checking…')); return; }
     if(!u){
-      box.append(h('span', {class:'cs-dot off'}), h('span', {class:'cs-text', text:'Sync: not signed in · your work is on this device only'}),
-        btn('Sign in to sync…', function(){ cloudOpen(); }, 'btn-primary'));
+      acctOpen = false;
+      box.append(h('button', {type:'button', class:'btn btn-small btn-primary acct-signin', title:'Sign in to keep the same plans on your phone, iPad and computer, and see the club library', text:'Sign in to sync', onclick:function(){ cloudOpen(); }}));
       return;
     }
     const waiting = CLOUD.member() === false;
-    const pend = u.admin ? CLOUD.coaches().filter(function(c){ return !c.approved; }).length : 0;
-    box.append(h('span', {class:'cs-dot' + (cloudErr || waiting ? ' warn' : '')}),
-      h('span', {class:'cs-text', title:u.email, text:cloudErr ? cloudErr
-        : waiting ? 'Signed in as ' + u.email + ' · waiting for the club admin to approve you — your own work syncs meanwhile'
-        : 'Club library · signed in as ' + u.email + (u.admin ? ' (admin)' : '') + ' · ' + (clubBusy ? 'syncing…' : cloudLast ? 'up to date' : 'connecting…')}),
-      u.admin ? btn(pend ? 'Coaches (' + pend + ' waiting)' : 'Coaches', coachesOpen, pend ? 'btn-primary' : '') : '',
-      btn('Sync now', function(){ clubSync(); }), btn('Sign out', cloudSignOut));
+    const pend = u.admin ? CLOUD.coaches().filter(function(c){ return !c.approved || (c.asked.length && c.asked.slice().sort().join() !== c.given.slice().sort().join()); }).length : 0;
+    const off = cloudErr && /No internet/.test(cloudErr);
+    const label = clubBusy ? 'Syncing…' : off ? 'Offline' : cloudErr ? 'Sync problem' : waiting ? 'Awaiting approval' : cloudLast ? 'Synced' : 'Connecting…';
+    const dot = off ? ' off' : (cloudErr || waiting) ? ' warn' : '';
+    const b = h('button', {type:'button', class:'acct-btn' + (acctOpen ? ' on' : ''), 'aria-haspopup':'true', 'aria-expanded':String(acctOpen), title:u.email,
+      onclick:function(e){ e.stopPropagation(); acctOpen = !acctOpen; renderCloudStatus(); }},
+      h('span', {class:'cs-dot' + dot}), h('span', {class:'acct-label', text:label}),
+      pend ? h('span', {class:'acct-badge', title:pend + ' coach' + (pend > 1 ? 'es' : '') + ' waiting for approval', text:String(pend)}) : '',
+      h('span', {class:'acct-caret', 'aria-hidden':'true', text:'▾'}));
+    box.appendChild(b);
+    if(!acctOpen) return;
+    const item = function(text, fn, cls){ return h('button', {type:'button', role:'menuitem', class:'acct-item' + (cls ? ' ' + cls : ''), text:text, onclick:function(e){ e.stopPropagation(); acctOpen = false; renderCloudStatus(); fn(); }}); };
+    const note = cloudErr ? cloudErr
+      : waiting ? 'The club admin needs to approve you and confirm your age groups. Until then your work is saved on this device, and it syncs as soon as you’re approved.'
+      : clubBusy ? 'Syncing now…' : cloudLast ? 'Up to date · last synced ' + clock() : 'Connecting…';
+    box.appendChild(h('div', {class:'acct-menu', role:'menu'},
+      h('div', {class:'acct-who'}, h('span', {class:'acct-email', text:u.email}), u.admin ? h('span', {class:'admin-badge', text:'Admin'}) : ''),
+      h('div', {class:'acct-note' + (cloudErr || waiting ? ' warn' : ''), text:note}),
+      u.admin ? item(pend ? 'Coaches — ' + pend + ' waiting' : 'Coaches', coachesOpen, pend ? 'hot' : '') : '',
+      item('Sync now', function(){ clubSync(); }),
+      item('Sign out', cloudSignOut)));
+    /* keep the menu on screen (on a phone the button isn't at the right edge) */
+    const menu = box.querySelector('.acct-menu'), r = menu.getBoundingClientRect(), pr = box.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+    if(r.left < 12){ menu.style.right = 'auto'; menu.style.left = Math.round(12 - pr.left) + 'px'; }
+    else if(r.right > vw - 12){ menu.style.right = Math.round(pr.right - (vw - 12)) + 'px'; }
   }
   /* the sign-in window */
   const cloudModal = document.getElementById('cloudModal');
@@ -10267,23 +10349,51 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     list.innerHTML = '';
     const cs = CLOUD.coaches();
     if(!cs.length){ list.appendChild(h('p', {class:'coach-empty', text:'No other coaches yet. Send them the app link — when they make an account they appear here for you to approve.'})); return; }
+    const same = function(a, b){ return a.slice().sort().join(',') === b.slice().sort().join(','); };
     cs.forEach(function(c){
+      /* the teams to give them: start from what they asked for (or what they have, if they haven't asked) */
+      let pick = (c.asked.length ? c.asked : c.given).filter(function(g){ return AGE_GROUPS.indexOf(g) !== -1; });
+      const changeAsked = c.approved && c.asked.length && !same(c.asked, c.given);
+      const state = !c.approved ? 'Waiting since ' + new Date(c.at || Date.now()).toLocaleDateString(undefined, {day:'numeric', month:'short'}) + (c.asked.length ? ' · asked for ' + c.asked.join(' · ') : ' · hasn’t picked a team yet')
+        : changeAsked ? 'Has ' + (c.given.join(' · ') || 'no teams') + ' · asked for ' + c.asked.join(' · ')
+        : 'Approved · ' + (c.given.join(' · ') || 'no teams');
+      const chips = h('div', {class:'coach-groups'});
+      const main = h('button', {type:'button', class:'btn btn-small btn-primary'});
+      const paint = function(){
+        Array.prototype.forEach.call(chips.children, function(b){ const on = pick.indexOf(b.dataset.g) !== -1; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+        main.textContent = c.approved ? 'Save' : 'Approve';
+        main.disabled = !pick.length || (c.approved && same(pick, c.given));
+        main.title = !pick.length ? 'Pick at least one age group' : '';
+      };
+      AGE_GROUPS.forEach(function(g){
+        chips.appendChild(h('button', {type:'button', class:'coach-g' + (c.asked.indexOf(g) !== -1 ? ' asked' : ''), 'data-g':g, text:g, title:c.asked.indexOf(g) !== -1 ? 'They asked for ' + g : '',
+          onclick:function(){ const i = pick.indexOf(g); if(i === -1) pick.push(g); else pick.splice(i, 1); paint(); }}));
+      });
       const act = async function(b, fn, done){
         b.disabled = true;
-        try{ await fn(c.uid); showToast(done); }catch(e){ showToast(e && e.code === 'offline' ? 'No internet — try again when you’re online' : 'That didn’t work — try again'); b.disabled = false; }
+        try{ await fn(); showToast(done); }catch(e){ showToast(e && e.code === 'offline' ? 'No internet — try again when you’re online' : 'That didn’t work — try again'); b.disabled = false; }
       };
-      const b = h('button', {type:'button', class:'btn btn-small' + (c.approved ? '' : ' btn-primary'), text:c.approved ? 'Remove access' : 'Approve'});
-      b.onclick = function(){ c.approved ? act(b, CLOUD.revoke, c.email + ' can no longer see the club library') : act(b, CLOUD.approve, c.email + ' can now see the club library'); };
-      list.appendChild(h('div', {class:'coach-row' + (c.approved ? '' : ' waiting')},
-        h('span', {class:'coach-email', text:c.email || 'A coach'}),
-        h('span', {class:'coach-state', text:c.approved ? 'Approved' : 'Waiting since ' + new Date(c.at || Date.now()).toLocaleDateString(undefined, {day:'numeric', month:'short'})}),
-        b));
+      main.onclick = function(){ const gs = pick.slice(); act(main, function(){ return CLOUD.approve(c.uid, gs); }, c.email + (c.approved ? ' now has ' : ' is approved for ') + gs.join(' · ')); };
+      const rm = c.approved ? h('button', {type:'button', class:'btn btn-small', text:'Remove access'}) : '';
+      if(rm) rm.onclick = function(){ act(rm, function(){ return CLOUD.revoke(c.uid); }, c.email + ' can no longer see the club library'); };
+      list.appendChild(h('div', {class:'coach-row' + (!c.approved || changeAsked ? ' waiting' : '')},
+        h('div', {class:'coach-top'}, h('span', {class:'coach-email', text:c.email || 'A coach'}), h('span', {class:'coach-state', text:state})),
+        chips,
+        h('div', {class:'coach-acts'}, rm, main)));
+      paint();
     });
   }
   if(coachModal) document.getElementById('coachClose').addEventListener('click', function(){ closeModal(coachModal); });
   if(CLOUD){
     let wasMember = null;
+    let lastAllowed = null;
     window.addEventListener('hufc-cloud-changed', function(){
+      const al = JSON.stringify(CLOUD.allowedGroups ? CLOUD.allowedGroups() : null);
+      if(al !== lastAllowed){
+        const had = lastAllowed; lastAllowed = al;
+        if(had !== null && al !== 'null' && document.documentElement.classList.contains('view-home')){ renderHome(); showToast('The club admin confirmed your age groups: ' + (myGroups().join(' · ') || 'none')); }
+        else if(document.documentElement.classList.contains('view-home')) renderHome();
+      }
       renderCloudStatus();
       if(coachModal && !coachModal.hidden) renderCoaches();
       const m = CLOUD.member();
