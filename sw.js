@@ -1,5 +1,5 @@
 /* HUFC Session Planner — keeps the planner on the phone so it opens with no signal */
-const VERSION = '20261025135657-98ea22e3';
+const VERSION = '20261025141314-d95e0f58';
 const CACHE = 'hufc-' + VERSION;
 const FILES = ["./", "index.html", "manifest.webmanifest", "apple-touch-icon.png", "icon-180.png", "icon-192.png", "icon-512.png", "icon-512-maskable.png"];
 self.addEventListener('install', function(e){
