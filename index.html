@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261026133642">
+<meta name="hufc-build" content="20261027102334">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2374,6 +2374,12 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 @media screen and (max-width:640px){ .doc-owner-m:not([hidden]){display:block !important; margin-left:0; max-width:100%; font-size:13px;} }
 .owner-tag{display:block; width:fit-content; max-width:100%; box-sizing:border-box; margin-bottom:6px; padding:2px 9px; border-radius:999px; background:var(--black); color:var(--yellow);
   font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:12px; line-height:1.3; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; overflow:hidden;}
+.pic-col{display:flex; flex-direction:column; gap:6px; width:340px; max-width:100%;}
+@media screen and (max-width:640px){ .pic-col{width:auto;} }
+.drill-pic{display:block; width:100%; height:auto; border-radius:4px; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+.pic-actions{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;}
+.pic-note{font-size:12px; color:var(--grey);}
+.thumb-pic{display:block; width:100%; height:100%; object-fit:cover;}
 </style>
 <script>/* the export makers and club logos, kept in their own files (see the service worker) */
 (function(){
@@ -2493,7 +2499,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 1:36pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:23am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -6362,7 +6368,18 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(pre && d.showDiagram) drill.appendChild(pgShapeBar(d));
     const luCol = pre && !d.showDiagram && d.lineup ? pgLineupCol(d) : null;
     const body = h('div', {class:'drill-body' + (d.showDiagram || luCol ? '' : ' no-diagram')});
-    if(d.showDiagram){
+    if(d.showDiagram && !pre && d.pic && d.pic.src){
+      /* a diagram brought in as a picture (e.g. from Sport Session Planner): shown where the pitch goes */
+      const picCol = h('div', {class:'pitch-col pic-col'},
+        h('img', {class:'drill-pic', src:d.pic.src, alt:(clean(d.name) || 'Practice') + ' diagram'}),
+        h('div', {class:'pic-actions no-print editor-only'},
+          h('span', {class:'pic-note', text:'Picture diagram'}),
+          canEdit(state) ? h('button', {type:'button', class:'btn btn-small', text:'Draw a diagram instead', title:'Swap this picture for a pitch you can draw on', onclick:function(){
+            const keep = d.pic; syncBoards(); delete d.pic; rerender(); saveLocal();
+            showToast('Picture swapped for a pitch you can draw on', function(){ syncBoards(); d.pic = keep; rerender(); saveLocal(); });
+          }}) : null));
+      body.append(picCol, notesWrap);
+    } else if(d.showDiagram){
       const frag = document.getElementById('boardTpl').content.cloneNode(true);
       const tools = frag.querySelector('.board-tools'), pitchCol = frag.querySelector('.pitch-col');
       drill.appendChild(tools);
@@ -6973,6 +6990,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   function practiceThumb(p, opts){
     if(!p.showDiagram) return '<div class="thumb-notes">Notes only</div>';
+    if(p.pic && p.pic.src) return '<img class="thumb-pic" alt="" src="' + String(p.pic.src).replace(/"/g, '&quot;') + '">';
     const u = 't' + (++thumbSeq), lc = p.lineColor || '#ffffff';
     let defs = grassPattern('g' + u, p.grass) +
       '<pattern id="n' + u + '" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#ffffff" stroke-width="0.6" opacity="0.55"/><line x1="0" y1="0" x2="6" y2="0" stroke="#ffffff" stroke-width="0.6" opacity="0.55"/></pattern>' +
