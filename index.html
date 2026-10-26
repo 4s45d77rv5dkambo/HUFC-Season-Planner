@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261026125110">
+<meta name="hufc-build" content="20261026133642">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2493,7 +2493,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 12:51pm</p>
+  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 1:36pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -10081,11 +10081,12 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     return x.madeBy || '';
   }
   function initials(n){ return String(n || '').split(/\s+/).filter(Boolean).map(function(w){ return w.charAt(0).toUpperCase(); }).join('').slice(0, 3); }
-  function ownerText(x, short){ const g = groupOf(x), n = coachOf(x); return [g || '', n ? (short ? initials(n) : n) : ''].filter(Boolean).join(' – '); }
-  function fitOwner(el, x){
-    const full = ownerText(x);
+  /* home cards: "U18 – David Ambelidis"; the plan's own header: just the coach's name */
+  function ownerText(x, short, nameOnly){ const g = nameOnly ? '' : groupOf(x), n = coachOf(x); return [g || '', n ? (short ? initials(n) : n) : ''].filter(Boolean).join(' – '); }
+  function fitOwner(el, x, nameOnly){
+    const full = ownerText(x, false, nameOnly);
     el.textContent = full; el.title = full; el.hidden = !full;
-    if(full && el.clientWidth && el.scrollWidth > el.clientWidth + 1) el.textContent = ownerText(x, true);
+    if(full && el.clientWidth && el.scrollWidth > el.clientWidth + 1) el.textContent = ownerText(x, true, nameOnly);
   }
   function ownerTag(x){
     const el = h('div', {class:'owner-tag', text:ownerText(x)});
@@ -10095,7 +10096,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function renderOwnerLines(){
     const st = typeof state !== 'undefined' ? state : null, l = typeof lu !== 'undefined' ? lu : null;
     [['ownerLine', st], ['ownerLineM', st], ['luOwnerLine', l], ['luOwnerLineM', l]].forEach(function(p){
-      const el = document.getElementById(p[0]); if(el && p[1]) fitOwner(el, p[1]);
+      const el = document.getElementById(p[0]); if(el && p[1]) fitOwner(el, p[1], true);
     });
   }
   window.addEventListener('resize', function(){ clearTimeout(renderOwnerLines.t); renderOwnerLines.t = setTimeout(renderOwnerLines, 150); });
