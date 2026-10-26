@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027102334">
+<meta name="hufc-build" content="20261027104324">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1369,6 +1369,91 @@ html.view-home .lu-sheet{display:none !important;}
 .lu-logo-opp:not(:disabled):hover .lu-logo-add{border-color:var(--yellow); color:var(--yellow);}
 
 
+/* ---------- match analysis ---------- */
+.an-box{width:min(1320px, 100%); height:94vh; max-height:94vh; background:var(--white);}
+.an-head{display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--line);}
+.an-head h3{flex:1; min-width:0; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.an-body{flex:1; min-height:0; display:grid; grid-template-columns:minmax(0, 1.65fr) minmax(300px, 1fr); gap:0;}
+.an-left{min-height:0; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:10px; border-right:1px solid var(--line);}
+.an-right{min-height:0; display:flex; flex-direction:column; padding:12px 14px; gap:8px;}
+.an-video-wrap{position:relative; background:#0d0e0f; border-radius:10px; overflow:hidden; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.an-video-wrap video{width:100%; height:100%; display:block; background:#000;}
+.an-video-wrap video[hidden]{display:none;}
+.an-empty{color:#fff; text-align:center; padding:20px; display:flex; flex-direction:column; align-items:center; gap:12px;}
+.an-empty[hidden]{display:none;}
+.an-empty p{margin:0; color:#cfd1d3; max-width:420px;}
+.an-flash{position:absolute; left:50%; top:12px; transform:translateX(-50%); background:var(--yellow); color:var(--black); font-weight:700; padding:6px 14px; border-radius:999px; opacity:0; pointer-events:none; white-space:nowrap;}
+.an-flash.on{animation:anFlash 1.6s ease-out;}
+@keyframes anFlash{0%{opacity:0; transform:translate(-50%, -6px);} 12%{opacity:1; transform:translate(-50%, 0);} 75%{opacity:1;} 100%{opacity:0;}}
+.an-ctl{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.an-ctl[hidden]{display:none;}
+.an-ctl .btn{min-width:44px;}
+.an-time{font-variant-numeric:tabular-nums; font-weight:600; font-size:14px; min-width:110px;}
+.an-ctl select{height:32px; font:inherit; font-size:13px; border:1px solid var(--line); border-radius:6px; padding:0 6px; background:var(--white);}
+.an-ctl .an-gap{flex:1;}
+.an-btns{display:flex; flex-direction:column; gap:8px;}
+.an-side{align-self:flex-start;}
+.an-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:6px;}
+.an-tag-btn{position:relative; min-height:46px; padding:8px 10px 8px 26px; text-align:left; border:1px solid var(--black); border-radius:10px; background:var(--white); font:inherit; font-weight:700; font-size:14px; cursor:pointer; color:var(--black); line-height:1.15;}
+.an-tag-btn:hover{background:var(--yellow);}
+.an-tag-btn:active{transform:scale(.97);}
+.an-tag-btn.them{border-color:#8e9399; color:#3d4043;}
+.an-tag-btn.them:hover{background:#e9eaeb;}
+.an-tag-btn.an-add{padding-left:10px; border-style:dashed; font-weight:600;}
+.an-key{position:absolute; left:8px; top:8px; font-size:10px; color:#8e9399; font-weight:700;}
+.an-new{display:flex; gap:6px;}
+.an-new input{flex:1; height:34px; font:inherit; padding:0 10px; border:1px solid var(--line); border-radius:8px;}
+.an-who{display:flex; flex-wrap:wrap; gap:5px; align-items:center; padding:8px; background:#fffbe0; border:1px solid var(--yellow); border-radius:10px;}
+.an-who[hidden]{display:none;}
+.an-who-lbl{font-weight:700; font-size:13px;}
+.an-who-p{display:inline-flex; align-items:center; gap:5px; height:30px; padding:0 9px 0 4px; border:1px solid var(--line); border-radius:999px; background:var(--white); font:inherit; font-size:13px; cursor:pointer;}
+.an-who-p:hover{border-color:var(--black);}
+.an-who-n{min-width:22px; height:22px; border-radius:50%; background:var(--black); color:var(--yellow); font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center;}
+.an-who-skip{height:30px; padding:0 10px; border:1px dashed var(--black); border-radius:999px; background:none; font:inherit; font-size:13px; cursor:pointer;}
+.an-ro{margin:0; font-size:13px; color:var(--grey);}
+.an-tabs{display:flex; gap:6px;}
+.an-tab{flex:1; height:36px; border:1px solid var(--line); border-radius:8px; background:var(--white); font:inherit; font-weight:700; cursor:pointer;}
+.an-tab.on{background:var(--black); color:var(--yellow); border-color:var(--black);}
+.an-tab span{font-weight:500; font-size:12px; opacity:.8; margin-left:4px;}
+#anTagsPane, #anStatsPane{flex:1; min-height:0; display:flex; flex-direction:column; gap:8px;}
+#anTagsPane[hidden], #anStatsPane[hidden]{display:none;}
+.an-filters{display:flex; flex-wrap:wrap; gap:6px;}
+.an-filters select{height:32px; font:inherit; font-size:13px; border:1px solid var(--line); border-radius:6px; padding:0 6px; background:var(--white); max-width:150px;}
+.an-list, #anStats{flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:5px; -webkit-overflow-scrolling:touch;}
+.an-row{display:flex; align-items:center; gap:6px; padding:5px 6px; border:1px solid var(--line); border-radius:8px; background:var(--white); flex-wrap:wrap;}
+.an-row.them{background:#f4f4f2;}
+.an-row.playing{border-color:var(--black); box-shadow:inset 3px 0 0 var(--yellow);}
+.an-row-main{display:flex; align-items:center; gap:8px; flex:1 1 180px; min-width:0; border:none; background:none; font:inherit; text-align:left; cursor:pointer; padding:2px;}
+.an-row-time{font-variant-numeric:tabular-nums; font-weight:700; min-width:44px; font-size:13px;}
+.an-row-type{font-weight:700; font-size:14px;}
+.an-row-who{font-size:13px; color:var(--grey); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.an-row-note{flex:1 1 120px; min-width:0; height:28px; font:inherit; font-size:13px; border:1px solid transparent; border-radius:6px; padding:0 6px; background:transparent;}
+.an-row-note:hover, .an-row-note:focus{border-color:var(--line); background:var(--white); outline:none;}
+.an-row-note.ro{height:auto; color:var(--grey);}
+.an-row-pid{height:28px; font:inherit; font-size:12px; border:1px solid var(--line); border-radius:6px; max-width:120px;}
+.an-empty-list{color:var(--grey); font-size:14px; margin:6px 2px;}
+.an-h{margin:8px 0 2px; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--grey);}
+.an-scroll{overflow-x:auto;}
+.an-table{border-collapse:collapse; width:100%; font-size:13px;}
+.an-table th, .an-table td{padding:5px 6px; border-bottom:1px solid var(--line); text-align:center; white-space:nowrap;}
+.an-table th:first-child{text-align:left;}
+.an-table thead th{font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:var(--grey);}
+.an-table td.zero{color:#c3c5c8;}
+.an-table td.tot{font-weight:700;}
+@media screen and (max-width:820px){
+  .an-box{height:100vh; max-height:100vh; border-radius:0;}
+  .an-body{display:block; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .an-left{overflow:visible; border-right:none; padding:10px 12px; min-height:0;}
+  .an-right{padding:6px 12px 16px; min-height:70vh;}
+  .an-list, #anStats{overflow:visible; flex:none;}
+  .an-grid{grid-template-columns:repeat(3, minmax(0, 1fr));}
+  .an-tag-btn{font-size:13px; min-height:44px; padding:6px 6px 6px 8px;}
+  .an-key{display:none;}
+  .an-time{min-width:0;}
+}
+.gt-an{font-size:11px; letter-spacing:.03em; text-transform:uppercase; white-space:normal; max-width:72px; line-height:1.15;}
+td.gt-an{font-size:14px; text-transform:none;}
+
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
 body.view-lineup .pregame-only{display:none !important;}
@@ -2499,7 +2584,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:23am</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:43am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -2701,6 +2786,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           <button type="button" class="add-link" id="luAddPlayer">+ Add player</button>
           <button type="button" class="add-link lu-sq-btn" id="luSquadBtn" title="Your saved squad: pick who's in this game, or save these players for next time">My squad</button>
           <button type="button" class="add-link lu-gt-link" id="luGtBtn" title="Every player's minutes, goals, assists and cards across all your lineups">Game time &amp; player stats</button>
+          <button type="button" class="add-link lu-an-link" id="luAnBtn" title="Tag the match video (e.g. from Veo): clips and stats for this game">Match analysis</button>
           </div>
         </div>
       </div>
@@ -2759,6 +2845,44 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       </div>
       <div class="gt-table-wrap"><table class="runsheet gt-table" id="gtTable"></table></div>
       <p class="gt-note" id="gtNote" data-time="1">Minutes come from each matchday lineup — the starting team in each half and the subs. Each team is counted on its own, from that team’s lineups only. Within a team, players are matched by name, so spell names the same way each week. <strong>%</strong> is the share of the minutes in the games they were named in the squad.</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal an-modal" id="anModal" hidden>
+  <div class="modal-box an-box" role="dialog" aria-modal="true" aria-labelledby="anTitle">
+    <div class="an-head">
+      <h3 id="anTitle">Match analysis</h3>
+      <label class="btn btn-small" for="anFile">Open match video…</label>
+      <input type="file" class="file-input" id="anFile" accept="video/*,.mp4,.mov,.m4v">
+      <button type="button" class="btn btn-small btn-primary" id="anClose">Done</button>
+    </div>
+    <div class="an-body">
+      <div class="an-left">
+        <div class="an-video-wrap">
+          <video id="anVideo" playsinline preload="metadata" hidden></video>
+          <div class="an-empty" id="anEmpty"><p id="anFileLbl"></p><label class="btn btn-primary" for="anFile">Open match video…</label></div>
+          <div class="an-flash" id="anFlash" aria-live="polite"></div>
+        </div>
+        <div class="an-ctl" id="anCtl" hidden>
+          <button type="button" class="btn btn-small" id="anBack" title="Back 5 seconds (←)">−5s</button>
+          <button type="button" class="btn btn-small btn-primary" id="anPlay" title="Play / pause (space)">▶</button>
+          <button type="button" class="btn btn-small" id="anFwd" title="Forward 5 seconds (→)">+5s</button>
+          <span class="an-time" id="anTime">0:00</span>
+          <select id="anSpeed" aria-label="Speed"><option value="0.5">½×</option><option value="1" selected>1×</option><option value="1.5">1½×</option><option value="2">2×</option><option value="4">4×</option></select>
+          <span class="an-gap"></span>
+          <button type="button" class="btn btn-small" id="anKo" title="Mark the moment the game kicks off — tags then show the match minute">Mark kick-off</button>
+          <button type="button" class="btn btn-small" id="anH2" title="Mark the start of the 2nd half">Mark 2nd half</button>
+        </div>
+        <div id="anTagArea"><div class="an-btns" id="anBtns"></div></div>
+        <div class="an-who" id="anWho" hidden></div>
+        <p class="an-ro" id="anRo" hidden>View only — another coach’s match. Tap a tag to watch it.</p>
+      </div>
+      <div class="an-right">
+        <div class="an-tabs" role="tablist"><button type="button" class="an-tab" role="tab" data-tab="tags">Tags<span id="anCount"></span></button><button type="button" class="an-tab" role="tab" data-tab="stats">Stats</button></div>
+        <div id="anTagsPane"><div class="an-filters" id="anFilters"></div><div class="an-list" id="anList"></div></div>
+        <div id="anStatsPane" hidden><div id="anStats"></div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -8698,6 +8822,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function luRenderTop(){
     const tb = document.getElementById('luTitleBar'); tb.innerHTML = '';
     setTimeout(renderOwnerLines, 0);
+    setTimeout(function(){ try{ renderAnButton(); }catch(e){} }, 0);
     tb.append(h('span', {class:'lbl', text:'Lineup title'}),
       textField({value:lu.title, ph:luAutoName() || 'e.g. Matchday 3 vs South Melbourne', label:'Lineup title', oneline:true, cls:'title-field lu-title', onInput:function(v){ lu.title = v; luSchedule(); }}),
       luScoreBoard());
@@ -9594,6 +9719,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
         const k = gtKey(p.name); if(!k || seenHere[k]) return; seenHere[k] = 1;
         const r = rows[k] = rows[k] || {name:clean(p.name), num:'', pos:'', posAt:-1, played:{}, games:0, starts:0, apps:0, min:0, avail:0, last:-1, ev:{g:0, a:0, ps:0, y:0, r:0}};
         const ev = p.ev || {}; Object.keys(r.ev).forEach(function(e){ r.ev[e] += Math.max(0, parseInt(ev[e], 10) || 0); });
+        r.an = r.an || {}; (L.analysis && Array.isArray(L.analysis.tags) ? L.analysis.tags : []).forEach(function(t){ if(t.side === 'us' && t.pid === p.id) r.an[t.type] = (r.an[t.type] || 0) + 1; });
         if((L.savedAt || 0) >= r.last){ r.name = clean(p.name); r.num = clean(p.num); r.last = L.savedAt || 0; }
         /* position: the one typed in the squad list (latest game), otherwise where they've lined up on the pitch */
         if(clean(p.pos) && (L.savedAt || 0) >= r.posAt){ r.pos = clean(p.pos).toUpperCase(); r.posAt = L.savedAt || 0; }
@@ -9725,9 +9851,13 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     }
     /* penalty saves only get a column once a keeper has one */
     const cols = GT_COLS.filter(function(c){ return c[0] !== 'ps' || tot.ps; });
+    /* from match analysis: a column for each tag that's been used on a player (most-used first, up to 4) */
+    const anTot = {}; rows.forEach(function(r){ Object.keys(r.an || {}).forEach(function(k){ anTot[k] = (anTot[k] || 0) + r.an[k]; }); });
+    const anCols = ['Chance', 'Shot', 'Turnover won', 'Turnover lost', 'Press won', 'Good build-up', 'Mistake'].concat(Object.keys(anTot)).filter(function(k, i, a){ return anTot[k] && a.indexOf(k) === i; }).slice(0, 4);
     t.appendChild(h('thead', null, h('tr', null,
       h('th', {class:'gt-num', text:'Number'}), h('th', {text:'Player'}), h('th', {class:'gt-pos', text:'Pos'}), h('th', {class:'gt-n', text:'Games', title:'Games named in the squad'}),
-      cols.map(function(c){ return h('th', {class:'gt-ev', title:c[1]}, h('span', {class:'gt-ev-head', html:gtIcon(c[0]) + '<span class="gt-ev-lbl">' + c[1].replace(' cards', '').replace('Pen saves', 'Pen saves') + '</span>'})); }))));
+      cols.map(function(c){ return h('th', {class:'gt-ev', title:c[1]}, h('span', {class:'gt-ev-head', html:gtIcon(c[0]) + '<span class="gt-ev-lbl">' + c[1].replace(' cards', '').replace('Pen saves', 'Pen saves') + '</span>'})); }),
+      anCols.map(function(k){ return h('th', {class:'gt-ev gt-an', title:k + ' (from match analysis)', text:k}); }))));
     const tb = h('tbody');
     rows.forEach(function(r){
       tb.appendChild(h('tr', null,
@@ -9735,11 +9865,13 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
         h('td', {class:'gt-name', text:r.name}),
         h('td', {class:'gt-pos', text:r.pos || '–'}),
         h('td', {class:'gt-n', text:String(r.games)}),
-        cols.map(function(c){ const v = r.ev[c[0]]; return h('td', {class:'gt-ev gt-ev-' + c[0] + (v ? '' : ' zero'), text:String(v)}); })));
+        cols.map(function(c){ const v = r.ev[c[0]]; return h('td', {class:'gt-ev gt-ev-' + c[0] + (v ? '' : ' zero'), text:String(v)}); }),
+        anCols.map(function(k){ const v = (r.an && r.an[k]) || 0; return h('td', {class:'gt-ev gt-an' + (v ? '' : ' zero'), text:String(v)}); })));
     });
     tb.appendChild(h('tr', {class:'gt-total'},
       h('td', {class:'gt-num'}), h('td', {class:'gt-name', text:'Team total'}), h('td', {class:'gt-pos'}), h('td', {class:'gt-n', text:String(n)}),
-      cols.map(function(c){ return h('td', {class:'gt-ev', text:String(tot[c[0]])}); })));
+      cols.map(function(c){ return h('td', {class:'gt-ev', text:String(tot[c[0]])}); }),
+      anCols.map(function(k){ return h('td', {class:'gt-ev gt-an', text:String(anTot[k])}); })));
     t.appendChild(tb);
   }
   gtModal.querySelectorAll('.gt-tab').forEach(function(b){ b.addEventListener('click', function(){ gtTab = b.dataset.tab; gtRender(); }); });
@@ -10031,6 +10163,285 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       swap(showHome); return true;
     }catch(err){ return false; }
   };
+
+  /* =====================================================================
+     Match analysis — tag moments in a match video (e.g. a Veo download) and get clips and stats.
+     Kept with the matchday lineup (lu.analysis), so it syncs and other coaches can see it.
+     The video itself stays on the device: open the file each time (its name is remembered).
+     ===================================================================== */
+  const AN_TYPES = ['Goal', 'Chance', 'Shot', 'Turnover won', 'Turnover lost', 'Press won', 'Good build-up', 'Corner', 'Free kick', 'Mistake'];
+  const AN_LEAD = 8, AN_TAIL = 4;           /* a clip: from 8 seconds before the tag to 4 after */
+  const anModal = document.getElementById('anModal');
+  const anVideo = document.getElementById('anVideo');
+  let anSide = 'us', anFilter = {type:'', side:'', pid:''}, anTab = 'tags', anClipEnd = null, anLastTag = null, anWhoTimer = 0, anUrl = null;
+
+  function anData(){
+    if(!lu.analysis || typeof lu.analysis !== 'object') lu.analysis = {};
+    const a = lu.analysis;
+    if(!Array.isArray(a.tags)) a.tags = [];
+    if(!Array.isArray(a.types)) a.types = [];
+    if(a.ko === undefined) a.ko = null;
+    if(a.h2 === undefined) a.h2 = null;
+    return a;
+  }
+  function anTypes(){ return AN_TYPES.concat(anData().types.filter(function(t){ return AN_TYPES.indexOf(t) === -1; })); }
+  function anCanEdit(){ return !readOnly && canEdit(lu); }
+  function anSave(){ if(anCanEdit()) luSchedule(); renderAnButton(); }
+  function anClock(t){ t = Math.max(0, t || 0); const m = Math.floor(t / 60), s = Math.floor(t % 60); return (m >= 60 ? Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0'); }
+  /* the match minute once kick-off (and the 2nd half) are marked; otherwise the video time */
+  function anHalf(t){ const a = anData(); return a.h2 != null && t >= a.h2 ? 2 : 1; }
+  function anMinute(t){
+    const a = anData();
+    if(a.h2 != null && t >= a.h2) return Math.min((lu.length || 45) * 2 + 15, (lu.length || 45) + Math.floor((t - a.h2) / 60) + 1) + "'";
+    if(a.ko != null && t >= a.ko) return (Math.floor((t - a.ko) / 60) + 1) + "'";
+    return anClock(t);
+  }
+  function anPlayerLabel(pid){ const p = pid ? luPlayer(pid) : null; return p ? [clean(p.num), luShort(p.name) || clean(p.name)].filter(Boolean).join(' ') || 'Player' : ''; }
+
+  /* ---------- the button on the lineup ---------- */
+  function renderAnButton(){
+    const b = document.getElementById('luAnBtn'); if(!b || !lu) return;
+    const n = lu.analysis && Array.isArray(lu.analysis.tags) ? lu.analysis.tags.length : 0;
+    b.textContent = n ? 'Match analysis · ' + n + (n === 1 ? ' tag' : ' tags') : 'Match analysis';
+  }
+
+  /* ---------- opening the window and the video ---------- */
+  function openAnalysis(){
+    luFlush();
+    anData(); anFilter = {type:'', side:'', pid:''}; anTab = 'tags';
+    document.getElementById('anTitle').textContent = 'Match analysis' + (luName(lu) ? ' · ' + luName(lu) : '');
+    anRenderAll();
+    openModal(anModal);
+  }
+  function closeAnalysis(){
+    try{ anVideo.pause(); }catch(e){}
+    closeModal(anModal);
+    renderAnButton();
+  }
+  document.getElementById('anFile').addEventListener('change', function(){
+    const f = this.files && this.files[0]; this.value = ''; if(!f) return;
+    if(anUrl){ try{ URL.revokeObjectURL(anUrl); }catch(e){} }
+    anUrl = URL.createObjectURL(f);
+    anVideo.src = anUrl;
+    const a = anData();
+    if(anCanEdit() && (!a.file || a.file.name !== f.name)){ a.file = {name:f.name, size:f.size}; anSave(); }
+    anRenderVideoState();
+  });
+  anVideo.addEventListener('loadedmetadata', anRenderVideoState);
+  anVideo.addEventListener('timeupdate', function(){
+    document.getElementById('anTime').textContent = anMinute(anVideo.currentTime) + (anData().ko != null ? ' · ' + anClock(anVideo.currentTime) : '') + ' / ' + anClock(anVideo.duration || 0);
+    if(anClipEnd != null && anVideo.currentTime >= anClipEnd){ anVideo.pause(); anClipEnd = null; }
+  });
+  anVideo.addEventListener('play', function(){ document.getElementById('anPlay').textContent = '❚❚'; });
+  anVideo.addEventListener('pause', function(){ document.getElementById('anPlay').textContent = '▶'; });
+  function anRenderVideoState(){
+    const a = anData(), has = !!anVideo.currentSrc;
+    document.getElementById('anEmpty').hidden = has;
+    anVideo.hidden = !has;
+    document.getElementById('anCtl').hidden = !has;
+    const want = a.file && a.file.name ? a.file.name : '';
+    document.getElementById('anFileLbl').textContent = has ? '' : want ? 'This match’s video: ' + want + ' — open it from this device' : 'Open the match video (e.g. the MP4 downloaded from Veo)';
+  }
+  function anSeek(t, clip){
+    if(!anVideo.currentSrc){ showToast('Open the match video first'); return; }
+    anVideo.currentTime = Math.max(0, t);
+    anClipEnd = clip ? t + AN_LEAD + AN_TAIL : null;
+    const p = anVideo.play(); if(p && p.catch) p.catch(function(){});
+  }
+  document.getElementById('anPlay').addEventListener('click', function(){ if(anVideo.paused){ anClipEnd = null; const p = anVideo.play(); if(p && p.catch) p.catch(function(){}); } else anVideo.pause(); });
+  document.getElementById('anBack').addEventListener('click', function(){ anVideo.currentTime = Math.max(0, anVideo.currentTime - 5); });
+  document.getElementById('anFwd').addEventListener('click', function(){ anVideo.currentTime = anVideo.currentTime + 5; });
+  document.getElementById('anSpeed').addEventListener('change', function(){ anVideo.playbackRate = parseFloat(this.value) || 1; });
+  document.getElementById('anKo').addEventListener('click', function(){
+    if(!anCanEdit() || !anVideo.currentSrc) return;
+    anData().ko = Math.round(anVideo.currentTime); anSave(); anRenderAll(); showToast('Kick-off marked at ' + anClock(anVideo.currentTime) + ' · times now show as match minutes');
+  });
+  document.getElementById('anH2').addEventListener('click', function(){
+    if(!anCanEdit() || !anVideo.currentSrc) return;
+    anData().h2 = Math.round(anVideo.currentTime); anSave(); anRenderAll(); showToast('2nd half marked at ' + anClock(anVideo.currentTime));
+  });
+
+  /* ---------- tagging ---------- */
+  function anRenderButtons(){
+    const box = document.getElementById('anBtns'); box.innerHTML = '';
+    const ed = anCanEdit();
+    document.getElementById('anTagArea').hidden = !ed;
+    if(!ed) return;
+    const sideSeg = h('div', {class:'seg an-side'},
+      h('button', {type:'button', class:anSide === 'us' ? 'active' : '', text:'Us', onclick:function(){ anSide = 'us'; anRenderButtons(); }}),
+      h('button', {type:'button', class:anSide === 'them' ? 'active' : '', text:clean(lu.meta.opponent) ? luOppShort() : 'Them', onclick:function(){ anSide = 'them'; anRenderButtons(); }}));
+    box.appendChild(sideSeg);
+    const grid = h('div', {class:'an-grid'});
+    anTypes().forEach(function(t, i){
+      grid.appendChild(h('button', {type:'button', class:'an-tag-btn' + (anSide === 'them' ? ' them' : ''), title:i < 10 ? 'Shortcut: ' + ((i + 1) % 10) : '', onclick:function(){ anAddTag(t); }},
+        i < 10 ? h('span', {class:'an-key', text:String((i + 1) % 10)}) : '', t));
+    });
+    grid.appendChild(h('button', {type:'button', class:'an-tag-btn an-add', text:'+ New tag', onclick:anNewType}));
+    box.appendChild(grid);
+  }
+  function anNewType(){
+    const box = document.getElementById('anBtns');
+    if(box.querySelector('.an-new')) return;
+    const inp = h('input', {type:'text', maxlength:'30', placeholder:'e.g. Switch of play'});
+    const done = function(){
+      const v = clean(inp.value);
+      if(v && anTypes().indexOf(v) === -1){ anData().types.push(v); anSave(); }
+      anRenderButtons();
+    };
+    inp.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); done(); } if(e.key === 'Escape') anRenderButtons(); });
+    box.appendChild(h('div', {class:'an-new'}, inp, h('button', {type:'button', class:'btn btn-small btn-primary', text:'Add', onclick:done})));
+    inp.focus();
+  }
+  function anAddTag(type){
+    if(!anCanEdit()) return;
+    if(!anVideo.currentSrc){ showToast('Open the match video first, then tag as it plays'); return; }
+    const t = Math.max(0, Math.round(anVideo.currentTime * 10) / 10);
+    const tag = {id:newId(), t:t, type:type, side:anSide, pid:'', note:''};
+    const a = anData(); a.tags.push(tag); a.tags.sort(function(x, y){ return x.t - y.t; });
+    anLastTag = tag; anSave();
+    anRenderList(); anRenderStats();
+    if(anSide === 'us') anAskWho(tag);
+    const b = document.getElementById('anFlash'); b.textContent = type + (anSide === 'them' ? ' (' + (clean(lu.meta.opponent) ? luOppShort() : 'them') + ')' : '') + ' · ' + anMinute(t); b.classList.remove('on'); void b.offsetWidth; b.classList.add('on');
+  }
+  /* straight after a tag: tap who it was (or carry on and it stays a team tag) */
+  function anAskWho(tag){
+    const strip = document.getElementById('anWho'); strip.innerHTML = '';
+    clearTimeout(anWhoTimer);
+    const named = lu.squad.filter(function(p){ return clean(p.name) || clean(p.num); });
+    if(!named.length){ strip.hidden = true; return; }
+    strip.appendChild(h('span', {class:'an-who-lbl', text:'Who? '}));
+    named.forEach(function(p){
+      strip.appendChild(h('button', {type:'button', class:'an-who-p', title:clean(p.name), onclick:function(){ tag.pid = p.id; anSave(); strip.hidden = true; anRenderList(); anRenderStats(); }},
+        h('span', {class:'an-who-n', text:clean(p.num) || '·'}), luShort(p.name) || ''));
+    });
+    strip.appendChild(h('button', {type:'button', class:'an-who-skip', text:'Team', onclick:function(){ strip.hidden = true; }}));
+    strip.hidden = false;
+    anWhoTimer = setTimeout(function(){ strip.hidden = true; }, 7000);
+  }
+
+  /* ---------- the list of tags (tap one to watch it) ---------- */
+  function anFiltered(){
+    return anData().tags.filter(function(t){
+      return (!anFilter.type || t.type === anFilter.type) && (!anFilter.side || t.side === anFilter.side) && (!anFilter.pid || t.pid === anFilter.pid);
+    });
+  }
+  function anRenderFilters(){
+    const box = document.getElementById('anFilters'); box.innerHTML = '';
+    const tags = anData().tags;
+    const types = anTypes().filter(function(t){ return tags.some(function(x){ return x.type === t; }); });
+    const pids = lu.squad.filter(function(p){ return tags.some(function(x){ return x.pid === p.id; }); });
+    const sel = function(key, label, opts){
+      const s = h('select', {'aria-label':label, onchange:function(){ anFilter[key] = this.value; anRenderList(); }},
+        h('option', {value:'', text:label}), opts.map(function(o){ const e = h('option', {value:o[0], text:o[1]}); if(anFilter[key] === o[0]) e.selected = true; return e; }));
+      return s;
+    };
+    box.append(sel('type', 'All tags', types.map(function(t){ return [t, t]; })),
+      sel('side', 'Both teams', [['us', 'Us'], ['them', clean(lu.meta.opponent) || 'Them']]),
+      sel('pid', 'All players', pids.map(function(p){ return [p.id, anPlayerLabel(p.id)]; })));
+    if(anFiltered().length > 1) box.appendChild(h('button', {type:'button', class:'btn btn-small', text:'▶ Play all', title:'Watch every tag in the list, one after another', onclick:anPlayAll}));
+  }
+  let anQueue = null;
+  function anPlayAll(){
+    const list = anFiltered(); if(!list.length) return;
+    anQueue = list.slice(); anNext();
+  }
+  function anNext(){
+    if(!anQueue || !anQueue.length){ anQueue = null; return; }
+    const t = anQueue.shift(); anSeek(t.t - AN_LEAD, true); anMark(t.id);
+  }
+  anVideo.addEventListener('pause', function(){ if(anQueue && anClipEnd == null) setTimeout(anNext, 400); });
+  function anMark(id){ document.querySelectorAll('.an-row').forEach(function(r){ r.classList.toggle('playing', r.dataset.id === id); }); }
+  function anRenderList(){
+    anRenderFilters();
+    const box = document.getElementById('anList'); box.innerHTML = '';
+    const list = anFiltered(), ed = anCanEdit();
+    document.getElementById('anCount').textContent = anData().tags.length ? list.length + ' of ' + anData().tags.length : '';
+    if(!list.length){
+      box.appendChild(h('p', {class:'an-empty-list', text:anData().tags.length ? 'Nothing matches these filters.' : ed ? 'No tags yet. Play the video and tap a button whenever something happens — Goal, Chance, Turnover… Tap a tag here later to watch it again.' : 'No tags in this match yet.'}));
+      return;
+    }
+    list.forEach(function(t){
+      const row = h('div', {class:'an-row' + (t.side === 'them' ? ' them' : ''), 'data-id':t.id},
+        h('button', {type:'button', class:'an-row-main', title:'Watch this moment', onclick:function(){ anQueue = null; anSeek(t.t - AN_LEAD, true); anMark(t.id); }},
+          h('span', {class:'an-row-time', text:anMinute(t.t)}),
+          h('span', {class:'an-row-type', text:t.type}),
+          h('span', {class:'an-row-who', text:t.side === 'them' ? (clean(lu.meta.opponent) ? luOppShort() : 'Them') : (anPlayerLabel(t.pid) || 'Us')})),
+        ed ? h('input', {type:'text', class:'an-row-note', value:t.note || '', placeholder:'Note', maxlength:'120', onchange:function(){ t.note = clean(this.value); anSave(); }}) : (t.note ? h('span', {class:'an-row-note ro', text:t.note}) : ''),
+        ed && t.side === 'us' ? anWhoSelect(t) : '',
+        ed ? h('button', {type:'button', class:'icon-btn danger', title:'Delete this tag', 'aria-label':'Delete tag', text:'✕', onclick:function(){
+          const a = anData(), i = a.tags.indexOf(t); if(i === -1) return;
+          a.tags.splice(i, 1); anSave(); anRenderList(); anRenderStats();
+          showToast('Deleted “' + t.type + '” at ' + anMinute(t.t), function(){ a.tags.push(t); a.tags.sort(function(x, y){ return x.t - y.t; }); anSave(); anRenderList(); anRenderStats(); });
+        }}) : '');
+      box.appendChild(row);
+    });
+  }
+  function anWhoSelect(t){
+    const s = h('select', {class:'an-row-pid', 'aria-label':'Player', onchange:function(){ t.pid = this.value; anSave(); anRenderStats(); anRenderFilters(); }},
+      h('option', {value:'', text:'Team'}),
+      lu.squad.filter(function(p){ return clean(p.name) || clean(p.num); }).map(function(p){ const o = h('option', {value:p.id, text:anPlayerLabel(p.id)}); if(t.pid === p.id) o.selected = true; return o; }));
+    return s;
+  }
+
+  /* ---------- stats ---------- */
+  function anRenderStats(){
+    const box = document.getElementById('anStats'); box.innerHTML = '';
+    const tags = anData().tags;
+    if(!tags.length){ box.appendChild(h('p', {class:'an-empty-list', text:'Stats appear here as you tag the match.'})); return; }
+    const opp = clean(lu.meta.opponent) ? luOppShort() : 'Them';
+    const types = anTypes().filter(function(t){ return tags.some(function(x){ return x.type === t; }); });
+    const n = function(type, side, half){ return tags.filter(function(x){ return x.type === type && x.side === side && (!half || anHalf(x.t) === half); }).length; };
+    const split = anData().h2 != null;
+    const head = split ? ['', 'HUFC 1st', '2nd', 'Total', opp + ' 1st', '2nd', 'Total'] : ['', 'HUFC', opp];
+    const tb = h('tbody');
+    types.forEach(function(t){
+      const cells = split ? [n(t, 'us', 1), n(t, 'us', 2), n(t, 'us'), n(t, 'them', 1), n(t, 'them', 2), n(t, 'them')] : [n(t, 'us'), n(t, 'them')];
+      tb.appendChild(h('tr', null, h('th', {text:t}), cells.map(function(v, i){ return h('td', {class:(v ? '' : 'zero') + ((split && (i === 2 || i === 5)) ? ' tot' : ''), text:String(v)}); })));
+    });
+    box.appendChild(h('h4', {class:'an-h', text:'Team'}));
+    box.appendChild(h('div', {class:'an-scroll'}, h('table', {class:'an-table'}, h('thead', null, h('tr', null, head.map(function(x){ return h('th', {text:x}); }))), tb)));
+    /* each player's tags */
+    const ps = lu.squad.filter(function(p){ return tags.some(function(x){ return x.pid === p.id; }); });
+    if(ps.length){
+      const ptypes = types.filter(function(t){ return tags.some(function(x){ return x.type === t && x.pid; }); });
+      const pt = h('tbody');
+      ps.forEach(function(p){
+        pt.appendChild(h('tr', null, h('th', {text:anPlayerLabel(p.id)}), ptypes.map(function(t){ const v = tags.filter(function(x){ return x.pid === p.id && x.type === t; }).length; return h('td', {class:v ? '' : 'zero', text:String(v)}); })));
+      });
+      box.appendChild(h('h4', {class:'an-h', text:'Players'}));
+      box.appendChild(h('div', {class:'an-scroll'}, h('table', {class:'an-table'}, h('thead', null, h('tr', null, h('th', {text:''}), ptypes.map(function(t){ return h('th', {text:t}); }))), pt)));
+    }
+  }
+
+  /* ---------- tabs, keyboard ---------- */
+  function anRenderTabs(){
+    anModal.querySelectorAll('.an-tab').forEach(function(b){ const on = b.dataset.tab === anTab; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
+    document.getElementById('anTagsPane').hidden = anTab !== 'tags';
+    document.getElementById('anStatsPane').hidden = anTab !== 'stats';
+  }
+  anModal.querySelectorAll('.an-tab').forEach(function(b){ b.addEventListener('click', function(){ anTab = b.dataset.tab; anRenderTabs(); }); });
+  function anRenderAll(){
+    anRenderVideoState(); anRenderButtons(); anRenderList(); anRenderStats(); anRenderTabs();
+    const ed = anCanEdit();
+    document.getElementById('anKo').hidden = !ed; document.getElementById('anH2').hidden = !ed;
+    const a = anData();
+    document.getElementById('anKo').textContent = a.ko != null ? 'Kick-off ' + anClock(a.ko) + ' ✓' : 'Mark kick-off';
+    document.getElementById('anH2').textContent = a.h2 != null ? '2nd half ' + anClock(a.h2) + ' ✓' : 'Mark 2nd half';
+    document.getElementById('anRo').hidden = ed;
+  }
+  document.addEventListener('keydown', function(e){
+    if(anModal.hidden) return;
+    if(e.key === 'Escape'){ closeAnalysis(); return; }
+    const tag = (e.target && e.target.tagName) || '';
+    if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if(e.key === ' '){ e.preventDefault(); document.getElementById('anPlay').click(); return; }
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); anVideo.currentTime = Math.max(0, anVideo.currentTime - (e.shiftKey ? 1 : 5)); return; }
+    if(e.key === 'ArrowRight'){ e.preventDefault(); anVideo.currentTime = anVideo.currentTime + (e.shiftKey ? 1 : 5); return; }
+    if(/^[0-9]$/.test(e.key) && anCanEdit()){ const i = (parseInt(e.key, 10) + 9) % 10, ts = anTypes(); if(ts[i]){ e.preventDefault(); anAddTag(ts[i]); } return; }
+    if(e.key === 't' || e.key === 'T'){ anSide = anSide === 'us' ? 'them' : 'us'; anRenderButtons(); }
+  });
+  document.getElementById('anClose').addEventListener('click', closeAnalysis);
+  document.getElementById('luAnBtn').addEventListener('click', openAnalysis);
 
   /* =====================================================================
      Age-group folders and the shared club library.
