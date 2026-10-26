@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027104324">
+<meta name="hufc-build" content="20261027105337">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1453,6 +1453,16 @@ html.view-home .lu-sheet{display:none !important;}
 }
 .gt-an{font-size:11px; letter-spacing:.03em; text-transform:uppercase; white-space:normal; max-width:72px; line-height:1.15;}
 td.gt-an{font-size:14px; text-transform:none;}
+.an-pick-box{max-width:560px; overflow-y:auto;}
+.an-pick-box > *{flex-shrink:0;}
+.an-pick-list{display:flex; flex-direction:column; gap:6px; margin:10px 0;}
+.an-pick-row{display:flex; align-items:center; gap:10px; width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--white); font:inherit; text-align:left; cursor:pointer; color:var(--black);}
+.an-pick-row:hover{border-color:var(--black);}
+.an-pick-main{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+.an-pick-title{font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.an-pick-sub{font-size:12.5px; color:var(--grey); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.an-pick-n{flex:none; font-size:12px; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--black); color:var(--yellow); white-space:nowrap;}
+.an-pick-n.none{background:#eeeeec; color:var(--grey);}
 
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
@@ -1724,7 +1734,7 @@ body.view-lineup .session-only{display:none !important;}
 .home-actions{width:100%; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); grid-auto-columns:minmax(0,1fr); grid-template-rows:auto auto; grid-auto-flow:column; gap:8px 10px;}
 .home-actions .btn{justify-content:center; text-align:center; min-width:0; white-space:normal; line-height:1.15;}
 .home-actions .nowrap{white-space:nowrap;}
-.home-actions .home-gt-btn{grid-row:span 2; border-color:var(--yellow); color:var(--yellow);}
+.home-actions .home-gt-btn{border-color:var(--yellow); color:var(--yellow);}
 .btn-big{font-size:16px; padding:11px 18px;}
 .btn-dark{background:transparent; color:var(--white); border-color:#5b5d61;}
 .btn-dark:hover{border-color:var(--white);}
@@ -1951,6 +1961,7 @@ html.has-selbar .home{padding-bottom:70px;}
 :where(html:not(.print-sim)) .home-actions{width:100%;}
 :where(html:not(.print-sim)) .home-actions .btn{padding:10px 8px; font-size:15px;}
 :where(html:not(.print-sim)) .home-actions .home-gt-btn{grid-row:3; grid-column:1 / span 3;}
+:where(html:not(.print-sim)) .home-actions .home-an-btn{grid-row:4; grid-column:1 / span 3;}
 :where(html:not(.print-sim)) .home-head .lib-search{min-width:0; flex:1 1 100%; order:5;}
 :where(html:not(.print-sim)) .home-head #libImportBtn{flex:1 1 100%; order:6;}
 :where(html:not(.print-sim)) .home-head #backupBtn,:where(html:not(.print-sim)) .home-head #restoreBtn{flex:1 1 45%; order:7;}
@@ -2527,6 +2538,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       <button type="button" class="btn btn-primary btn-big" id="homePgNewBtn" title="Shapes and phases to show the players before a game">+ New <span class="nowrap">pre-game</span></button>
       <button type="button" class="btn btn-big btn-dark" id="homePgOpenBtn" title="See all your pre-game plans">Open <span class="nowrap">pre-games</span></button>
       <button type="button" class="btn btn-big btn-dark home-gt-btn" id="homeGtBigBtn" title="Every player's minutes, goals, assists and cards across all your lineups">Game time <span class="nowrap">&amp; player stats</span></button>
+      <button type="button" class="btn btn-big btn-dark home-gt-btn home-an-btn" id="homeAnBtn" title="Tag a match video (e.g. from Veo): clips and stats for each game">Match <span class="nowrap">analysis</span></button>
     </div>
   </section>
 
@@ -2584,7 +2596,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:43am</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:53am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -2884,6 +2896,15 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
         <div id="anStatsPane" hidden><div id="anStats"></div></div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal confirm-modal" id="anPick" hidden>
+  <div class="modal-box confirm-box an-pick-box" role="dialog" aria-modal="true" aria-labelledby="anPickTitle">
+    <h3 id="anPickTitle">Match analysis</h3>
+    <p>Pick a match. Its analysis is kept with that game’s matchday lineup.</p>
+    <div class="an-pick-list" id="anPickList"></div>
+    <div class="confirm-actions"><button type="button" class="btn" id="anPickNew">+ New matchday lineup</button><button type="button" class="btn btn-primary" id="anPickClose">Close</button></div>
   </div>
 </div>
 
@@ -10442,6 +10463,42 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   });
   document.getElementById('anClose').addEventListener('click', closeAnalysis);
   document.getElementById('luAnBtn').addEventListener('click', openAnalysis);
+
+  /* ---------- from the home page: pick a match, straight into its analysis ---------- */
+  const anPick = document.getElementById('anPick');
+  function anPickOpen(){
+    const box = document.getElementById('anPickList'); box.innerHTML = '';
+    const list = luList().filter(function(x){ return inView(x.lu); })
+      .sort(function(a, b){ return (b.lu.savedAt || 0) - (a.lu.savedAt || 0); });
+    if(!list.length) box.appendChild(h('p', {class:'an-empty-list', text:'No matchday lineups in this folder yet. Make one with “+ New matchday lineup” — each match’s analysis lives with its lineup.'}));
+    list.forEach(function(x){
+      const L = x.lu, a = L.analysis || {}, n = Array.isArray(a.tags) ? a.tags.length : 0;
+      const sub = [clean(L.meta && L.meta.date), groupOf(L), a.file && a.file.name ? '🎞 ' + a.file.name : ''].filter(Boolean).join(' · ');
+      box.appendChild(h('button', {type:'button', class:'an-pick-row', onclick:function(){ closeModal(anPick, true); anOpenMatch(x.key); }},
+        h('span', {class:'an-pick-main'}, h('span', {class:'an-pick-title', text:luName(L) || 'Untitled lineup'}), sub ? h('span', {class:'an-pick-sub', text:sub}) : ''),
+        h('span', {class:'an-pick-n' + (n ? '' : ' none'), text:n ? n + (n === 1 ? ' tag' : ' tags') : 'Not started'})));
+    });
+    openModal(anPick);
+  }
+  /* open the lineup, then its analysis once it's on screen */
+  function anOpenMatch(key){
+    const id = key.slice(LU_PREFIX.length);
+    if(!(window.hufcOpenItem && window.hufcOpenItem('lineup', id))) return;
+    let tries = 0;
+    (function wait(){
+      if(lu && luKey === key && isLineupView()){ openAnalysis(); return; }
+      if(tries++ < 50) setTimeout(wait, 100);
+    })();
+  }
+  document.getElementById('homeAnBtn').addEventListener('click', anPickOpen);
+  document.getElementById('anPickClose').addEventListener('click', function(){ closeModal(anPick); });
+  document.getElementById('anPickNew').addEventListener('click', function(){
+    closeModal(anPick, true);
+    document.getElementById('homeLineupBtn').click();
+    let tries = 0;
+    (function wait(){ if(lu && isLineupView()){ openAnalysis(); return; } if(tries++ < 50) setTimeout(wait, 100); })();
+  });
+  anPick.addEventListener('click', function(e){ if(e.target === anPick) closeModal(anPick); });
 
   /* =====================================================================
      Age-group folders and the shared club library.
