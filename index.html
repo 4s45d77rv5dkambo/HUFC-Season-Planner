@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261026104339">
+<meta name="hufc-build" content="20261026110604">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -212,8 +212,13 @@ This typically indicates that your device does not have a healthy Internet conne
     adminOnly();
     const id = inviteId(name, email); if(!id || id === 'name~') throw err('Type a name', 'bad');
     await timed(FB.setDoc(FB.doc(fs, 'invites', id), {name:String(name || '').trim(), email:String(email || '').trim().toLowerCase(), groups:groups || [], at:Date.now(), by:me.email}));
+    /* an email added for someone already on the roster by name: one entry, not two */
+    const byName = inviteId(name, '');
+    if(id !== byName && invites.has(byName)){ try{ await timed(FB.deleteDoc(FB.doc(fs, 'invites', byName))); }catch(e){} }
   }
   async function uninvite(id){ adminOnly(); await timed(FB.deleteDoc(FB.doc(fs, 'invites', id))); }
+  /* the admin puts a roster name on a coach who signed up without it (their teams then show ticked) */
+  async function nameCoach(uid, name){ adminOnly(); await timed(FB.setDoc(FB.doc(fs, 'users', uid), {name:String(name || '').trim().slice(0, 60)}, {merge:true})); }
   /* a coach on the roster (by email) lets themselves in to exactly the teams the admin listed */
   let triedInvite = false;
   async function useInvite(){
@@ -225,6 +230,7 @@ This typically indicates that your device does not have a healthy Internet conne
       const inv = s.data() || {};
       await timed(FB.setDoc(FB.doc(fs, 'approved', me.uid), {email:me.email.toLowerCase(), name:inv.name || '', groups:inv.groups || [], at:Date.now(), by:'roster'}));
       if(inv.name){ try{ await setName(inv.name); }catch(e){} }
+      try{ await timed(FB.setDoc(FB.doc(fs, 'users', me.uid), {groups:inv.groups || []}, {merge:true})); }catch(e){}   /* their teams are settled */
     }catch(e){ triedInvite = false; }
   }
 
@@ -288,7 +294,12 @@ This typically indicates that your device does not have a healthy Internet conne
     });
     return out.sort(function(a, b){ return (a.approved - b.approved) || (b.at - a.at); });
   }
-  async function approve(uid, groups){ adminOnly(); const c = coaches.get(uid) || {}; await timed(FB.setDoc(FB.doc(fs, 'approved', uid), {email:c.email || '', groups:groups || [], at:Date.now(), by:me.email})); }
+  async function approve(uid, groups){
+    adminOnly(); const c = coaches.get(uid) || {};
+    await timed(FB.setDoc(FB.doc(fs, 'approved', uid), {email:c.email || '', groups:groups || [], at:Date.now(), by:me.email}));
+    /* what they asked for is now settled */
+    try{ await timed(FB.setDoc(FB.doc(fs, 'users', uid), {groups:groups || []}, {merge:true})); }catch(e){}
+  }
   async function revoke(uid){
     adminOnly();
     await timed(FB.deleteDoc(FB.doc(fs, 'approved', uid)));
@@ -401,7 +412,7 @@ This typically indicates that your device does not have a healthy Internet conne
     knows:function(uid){ return sources.has(uid); },
     member:function(){ return member; },
     name:function(){ if(!me) return ''; if(me.name != null) return me.name; const c = coaches.get(me.uid); return c && c.name || ''; },
-    setName:setName, roster:rosterList, invite:invite, uninvite:uninvite,
+    setName:setName, roster:rosterList, invite:invite, uninvite:uninvite, nameCoach:nameCoach,
     allowedGroups:allowedGroups,
     coaches:coachList, approve:approve, revoke:revoke,
     coachName:function(uid){ const c = coaches.get(uid); return c ? (c.name || String(c.email || '').split('@')[0]) : ''; },
@@ -2347,6 +2358,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 .coach-match{font-size:12px; font-weight:600; color:var(--black); background:#fff6c2; border-radius:6px; padding:3px 7px; align-self:flex-start;}
 .acct-name-row{display:flex; gap:6px; margin:4px 0 6px;}
 .acct-name-row input{flex:1; min-width:0; height:32px; font:inherit; font-size:14px; padding:0 8px; border:1px solid var(--line); border-radius:7px;}
+.coach-who{height:32px; font:inherit; font-size:13.5px; padding:0 8px; border:1px dashed var(--black); border-radius:8px; background:#fffbe0; align-self:flex-start; max-width:100%;}
 </style>
 <script>/* the export makers and club logos, kept in their own files (see the service worker) */
 (function(){
@@ -2466,7 +2478,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 10:43am</p>
+  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 11:06am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -10451,9 +10463,23 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const cs = CLOUD.coaches();
     if(!cs.length){ list.appendChild(h('p', {class:'coach-empty', text:'No other coaches yet. Send them the app link — when they make an account they appear here for you to approve.'})); return; }
     const same = function(a, b){ return a.slice().sort().join(',') === b.slice().sort().join(','); };
+    const free = CLOUD.roster();   /* roster names nobody has been matched to yet */
+    /* "Who is this?" — match a coach to their roster entry: their name goes on their account and their teams tick */
+    const whoIsThis = function(c){
+      const sel = h('select', {class:'coach-who', 'aria-label':'Who is this coach?'},
+        h('option', {value:'', text:'Who is this? Pick from your roster…'}),
+        free.map(function(r){ return h('option', {value:r.name, text:r.name + (r.groups.length ? ' · ' + r.groups.join(' · ') : '')}); }));
+      sel.onchange = async function(){
+        const n = sel.value; if(!n) return;
+        sel.disabled = true;
+        try{ await CLOUD.nameCoach(c.uid, n); showToast((c.email || 'That coach') + ' is now ' + n + ' — check the teams and press ' + (c.approved ? 'Save' : 'Approve')); }
+        catch(e){ sel.disabled = false; showToast(e && e.code === 'offline' ? 'No internet — try again when you’re online' : 'That didn’t work — try again'); }
+      };
+      return sel;
+    };
     cs.forEach(function(c){
       /* the teams to give them: start from what they asked for (or what they have, if they haven't asked) */
-      let pick = (!c.approved && c.roster && c.roster.groups.length ? c.roster.groups : c.asked.length ? c.asked : c.given).filter(function(g){ return AGE_GROUPS.indexOf(g) !== -1; });
+      let pick = (c.roster && c.roster.groups.length && (!c.approved || !c.given.length) ? c.roster.groups : c.asked.length ? c.asked : c.given).filter(function(g){ return AGE_GROUPS.indexOf(g) !== -1; });
       const changeAsked = c.approved && c.asked.length && !same(c.asked, c.given);
       const state = !c.approved ? 'Waiting since ' + new Date(c.at || Date.now()).toLocaleDateString(undefined, {day:'numeric', month:'short'}) + (c.asked.length ? ' · asked for ' + c.asked.join(' · ') : ' · hasn’t picked a team yet')
         : changeAsked ? 'Has ' + (c.given.join(' · ') || 'no teams') + ' · asked for ' + c.asked.join(' · ')
@@ -10481,6 +10507,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       list.appendChild(h('div', {class:'coach-row' + (!c.approved || changeAsked ? ' waiting' : '')},
         h('div', {class:'coach-top'}, h('span', {class:'coach-name', text:c.name || c.email || 'A coach'}), c.name ? h('span', {class:'coach-mail', text:c.email}) : '', h('span', {class:'coach-state', text:state})),
         !c.approved && c.roster ? h('span', {class:'coach-match', text:'On your roster: ' + (c.roster.name || c.name) + ' · ' + (c.roster.groups.join(' · ') || 'no teams') + ' — ticked for you'}) : '',
+        !c.roster && free.length ? whoIsThis(c) : '',
         chips,
         h('div', {class:'coach-acts'}, rm, main)));
       paint();
@@ -10536,6 +10563,9 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       const al = JSON.stringify(CLOUD.allowedGroups ? CLOUD.allowedGroups() : null);
       if(al !== lastAllowed){
         const had = lastAllowed; lastAllowed = al;
+        /* the admin settled this coach's teams: what they'd asked for is answered */
+        const ag = CLOUD.allowedGroups ? CLOUD.allowedGroups() : null;
+        if(ag && ag.length && had !== null) setSettings({groups:ag, group:ag[0]});
         if(had !== null && al !== 'null' && document.documentElement.classList.contains('view-home')){ renderHome(); showToast('The club admin confirmed your age groups: ' + (myGroups().join(' · ') || 'none')); }
         else if(document.documentElement.classList.contains('view-home')) renderHome();
       }
