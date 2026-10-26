@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261026110604">
+<meta name="hufc-build" content="20261026111434">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2314,7 +2314,15 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 .cloud-gap{flex:1;}
 .btn-link{border:none; background:none; padding:0 4px; text-decoration:underline; font-size:13px; min-height:0; height:auto;}
 .coach-box{max-width:520px;}
-.coach-list{display:flex; flex-direction:column; gap:6px; margin:12px 0 4px; max-height:52vh; overflow:auto;}
+.coach-list{display:flex; flex-direction:column; gap:6px; margin:8px 0 4px;}
+/* the whole Coaches window scrolls as one page (nothing squeezed into small boxes) */
+.coach-box{overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;}
+.coach-box > *{flex-shrink:0;}
+.coach-box .confirm-actions{position:sticky; bottom:-18px; background:var(--white); padding:10px 0 2px; margin-top:8px;}
+.coach-sec{margin:14px 0 0; font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--grey);}
+.coach-line{display:flex; align-items:center; gap:10px;}
+.coach-line .coach-top{flex:1;}
+.coach-row.compact{padding:8px 12px;}
 .coach-row{display:flex; flex-direction:column; gap:8px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--white);}
 .coach-top{display:flex; flex-direction:column; gap:2px; min-width:0;}
 .coach-groups{display:flex; flex-wrap:wrap; gap:5px;}
@@ -2478,7 +2486,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 11:06am</p>
+  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 11:14am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -2536,7 +2544,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <h3 id="coachTitle">Coaches</h3>
     <p>Coaches who make an account with the app link appear here with the age groups they asked for. Pick the teams to give them and press Approve — then they can see the Club library and save work in those teams only.</p>
     <div class="coach-list" id="coachList"></div>
-    <h4 class="coach-h">Club roster</h4>
+    <h4 class="coach-sec">Club roster</h4>
     <p class="coach-sub">Coaches you expect. With an email, they’re let straight in to their teams when they sign up with it. Without one, their teams are ticked for you when someone with that name signs up.</p>
     <div class="coach-list" id="rosterList"></div>
     <details class="roster-add">
@@ -10456,7 +10464,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   }
   /* the admin's list of coaches: approve new ones, or take a coach out of the club library */
   const coachModal = document.getElementById('coachModal');
-  function coachesOpen(){ if(!coachModal) return; renderCoaches(); renderRoster(); openModal(coachModal); }
+  let openRows = {};
+  function coachesOpen(){ if(!coachModal) return; openRows = {}; renderCoaches(); renderRoster(); openModal(coachModal); }
   function renderCoaches(){
     const list = document.getElementById('coachList'); if(!list || !CLOUD) return;
     list.innerHTML = '';
@@ -10477,7 +10486,16 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       };
       return sel;
     };
+    const waitingN = cs.filter(function(c){ return !c.approved || (c.asked.length && !same(c.asked, c.given)); }).length;
+    let secDone = {};
+    cs.sort(function(a, b){
+      const wa = !a.approved || (a.asked.length && !same(a.asked, a.given)), wb = !b.approved || (b.asked.length && !same(b.asked, b.given));
+      return (wb - wa) || String(a.name || a.email).localeCompare(String(b.name || b.email));
+    });
     cs.forEach(function(c){
+      const isWaiting = !c.approved || (c.asked.length && !same(c.asked, c.given));
+      const sec = isWaiting ? 'Waiting for you (' + waitingN + ')' : 'Approved (' + (cs.length - waitingN) + ')';
+      if(!secDone[sec]){ secDone[sec] = 1; list.appendChild(h('h4', {class:'coach-sec', text:sec})); }
       /* the teams to give them: start from what they asked for (or what they have, if they haven't asked) */
       let pick = (c.roster && c.roster.groups.length && (!c.approved || !c.given.length) ? c.roster.groups : c.asked.length ? c.asked : c.given).filter(function(g){ return AGE_GROUPS.indexOf(g) !== -1; });
       const changeAsked = c.approved && c.asked.length && !same(c.asked, c.given);
@@ -10504,12 +10522,20 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       main.onclick = function(){ const gs = pick.slice(); act(main, function(){ return CLOUD.approve(c.uid, gs); }, who_ + (c.approved ? ' now has ' : ' is approved for ') + gs.join(' · ')); };
       const rm = c.approved ? h('button', {type:'button', class:'btn btn-small', text:'Remove access'}) : '';
       if(rm) rm.onclick = function(){ act(rm, function(){ return CLOUD.revoke(c.uid); }, who_ + ' can no longer see the club library'); };
+      if(!isWaiting && !openRows[c.uid]){
+        /* approved: one tidy line — Edit opens the teams */
+        list.appendChild(h('div', {class:'coach-row compact'},
+          h('div', {class:'coach-line'},
+            h('div', {class:'coach-top'}, h('span', {class:'coach-name', text:c.name || c.email || 'A coach'}), h('span', {class:'coach-mail', text:(c.given.join(' · ') || 'no teams') + (c.name ? ' · ' + c.email : '')})),
+            h('button', {type:'button', class:'btn btn-small', text:'Edit', onclick:function(){ openRows[c.uid] = 1; renderCoaches(); }}))));
+        return;
+      }
       list.appendChild(h('div', {class:'coach-row' + (!c.approved || changeAsked ? ' waiting' : '')},
         h('div', {class:'coach-top'}, h('span', {class:'coach-name', text:c.name || c.email || 'A coach'}), c.name ? h('span', {class:'coach-mail', text:c.email}) : '', h('span', {class:'coach-state', text:state})),
         !c.approved && c.roster ? h('span', {class:'coach-match', text:'On your roster: ' + (c.roster.name || c.name) + ' · ' + (c.roster.groups.join(' · ') || 'no teams') + ' — ticked for you'}) : '',
-        !c.roster && free.length ? whoIsThis(c) : '',
+        !c.roster && !c.name && free.length ? whoIsThis(c) : '',
         chips,
-        h('div', {class:'coach-acts'}, rm, main)));
+        h('div', {class:'coach-acts'}, c.approved && !isWaiting ? h('button', {type:'button', class:'btn btn-small', text:'Close', onclick:function(){ delete openRows[c.uid]; renderCoaches(); }}) : '', rm, main)));
       paint();
     });
   }
