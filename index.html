@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261026111434">
+<meta name="hufc-build" content="20261026123220">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2367,6 +2367,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 .acct-name-row{display:flex; gap:6px; margin:4px 0 6px;}
 .acct-name-row input{flex:1; min-width:0; height:32px; font:inherit; font-size:14px; padding:0 8px; border:1px solid var(--line); border-radius:7px;}
 .coach-who{height:32px; font:inherit; font-size:13.5px; padding:0 8px; border:1px dashed var(--black); border-radius:8px; background:#fffbe0; align-self:flex-start; max-width:100%;}
+.owner-line{padding:8px 14px 0; text-align:right; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px; letter-spacing:.06em; text-transform:uppercase; color:#5b5f63; white-space:nowrap; overflow:hidden;}
+.owner-tag{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:#5b5f63; white-space:nowrap; overflow:hidden; margin-bottom:2px;}
 </style>
 <script>/* the export makers and club logos, kept in their own files (see the service worker) */
 (function(){
@@ -2486,7 +2488,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 11:14am</p>
+  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 12:32pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -2610,6 +2612,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     </div>
     <div class="doc-title"><strong>Training Session Plan</strong></div>
   </header>
+  <div class="owner-line" id="ownerLine" hidden></div>
 
   <div class="title-bar" id="titleBar"></div>
   <div class="info" id="info"></div>
@@ -2638,6 +2641,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     </div>
     <div class="doc-title"><strong>Matchday Lineup</strong></div>
   </header>
+  <div class="owner-line" id="luOwnerLine" hidden></div>
 
   <div class="title-bar" id="luTitleBar"></div>
   <div class="info" id="luInfo"></div>
@@ -6018,6 +6022,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     ['players','Players','e.g. 18']
   ];
   function renderTop(){
+    setTimeout(renderOwnerLines, 0);
     if(isPre()) return pgRenderTop();
     const tb = document.getElementById('titleBar');
     tb.innerHTML = '';
@@ -7054,7 +7059,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const card = h('article', {class:'lib-card'},
       h('div', {class:'lib-thumb', html:practiceThumb(p)}),
       h('div', {class:'lib-info'},
-        h('div', {class:'lib-name'}, groupBadge(e), clean(p.name) || 'Untitled practice'),
+        ownerTag(e),
+        h('div', {class:'lib-name'}, clean(p.name) || 'Untitled practice'),
         h('div', {class:'lib-chips'},
           h('span', {class:'chip', text:dur(p) + ' min'}),
           opts.picker && inSession ? h('span', {class:'chip chip-in', text:'In this session'}) : null),
@@ -7098,7 +7104,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const clipN = pre ? s.drills.reduce(function(a, d){ return a + (d.clips || []).length; }, 0) : 0;
     const isOpen = !document.documentElement.classList.contains('view-home') && x.key === storageKey;
     const card = h('div', {class:'session-card' + (isOpen ? ' is-open' : ''), role:'button', tabindex:'0', title:isOpen ? 'This session is open now' : 'Open this session'},
-      h('div', {class:'session-title' + (sessionName(s) ? '' : ' untitled')}, groupBadge(s), sessionName(s) || (pre ? 'Untitled pre-game' : 'Untitled session')),
+      ownerTag(s),
+      h('div', {class:'session-title' + (sessionName(s) ? '' : ' untitled')}, sessionName(s) || (pre ? 'Untitled pre-game' : 'Untitled session')),
       h('div', {class:'session-meta', text:(pre ? [clean(m.title) && clean(m.opponent) && clean(m.title).toLowerCase().indexOf(clean(m.opponent).toLowerCase()) === -1 ? 'vs ' + clean(m.opponent) : '', clean(m.date), clean(m.time), clean(m.venue), clean(m.squad)]
         : [clean(m.title) ? clean(f.theme) : '', clean(m.date), clean(m.time), clean(m.venue), clean(m.squad)]).filter(Boolean).join(' · ') || 'No details yet'}),
       h('div', {class:'session-foot'},
@@ -8667,6 +8674,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   }
   function luRenderTop(){
     const tb = document.getElementById('luTitleBar'); tb.innerHTML = '';
+    setTimeout(renderOwnerLines, 0);
     tb.append(h('span', {class:'lbl', text:'Lineup title'}),
       textField({value:lu.title, ph:luAutoName() || 'e.g. Matchday 3 vs South Melbourne', label:'Lineup title', oneline:true, cls:'title-field lu-title', onInput:function(v){ lu.title = v; luSchedule(); }}),
       luScoreBoard());
@@ -9482,7 +9490,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       const s = x.lu, name = luName(s), m = s.meta;
       const score = clean(s.result.us) !== '' && clean(s.result.them) !== '' ? 'HUFC ' + clean(s.result.us) + '–' + clean(s.result.them) : '';
       const card = h('div', {class:'session-card lineup-card', role:'button', tabindex:'0', title:'Open this lineup'},
-        h('div', {class:'session-title' + (name ? '' : ' untitled')}, groupBadge(s), name || 'Untitled lineup'),
+        ownerTag(s),
+        h('div', {class:'session-title' + (name ? '' : ' untitled')}, name || 'Untitled lineup'),
         h('div', {class:'session-meta', text:[clean(m.competition), clean(m.date), clean(m.kickoff), score].filter(Boolean).join(' · ') || 'No details yet'}),
         h('div', {class:'session-foot'},
           h('span', {text:LU_FORMATS[s.format].label + ' · ' + s.periods.map(function(p){ return luFormLabel(p.formation); }).filter(function(f, i, a){ return a.indexOf(f) === i; }).join(' / ')}),
@@ -10056,6 +10065,33 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(v === 'mine' && isMine(g) && myGroups().length < 2) return null;
     return h('span', {class:'grp-badge' + (isMine(g) ? ' mine' : ''), text:g});
   }
+  /* ---------- whose it is: "U18 – David Ambelidis" (initials when the name doesn't fit) ---------- */
+  function coachOf(x){
+    if(!x) return '';
+    if(CLOUD && CLOUD.user()){
+      const me = CLOUD.user();
+      if(!x.owner || x.owner === me.uid) return CLOUD.name() || x.madeBy || '';
+      if(CLOUD.knows && CLOUD.knows(x.owner)) return CLOUD.coachName(x.owner) || x.madeBy || '';
+    }
+    return x.madeBy || '';
+  }
+  function initials(n){ return String(n || '').split(/\s+/).filter(Boolean).map(function(w){ return w.charAt(0).toUpperCase(); }).join('').slice(0, 3); }
+  function ownerText(x, short){ const g = groupOf(x), n = coachOf(x); return [g || '', n ? (short ? initials(n) : n) : ''].filter(Boolean).join(' – '); }
+  function fitOwner(el, x){
+    const full = ownerText(x);
+    el.textContent = full; el.title = full; el.hidden = !full;
+    if(full && el.clientWidth && el.scrollWidth > el.clientWidth + 1) el.textContent = ownerText(x, true);
+  }
+  function ownerTag(x){
+    const el = h('div', {class:'owner-tag', text:ownerText(x)});
+    requestAnimationFrame(function(){ fitOwner(el, x); });
+    return el;
+  }
+  function renderOwnerLines(){
+    const a = document.getElementById('ownerLine'); if(a && typeof state !== 'undefined' && state) fitOwner(a, state);
+    const b = document.getElementById('luOwnerLine'); if(b && typeof lu !== 'undefined' && lu) fitOwner(b, lu);
+  }
+  window.addEventListener('resize', function(){ clearTimeout(renderOwnerLines.t); renderOwnerLines.t = setTimeout(renderOwnerLines, 150); });
   function groupList(gs){ return gs.length > 1 ? gs.slice(0, -1).join(', ') + ' and ' + gs[gs.length - 1] : (gs[0] || ''); }
 
   /* ---------- view-only for other age groups' work ---------- */
@@ -10216,6 +10252,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const g = this.value; if(!isMine(g)) return;
     if(isLineupView()){ lu.group = g; luSaveNow(); }
     else { state.group = g; saveLocal(); }
+    renderOwnerLines();
     showToast('Moved to your ' + g + ' folder');
     clubSyncSoon();
   });
@@ -10369,6 +10406,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       return !x || !x.owner || x.owner === w.uid || !CLOUD.knows(x.owner);
     };
     return {dir:CLOUD.dir, online:true, canEdit:canEditCloud,
+      byName:function(){ return CLOUD.name(); }, isOther:function(o){ const u = CLOUD.user(); return !!(u && o !== u.uid && CLOUD.knows(o)); },
       readIndex:function(){ try{ return JSON.parse(localStorage.getItem(cloudKey()) || '{}') || {}; }catch(e){ return {}; } },
       writeIndex:function(ix){ try{ localStorage.setItem(cloudKey(), JSON.stringify(ix)); }catch(e){} }};
   }
@@ -10586,6 +10624,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     let wasMember = null;
     let lastAllowed = null;
     window.addEventListener('hufc-cloud-changed', function(){
+      renderOwnerLines();
       const al = JSON.stringify(CLOUD.allowedGroups ? CLOUD.allowedGroups() : null);
       if(al !== lastAllowed){
         const had = lastAllowed; lastAllowed = al;
@@ -10723,7 +10762,9 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
             if(files[it.id + '.json'] && (+files[it.id + '.json'][st] || 0) > stamp) continue;
             if(clubOnline){
               /* online: one refused upload (a view-only coach) shouldn't stop everyone else's work coming in */
-              try{ await writeJSON(kdir, it.id + '.json', Object.assign({}, it.obj, {group:g})); ix[path] = stamp; }
+              const out = Object.assign({}, it.obj, {group:g});
+              if(H.byName && !out.madeBy && (!out.owner || !H.isOther(out.owner))) { const nm = H.byName(); if(nm) out.madeBy = nm; }
+              try{ await writeJSON(kdir, it.id + '.json', out); ix[path] = stamp; }
               catch(err){ pushErr = err; if(err && err.code === 'offline') break; }
               continue;
             }
