@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261026123812">
+<meta name="hufc-build" content="20261026125110">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2367,10 +2367,11 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 .acct-name-row{display:flex; gap:6px; margin:4px 0 6px;}
 .acct-name-row input{flex:1; min-width:0; height:32px; font:inherit; font-size:14px; padding:0 8px; border:1px solid var(--line); border-radius:7px;}
 .coach-who{height:32px; font:inherit; font-size:13.5px; padding:0 8px; border:1px dashed var(--black); border-radius:8px; background:#fffbe0; align-self:flex-start; max-width:100%;}
-/* whose it is: a black bubble with yellow text */
-.owner-line{display:block; width:fit-content; max-width:calc(100% - 28px); box-sizing:border-box; margin:10px 14px 0 auto; padding:4px 12px; border-radius:999px; background:var(--black); color:var(--yellow);
-  font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px; line-height:1.25; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; overflow:hidden;
-  -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+/* whose it is: white, under the document name in the black header (on phones, under the club line) */
+.doc-owner{display:block; margin-top:6px; max-width:420px; margin-left:auto; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:15px; line-height:1.2; letter-spacing:.08em; text-transform:uppercase; color:var(--white); white-space:nowrap; overflow:hidden;}
+.doc-owner[hidden]{display:none;}
+.doc-owner-m{display:none !important;}
+@media screen and (max-width:640px){ .doc-owner-m:not([hidden]){display:block !important; margin-left:0; max-width:100%; font-size:13px;} }
 .owner-tag{display:block; width:fit-content; max-width:100%; box-sizing:border-box; margin-bottom:6px; padding:2px 9px; border-radius:999px; background:var(--black); color:var(--yellow);
   font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:12px; line-height:1.3; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; overflow:hidden;}
 </style>
@@ -2492,7 +2493,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 12:38pm</p>
+  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 12:51pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -2613,10 +2614,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <div class="club">
       <h1 class="club-name">Heidelberg United</h1>
       <div class="club-sub">Football Club · Est. 1958</div>
+      <div class="doc-owner doc-owner-m" id="ownerLineM" hidden></div>
     </div>
-    <div class="doc-title"><strong>Training Session Plan</strong></div>
+    <div class="doc-title"><strong>Training Session Plan</strong><span class="doc-owner" id="ownerLine" hidden></span></div>
   </header>
-  <div class="owner-line" id="ownerLine" hidden></div>
 
   <div class="title-bar" id="titleBar"></div>
   <div class="info" id="info"></div>
@@ -2642,10 +2643,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <div class="club">
       <h1 class="club-name">Heidelberg United</h1>
       <div class="club-sub">Football Club · Est. 1958</div>
+      <div class="doc-owner doc-owner-m" id="luOwnerLineM" hidden></div>
     </div>
-    <div class="doc-title"><strong>Matchday Lineup</strong></div>
+    <div class="doc-title"><strong>Matchday Lineup</strong><span class="doc-owner" id="luOwnerLine" hidden></span></div>
   </header>
-  <div class="owner-line" id="luOwnerLine" hidden></div>
 
   <div class="title-bar" id="luTitleBar"></div>
   <div class="info" id="luInfo"></div>
@@ -10092,8 +10093,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     return el;
   }
   function renderOwnerLines(){
-    const a = document.getElementById('ownerLine'); if(a && typeof state !== 'undefined' && state) fitOwner(a, state);
-    const b = document.getElementById('luOwnerLine'); if(b && typeof lu !== 'undefined' && lu) fitOwner(b, lu);
+    const st = typeof state !== 'undefined' ? state : null, l = typeof lu !== 'undefined' ? lu : null;
+    [['ownerLine', st], ['ownerLineM', st], ['luOwnerLine', l], ['luOwnerLineM', l]].forEach(function(p){
+      const el = document.getElementById(p[0]); if(el && p[1]) fitOwner(el, p[1]);
+    });
   }
   window.addEventListener('resize', function(){ clearTimeout(renderOwnerLines.t); renderOwnerLines.t = setTimeout(renderOwnerLines, 150); });
   function groupList(gs){ return gs.length > 1 ? gs.slice(0, -1).join(', ') + ' and ' + gs[gs.length - 1] : (gs[0] || ''); }
