@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261026123220">
+<meta name="hufc-build" content="20261026123812">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2367,8 +2367,12 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 .acct-name-row{display:flex; gap:6px; margin:4px 0 6px;}
 .acct-name-row input{flex:1; min-width:0; height:32px; font:inherit; font-size:14px; padding:0 8px; border:1px solid var(--line); border-radius:7px;}
 .coach-who{height:32px; font:inherit; font-size:13.5px; padding:0 8px; border:1px dashed var(--black); border-radius:8px; background:#fffbe0; align-self:flex-start; max-width:100%;}
-.owner-line{padding:8px 14px 0; text-align:right; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px; letter-spacing:.06em; text-transform:uppercase; color:#5b5f63; white-space:nowrap; overflow:hidden;}
-.owner-tag{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:#5b5f63; white-space:nowrap; overflow:hidden; margin-bottom:2px;}
+/* whose it is: a black bubble with yellow text */
+.owner-line{display:block; width:fit-content; max-width:calc(100% - 28px); box-sizing:border-box; margin:10px 14px 0 auto; padding:4px 12px; border-radius:999px; background:var(--black); color:var(--yellow);
+  font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px; line-height:1.25; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; overflow:hidden;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+.owner-tag{display:block; width:fit-content; max-width:100%; box-sizing:border-box; margin-bottom:6px; padding:2px 9px; border-radius:999px; background:var(--black); color:var(--yellow);
+  font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:12px; line-height:1.3; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; overflow:hidden;}
 </style>
 <script>/* the export makers and club logos, kept in their own files (see the service worker) */
 (function(){
@@ -2488,7 +2492,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 12:32pm</p>
+  <p class="home-version">HUFC Session Planner · updated 26 Oct 2026, 12:38pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
