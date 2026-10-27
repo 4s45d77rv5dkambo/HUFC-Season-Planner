@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027144651">
+<meta name="hufc-build" content="20261027144740">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2752,7 +2752,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 2:46pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 2:47pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11957,6 +11957,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.2', d:'27 Oct 2026', t:'Full update history', n:['Every update since v1.0 is listed here', 'Closing Coaches, your teams or sign-in from Settings brings you back to Settings']},
     {v:'3.1', d:'27 Oct 2026', t:'Cleaner home page', n:['Back up everything, Bring in a backup and Import from session files moved off the home page into Settings → Backup & data']},
     {v:'3.0', d:'27 Oct 2026', t:'Settings', n:['A Settings window (⚙ on the home page): your account, your teams, and what new sessions and lineups start with', 'Backups, storage on this device, and coach approvals (admin) in one place', 'This update history']},
     {v:'2.9', d:'27 Oct 2026', t:'Delete from inside a plan', n:['A Delete button in the top bar of every session, pre-game and lineup — it asks first, and you can Undo']},
@@ -12030,7 +12031,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     }
     if(!u){
       c.append(h('p', {class:'set-sub', text:'Sign in to keep the same plans on your phone, iPad and computer, and to see the club library.'}),
-        h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn btn-primary', text:'Sign in', onclick:function(){ closeModal(setModal, true); cloudOpen(); }})));
+        h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn btn-primary', text:'Sign in', onclick:function(){ cloudOpen(); }})));
       p.appendChild(c); return;
     }
     const name = CLOUD.name() || '';
@@ -12066,7 +12067,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     c.append(h('div', {class:'set-chips'}, AGE_GROUPS.map(function(g){
       const on = ms.indexOf(g) !== -1, wait = asked.indexOf(g) !== -1;
       return h('span', {class:'set-chip' + (on ? ' on' : '') + (wait ? ' wait' : ''), title:wait ? 'Waiting for the club admin' : '', text:g + (wait ? ' · waiting' : '')});
-    })), h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn', text:limited ? 'Ask for different teams…' : 'Change teams…', onclick:function(){ closeModal(setModal, true); askGroup(); }})));
+    })), h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn', text:limited ? 'Ask for different teams…' : 'Change teams…', onclick:function(){ askGroup(); }})));
     p.appendChild(c);
     if(ms.length > 1){
       const f = setCard('Where new work goes');
@@ -12147,7 +12148,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     c.append(h('div', {class:'set-stats'},
       h('div', {class:'set-stat'}, h('b', {text:String(list.filter(function(x){ return x.approved; }).length)}), h('span', {text:'Approved'})),
       h('div', {class:'set-stat' + (pend ? ' hot' : '')}, h('b', {text:String(pend)}), h('span', {text:'Waiting'}))),
-      h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn btn-primary', text:pend ? 'Review ' + pend + ' waiting' : 'Open coaches', onclick:function(){ closeModal(setModal, true); coachesOpen(); }})));
+      h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn btn-primary', text:pend ? 'Review ' + pend + ' waiting' : 'Open coaches', onclick:function(){ coachesOpen(); }})));
     p.appendChild(c);
   }
   /* ---------- About ---------- */
@@ -12176,6 +12177,11 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     p.appendChild(hc);
   }
 
+  /* windows opened from Settings (Coaches, teams, sign in) open on top of it — closing them comes back here, up to date */
+  ['coachModal', 'groupModal', 'cloudModal'].forEach(function(id){
+    const el = document.getElementById(id); if(!el || !window.MutationObserver) return;
+    new MutationObserver(function(){ if(el.hidden && !setModal.hidden) renderSettings(); }).observe(el, {attributes:true, attributeFilter:['hidden']});
+  });
   document.getElementById('setClose').addEventListener('click', function(){ closeModal(setModal); });
   setModal.addEventListener('click', function(e){ if(e.target === setModal) closeModal(setModal); });
   document.getElementById('homeSetBtn').addEventListener('click', function(){ settingsOpen(); });
