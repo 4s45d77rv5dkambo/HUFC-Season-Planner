@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027225711">
+<meta name="hufc-build" content="20261028072907">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1631,6 +1631,16 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-modal.clip-open .an-clip-top strong::before{content:'CLIP · '; color:var(--yellow); font-family:'Barlow Condensed', sans-serif; letter-spacing:.06em;}
 
 .an-modal.recording #anCtl, .an-modal.recording #anTagArea{pointer-events:none; opacity:.4;}
+/* the match video windows: every button is clear white; hovering or picking it turns it black with yellow text
+   (the video's own controls, the drawing bar and full screen keep their dark look) */
+:is(.an-box, .an-pick-box) :is(.btn, .an-tag-btn, .an-tab, .an-len-pick, .an-who-p, .an-who-skip, .seg button):not(:is(.an-draw-bar, .pg-vid-bar, .an-fs-tags, .an-rec) *){
+  background:#fff; color:var(--black); border-color:var(--black); transition:background .12s ease, color .12s ease;}
+:is(.an-box, .an-pick-box) :is(.btn, .an-tag-btn, .an-tab, .an-len-pick, .an-who-p, .an-who-skip, .seg button):not(:is(.an-draw-bar, .pg-vid-bar, .an-fs-tags, .an-rec) *):is(:hover:not(:disabled), :focus-visible, .on, .active, [aria-pressed="true"]){
+  background:var(--black); color:var(--yellow); border-color:var(--black);}
+.an-box .an-tag-btn.them{color:var(--black);}
+.an-box .an-tag-btn:hover .an-key{color:var(--yellow);}
+.an-box .an-who-p:hover .an-who-n{background:var(--yellow); color:var(--black);}
+.an-box .an-ctl select, .an-box .an-filters select, .an-box select{background-color:#fff;}
 
 /* ---------- Settings ---------- */
 .home-hero{position:relative;}
@@ -2912,7 +2922,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:57pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 7:29am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -13096,6 +13106,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.19', d:'28 Oct 2026', t:'Match video buttons', n:['Every button in the match video windows is clear white, and turns black with yellow text when you hover over it or pick it']},
     {v:'3.18', d:'27 Oct 2026', t:'Smooth video bar', n:['The yellow pill under every video (match videos, clips and pre-game videos) slides along smoothly as it plays, instead of jumping each second', 'All the yellow pills (video bars and scroll bars) are a little wider']},
     {v:'3.17', d:'27 Oct 2026', t:'Check-over fixes', n:['Fixed: Undo after deleting a session, lineup, pre-game or match video could be undone again by the next sync — it now stays back', 'Deleting a clip also clears its saved drawn copy, and closes it if it’s playing', 'Adding a clip to a pre-game while a different match is open now works', 'The T key (us / them) updates the full-screen tag buttons too', 'Match video list uses the pre-game’s name when it has no title', 'Clearer message when a clip can’t be added to a pre-game']},
     {v:'3.16', d:'27 Oct 2026', t:'Instant clips', n:['Save clip is instant — no more waiting for the clip to play through', 'A clip plays straight from the match video, always at the right speed', 'Its own video file is only made when you share it or put it on a pre-game (at normal speed, even if you were watching at 4×)', 'Changing where a clip starts or ends is instant too']},
