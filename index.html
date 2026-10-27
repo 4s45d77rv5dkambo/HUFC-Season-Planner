@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027193124">
+<meta name="hufc-build" content="20261027193912">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1572,6 +1572,7 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-len-range{flex:1 1 160px; min-width:120px; accent-color:#0d0e0f;}
 .an-len-where{display:flex; gap:6px;}
 .an-nudge{min-width:0 !important; padding-left:8px; padding-right:8px;}
+.an-empty-acts{display:flex; gap:8px; flex-wrap:wrap; justify-content:center;}
 
 /* ---------- Settings ---------- */
 .home-hero{position:relative;}
@@ -2848,7 +2849,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 7:31pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 7:39pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3127,7 +3128,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
         <input type="text" class="an-name" id="anName" maxlength="120" aria-label="Name of this match video" autocomplete="off">
         <label class="an-link" title="Attach this video to a matchday lineup to tag its players — or leave it on its own"><span>Lineup</span><select id="anLink" aria-label="Attach to a lineup"></select></label>
       </div>
-      <label class="btn btn-small" for="anFile">Open match video…</label>
+      <button type="button" class="btn btn-small" data-an-open>Open match video…</button>
       <input type="file" class="file-input" id="anFile" accept="video/*,.mp4,.mov,.m4v">
       <button type="button" class="btn btn-small btn-primary" id="anClose">Done</button>
     </div>
@@ -3135,7 +3136,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       <div class="an-left">
         <div class="an-video-wrap">
           <video id="anVideo" playsinline preload="metadata" hidden></video>
-          <div class="an-empty" id="anEmpty"><p id="anFileLbl"></p><label class="btn btn-primary" for="anFile">Open match video…</label></div>
+          <div class="an-empty" id="anEmpty"><p id="anFileLbl"></p><div class="an-empty-acts" id="anEmptyActs"></div></div>
           <div class="an-flash" id="anFlash" aria-live="polite"></div>
           <div class="an-rec" id="anRec" hidden><div class="an-rec-box"><span class="an-rec-dot"></span><span id="anRecText">Making your clip…</span><div class="an-rec-track"><div class="an-rec-bar" id="anRecBar"></div></div><button type="button" class="btn btn-small" id="anRecCancel">Cancel</button></div></div>
           <div class="an-clip-player" id="anClipPlayer" hidden>
@@ -10611,10 +10612,11 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(!m){ showToast('That match video isn’t on this device'); return; }
     anM = m; anKey = key;
     anData(); anFilter = {type:'', side:'', pid:''}; anTab = 'tags'; anCut = null;
-    if(anUrl && anM.analysis.file && anVideo.dataset.for !== anKey){ anVideo.removeAttribute('src'); try{ anVideo.load(); }catch(e){} }
+    if(anVideo.dataset.for !== anKey){ anVideo.removeAttribute('src'); delete anVideo.dataset.for; try{ anVideo.load(); }catch(e){} }
     anRenderHead();
     anRenderAll();
     openModal(anModal);
+    anRestoreVideo();
   }
   function closeAnalysis(){
     if(anRec){ anRec.cancel(); }
@@ -10652,15 +10654,86 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     anSave(); anRenderHead(); anRenderAll();
     showToast(L ? 'Attached to “' + (luName(L) || 'lineup') + '” · its players are ready to tag' + (had ? ' (players tagged from another lineup won’t show)' : '') : 'Not attached to a lineup');
   });
+  /* ---------- the match video file: remembered, so it opens again by itself ----------
+     · this session: kept ready for every match you open
+     · computer (Windows program, Chrome, Edge): the planner remembers where the file is on your computer
+     · iPhone / iPad: a copy is kept on the device (if there's room)
+     The video never goes online — other coaches open their own copy. */
+  const anFiles = {};          /* this session: key → {url, name} */
+  const AN_PICK = !!window.showOpenFilePicker && window.self === window.top;
+  function anSetVideo(url, key){ anVideo.src = url; anVideo.dataset.for = key; anRenderVideoState(); }
+  function anUseFile(f, how){
+    if(!anM) return;
+    const key = anKey, id = anM.id;
+    const old = anFiles[key]; if(old && old.url){ try{ URL.revokeObjectURL(old.url); }catch(e){} }
+    const url = URL.createObjectURL(f); anFiles[key] = {url:url, name:f.name};
+    anSetVideo(url, key);
+    const a = anData();
+    if(anCanEdit() && (!a.file || a.file.name !== f.name || a.file.size !== f.size)){ a.file = {name:f.name, size:f.size}; anSave(); }
+    if(how === 'handle') return;
+    /* phones and tablets: keep a copy on the device so it opens straight away next time */
+    if(!AN_PICK) anKeepCopy(id, f);
+  }
+  async function anKeepCopy(id, f){
+    try{
+      if(navigator.storage && navigator.storage.estimate){
+        const e = await navigator.storage.estimate();
+        if(e && e.quota && (e.quota - (e.usage || 0)) < f.size * 1.15){ showToast('Not enough room to keep this video on the device · you’ll pick it again next time'); return; }
+      }
+      try{ if(navigator.storage && navigator.storage.persist) await navigator.storage.persist(); }catch(e){}
+      await pgMedia.put('mvf-' + id, f);
+      showToast('Video kept on this device · it opens by itself next time');
+    }catch(e){ showToast('Couldn’t keep the video on this device · you’ll pick it again next time'); }
+  }
+  async function anOpenVideoFile(){
+    if(AN_PICK){
+      try{
+        const hs = await window.showOpenFilePicker({id:'hufc-match', types:[{description:'Match video', accept:{'video/*':['.mp4', '.mov', '.m4v', '.webm', '.mkv']}}]});
+        const hd = hs && hs[0]; if(!hd) return;
+        const f = await hd.getFile();
+        if(anM){ try{ await pgMedia.put('mvh-' + anM.id, hd); }catch(e){} }
+        anUseFile(f, 'handle');
+        return;
+      }catch(e){ if(e && e.name === 'AbortError') return; }
+    }
+    document.getElementById('anFile').click();
+  }
   document.getElementById('anFile').addEventListener('change', function(){
     const f = this.files && this.files[0]; this.value = ''; if(!f) return;
-    if(anUrl){ try{ URL.revokeObjectURL(anUrl); }catch(e){} }
-    anUrl = URL.createObjectURL(f);
-    anVideo.src = anUrl;
-    const a = anData();
-    if(anCanEdit() && (!a.file || a.file.name !== f.name)){ a.file = {name:f.name, size:f.size}; anSave(); }
-    anRenderVideoState();
+    anUseFile(f, 'input');
   });
+  anModal.querySelectorAll('[data-an-open]').forEach(function(b){ b.addEventListener('click', anOpenVideoFile); });
+  /* when a match opens: put its video back if we can */
+  let anReopen = null;
+  async function anRestoreVideo(){
+    anReopen = null;
+    if(!anM) return;
+    const key = anKey, id = anM.id;
+    if(anVideo.dataset.for === key && anVideo.currentSrc){ anRenderVideoState(); return; }
+    if(anFiles[key]){ anSetVideo(anFiles[key].url, key); return; }
+    let hd = null; try{ hd = await pgMedia.get('mvh-' + id); }catch(e){}
+    if(anKey !== key) return;
+    if(hd && hd.getFile){
+      let perm = 'granted';
+      try{ if(hd.queryPermission) perm = await hd.queryPermission({mode:'read'}); }catch(e){}
+      if(perm === 'granted'){ try{ const f = await hd.getFile(); if(anKey === key) anUseFile(f, 'handle'); return; }catch(e){} }
+      /* the computer asks once each time the planner starts */
+      anReopen = hd; anRenderVideoState(); return;
+    }
+    let blob = null; try{ blob = await pgMedia.get('mvf-' + id); }catch(e){}
+    if(anKey !== key) return;
+    if(blob){ const url = URL.createObjectURL(blob); anFiles[key] = {url:url, name:(anData().file || {}).name || 'video'}; anSetVideo(url, key); return; }
+    anRenderVideoState();
+  }
+  async function anReopenFile(){
+    const hd = anReopen; if(!hd) return anOpenVideoFile();
+    try{
+      const p = hd.requestPermission ? await hd.requestPermission({mode:'read'}) : 'granted';
+      if(p === 'granted'){ const f = await hd.getFile(); anReopen = null; anUseFile(f, 'handle'); return; }
+    }catch(e){}
+    showToast('That file has moved or been renamed · pick it again');
+    anOpenVideoFile();
+  }
   anVideo.addEventListener('loadedmetadata', anRenderVideoState);
   anVideo.addEventListener('timeupdate', function(){
     document.getElementById('anTime').textContent = anMinute(anVideo.currentTime) + (anData().ko != null ? ' · ' + anClock(anVideo.currentTime) : '') + ' / ' + anClock(anVideo.duration || 0);
@@ -10669,12 +10742,18 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   anVideo.addEventListener('play', function(){ document.getElementById('anPlay').textContent = '❚❚'; });
   anVideo.addEventListener('pause', function(){ document.getElementById('anPlay').textContent = '▶'; });
   function anRenderVideoState(){
-    const a = anData(), has = !!anVideo.currentSrc;
+    const a = anData(), has = !!anVideo.currentSrc && anVideo.dataset.for === anKey;
+    const acts = document.getElementById('anEmptyActs');
+    if(acts){
+      acts.innerHTML = '';
+      if(anReopen) acts.appendChild(h('button', {type:'button', class:'btn btn-primary', text:'▶ Open ' + ((a.file && a.file.name) || 'the video'), onclick:anReopenFile}));
+      acts.appendChild(h('button', {type:'button', class:'btn' + (anReopen ? '' : ' btn-primary'), text:anReopen ? 'Pick a different file…' : 'Open match video…', onclick:anOpenVideoFile}));
+    }
     document.getElementById('anEmpty').hidden = has;
     anVideo.hidden = !has;
     document.getElementById('anCtl').hidden = !has;
     const want = a.file && a.file.name ? a.file.name : '';
-    document.getElementById('anFileLbl').textContent = has ? '' : want ? 'This match’s video: ' + want + ' — open it from this device' : 'Open the match video (e.g. the MP4 downloaded from Veo)';
+    document.getElementById('anFileLbl').textContent = has ? '' : anReopen ? 'Tap to open this match’s video again: ' + want : want ? 'This match’s video: ' + want + ' — open it from this device' : 'Open the match video (e.g. the MP4 downloaded from Veo)';
   }
   function anSeek(t, clip){
     if(!anVideo.currentSrc){ showToast('Open the match video first'); return; }
@@ -10919,6 +10998,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           if(!(await askDelete('match video', title, 'Its tags and clips go too. The video file on your device isn’t touched.'))) return;
           const raw = localStorage.getItem(x.key);
           try{ localStorage.removeItem(x.key); }catch(e){}
+          setTimeout(function(){ if(!localStorage.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); } }, 12000);
           clubSyncSoon(); anPickOpen();
           showToast('Deleted “' + title + '”', function(){ try{ localStorage.setItem(x.key, raw); }catch(e){} clubSyncSoon(); anPickOpen(); });
         }}) : '');
@@ -12587,6 +12667,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.8', d:'27 Oct 2026', t:'Match videos remember the video', n:['The video opens again by itself when you come back to a match — no more picking it from your files each time', 'On a computer the planner remembers where the file is; on an iPhone or iPad it keeps a copy on the device', 'No more black screen when a match’s video isn’t on this device']},
     {v:'3.7', d:'27 Oct 2026', t:'Match videos: halves, clip length, full screen', n:['Mark when each half starts and ends — tap a mark to jump there, ✕ to clear it; times show 45+2’, HT and FT', 'Choose a clip’s length, from 1 second to 1 minute, and nudge the start or end a second at a time', 'Clips play with the planner’s own yellow controls, and full screen keeps your drawings', 'Match videos have their own section on the home page']},
     {v:'3.6', d:'27 Oct 2026', t:'Draw on clips', n:['Pause a clip and tap ✏ Draw: run, pass, dribble and shot arrows (the same as in sessions), highlighted areas, rings and text', 'When the clip plays it freezes there to show your drawings, then carries on (choose how long)', 'Clips you share or add to a pre-game include the drawings']},
     {v:'3.5', d:'27 Oct 2026', t:'Updates straight away', n:['New versions arrive within a minute or so — on the Home page the planner switches over by itself', 'In the middle of a plan it waits until you go Home, or tap Update now (your work is saved first)', 'Windows program 1.5.8 checks every minute']},
