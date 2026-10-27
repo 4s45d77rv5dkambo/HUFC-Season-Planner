@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027195635">
+<meta name="hufc-build" content="20261027205022">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1595,6 +1595,16 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-cut-boardrow .lbl{font-weight:700; font-size:13px;}
 .an-cut-board{font:inherit; font-size:14px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--white); max-width:100%;}
 
+/* picking a clip for a pre-game board */
+.an-cpk-list{display:flex; flex-direction:column; gap:6px; max-height:56vh; overflow-y:auto; margin:6px 0 4px;}
+.an-cpk-match{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); margin:8px 0 2px;}
+.an-cpk-clip{display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:1px solid var(--line); background:var(--white); border-radius:10px; padding:8px 10px; cursor:pointer; font:inherit;}
+.an-cpk-clip:hover{border-color:var(--black);}
+.an-cpk-play{width:30px; height:30px; flex:none; border-radius:50%; background:var(--yellow); display:grid; place-items:center;}
+.an-cpk-play svg{width:14px; height:14px;}
+.an-cpk-main{display:flex; flex-direction:column; min-width:0;}
+.an-cpk-main span{color:var(--grey); font-size:13px;}
+
 /* ---------- Settings ---------- */
 .home-hero{position:relative;}
 .home-set-btn{position:absolute; top:12px; right:12px; display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #3a3b3e; border-radius:999px;
@@ -2875,7 +2885,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 7:56pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 8:50pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3207,6 +3217,14 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   </div>
 </div>
 
+<div class="modal confirm-modal" id="anClipPick" hidden>
+  <div class="modal-box confirm-box an-pick-box" role="dialog" aria-modal="true" aria-labelledby="anClipPickTitle">
+    <h3 id="anClipPickTitle">Add a clip to this board</h3>
+    <p class="coach-sub">Clips you’ve cut from your match videos. Drawings come with them.</p>
+    <div class="an-cpk-list" id="anClipPickList"></div>
+    <div class="confirm-actions"><button type="button" class="btn" id="anClipPickClose">Cancel</button></div>
+  </div>
+</div>
 <div class="modal confirm-modal" id="anPg" hidden>
   <div class="modal-box confirm-box an-pick-box" role="dialog" aria-modal="true" aria-labelledby="anPgTitle">
     <h3 id="anPgTitle">Add to a pre-game</h3>
@@ -11893,6 +11911,53 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     showToast('Added to “' + (sessionName(s) || 'pre-game') + '” · ' + (clean(d.name) || 'board'));
   }
   document.getElementById('anPgClose').addEventListener('click', function(){ closeModal(anPgModal); });
+  /* ---------- from a pre-game board: pick one of your clips ---------- */
+  const anCpkModal = document.getElementById('anClipPick');
+  let anCpkDone = null;
+  function anPickClipForBoard(done){
+    anCpkDone = done;
+    const box = document.getElementById('anClipPickList'); box.innerHTML = '';
+    const list = mvList().filter(function(x){ return ((x.m.analysis || {}).clips || []).length; });
+    if(!list.length) box.appendChild(h('p', {class:'an-empty-list', text:'No clips yet. Open a match video (+ Match video on the home page), tap ✂ Clip under the video, and your clips appear here.'}));
+    list.forEach(function(x){
+      box.appendChild(h('div', {class:'an-cpk-match', text:mvTitle(x.m)}));
+      x.m.analysis.clips.forEach(function(c){
+        const drawn = (c.marks || []).filter(function(m){ return m.shapes && m.shapes.length; }).length;
+        box.appendChild(h('button', {type:'button', class:'an-cpk-clip', onclick:function(){ closeModal(anCpkModal, true); const f = anCpkDone; anCpkDone = null; if(f) f(x.key, c.id); }},
+          h('span', {class:'an-cpk-play', html:PG_PLAY}),
+          h('span', {class:'an-cpk-main'}, h('strong', {text:c.name}), h('span', {text:[Math.round(c.end - c.start) + 's', drawn ? '✏ drawn' : '', (c.boards || []).length ? 'On ' + c.boards.map(function(b){ return b.name; }).join(', ') : '', c.note].filter(Boolean).join(' · ')}))));
+      });
+    });
+    openModal(anCpkModal);
+  }
+  document.getElementById('anClipPickClose').addEventListener('click', function(){ anCpkDone = null; closeModal(anCpkModal); });
+  anCpkModal.addEventListener('click', function(e){ if(e.target === anCpkModal){ anCpkDone = null; closeModal(anCpkModal); } });
+  /* the clip as a video (with its drawings), from a match video that isn't open */
+  async function anClipForBoard(mkey, cid){
+    let m = null; try{ m = JSON.parse(localStorage.getItem(mkey)); }catch(e){}
+    if(!m) return null;
+    const keepM = anM, keepK = anKey, open = !anModal.hidden;
+    if(!open){ anM = m; anKey = mkey; }
+    const c = ((anM.analysis || {}).clips || []).find(function(x){ return x.id === cid; });
+    let out = null;
+    try{
+      if(c){
+        const blob = await anClipBlobDrawn(c);
+        if(blob){ const players = (c.pids || []).map(anPlayerLabel).filter(Boolean); out = {blob:blob, name:anFileName(c), title:c.name + (players.length ? ' — ' + players.join(', ') : '')}; }
+      }
+    }finally{ if(!open){ anM = keepM; anKey = keepK; } }
+    return out;
+  }
+  /* remember on the clip which board it went onto */
+  function anClipMarkBoard(mkey, cid, b){
+    try{
+      const m = JSON.parse(localStorage.getItem(mkey)); const c = m && ((m.analysis || {}).clips || []).find(function(x){ return x.id === cid; });
+      if(!c) return;
+      c.boards = (c.boards || []).filter(function(x){ return x.did !== b.did; }).concat([b]);
+      m.savedAt = Date.now(); localStorage.setItem(mkey, JSON.stringify(m)); clubSyncSoon();
+      if(anM && anKey === mkey){ anM = m; }
+    }catch(e){}
+  }
   document.getElementById('anCutBtn').addEventListener('click', anCutOpen);
 
   /* =====================================================================
@@ -12802,7 +12867,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'3.10', d:'27 Oct 2026', t:'Match videos and pre-games', n:['Attach a match video to a pre-game (next to Lineup in the match video window) — only the clips you choose go onto it', 'When cutting a clip, pick the pre-game board it goes on (e.g. Possession) and it’s added as it’s saved', 'A pre-game shows its match video and opens it in one tap, or starts a new one attached to it']},
+    {v:'3.10', d:'27 Oct 2026', t:'Match videos and pre-games', n:['Attach a match video to a pre-game (next to Lineup in the match video window) — only the clips you choose go onto it', 'When cutting a clip, pick the pre-game board it goes on (e.g. Possession) and it’s added as it’s saved', '+ Add clip on every pre-game board: pick any clip you’ve cut from your match videos, drawings included']},
     {v:'3.9', d:'27 Oct 2026', t:'Easier to watch', n:['Tap the match video to play or pause, double-tap (or ⛶) for full screen — the tag buttons come too', 'A yellow seek bar on the match video: drag or tap to skip anywhere, with your tags and the halves marked', 'Fixed: the clip player’s play and full-screen buttons were invisible']},
     {v:'3.8', d:'27 Oct 2026', t:'Match videos remember the video', n:['The video opens again by itself when you come back to a match — no more picking it from your files each time', 'On a computer the planner remembers where the file is; on an iPhone or iPad it keeps a copy on the device', 'No more black screen when a match’s video isn’t on this device']},
     {v:'3.7', d:'27 Oct 2026', t:'Match videos: halves, clip length, full screen', n:['Mark when each half starts and ends — tap a mark to jump there, ✕ to clear it; times show 45+2’, HT and FT', 'Choose a clip’s length, from 1 second to 1 minute, and nudge the start or end a second at a time', 'Clips play with the planner’s own yellow controls, and full screen keeps your drawings', 'Match videos have their own section on the home page']},
@@ -13253,10 +13318,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       cell('Our formation', luCombo({value:clean(state.focus.ours), ph:'e.g. 4-3-3', label:'Our formation', options:forms, onChange:formSet('ours')})),
       cell('Their formation', luCombo({value:clean(state.focus.theirs), ph:'e.g. 4-4-2', label:'Their formation', options:forms, onChange:formSet('theirs')})),
       cell('Key messages', textField({value:state.focus.theme, ph:'The two or three things that win us this game', label:'Key messages', onInput:function(v){ state.focus.theme = v; scheduleSave(); }})),
-      h('div', {class:'cell'}, h('span', {class:'lbl', text:'Boards'}), h('div', {class:'total-val', id:'totalVal'}), h('div', {class:'total-sub', id:'totalSub'})),
-      h('div', {class:'cell pg-mv-cell no-print', id:'pgMvCell'})
+      h('div', {class:'cell'}, h('span', {class:'lbl', text:'Boards'}), h('div', {class:'total-val', id:'totalVal'}), h('div', {class:'total-sub', id:'totalSub'}))
     );
-    pgRenderMatchCell();
   }
   /* the match videos attached to this pre-game: open one, or start a new one attached to it */
   function pgRenderMatchCell(){
@@ -13772,6 +13835,25 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     wrap.appendChild(h('div', {class:'pg-clip-add no-print'},
       h('button', {type:'button', class:'add-link', style:'margin-top:0', text:'+ Video link', onclick:function(){ linkRow.hidden = !linkRow.hidden; if(!linkRow.hidden) linkIn.focus(); }}),
       h('button', {type:'button', class:'add-link', style:'margin-top:0', text:'+ Upload video', onclick:function(){ fileIn.click(); }}),
+      h('button', {type:'button', class:'add-link', style:'margin-top:0', text:'+ Add clip', title:'A clip you cut from one of your match videos (with its drawings)', onclick:function(){
+        anPickClipForBoard(async function(mkey, cid){
+          setStatus('Adding the clip…', 'saving');
+          const r = await anClipForBoard(mkey, cid);
+          if(!r){ setStatus('That clip’s video is on the device that made it · add it from there', 'warn'); return; }
+          const id = newId(), clip = {id:id, kind:'file', name:r.name, size:r.blob.size, title:r.title};
+          try{
+            if(window.hufcDesktop && window.hufcDesktop.saveVideo){
+              const sv = await window.hufcDesktop.saveVideo('', id, r.title, new File([r.blob], r.name, {type:r.blob.type}));
+              if(sv && sv.file) clip.local = sv.file; else await pgMedia.put(id, r.blob);
+            } else await pgMedia.put(id, r.blob);
+          }catch(e){ setStatus('There isn’t room on this device for that clip', 'warn'); return; }
+          syncBoards();
+          d.clips.push(clip);
+          rerender(); saveLocal();
+          anClipMarkBoard(mkey, cid, {pg:state.planId, did:d.id, name:clean(d.name) || 'board'});
+          setStatus('Clip added to this board');
+        });
+      }}),
       fileIn));
     wrap.appendChild(linkRow);
     return wrap;
