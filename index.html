@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027220411">
+<meta name="hufc-build" content="20261027223148">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2912,7 +2912,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:04pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:31pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -7639,7 +7639,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           const raw = localStorage.getItem(x.key);
           try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){}
           redraw(); clubSyncSoon();
-          showToast('Removed “' + (sessionName(s) || 'Untitled session') + '”', function(){ try{ localStorage.setItem(x.key, raw); }catch(e){} redraw(); clubSyncSoon(); });
+          showToast('Removed “' + (sessionName(s) || 'Untitled session') + '”', function(){ undoDeleted(x.key, raw); redraw(); clubSyncSoon(); });
         }})
       )
     );
@@ -7899,7 +7899,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     delDone(name, key, raw);
   });
   function delDone(name, key, raw){
-    const undo = function(){ if(raw){ try{ localStorage.setItem(key, raw); }catch(e){} } clubSyncSoon(); if(document.documentElement.classList.contains('view-home')) renderHome(); };
+    const undo = function(){ undoDeleted(key, raw); clubSyncSoon(); if(document.documentElement.classList.contains('view-home')) renderHome(); };
     swap(function(){ showHome(); showToast('Deleted “' + name + '”', undo); });
     clubSyncSoon();
   }
@@ -10066,7 +10066,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
             const raw = localStorage.getItem(x.key);
             try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){}
             refresh(); clubSyncSoon();
-            showToast('Removed “' + (name || 'Untitled lineup') + '”', function(){ try{ localStorage.setItem(x.key, raw); }catch(e){} refresh(); clubSyncSoon(); });
+            showToast('Removed “' + (name || 'Untitled lineup') + '”', function(){ undoDeleted(x.key, raw); refresh(); clubSyncSoon(); });
           }})));
       const go = function(){ closeLineups(true); swap(function(){ luOpen(x.key); }); };
       card.addEventListener('click', go);
@@ -10826,6 +10826,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       let fp = null; try{ fp = localStorage.getItem(AN_PATH_PREFIX + id); }catch(e){}
       if(fp){
         const url = anFileUrl(fp);
+        anVideo.addEventListener('loadeddata', function(){ anVideo.onerror = null; }, {once:true});
         anVideo.onerror = function(){ anVideo.onerror = null; if(anVideo.dataset.for === key){ anVideo.removeAttribute('src'); delete anVideo.dataset.for; try{ anVideo.load(); }catch(e){} anRenderVideoState(); showToast('This match’s video has moved or been renamed · open it again'); } };
         anFiles[key] = {url:url, name:(anData().file || {}).name || 'video'}; anSetVideo(url, key); return;
       }
@@ -11175,7 +11176,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(e.key === 'ArrowLeft'){ e.preventDefault(); anVideo.currentTime = Math.max(0, anVideo.currentTime - (e.shiftKey ? 1 : 5)); return; }
     if(e.key === 'ArrowRight'){ e.preventDefault(); anVideo.currentTime = anVideo.currentTime + (e.shiftKey ? 1 : 5); return; }
     if(/^[0-9]$/.test(e.key) && anCanEdit()){ const i = (parseInt(e.key, 10) + 9) % 10, ts = anTypes(); if(ts[i]){ e.preventDefault(); anAddTag(ts[i]); } return; }
-    if(e.key === 't' || e.key === 'T'){ anSide = anSide === 'us' ? 'them' : 'us'; anRenderButtons(); }
+    if(e.key === 't' || e.key === 'T'){ anSide = anSide === 'us' ? 'them' : 'us'; anRenderButtons(); if(anIsFull()) anRenderFsTags(); }
   });
   document.getElementById('anClose').addEventListener('click', closeAnalysis);
   document.getElementById('luAnBtn').addEventListener('click', openAnalysis);
@@ -11189,7 +11190,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     list.forEach(function(x){
       const m = x.m, a = m.analysis || {}, n = (a.tags || []).length, c = (a.clips || []).length;
       const L = anLoadLu(m.luId);
-      const title = clean(m.title) || (L ? luName(L) : '') || 'Untitled match video';
+      const title = mvTitle(m);
       const sub = [L && clean(L.meta.date), groupOf(m), L ? 'Lineup ✓' : 'No lineup', a.file && a.file.name ? '🎞 ' + a.file.name : ''].filter(Boolean).join(' · ');
       const row = h('div', {class:'an-pick-item'},
         h('button', {type:'button', class:'an-pick-row', onclick:function(){ closeModal(anPick, true); anOpenMatch(x.key); }},
@@ -11201,7 +11202,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){}
           setTimeout(function(){ if(!localStorage.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); try{ localStorage.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
           clubSyncSoon(); anPickOpen();
-          showToast('Deleted “' + title + '”', function(){ try{ localStorage.setItem(x.key, raw); }catch(e){} clubSyncSoon(); anPickOpen(); });
+          showToast('Deleted “' + title + '”', function(){ undoDeleted(x.key, raw); clubSyncSoon(); anPickOpen(); });
         }}) : '');
       box.appendChild(row);
     });
@@ -11230,7 +11231,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
             const raw = localStorage.getItem(x.key);
             try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){}
             clubSyncSoon(); renderHome();
-            showToast('Deleted “' + title + '”', function(){ try{ localStorage.setItem(x.key, raw); }catch(e){} clubSyncSoon(); renderHome(); });
+            showToast('Deleted “' + title + '”', function(){ undoDeleted(x.key, raw); clubSyncSoon(); renderHome(); });
           }}) : null));
       const go = function(){ anOpenMatch(x.key); };
       card.addEventListener('click', go);
@@ -11397,7 +11398,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       anVideo.playbackRate = 1; document.getElementById('anSpeed').value = '1';
       const mime = anRecMime();
       /* copy the picture at up to 1080p (full HD), steadily */
-      let draw = 0, vfc = 0, settled = false, recRef = null, recOn = false;
+      let draw = 0, settled = false, recRef = null, recOn = false;
       const pre = Math.max(0, start - 1.5);   /* start playing a little earlier so the video is running smoothly when recording begins */
       const vw = anVideo.videoWidth || 1280, vh = anVideo.videoHeight || 720, sc = Math.min(1, 1920 / vw, 1080 / vh);
       const cv = document.createElement('canvas'); cv.width = Math.round(vw * sc / 2) * 2; cv.height = Math.round(vh * sc / 2) * 2;
@@ -11429,14 +11430,14 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       const chunks = [];
       let rec;
       try{ rec = new MediaRecorder(stream, {mimeType:mime, videoBitsPerSecond:8000000, audioBitsPerSecond:128000}); }
-      catch(e){ settled = true; window.__HUFC_REC = false; document.getElementById('anVideoWrap').classList.remove('recording'); cancelAnimationFrame(draw); reject(e); return; }
+      catch(e){ settled = true; window.__HUFC_REC = false; document.getElementById('anVideoWrap').classList.remove('recording'); anModal.classList.remove('recording'); cancelAnimationFrame(draw); reject(e); return; }
       rec.ondataavailable = function(e){ if(e.data && e.data.size) chunks.push(e.data); };
       let lastT = -1, stall = 0, dog = 0;
       const finish = function(ok, why){
         if(settled) return; settled = true;
         window.__HUFC_REC = false; document.getElementById('anVideoWrap').classList.remove('recording'); anModal.classList.remove('recording');
         anVideo.removeEventListener('timeupdate', tick); anVideo.removeEventListener('seeked', go);
-        cancelAnimationFrame(draw); clearInterval(dog); try{ if(vfc && anVideo.cancelVideoFrameCallback) anVideo.cancelVideoFrameCallback(vfc); }catch(e){}
+        cancelAnimationFrame(draw); clearInterval(dog);
         const done = function(){ ok ? resolve(new Blob(chunks, {type:(mime || 'video/webm').split(';')[0]})) : reject(new Error(why || 'cancelled')); };
         if(rec.state === 'inactive'){ done(); }
         else { rec.onstop = done; try{ rec.stop(); }catch(e){ done(); } setTimeout(done, 1500); }   /* (never wait on a recorder that won't stop) */
@@ -11529,9 +11530,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
             h('span', {class:'an-clip-sub', text:anMinute(c.start) + ' · ' + Math.round(c.end - c.start) + 's' + (players.length ? ' · ' + players.join(', ') : '') + ((c.boards || []).length ? ' · On ' + c.boards.map(function(b){ return b.name; }).join(', ') : '') + ((c.marks || []).filter(function(m){ return m.shapes && m.shapes.length; }).length ? ' · ✏ ' + c.marks.filter(function(m){ return m.shapes && m.shapes.length; }).length + ' drawn' : '') + (c.note ? ' · ' + c.note : '')})),
           ed ? h('button', {type:'button', class:'icon-btn danger', title:'Delete this clip', 'aria-label':'Delete clip', text:'✕', onclick:function(){
             const all = anClips(), i = all.indexOf(c); if(i === -1) return;
+            if(anDC === c) document.getElementById('anClipClose').click();
             all.splice(i, 1); anSave(); anRenderClips();
             showToast('Deleted “' + c.name + '”', function(){ all.splice(i, 0, c); anSave(); anRenderClips(); });
-            setTimeout(function(){ if(anClips().indexOf(c) === -1){ if(c.local && window.hufcDesktop && window.hufcDesktop.deleteVideo) window.hufcDesktop.deleteVideo(c.local); else pgMedia.del('an-' + c.id).catch(function(){}); } }, 12000);
+            setTimeout(function(){ if(anClips().indexOf(c) === -1){ if(c.local && window.hufcDesktop && window.hufcDesktop.deleteVideo) window.hufcDesktop.deleteVideo(c.local); else pgMedia.del('an-' + c.id).catch(function(){}); pgMedia.del('anb-' + c.id).catch(function(){}); } }, 12000);
           }}) : ''),
         h('div', {class:'an-clip-acts'},
           ed ? h('button', {type:'button', class:'btn btn-small', text:'✎ Edit', title:'Change the name, players or note — or where it starts and ends', onclick:function(){ anEditClip(c); }}) : '',
@@ -12093,7 +12095,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   async function anClipForBoard(mkey, cid){
     let m = null; try{ m = JSON.parse(localStorage.getItem(mkey)); }catch(e){}
     if(!m) return null;
-    let keepM = anM, keepK = anKey, open = !anModal.hidden, opened = false;
+    let keepM = anM, keepK = anKey, open = !anModal.hidden && anKey === mkey, opened = false;
+    if(!anModal.hidden && anKey !== mkey) closeAnalysis();   /* another match is open: this one's clip comes from its own match */
     const c0 = ((m.analysis || {}).clips || []).find(function(x){ return x.id === cid; });
     let hasFile = false;
     if(c0 && !c0.virtual){ try{ hasFile = !!(await anClipUrl(c0)); }catch(e){} }
@@ -12148,6 +12151,13 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     }catch(e){}
   }
   function wasDeleted(key){ return !!deletedLog()[key]; }
+  /* Undo after a delete: put it back as newer than any "deleted" marker a sync may already have sent, and take it off the deleted list */
+  function undoDeleted(key, raw){
+    if(!raw) return;
+    try{ const o = JSON.parse(raw); if(o && typeof o === 'object'){ o.savedAt = Date.now(); raw = JSON.stringify(o); } }catch(e){}
+    try{ localStorage.setItem(key, raw); }catch(e){}
+    try{ const d = deletedLog(); if(d[key]){ delete d[key]; localStorage.setItem(DEL_KEY, JSON.stringify(d)); } }catch(e){}
+  }
   /* made by you (on this device, or under your account) */
   function isMineObj(o){
     if(!o || !o.owner) return true;
@@ -13078,6 +13088,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.17', d:'27 Oct 2026', t:'Check-over fixes', n:['Fixed: Undo after deleting a session, lineup, pre-game or match video could be undone again by the next sync — it now stays back', 'Deleting a clip also clears its saved drawn copy, and closes it if it’s playing', 'Adding a clip to a pre-game while a different match is open now works', 'The T key (us / them) updates the full-screen tag buttons too', 'Match video list uses the pre-game’s name when it has no title', 'Clearer message when a clip can’t be added to a pre-game']},
     {v:'3.16', d:'27 Oct 2026', t:'Instant clips', n:['Save clip is instant — no more waiting for the clip to play through', 'A clip plays straight from the match video, always at the right speed', 'Its own video file is only made when you share it or put it on a pre-game (at normal speed, even if you were watching at 4×)', 'Changing where a clip starts or ends is instant too']},
     {v:'3.15', d:'27 Oct 2026', t:'Edit your clips', n:['✎ Edit on any clip: change its name, note and players — or where it starts and ends (it’s re-cut, and your drawings stay on the same moment)', 'Picking a length now keeps the clip ending where you are in the video']},
     {v:'3.14', d:'27 Oct 2026', t:'Clip fixes', n:['Fixed: the Cancel button while making a clip was covered by the seek bar', 'A clip that stops making progress stops by itself and says so', 'While a clip is being made nothing can pause it (taps, keys, syncing wait), so clips don’t have little stops in them', 'Clips are copied frame by frame at up to full HD (1080p) for smoother clips', 'No more jerky start: the video gets a short run-up before recording begins', 'With a clip open, only the clip’s play button shows (the match’s controls come back when you close it)']},
@@ -14056,7 +14067,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
         anPickClipForBoard(async function(mkey, cid){
           setStatus('Adding the clip…', 'saving');
           const r = await anClipForBoard(mkey, cid);
-          if(!r){ setStatus('That clip’s video is on the device that made it · add it from there', 'warn'); return; }
+          if(!r){ setStatus(document.getElementById('anModal').hidden ? 'Couldn’t make that clip’s video · open its match video, then add the clip again' : 'Open the match video, then add the clip again', 'warn'); return; }
           const id = newId(), clip = {id:id, kind:'file', name:r.name, size:r.blob.size, title:r.title};
           try{
             if(window.hufcDesktop && window.hufcDesktop.saveVideo){
