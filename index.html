@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027105337">
+<meta name="hufc-build" content="20261027114532">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1463,6 +1463,45 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-pick-sub{font-size:12.5px; color:var(--grey); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .an-pick-n{flex:none; font-size:12px; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--black); color:var(--yellow); white-space:nowrap;}
 .an-pick-n.none{background:#eeeeec; color:var(--grey);}
+/* clips */
+.an-cut{border:1px solid var(--black); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; background:#fffdf0;}
+.an-cut[hidden]{display:none;}
+.an-cut-head{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.an-cut-len{flex:1; font-size:13px; color:var(--grey);}
+.an-cut-times{display:flex; gap:14px; flex-wrap:wrap;}
+.an-cut-t{display:inline-flex; align-items:center; gap:8px;}
+.an-cut-name, .an-cut-note{height:38px; font:inherit; font-size:15px; padding:0 10px; border:1px solid var(--line); border-radius:8px; background:var(--white);}
+.an-cut-note{font-size:14px; height:34px;}
+.an-cut-who{display:flex; flex-wrap:wrap; gap:5px; align-items:center;}
+.an-cut-who .an-who-p.on{background:var(--black); color:var(--yellow); border-color:var(--black);}
+.an-cut-acts{display:flex; justify-content:flex-end; gap:8px;}
+.an-cut-btn{font-weight:700;}
+.an-rec{position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:center; padding:14px; pointer-events:none;}
+.an-rec[hidden]{display:none;}
+.an-rec-box{pointer-events:auto; display:flex; align-items:center; gap:10px; background:rgba(13,14,15,.88); color:#fff; padding:8px 12px; border-radius:999px; font-weight:600; font-size:14px;}
+.an-rec-dot{width:10px; height:10px; border-radius:50%; background:#e0473c; animation:anBlink 1s infinite;}
+@keyframes anBlink{50%{opacity:.3;}}
+.an-rec-track{width:120px; height:6px; background:#45484c; border-radius:3px; overflow:hidden;}
+.an-rec-bar{height:100%; width:0; background:var(--yellow);}
+.an-clip-player{position:absolute; inset:0; background:#000; display:flex; flex-direction:column; z-index:3;}
+.an-clip-player[hidden]{display:none;}
+.an-clip-top{display:flex; align-items:center; gap:10px; padding:6px 10px; color:#fff;}
+.an-clip-top strong{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.an-clip-player video{flex:1; min-height:0; width:100%; background:#000;}
+#anClipsPane{flex:1; min-height:0; display:flex; flex-direction:column; gap:8px;}
+#anClipsPane[hidden]{display:none;}
+.an-clip{border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:var(--white); display:flex; flex-direction:column; gap:8px;}
+.an-clip-line{display:flex; align-items:center; gap:10px;}
+.an-clip-play{flex:none;}
+.an-clip-text{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+.an-clip-name{font:inherit; font-weight:700; font-size:15px; border:1px solid transparent; border-radius:6px; padding:2px 4px; margin-left:-4px; background:transparent;}
+.an-clip-name:hover, .an-clip-name:focus{border-color:var(--line); outline:none; background:var(--white);}
+.an-clip-sub{font-size:12.5px; color:var(--grey);}
+.an-clip-acts{display:flex; justify-content:flex-end; gap:6px; flex-wrap:wrap;}
+.an-pg-plan{border:1px solid var(--line); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:6px;}
+.an-pg-title{font-weight:700;}
+.an-pg-boards{display:flex; flex-wrap:wrap; gap:6px;}
+@media screen and (max-width:820px){ .an-list#anClipList{overflow:visible;} }
 
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
@@ -1734,7 +1773,7 @@ body.view-lineup .session-only{display:none !important;}
 .home-actions{width:100%; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); grid-auto-columns:minmax(0,1fr); grid-template-rows:auto auto; grid-auto-flow:column; gap:8px 10px;}
 .home-actions .btn{justify-content:center; text-align:center; min-width:0; white-space:normal; line-height:1.15;}
 .home-actions .nowrap{white-space:nowrap;}
-.home-actions .home-gt-btn{border-color:var(--yellow); color:var(--yellow);}
+.home-actions .home-gt-btn{grid-row:span 2; border-color:var(--yellow); color:var(--yellow);}
 .btn-big{font-size:16px; padding:11px 18px;}
 .btn-dark{background:transparent; color:var(--white); border-color:#5b5d61;}
 .btn-dark:hover{border-color:var(--white);}
@@ -1960,8 +1999,8 @@ html.has-selbar .home{padding-bottom:70px;}
 :where(html:not(.print-sim)) .home-doc{font-size:24px;}
 :where(html:not(.print-sim)) .home-actions{width:100%;}
 :where(html:not(.print-sim)) .home-actions .btn{padding:10px 8px; font-size:15px;}
-:where(html:not(.print-sim)) .home-actions .home-gt-btn{grid-row:3; grid-column:1 / span 3;}
-:where(html:not(.print-sim)) .home-actions .home-an-btn{grid-row:4; grid-column:1 / span 3;}
+:where(html:not(.print-sim)) .home-actions{grid-template-columns:repeat(2, minmax(0,1fr)); grid-template-rows:none; grid-auto-flow:row;}
+:where(html:not(.print-sim)) .home-actions .home-gt-btn{grid-row:auto; grid-column:1 / span 2;}
 :where(html:not(.print-sim)) .home-head .lib-search{min-width:0; flex:1 1 100%; order:5;}
 :where(html:not(.print-sim)) .home-head #libImportBtn{flex:1 1 100%; order:6;}
 :where(html:not(.print-sim)) .home-head #backupBtn,:where(html:not(.print-sim)) .home-head #restoreBtn{flex:1 1 45%; order:7;}
@@ -2537,8 +2576,9 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       <button type="button" class="btn btn-big btn-dark" id="homeLuOpenBtn" title="See all your matchday lineups">Open lineups</button>
       <button type="button" class="btn btn-primary btn-big" id="homePgNewBtn" title="Shapes and phases to show the players before a game">+ New <span class="nowrap">pre-game</span></button>
       <button type="button" class="btn btn-big btn-dark" id="homePgOpenBtn" title="See all your pre-game plans">Open <span class="nowrap">pre-games</span></button>
+      <button type="button" class="btn btn-primary btn-big" id="homeMvNewBtn" title="Open a match video (e.g. from Veo) to tag it, cut clips and see stats">+ Match video</button>
+      <button type="button" class="btn btn-big btn-dark" id="homeMvOpenBtn" title="The matches you've analysed: tags, clips and stats">Open <span class="nowrap">match videos</span></button>
       <button type="button" class="btn btn-big btn-dark home-gt-btn" id="homeGtBigBtn" title="Every player's minutes, goals, assists and cards across all your lineups">Game time <span class="nowrap">&amp; player stats</span></button>
-      <button type="button" class="btn btn-big btn-dark home-gt-btn home-an-btn" id="homeAnBtn" title="Tag a match video (e.g. from Veo): clips and stats for each game">Match <span class="nowrap">analysis</span></button>
     </div>
   </section>
 
@@ -2596,7 +2636,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:53am</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 11:45am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -2875,6 +2915,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           <video id="anVideo" playsinline preload="metadata" hidden></video>
           <div class="an-empty" id="anEmpty"><p id="anFileLbl"></p><label class="btn btn-primary" for="anFile">Open match video…</label></div>
           <div class="an-flash" id="anFlash" aria-live="polite"></div>
+          <div class="an-rec" id="anRec" hidden><div class="an-rec-box"><span class="an-rec-dot"></span><span id="anRecText">Making your clip…</span><div class="an-rec-track"><div class="an-rec-bar" id="anRecBar"></div></div><button type="button" class="btn btn-small" id="anRecCancel">Cancel</button></div></div>
+          <div class="an-clip-player" id="anClipPlayer" hidden><div class="an-clip-top"><strong id="anClipTitle"></strong><button type="button" class="btn btn-small" id="anClipClose">Close</button></div><video id="anClipVid" playsinline controls></video></div>
         </div>
         <div class="an-ctl" id="anCtl" hidden>
           <button type="button" class="btn btn-small" id="anBack" title="Back 5 seconds (←)">−5s</button>
@@ -2882,17 +2924,20 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           <button type="button" class="btn btn-small" id="anFwd" title="Forward 5 seconds (→)">+5s</button>
           <span class="an-time" id="anTime">0:00</span>
           <select id="anSpeed" aria-label="Speed"><option value="0.5">½×</option><option value="1" selected>1×</option><option value="1.5">1½×</option><option value="2">2×</option><option value="4">4×</option></select>
+          <button type="button" class="btn btn-small an-cut-btn" id="anCutBtn" title="Cut a part of the match into its own video">✂ Clip</button>
           <span class="an-gap"></span>
           <button type="button" class="btn btn-small" id="anKo" title="Mark the moment the game kicks off — tags then show the match minute">Mark kick-off</button>
           <button type="button" class="btn btn-small" id="anH2" title="Mark the start of the 2nd half">Mark 2nd half</button>
         </div>
+        <div class="an-cut" id="anCut" hidden></div>
         <div id="anTagArea"><div class="an-btns" id="anBtns"></div></div>
         <div class="an-who" id="anWho" hidden></div>
         <p class="an-ro" id="anRo" hidden>View only — another coach’s match. Tap a tag to watch it.</p>
       </div>
       <div class="an-right">
-        <div class="an-tabs" role="tablist"><button type="button" class="an-tab" role="tab" data-tab="tags">Tags<span id="anCount"></span></button><button type="button" class="an-tab" role="tab" data-tab="stats">Stats</button></div>
+        <div class="an-tabs" role="tablist"><button type="button" class="an-tab" role="tab" data-tab="tags">Tags<span id="anCount"></span></button><button type="button" class="an-tab" role="tab" data-tab="clips">Clips<span id="anClipCount"></span></button><button type="button" class="an-tab" role="tab" data-tab="stats">Stats</button></div>
         <div id="anTagsPane"><div class="an-filters" id="anFilters"></div><div class="an-list" id="anList"></div></div>
+        <div id="anClipsPane" hidden><div class="an-list" id="anClipList"></div></div>
         <div id="anStatsPane" hidden><div id="anStats"></div></div>
       </div>
     </div>
@@ -2901,10 +2946,19 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
 <div class="modal confirm-modal" id="anPick" hidden>
   <div class="modal-box confirm-box an-pick-box" role="dialog" aria-modal="true" aria-labelledby="anPickTitle">
-    <h3 id="anPickTitle">Match analysis</h3>
-    <p>Pick a match. Its analysis is kept with that game’s matchday lineup.</p>
+    <h3 id="anPickTitle">Match videos</h3>
+    <p id="anPickText"></p>
     <div class="an-pick-list" id="anPickList"></div>
     <div class="confirm-actions"><button type="button" class="btn" id="anPickNew">+ New matchday lineup</button><button type="button" class="btn btn-primary" id="anPickClose">Close</button></div>
+  </div>
+</div>
+
+<div class="modal confirm-modal" id="anPg" hidden>
+  <div class="modal-box confirm-box an-pick-box" role="dialog" aria-modal="true" aria-labelledby="anPgTitle">
+    <h3 id="anPgTitle">Add to a pre-game</h3>
+    <p>Pick the board to put <strong id="anPgName"></strong> on. It shows with that board’s video clips, ready to play to the players.</p>
+    <div class="an-pick-list" id="anPgList"></div>
+    <div class="confirm-actions"><button type="button" class="btn btn-primary" id="anPgClose">Close</button></div>
   </div>
 </div>
 
@@ -9628,7 +9682,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function luHasContent(s){
     const m = s.meta || {};
     return !!(clean(s.title) || clean(m.opponent) || clean(m.round) || clean(m.date) || clean(m.competition) ||
-      (s.squad || []).some(function(p){ return clean(p.name) || clean(p.num); }));
+      (s.squad || []).some(function(p){ return clean(p.name) || clean(p.num); }) ||
+      !!(s.analysis && ((s.analysis.file && s.analysis.file.name) || (s.analysis.tags && s.analysis.tags.length) || (s.analysis.clips && s.analysis.clips.length))));   /* a match video counts too */
   }
   function luList(){
     const out = [];
@@ -10235,7 +10290,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     openModal(anModal);
   }
   function closeAnalysis(){
+    if(anRec){ anRec.cancel(); }
+    anCut = null;
     try{ anVideo.pause(); }catch(e){}
+    try{ document.getElementById('anClipClose').click(); }catch(e){}
     closeModal(anModal);
     renderAnButton();
   }
@@ -10438,11 +10496,13 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function anRenderTabs(){
     anModal.querySelectorAll('.an-tab').forEach(function(b){ const on = b.dataset.tab === anTab; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
     document.getElementById('anTagsPane').hidden = anTab !== 'tags';
+    document.getElementById('anClipsPane').hidden = anTab !== 'clips';
     document.getElementById('anStatsPane').hidden = anTab !== 'stats';
   }
   anModal.querySelectorAll('.an-tab').forEach(function(b){ b.addEventListener('click', function(){ anTab = b.dataset.tab; anRenderTabs(); }); });
   function anRenderAll(){
-    anRenderVideoState(); anRenderButtons(); anRenderList(); anRenderStats(); anRenderTabs();
+    anRenderVideoState(); anRenderButtons(); anRenderList(); anRenderStats(); anRenderClips(); anRenderCut(); anRenderTabs();
+    document.getElementById('anCutBtn').hidden = !anCanEdit();
     const ed = anCanEdit();
     document.getElementById('anKo').hidden = !ed; document.getElementById('anH2').hidden = !ed;
     const a = anData();
@@ -10466,17 +10526,23 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* ---------- from the home page: pick a match, straight into its analysis ---------- */
   const anPick = document.getElementById('anPick');
-  function anPickOpen(){
+  /* mode 'new': which game is this video from? · 'open': the matches already analysed */
+  function anHasWork(L){ const a = L.analysis || {}; return !!((a.file && a.file.name) || (a.tags && a.tags.length) || (a.clips && a.clips.length)); }
+  function anPickOpen(mode){
     const box = document.getElementById('anPickList'); box.innerHTML = '';
-    const list = luList().filter(function(x){ return inView(x.lu); })
+    const isNew = mode === 'new';
+    document.getElementById('anPickTitle').textContent = isNew ? 'New match video' : 'Match videos';
+    document.getElementById('anPickText').textContent = isNew ? 'Which game is the video from? Pick its matchday lineup, or start a new one.' : 'Matches you’ve analysed — tap one for its video, tags, clips and stats.';
+    document.getElementById('anPickNew').textContent = isNew ? '+ New match' : '+ Match video';
+    const list = luList().filter(function(x){ return inView(x.lu) && (isNew || anHasWork(x.lu)); })
       .sort(function(a, b){ return (b.lu.savedAt || 0) - (a.lu.savedAt || 0); });
-    if(!list.length) box.appendChild(h('p', {class:'an-empty-list', text:'No matchday lineups in this folder yet. Make one with “+ New matchday lineup” — each match’s analysis lives with its lineup.'}));
+    if(!list.length) box.appendChild(h('p', {class:'an-empty-list', text:isNew ? 'No matches in this folder yet — tap “+ New match” to start one.' : 'No match videos yet. Tap “+ Match video”, pick the game, and open its video to start.'}));
     list.forEach(function(x){
       const L = x.lu, a = L.analysis || {}, n = Array.isArray(a.tags) ? a.tags.length : 0;
       const sub = [clean(L.meta && L.meta.date), groupOf(L), a.file && a.file.name ? '🎞 ' + a.file.name : ''].filter(Boolean).join(' · ');
       box.appendChild(h('button', {type:'button', class:'an-pick-row', onclick:function(){ closeModal(anPick, true); anOpenMatch(x.key); }},
         h('span', {class:'an-pick-main'}, h('span', {class:'an-pick-title', text:luName(L) || 'Untitled lineup'}), sub ? h('span', {class:'an-pick-sub', text:sub}) : ''),
-        h('span', {class:'an-pick-n' + (n ? '' : ' none'), text:n ? n + (n === 1 ? ' tag' : ' tags') : 'Not started'})));
+        h('span', {class:'an-pick-n' + (n || (a.clips && a.clips.length) ? '' : ' none'), text:[n ? n + (n === 1 ? ' tag' : ' tags') : '', a.clips && a.clips.length ? a.clips.length + (a.clips.length === 1 ? ' clip' : ' clips') : ''].filter(Boolean).join(' · ') || (a.file && a.file.name ? 'Video added' : 'Not started')})));
     });
     openModal(anPick);
   }
@@ -10490,15 +10556,255 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       if(tries++ < 50) setTimeout(wait, 100);
     })();
   }
-  document.getElementById('homeAnBtn').addEventListener('click', anPickOpen);
+  let anPickMode = 'open';
+  document.getElementById('homeMvNewBtn').addEventListener('click', function(){ anPickMode = 'new'; anPickOpen('new'); });
+  document.getElementById('homeMvOpenBtn').addEventListener('click', function(){ anPickMode = 'open'; anPickOpen('open'); });
   document.getElementById('anPickClose').addEventListener('click', function(){ closeModal(anPick); });
   document.getElementById('anPickNew').addEventListener('click', function(){
+    if(anPickMode === 'open'){ anPickMode = 'new'; anPickOpen('new'); return; }
     closeModal(anPick, true);
     document.getElementById('homeLineupBtn').click();
     let tries = 0;
     (function wait(){ if(lu && isLineupView()){ openAnalysis(); return; } if(tries++ < 50) setTimeout(wait, 100); })();
   });
   anPick.addEventListener('click', function(e){ if(e.target === anPick) closeModal(anPick); });
+
+  /* =====================================================================
+     Clips: cut a part of the match into its own short video, name it, tag the players,
+     share it, or put it on a pre-game board to show the players.
+     The clip's details sync with the lineup; the video file itself is kept on the device that made it
+     (in the computer program, in the planner's Videos folder). Elsewhere it plays from the match video.
+     ===================================================================== */
+  let anCut = null, anRec = null;
+  function anClips(){ const a = anData(); if(!Array.isArray(a.clips)) a.clips = []; return a.clips; }
+  function anRecMime(){
+    const MR = window.MediaRecorder; if(!MR || !MR.isTypeSupported) return '';
+    return ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+      .find(function(m){ try{ return MR.isTypeSupported(m); }catch(e){ return false; } }) || '';
+  }
+  const anExt = function(mime){ return /mp4/.test(mime || '') ? '.mp4' : '.webm'; };
+  function anFileName(c){ return (clean(c.name) || 'Clip').replace(/[\\/:*?"<>|]+/g, ' ').trim() + anExt(c.mime); }
+  function anClipUrl(c){ return pgClipUrl({id:'an-' + c.id, local:c.local}); }
+
+  /* ---------- the cutting panel ---------- */
+  function anCutOpen(){
+    if(!anCanEdit()) return;
+    if(!anVideo.currentSrc){ showToast('Open the match video first'); return; }
+    if(!anRecMime()){ showToast('This browser can’t make video clips · use the computer program, Chrome or Safari'); return; }
+    const now = anVideo.currentTime;
+    anCut = {start:Math.max(0, now - 20), end:Math.min(anVideo.duration || now + 10, now + 10), name:'', pids:[], note:''};
+    anRenderCut();
+    setTimeout(function(){ const n = document.querySelector('.an-cut-name'); if(n) try{ n.focus(); }catch(e){} }, 30);   /* straight into naming it */
+  }
+  function anRenderCut(){
+    const box = document.getElementById('anCut'); box.innerHTML = '';
+    box.hidden = !anCut; if(!anCut) return;
+    const len = Math.max(0, anCut.end - anCut.start);
+    const tm = function(which){
+      return h('span', {class:'an-cut-t'}, h('span', {class:'lbl', text:which === 'start' ? 'From' : 'To'}), h('strong', {text:anMinute(anCut[which]) + (anData().ko != null ? ' (' + anClock(anCut[which]) + ')' : '')}),
+        h('button', {type:'button', class:'btn btn-small', text:'Set to now', onclick:function(){ anCut[which] = anVideo.currentTime; if(anCut.end < anCut.start + 1){ if(which === 'start') anCut.end = anCut.start + 30; else anCut.start = Math.max(0, anCut.end - 30); } anRenderCut(); }}));
+    };
+    const name = h('input', {type:'text', class:'an-cut-name', maxlength:'80', value:anCut.name, placeholder:'Name it — e.g. Building out from the back', oninput:function(){ anCut.name = this.value; }});
+    const note = h('input', {type:'text', class:'an-cut-note', maxlength:'160', value:anCut.note, placeholder:'What to look for (optional)', oninput:function(){ anCut.note = this.value; }});
+    const who = h('div', {class:'an-cut-who'}, h('span', {class:'lbl', text:'Players'}),
+      lu.squad.filter(function(p){ return clean(p.name) || clean(p.num); }).map(function(p){
+        const on = anCut.pids.indexOf(p.id) !== -1;
+        return h('button', {type:'button', class:'an-who-p' + (on ? ' on' : ''), 'aria-pressed':String(on), onclick:function(){ const i = anCut.pids.indexOf(p.id); if(i === -1) anCut.pids.push(p.id); else anCut.pids.splice(i, 1); anRenderCut(); }},
+          h('span', {class:'an-who-n', text:clean(p.num) || '·'}), luShort(p.name) || '');
+      }));
+    box.append(
+      h('div', {class:'an-cut-head'}, h('strong', {text:'✂ New clip'}), h('span', {class:'an-cut-len', text:Math.round(len) + ' seconds'}),
+        h('button', {type:'button', class:'btn btn-small', text:'Last 30s', title:'The 30 seconds before where the video is now', onclick:function(){ anCut.end = anVideo.currentTime; anCut.start = Math.max(0, anCut.end - 30); anRenderCut(); }}),
+        h('button', {type:'button', class:'btn btn-small', text:'Next 30s', title:'The 30 seconds from where the video is now', onclick:function(){ anCut.start = anVideo.currentTime; anCut.end = Math.min(anVideo.duration || anCut.start + 30, anCut.start + 30); anRenderCut(); }})),
+      h('div', {class:'an-cut-times'}, tm('start'), tm('end')),
+      name, note, who,
+      h('div', {class:'an-cut-acts'},
+        h('button', {type:'button', class:'btn btn-small', text:'Cancel', onclick:function(){ anCut = null; anRenderCut(); }}),
+        h('button', {type:'button', class:'btn btn-small', text:'▶ Preview', onclick:function(){ anQueue = null; anVideo.currentTime = anCut.start; anClipEnd = anCut.end; const p = anVideo.play(); if(p && p.catch) p.catch(function(){}); }}),
+        h('button', {type:'button', class:'btn btn-small btn-primary', text:'Save clip', disabled:len < 2 || len > 600, title:len > 600 ? 'Keep clips under 10 minutes' : '', onclick:anCutSave})));
+  }
+  /* records the part of the match as it plays (a 30-second clip takes 30 seconds) */
+  function anRecord(start, end){
+    return new Promise(function(resolve, reject){
+      const mime = anRecMime();
+      let stream = null, draw = 0;
+      try{
+        if(anVideo.captureStream) stream = anVideo.captureStream();
+        else if(anVideo.mozCaptureStream) stream = anVideo.mozCaptureStream();
+      }catch(e){ stream = null; }
+      if(!stream){
+        /* Safari: copy the picture onto a canvas, and the sound through the speakers' path */
+        const cv = document.createElement('canvas'); cv.width = anVideo.videoWidth || 1280; cv.height = anVideo.videoHeight || 720;
+        const g = cv.getContext('2d');
+        const paint = function(){ try{ g.drawImage(anVideo, 0, 0, cv.width, cv.height); }catch(e){} draw = requestAnimationFrame(paint); };
+        paint();
+        stream = cv.captureStream(30);
+        try{
+          if(!anVideo._hufcAudio){
+            const AC = window.AudioContext || window.webkitAudioContext, ac = new AC(), src = ac.createMediaElementSource(anVideo), dst = ac.createMediaStreamDestination();
+            src.connect(ac.destination); src.connect(dst); anVideo._hufcAudio = {ac:ac, dst:dst};
+          }
+          anVideo._hufcAudio.ac.resume && anVideo._hufcAudio.ac.resume();
+          anVideo._hufcAudio.dst.stream.getAudioTracks().forEach(function(t){ stream.addTrack(t); });
+        }catch(e){}
+      }
+      const chunks = [];
+      let rec;
+      try{ rec = new MediaRecorder(stream, {mimeType:mime, videoBitsPerSecond:3000000, audioBitsPerSecond:96000}); }
+      catch(e){ cancelAnimationFrame(draw); reject(e); return; }
+      rec.ondataavailable = function(e){ if(e.data && e.data.size) chunks.push(e.data); };
+      const finish = function(ok){
+        anVideo.removeEventListener('timeupdate', tick);
+        cancelAnimationFrame(draw);
+        rec.onstop = function(){ ok ? resolve(new Blob(chunks, {type:(mime || 'video/webm').split(';')[0]})) : reject(new Error('cancelled')); };
+        try{ rec.stop(); }catch(e){}
+        try{ anVideo.pause(); }catch(e){}
+      };
+      const tick = function(){
+        const done = Math.min(1, (anVideo.currentTime - start) / (end - start));
+        const bar = document.getElementById('anRecBar'); if(bar) bar.style.width = Math.round(done * 100) + '%';
+        const tx = document.getElementById('anRecText'); if(tx) tx.textContent = 'Making your clip… ' + Math.max(0, Math.round(anVideo.currentTime - start)) + ' / ' + Math.round(end - start) + 's';
+        if(anVideo.currentTime >= end) finish(true);
+      };
+      anRec = {cancel:function(){ finish(false); }};
+      anVideo.playbackRate = 1;
+      document.getElementById('anSpeed').value = '1';
+      const go = function(){
+        anVideo.removeEventListener('seeked', go);
+        rec.start(1000);
+        anVideo.addEventListener('timeupdate', tick);
+        const p = anVideo.play(); if(p && p.catch) p.catch(function(){ finish(false); });
+      };
+      anVideo.addEventListener('seeked', go);
+      anClipEnd = null; anQueue = null;
+      anVideo.currentTime = start;
+    });
+  }
+  async function anCutSave(){
+    const c = {id:newId(), name:clean(anCut.name) || ('Clip ' + anMinute(anCut.start)), start:Math.round(anCut.start * 10) / 10, end:Math.round(anCut.end * 10) / 10,
+      pids:anCut.pids.slice(), note:clean(anCut.note), at:Date.now()};
+    const ov = document.getElementById('anRec'); ov.hidden = false;
+    document.getElementById('anRecBar').style.width = '0%';
+    let blob;
+    try{ blob = await anRecord(c.start, c.end); }
+    catch(e){ ov.hidden = true; anRec = null; if(e && e.message !== 'cancelled') showToast('Couldn’t make the clip on this device · try the computer program'); return; }
+    ov.hidden = true; anRec = null;
+    c.size = blob.size; c.mime = blob.type;
+    /* keep the video: the program's Videos folder, or this device's storage */
+    try{
+      if(window.hufcDesktop && window.hufcDesktop.saveVideo){
+        const r = await window.hufcDesktop.saveVideo('', 'an-' + c.id, c.name, new File([blob], anFileName(c), {type:blob.type}));
+        if(r && r.file) c.local = r.file; else await pgMedia.put('an-' + c.id, blob);
+      } else await pgMedia.put('an-' + c.id, blob);
+    }catch(e){ showToast('There isn’t room on this device for that clip'); return; }
+    anClips().push(c); anSave();
+    anCut = null; anRenderCut();
+    anTab = 'clips'; anRenderAll();
+    showToast('Clip saved · “' + c.name + '” (' + Math.round(c.end - c.start) + 's)');
+  }
+  document.getElementById('anRecCancel').addEventListener('click', function(){ if(anRec) anRec.cancel(); });
+
+  /* ---------- the Clips tab ---------- */
+  function anRenderClips(){
+    const box = document.getElementById('anClipList'); if(!box) return; box.innerHTML = '';
+    const cs = anClips(), ed = anCanEdit();
+    document.getElementById('anClipCount').textContent = cs.length ? String(cs.length) : '';
+    if(!cs.length){ box.appendChild(h('p', {class:'an-empty-list', text:ed ? 'No clips yet. Tap ✂ Clip under the video to cut a part of the match into its own video — name it, tag the players, then share it or add it to a pre-game.' : 'No clips from this match yet.'})); return; }
+    cs.forEach(function(c){
+      const players = c.pids.map(anPlayerLabel).filter(Boolean);
+      const row = h('div', {class:'an-clip'},
+        h('div', {class:'an-clip-line'},
+          h('button', {type:'button', class:'pg-play an-clip-play', title:'Watch the clip', 'aria-label':'Watch the clip', html:PG_PLAY, onclick:function(){ anPlayClip(c); }}),
+          h('div', {class:'an-clip-text'},
+            ed ? h('input', {type:'text', class:'an-clip-name', value:c.name, maxlength:'80', 'aria-label':'Clip name', onchange:function(){ c.name = clean(this.value) || c.name; anSave(); }}) : h('strong', {text:c.name}),
+            h('span', {class:'an-clip-sub', text:anMinute(c.start) + ' · ' + Math.round(c.end - c.start) + 's' + (players.length ? ' · ' + players.join(', ') : '') + (c.note ? ' · ' + c.note : '')})),
+          ed ? h('button', {type:'button', class:'icon-btn danger', title:'Delete this clip', 'aria-label':'Delete clip', text:'✕', onclick:function(){
+            const all = anClips(), i = all.indexOf(c); if(i === -1) return;
+            all.splice(i, 1); anSave(); anRenderClips();
+            showToast('Deleted “' + c.name + '”', function(){ all.splice(i, 0, c); anSave(); anRenderClips(); });
+            setTimeout(function(){ if(anClips().indexOf(c) === -1){ if(c.local && window.hufcDesktop && window.hufcDesktop.deleteVideo) window.hufcDesktop.deleteVideo(c.local); else pgMedia.del('an-' + c.id).catch(function(){}); } }, 12000);
+          }}) : ''),
+        h('div', {class:'an-clip-acts'},
+          h('button', {type:'button', class:'btn btn-small', text:'Share / save', onclick:function(){ anShareClip(c); }}),
+          ed || true ? h('button', {type:'button', class:'btn btn-small btn-primary', text:'Add to pre-game…', onclick:function(){ anToPregame(c); }}) : ''));
+      box.appendChild(row);
+    });
+  }
+  async function anPlayClip(c){
+    const url = await anClipUrl(c);
+    const pl = document.getElementById('anClipPlayer'), v = document.getElementById('anClipVid');
+    if(url){
+      try{ anVideo.pause(); }catch(e){}
+      document.getElementById('anClipTitle').textContent = c.name;
+      v.src = url; pl.hidden = false; const p = v.play(); if(p && p.catch) p.catch(function(){});
+      return;
+    }
+    /* made on another device: play that part of the match video instead */
+    if(anVideo.currentSrc){ anSeek(c.start, false); anClipEnd = c.end; return; }
+    showToast('This clip’s video is on the device that made it · open the match video to watch it here');
+  }
+  document.getElementById('anClipClose').addEventListener('click', function(){ const v = document.getElementById('anClipVid'); try{ v.pause(); }catch(e){} v.removeAttribute('src'); document.getElementById('anClipPlayer').hidden = true; });
+  async function anClipBlob(c){
+    const url = await anClipUrl(c); if(!url) return null;
+    try{ const r = await fetch(url); return await r.blob(); }catch(e){ return null; }
+  }
+  async function anShareClip(c){
+    const blob = await anClipBlob(c);
+    if(!blob){ showToast('This clip’s video is on the device that made it'); return; }
+    const file = new File([blob], anFileName(c), {type:blob.type || 'video/mp4'});
+    /* phones and iPads: the share sheet (WhatsApp, Messages, Save Video…) */
+    if(navigator.canShare && navigator.share && !(window.hufcDesktop)){
+      try{ if(navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:c.name, text:c.name + (c.note ? ' — ' + c.note : '')}); return; } }
+      catch(e){ if(e && e.name === 'AbortError') return; }
+    }
+    const ok = await saveFile(file, file.name);
+    if(ok) showToast('Saved “' + file.name + '”');
+  }
+
+  /* ---------- put a clip on a pre-game board ---------- */
+  const anPgModal = document.getElementById('anPg');
+  let anPgClip = null;
+  function anToPregame(c){
+    anPgClip = c;
+    const box = document.getElementById('anPgList'); box.innerHTML = '';
+    const plans = listSessions().filter(function(x){ return isPre(x.plan) && canEdit(x.plan); })
+      .sort(function(a, b){ return (b.plan.savedAt || 0) - (a.plan.savedAt || 0); });
+    document.getElementById('anPgName').textContent = '“' + c.name + '”';
+    if(!plans.length) box.appendChild(h('p', {class:'an-empty-list', text:'No pre-game plans yet. Make one with “+ New pre-game” on the home page, then add the clip.'}));
+    plans.forEach(function(x){
+      const s = x.plan;
+      box.appendChild(h('div', {class:'an-pg-plan'},
+        h('div', {class:'an-pg-title', text:sessionName(s) || 'Untitled pre-game'}),
+        h('div', {class:'an-pg-boards'}, (s.drills || []).map(function(d, i){
+          return h('button', {type:'button', class:'btn btn-small', text:(i + 1) + '. ' + (clean(d.name) || 'Board ' + (i + 1)), onclick:function(){ anAddToBoard(x.key, d.id); }});
+        }))));
+    });
+    openModal(anPgModal);
+  }
+  async function anAddToBoard(key, did){
+    const c = anPgClip; if(!c) return;
+    const blob = await anClipBlob(c);
+    if(!blob){ showToast('This clip’s video is on the device that made it · add it to the pre-game from there'); return; }
+    let s; try{ s = JSON.parse(localStorage.getItem(key)); }catch(e){ s = null; }
+    const d = s && (s.drills || []).find(function(x){ return x.id === did; });
+    if(!d){ showToast('That pre-game has changed · try again'); return; }
+    const id = newId(), players = c.pids.map(anPlayerLabel).filter(Boolean);
+    const clip = {id:id, kind:'file', name:anFileName(c), size:blob.size, title:c.name + (players.length ? ' — ' + players.join(', ') : '')};
+    try{
+      if(window.hufcDesktop && window.hufcDesktop.saveVideo){
+        const r = await window.hufcDesktop.saveVideo('', id, c.name, new File([blob], anFileName(c), {type:blob.type}));
+        if(r && r.file) clip.local = r.file; else await pgMedia.put(id, blob);
+      } else await pgMedia.put(id, blob);
+    }catch(e){ showToast('There isn’t room on this device for that clip'); return; }
+    d.clips = d.clips || []; d.clips.push(clip);
+    s.savedAt = Date.now();
+    try{ localStorage.setItem(key, JSON.stringify(s)); }catch(e){ showToast('Couldn’t save the pre-game'); return; }
+    clubSyncSoon();
+    closeModal(anPgModal);
+    showToast('Added to “' + (sessionName(s) || 'pre-game') + '” · ' + (clean(d.name) || 'board'));
+  }
+  document.getElementById('anPgClose').addEventListener('click', function(){ closeModal(anPgModal); });
+  document.getElementById('anCutBtn').addEventListener('click', anCutOpen);
 
   /* =====================================================================
      Age-group folders and the shared club library.
