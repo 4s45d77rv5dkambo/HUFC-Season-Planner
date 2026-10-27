@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028072907">
+<meta name="hufc-build" content="20261028092052">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2789,6 +2789,33 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 .pic-actions{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;}
 .pic-note{font-size:12px; color:var(--grey);}
 .thumb-pic{display:block; width:100%; height:100%; object-fit:cover;}
+
+/* ---------- the Windows program: its own black title bar (no browser-style menu strip) ---------- */
+.winbar{display:none;}
+html.app-frame .winbar{display:flex; position:fixed; top:0; left:0; right:0; height:40px; z-index:3000; background:#0d0e0f; align-items:center; gap:10px;
+  padding:0 150px 0 6px; -webkit-app-region:drag; user-select:none; -webkit-user-select:none; box-shadow:inset 0 -2px 0 var(--yellow);}
+html.app-frame .winbar button{-webkit-app-region:no-drag;}
+.winbar-menu{width:36px; height:30px; border:0; border-radius:6px; background:transparent; color:#fff; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;}
+.winbar-menu:hover, .winbar-menu.on{background:#26272a; color:var(--yellow);}
+.winbar-crest{width:22px; height:22px; object-fit:contain;}
+.winbar-title{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:15px; letter-spacing:.09em; text-transform:uppercase; color:#fff; white-space:nowrap;}
+.winbar-title b{color:var(--yellow); font-weight:700;}
+.winbar-status{margin-left:auto; display:flex; align-items:center; gap:7px; font-size:12.5px; color:#a3a8ad; min-width:0;}
+.winbar-status .status-text{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.winbar-status .dot{width:7px; height:7px; border-radius:50%; background:#2e9d5b; flex-shrink:0;}
+.winbar-status.saving .dot{background:#8e9399;}
+.winbar-status.warn .dot{background:var(--danger);}
+html.app-frame body{padding-top:40px;}
+html.app-frame .appbar{top:40px;}
+html.app-frame.view-home .appbar{display:none;}
+html.app-frame .appbar .status > *{display:none;}
+html.app-frame :is(.modal, .pg-show, .pg-pic-view, .an-clip-player.an-full, .an-video-wrap.an-full){top:40px;}
+html.app-frame .an-video-wrap.an-full{height:calc(100vh - 40px);}
+/* the page's own scroll bar: a slim yellow pill that starts under the title bar */
+html.app-frame::-webkit-scrollbar{width:14px;}
+html.app-frame::-webkit-scrollbar-track{background:transparent; margin-top:42px;}
+html.app-frame::-webkit-scrollbar-thumb{background:#ffd400; border-radius:999px; border:3px solid #f3f3f0; min-height:40px;}
+html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 </style>
 <script>/* the export makers and club logos, kept in their own files (see the service worker) */
 (function(){
@@ -2802,6 +2829,12 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 </script>
 </head>
 <body>
+<div class="winbar" id="winbar" aria-hidden="false">
+  <button type="button" class="winbar-menu" id="winbarMenu" title="Menu: your planner folder, back up, zoom, about" aria-label="Menu"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <img class="winbar-crest" id="winbarCrest" alt="" src="data:,">
+  <span class="winbar-title">HUFC <b>Season Planner</b></span>
+  <div class="winbar-status" id="winStatus"><span class="dot"></span><span class="status-text"></span></div>
+</div>
 
 <div class="appbar">
   <div class="appbar-inner">
@@ -2922,7 +2955,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 7:29am</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 9:20am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -5554,10 +5587,19 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
      ===================================================================== */
   let state, storageKey, boards = [], saveTimer = null, storageOK = true;
   const statusEl = document.getElementById('status'), statusText = statusEl.querySelector('.status-text');
+  /* the Windows program draws its own title bar (newer programs): crest, name, the save status, and the menu */
+  (function(){
+    if(!(window.hufcDesktop && window.hufcDesktop.frame === 'app') && !window.__HUFC_FRAME_PREVIEW) return;
+    document.documentElement.classList.add('app-frame');
+    const c = document.querySelector('img.crest'); if(c) document.getElementById('winbarCrest').src = c.src;
+    const mb = document.getElementById('winbarMenu');
+    mb.addEventListener('click', function(){ const r = mb.getBoundingClientRect(); if(window.hufcDesktop && window.hufcDesktop.menu) window.hufcDesktop.menu(Math.round(r.left), Math.round(r.bottom + 2)); });
+  })();
 
   function setStatus(text, kind){
     statusText.textContent = text;
     statusEl.className = 'status' + (kind ? ' ' + kind : '');
+    const ws = document.getElementById('winStatus'); if(ws){ ws.className = 'winbar-status' + (kind ? ' ' + kind : ''); ws.querySelector('.status-text').textContent = text; }
   }
   function clock(){ return new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
   function readLocal(key){
@@ -13106,6 +13148,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.20', d:'28 Oct 2026', t:'A proper Windows app', n:['The Windows program (v1.5.9) has its own black title bar with the crest — no more File / Edit / View / Help strip', 'The ☰ button on the title bar holds your planner folder, back up, zoom and About', '“Everything is saved” sits quietly in the title bar instead of its own white strip', 'A slim yellow scroll bar in the program']},
     {v:'3.19', d:'28 Oct 2026', t:'Match video buttons', n:['Every button in the match video windows is clear white, and turns black with yellow text when you hover over it or pick it']},
     {v:'3.18', d:'27 Oct 2026', t:'Smooth video bar', n:['The yellow pill under every video (match videos, clips and pre-game videos) slides along smoothly as it plays, instead of jumping each second', 'All the yellow pills (video bars and scroll bars) are a little wider']},
     {v:'3.17', d:'27 Oct 2026', t:'Check-over fixes', n:['Fixed: Undo after deleting a session, lineup, pre-game or match video could be undone again by the next sync — it now stays back', 'Deleting a clip also clears its saved drawn copy, and closes it if it’s playing', 'Adding a clip to a pre-game while a different match is open now works', 'The T key (us / them) updates the full-screen tag buttons too', 'Match video list uses the pre-game’s name when it has no title', 'Clearer message when a clip can’t be added to a pre-game']},
