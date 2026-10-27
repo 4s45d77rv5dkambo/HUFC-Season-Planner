@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027145744">
+<meta name="hufc-build" content="20261027150019">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2775,7 +2775,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 2:57pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 3:00pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -8298,11 +8298,25 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     else setStatus('Couldn’t open the PDF' + (r && r.error ? ' (' + r.error + ')' : ''), 'warn');
   }
   /* the computer program: an update to the planner has arrived. Save, then offer to reload into it */
-  window.hufcPlannerUpdated = function(){
-    try{ flush(); }catch(e){}
-    showToast('The planner has been updated', function(){ try{ flush(); }catch(e){} location.reload(); });
-    toastUndo.textContent = 'Reload'; clearTimeout(toastTimer);      /* stays until you choose */
+  /* updates come in straight away: on the Home page the planner just reloads into the new version;
+     in the middle of a plan it waits until you're back on Home (or you press Update now) — your work is saved first */
+  let updPending = null;
+  function updSafe(){ return document.documentElement.classList.contains('view-home') && !document.querySelector('.modal:not([hidden])') && !document.querySelector('.present-on, .pg-present:not([hidden])'); }
+  function updApply(){
+    const fn = updPending; if(!fn) return; updPending = null;
+    try{ flush(); }catch(e){} try{ luFlush(); }catch(e){}
+    setStatus('Updating the planner…');
+    setTimeout(fn, 500);
+  }
+  window.hufcUpdateReady = function(fn){
+    updPending = fn || function(){ location.reload(); };
+    if(updSafe()){ updApply(); return; }
+    showToast('A planner update is ready · it applies when you go Home', function(){ updApply(); });
+    toastUndo.textContent = 'Update now'; clearTimeout(toastTimer);
   };
+  setInterval(function(){ if(updPending && updSafe()) updApply(); }, 3000);
+  window.hufcPlannerUpdated = function(){ window.hufcUpdateReady(function(){ location.reload(); }); };
+  window.showToastPublic = function(m){ showToast(m); };
   const canDesktopPdf = function(){ return !!(window.hufcDesktop && window.hufcDesktop.printPdf); };
   document.getElementById('printBtn').addEventListener('click', function(){
     if(window.hufcDesktop && window.hufcDesktop.openPdf){ flush(); exportPdf('print'); return; }   /* the same PDF as the online planner makes */
@@ -11980,6 +11994,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.5', d:'27 Oct 2026', t:'Updates straight away', n:['New versions arrive within a minute or so — on the Home page the planner switches over by itself', 'In the middle of a plan it waits until you go Home, or tap Update now (your work is saved first)', 'Windows program 1.5.8 checks every minute']},
     {v:'3.4', d:'27 Oct 2026', t:'Bigger folder buttons', n:['My folder, Club library and the age groups are big buttons right across the page']},
     {v:'3.3', d:'27 Oct 2026', t:'Share the planner', n:['The admin can copy or share the iPhone/iPad link and the Windows download from Settings → Club & sharing', 'A download page for the Windows program']},
     {v:'3.2', d:'27 Oct 2026', t:'Full update history', n:['Every update since v1.0 is listed here', 'Closing Coaches, your teams or sign-in from Settings brings you back to Settings']},
@@ -12210,7 +12225,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     c.append(h('div', {class:'set-about'}, h('img', {class:'set-crest', alt:'', src:document.querySelector('.home-crest').src}),
       h('div', null, h('div', {class:'set-who-name', text:'Heidelberg United'}), h('div', {class:'set-club', text:'Football Club · Est. 1958'}),
         h('div', {class:'set-who-mail', text:'Version ' + SET_HISTORY[0].v + ' · ' + where + ' · ' + ver.replace('HUFC Session Planner · ', '')}))),
-      h('p', {class:'set-sub', text:'Updates arrive by themselves: the app shows an Update bar, the Windows program offers Reload.'}));
+      h('p', {class:'set-sub', text:'Updates arrive by themselves within a minute or so — the planner switches over when you’re on the Home page.'}));
     p.appendChild(c);
     const hc = setCard('Update history');
     const list = h('ol', {class:'set-hist'});
@@ -13319,9 +13334,17 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 <script>/* offline: the planner is kept on this phone; a newer one is fetched when online and offered here */
 (function(){
   if(!('serviceWorker' in navigator) || (location.protocol !== 'https:' && location.hostname !== 'localhost')) return;
-  window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      function chk(){ if(!document.hidden) reg.update().catch(function(){}); }
+      setInterval(chk, 60000);
+      document.addEventListener('visibilitychange', function(){ if(!document.hidden) setTimeout(chk, 800); });
+    }).catch(function(){});
+  });
   navigator.serviceWorker.addEventListener('message', function(e){
-    if(e.data !== 'hufc-updated' || document.getElementById('pwaBar')) return;
+    if(e.data !== 'hufc-updated') return;
+    if(window.hufcUpdateReady){ window.hufcUpdateReady(function(){ location.reload(); }); return; }
+    if(document.getElementById('pwaBar')) return;
     var bar = document.createElement('div'); bar.id = 'pwaBar'; bar.className = 'restart-bar no-print'; bar.setAttribute('role', 'status');
     var t = document.createElement('span'); t.innerHTML = '<b>A newer planner is ready.</b> Reload to use it \u2014 your work is saved first.';
     var go = document.createElement('button'); go.type = 'button'; go.className = 'btn'; go.textContent = 'Reload';
