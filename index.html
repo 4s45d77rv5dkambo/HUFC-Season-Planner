@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027215842">
+<meta name="hufc-build" content="20261027220411">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1630,6 +1630,8 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-modal.clip-open #anCtl, .an-modal.clip-open #anTagArea, .an-modal.clip-open #anCut, .an-modal.clip-open #anWho{display:none !important;}
 .an-modal.clip-open .an-clip-top strong::before{content:'CLIP · '; color:var(--yellow); font-family:'Barlow Condensed', sans-serif; letter-spacing:.06em;}
 
+.an-modal.recording #anCtl, .an-modal.recording #anTagArea{pointer-events:none; opacity:.4;}
+
 /* ---------- Settings ---------- */
 .home-hero{position:relative;}
 .home-set-btn{position:absolute; top:12px; right:12px; display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #3a3b3e; border-radius:999px;
@@ -2910,7 +2912,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 9:58pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:04pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -10852,6 +10854,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     anOpenVideoFile();
   }
   anVideo.addEventListener('loadedmetadata', anRenderVideoState);
+  anVideo.addEventListener('ratechange', function(){ if(window.__HUFC_REC && anVideo.playbackRate !== 1) anVideo.playbackRate = 1; });
   /* a seek bar on the match video: drag or tap to skip anywhere; your tags and the halves are marked on it */
   const anMainBar = document.getElementById('anMainBar');
   const anMFill = h('span', {class:'pg-vid-fill'}), anMKnob = h('span', {class:'pg-vid-knob'}), anMTicks = h('span', {class:'an-cp-ticks'});
@@ -11390,9 +11393,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function anRecord(start, end){
     return new Promise(function(resolve, reject){
       if(!anCanCapture()){ reject(new Error('nocapture')); return; }
-      window.__HUFC_REC = true; document.getElementById('anVideoWrap').classList.add('recording');
+      window.__HUFC_REC = true; document.getElementById('anVideoWrap').classList.add('recording'); anModal.classList.add('recording');
+      anVideo.playbackRate = 1; document.getElementById('anSpeed').value = '1';
       const mime = anRecMime();
-      /* copy the picture at up to 1080p (full HD), one copy per new frame */
+      /* copy the picture at up to 1080p (full HD), steadily */
       let draw = 0, vfc = 0, settled = false, recRef = null, recOn = false;
       const pre = Math.max(0, start - 1.5);   /* start playing a little earlier so the video is running smoothly when recording begins */
       const vw = anVideo.videoWidth || 1280, vh = anVideo.videoHeight || 720, sc = Math.min(1, 1920 / vw, 1080 / vh);
@@ -11404,7 +11408,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
         if(recRef && !recOn && !anVideo.paused && anVideo.currentTime >= start - 0.02){
           try{ recRef.start(1000); recOn = true; }catch(e){ finish(false, 'record'); return; }
         }
-        if(anVideo.requestVideoFrameCallback) vfc = anVideo.requestVideoFrameCallback(paint); else draw = requestAnimationFrame(paint);
+        draw = requestAnimationFrame(paint);   /* a steady copy every screen refresh, so the clip's timing is always right */
       };
       paint();
       const stream = cv.captureStream(30);
@@ -11430,7 +11434,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       let lastT = -1, stall = 0, dog = 0;
       const finish = function(ok, why){
         if(settled) return; settled = true;
-        window.__HUFC_REC = false; document.getElementById('anVideoWrap').classList.remove('recording');
+        window.__HUFC_REC = false; document.getElementById('anVideoWrap').classList.remove('recording'); anModal.classList.remove('recording');
         anVideo.removeEventListener('timeupdate', tick); anVideo.removeEventListener('seeked', go);
         cancelAnimationFrame(draw); clearInterval(dog); try{ if(vfc && anVideo.cancelVideoFrameCallback) anVideo.cancelVideoFrameCallback(vfc); }catch(e){}
         const done = function(){ ok ? resolve(new Blob(chunks, {type:(mime || 'video/webm').split(';')[0]})) : reject(new Error(why || 'cancelled')); };
@@ -11467,22 +11471,9 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   }
   async function anCutSave(){
     if(anCut.editId) return anCutSaveEdit();
+    /* saved straight away: it plays from the match video; its own video file is only made when you share it or put it on a pre-game */
     const c = {id:newId(), name:clean(anCut.name) || ('Clip ' + anMinute(anCut.start)), start:Math.round(anCut.start * 10) / 10, end:Math.round(anCut.end * 10) / 10,
-      pids:anCut.pids.slice(), note:clean(anCut.note), at:Date.now()};
-    const ov = document.getElementById('anRec'); ov.hidden = false;
-    document.getElementById('anRecBar').style.width = '0%';
-    let blob;
-    try{ blob = await anRecord(c.start, c.end); }
-    catch(e){ ov.hidden = true; anRec = null; if(e && e.message === 'stuck') showToast('The video stopped moving, so the clip was stopped · try again'); else if(e && e.message === 'nocapture') anNeedPick(); else if(e && e.message !== 'cancelled') showToast('Couldn’t make the clip on this device · try again, or pick the video again'); return; }
-    ov.hidden = true; anRec = null;
-    c.size = blob.size; c.mime = blob.type;
-    /* keep the video: the program's Videos folder, or this device's storage */
-    try{
-      if(window.hufcDesktop && window.hufcDesktop.saveVideo){
-        const r = await window.hufcDesktop.saveVideo('', 'an-' + c.id, c.name, new File([blob], anFileName(c), {type:blob.type}));
-        if(r && r.file) c.local = r.file; else await pgMedia.put('an-' + c.id, blob);
-      } else await pgMedia.put('an-' + c.id, blob);
-    }catch(e){ showToast('There isn’t room on this device for that clip'); return; }
+      pids:anCut.pids.slice(), note:clean(anCut.note), at:Date.now(), virtual:true};
     anClips().push(c); anSave();
     const toBoard = anCut.board ? {key:anCut.boardKey || (anPgFind(anM.pgId) || {}).key, did:anCut.board} : null;
     anCut = null; anRenderCut();
@@ -11506,32 +11497,20 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const ns = Math.round(anCut.start * 10) / 10, ne = Math.round(anCut.end * 10) / 10, moved = Math.abs(ns - c.start) > 0.05 || Math.abs(ne - c.end) > 0.05;
     c.name = clean(anCut.name) || c.name; c.pids = anCut.pids.slice(); c.note = clean(anCut.note);
     if(moved){
-      if(!anVideo.currentSrc){ showToast('Open the match video to change where the clip starts or ends'); return; }
-      const ov = document.getElementById('anRec'); ov.hidden = false; document.getElementById('anRecBar').style.width = '0%';
-      let blob;
-      try{ blob = await anRecord(ns, ne); }
-      catch(e){ ov.hidden = true; anRec = null; if(e && e.message === 'stuck') showToast('The video stopped moving, so the clip was stopped · try again'); else if(e && e.message === 'nocapture') anNeedPick(); else if(e && e.message !== 'cancelled') showToast('Couldn’t re-cut the clip on this device · try again'); return; }
-      ov.hidden = true; anRec = null;
       /* drawings stay on the same moment of the match */
       const shift = c.start - ns, len = ne - ns;
       (c.marks || []).forEach(function(m){ m.t = Math.round((m.t + shift) * 10) / 10; });
       c.marks = (c.marks || []).filter(function(m){ return m.t >= 0 && m.t <= len; });
-      const oldLocal = c.local;
-      c.start = ns; c.end = ne; c.size = blob.size; c.mime = blob.type; delete c.bakeStamp;
-      try{
-        if(window.hufcDesktop && window.hufcDesktop.saveVideo){
-          const r = await window.hufcDesktop.saveVideo('', 'an-' + c.id + '-' + Date.now().toString(36), c.name, new File([blob], anFileName(c), {type:blob.type}));
-          if(r && r.file){ c.local = r.file; if(oldLocal && oldLocal !== r.file && window.hufcDesktop.deleteVideo) window.hufcDesktop.deleteVideo(oldLocal); }
-          else { delete c.local; await pgMedia.put('an-' + c.id, blob); }
-        } else await pgMedia.put('an-' + c.id, blob);
-        try{ if(pgUrls['an-' + c.id]){ URL.revokeObjectURL(pgUrls['an-' + c.id]); delete pgUrls['an-' + c.id]; } }catch(e){}
-        pgMedia.del('anb-' + c.id).catch(function(){});
-      }catch(e){ showToast('There isn’t room on this device for that clip'); return; }
+      /* the old video file goes; the new one is made when it's next shared or put on a pre-game */
+      if(c.local && window.hufcDesktop && window.hufcDesktop.deleteVideo) window.hufcDesktop.deleteVideo(c.local);
+      c.start = ns; c.end = ne; c.virtual = true; delete c.local; delete c.size; delete c.mime; delete c.bakeStamp;
+      pgMedia.del('an-' + c.id).catch(function(){}); pgMedia.del('anb-' + c.id).catch(function(){});
+      try{ if(pgUrls['an-' + c.id]){ URL.revokeObjectURL(pgUrls['an-' + c.id]); delete pgUrls['an-' + c.id]; } }catch(e){}
     }
     anSave();
     anCut = null; anRenderCut();
     anTab = 'clips'; anRenderAll();
-    showToast(moved ? 'Clip re-cut · “' + c.name + '” (' + Math.round(c.end - c.start) + 's)' + ((c.boards || []).length ? ' · add it to the pre-game again to update it there' : '') : 'Clip updated');
+    showToast(moved ? 'Clip changed · “' + c.name + '” (' + Math.round(c.end - c.start) + 's)' + ((c.boards || []).length ? ' · add it to the pre-game again to update it there' : '') : 'Clip updated');
   }
 
   /* ---------- the Clips tab ---------- */
@@ -11562,26 +11541,29 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     });
   }
   async function anPlayClip(c){
-    const url = await anClipUrl(c);
+    const url = c.virtual ? null : await anClipUrl(c);
     const pl = document.getElementById('anClipPlayer'), v = document.getElementById('anClipVid');
-    if(url){
-      try{ anVideo.pause(); }catch(e){}
-      document.getElementById('anClipTitle').textContent = c.name;
-      anDC = c; anDMode = false; anDMark = null; anDFreeze = null; anDLast = 0; anStage.classList.remove('drawing'); anCpPaint();
-      document.getElementById('anFreezeFlag').hidden = true;
-      v.src = url; pl.hidden = false; anModal.classList.add('clip-open'); anShowShapes([]); anRenderDrawBar();
-      document.getElementById('anLeft').classList.add('clip-open');
-      const p = v.play(); if(p && p.catch) p.catch(function(){});
-      return;
+    let src = url, off = 0, len = 0;
+    if(!src){
+      /* an instant clip (or one made on another device): play its part of the match video */
+      if(!(anVideo.currentSrc && anVideo.dataset.for === anKey)){ showToast('Open the match video to watch this clip'); return; }
+      src = anVideo.currentSrc; off = c.start; len = Math.max(0.5, c.end - c.start);
     }
-    /* made on another device: play that part of the match video instead */
-    if(anVideo.currentSrc){ anSeek(c.start, false); anClipEnd = c.end; return; }
-    showToast('This clip’s video is on the device that made it · open the match video to watch it here');
+    try{ anVideo.pause(); }catch(e){}
+    document.getElementById('anClipTitle').textContent = c.name;
+    anDC = c; anDMode = false; anDMark = null; anDFreeze = null; anDLast = 0; anStage.classList.remove('drawing');
+    anCpOff = off; anCpLen = len;
+    document.getElementById('anFreezeFlag').hidden = true;
+    pl.hidden = false; anModal.classList.add('clip-open'); anShowShapes([]); anRenderDrawBar();
+    const go = function(){ try{ v.currentTime = off; }catch(e){} anCpPaint(); const p = v.play(); if(p && p.catch) p.catch(function(){}); };
+    if(v.getAttribute('src') === src && v.readyState >= 1) go();
+    else { v.addEventListener('loadedmetadata', go, {once:true}); v.src = src; }
+    anCpPaint();
   }
   document.getElementById('anClipClose').addEventListener('click', function(){
     if(anDMode) anDrawDone();
     anCpFull(false);
-    clearTimeout(anDFreezeT); anDFreeze = null; anDC = null;
+    clearTimeout(anDFreezeT); anDFreeze = null; anDC = null; anCpOff = 0; anCpLen = 0;
     const v = document.getElementById('anClipVid'); try{ v.pause(); }catch(e){} v.removeAttribute('src'); document.getElementById('anClipPlayer').hidden = true; anModal.classList.remove('clip-open');
     document.getElementById('anLeft').classList.remove('clip-open');
     anShowShapes([]);
@@ -11592,6 +11574,11 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
      Kept on the clip as marks: [{id, t (seconds into the clip), hold (seconds), shapes:[{k, c, p:[[x,y]...]}]}]
      (x, y run 0–1 across the picture). Shared clips and pre-game clips get the drawings in the video.
      ===================================================================== */
+  /* a clip's own time: a saved clip plays from its own video; an instant clip plays its part of the match video */
+  let anCpOff = 0, anCpLen = 0;
+  function anCpT(){ return anCV.currentTime - anCpOff; }
+  function anCpD(){ return anCpLen || anCV.duration || 0; }
+  function anCpSet(t){ anCV.currentTime = anCpOff + Math.max(0, Math.min(anCpD(), t)); }
   const AN_DRAW_COLOURS = ['#ffd400', '#ffffff', '#ff3b30', '#22d3ee'];
   const AN_DRAW_TOOLS = [['run', 'Run'], ['pass', 'Pass'], ['dribble', 'Dribble'], ['shoot', 'Shot'], ['area', 'Area'], ['ring', 'Ring'], ['text', 'Text']];
   const AN_DRAW_ICONS = {"run": "<svg viewBox=\"0 0 24 24\"><line x1=\"3\" y1=\"18\" x2=\"15.63\" y2=\"8.34\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M20,5 L16.66,11.33 L16.64,7.57 L13.01,6.57 Z\" fill=\"currentColor\"/></svg>", "pass": "<svg viewBox=\"0 0 24 24\"><line x1=\"3\" y1=\"18\" x2=\"15.63\" y2=\"8.34\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"3,2.5\" stroke-linecap=\"round\"/><path d=\"M20,5 L16.66,11.33 L16.64,7.57 L13.01,6.57 Z\" fill=\"currentColor\"/></svg>", "dribble": "<svg viewBox=\"0 0 24 24\"><path d=\"M3,18 C4.5,19 5.8,16.8 5.6,15 C5.4,13.2 7.2,13 8.6,14 C10,15 11.2,13.5 10.9,11.6 C10.7,10 12.5,10.1 13.6,9.6 L16.4,7.6\" stroke=\"currentColor\" stroke-width=\"1.6\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M20,4.8 L16.72,11.16 L16.67,7.4 L13.03,6.43 Z\" fill=\"currentColor\"/></svg>", "shoot": "<svg viewBox=\"0 0 24 24\"><path d=\"M3.82,19.07 L15.97,9.78 M2.18,16.93 L14.33,7.63\" stroke=\"currentColor\" stroke-width=\"1.3\" fill=\"none\"/><path d=\"M20,5 L16.66,11.33 L16.64,7.57 L13.01,6.57 Z\" fill=\"currentColor\"/></svg>", "area": "<svg viewBox=\"0 0 24 24\"><path d=\"M4,8 L13,4 L20,9 L17,18 L6,17 Z\" fill=\"currentColor\" fill-opacity=\".3\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-dasharray=\"3,2\" stroke-linejoin=\"round\"/></svg>", "ring": "<svg viewBox=\"0 0 24 24\"><ellipse cx=\"12\" cy=\"13\" rx=\"8\" ry=\"5.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/></svg>", "text": "<svg viewBox=\"0 0 24 24\"><path d=\"M5,6 H19 M12,6 V19\" stroke=\"currentColor\" stroke-width=\"2.6\" stroke-linecap=\"round\"/></svg>"};
@@ -11756,7 +11743,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(ed) bar.appendChild(h('button', {type:'button', class:'btn btn-small btn-primary', title:'Pause here and draw what happens next', text:'✏ Draw', onclick:anDrawStart}));
     marks.forEach(function(m){
       bar.appendChild(h('span', {class:'an-mark-chip'},
-        h('button', {type:'button', class:'an-mark-go', title:'Go to this moment', text:'⏸ ' + anClock(m.t) + ' · ' + m.shapes.length + (m.shapes.length === 1 ? ' drawing' : ' drawings'), onclick:function(){ anCV.pause(); anCV.currentTime = m.t; anDFreeze = null; anShowShapes(m.shapes); }}),
+        h('button', {type:'button', class:'an-mark-go', title:'Go to this moment', text:'⏸ ' + anClock(m.t) + ' · ' + m.shapes.length + (m.shapes.length === 1 ? ' drawing' : ' drawings'), onclick:function(){ anCV.pause(); anCpSet(m.t); anDFreeze = null; anShowShapes(m.shapes); }}),
         ed ? h('button', {type:'button', class:'an-mark-x', title:'Remove these drawings', 'aria-label':'Remove', text:'✕', onclick:function(){
           const all = anMarks(anDC), i = all.indexOf(m); if(i === -1) return; all.splice(i, 1); anSave(); anShowShapes([]); anRenderDrawBar();
           showToast('Drawings removed', function(){ all.splice(i, 0, m); anSave(); anRenderDrawBar(); });
@@ -11767,7 +11754,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function anDrawStart(){
     if(!anDC || !anCanEdit()) return;
     anCV.pause(); anDFreeze = null; clearTimeout(anDFreezeT);
-    const t = Math.round(anCV.currentTime * 10) / 10;
+    const t = Math.round(anCpT() * 10) / 10;
     anDMark = anMarkAt(anDC, t);
     if(!anDMark){ anDMark = {id:newId(), t:t, hold:4, shapes:[]}; anMarks(anDC).push(anDMark); }
     anDMode = true;
@@ -11840,10 +11827,11 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     cancelAnimationFrame(anDRaf);
     const step = function(){
       if(!anDC || anCV.paused || anDMode){ anDRaf = 0; return; }
-      const t = anCV.currentTime;
+      const t = anCpT();
+      if(anCpLen && t >= anCpLen - 0.02){ anCV.pause(); anCpSet(anCpLen); anDRaf = 0; anCpPaint(); return; }
       const m = anMarks(anDC).filter(function(x){ return x.shapes.length && x.t > anDLast - 0.01 && x.t <= t + 0.04; }).sort(function(a, b){ return a.t - b.t; })[0];
       if(m && !anDFreeze){
-        anDFreeze = m; anCV.pause(); anCV.currentTime = m.t; anShowShapes(m.shapes);
+        anDFreeze = m; anCV.pause(); anCpSet(m.t); anShowShapes(m.shapes);
         const fl = document.getElementById('anFreezeFlag'); fl.hidden = false; fl.textContent = '⏸ ' + m.hold + 's';
         clearTimeout(anDFreezeT);
         anDFreezeT = setTimeout(function(){
@@ -11860,17 +11848,18 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   }
   anCV.addEventListener('play', function(){
     if(anDMode){ anCV.pause(); return; }
+    if(anCpLen && (anCpT() >= anCpLen - 0.05 || anCpT() < -0.05)) anCpSet(0);
     if(anDFreeze){ clearTimeout(anDFreezeT); anDLast = anDFreeze.t + 0.05; anDFreeze = null; document.getElementById('anFreezeFlag').hidden = true; }
-    else anDLast = anCV.currentTime - 0.01;
+    else anDLast = anCpT() - 0.01;
     if(!anDMode) anShowShapes([]);
     anDWatch();
   });
   anCV.addEventListener('seeked', function(){
     if(anDMode || anDFreeze) return;
-    anDLast = anCV.currentTime - 0.01;
-    if(anCV.paused && anDC){ const m = anMarkAt(anDC, anCV.currentTime); anShowShapes(m ? m.shapes : []); }
+    anDLast = anCpT() - 0.01;
+    if(anCV.paused && anDC){ const m = anMarkAt(anDC, anCpT()); anShowShapes(m ? m.shapes : []); }
   });
-  anCV.addEventListener('pause', function(){ if(!anDMode && !anDFreeze && anDC){ const m = anMarkAt(anDC, anCV.currentTime); if(m) anShowShapes(m.shapes); } });
+  anCV.addEventListener('pause', function(){ if(!anDMode && !anDFreeze && anDC){ const m = anMarkAt(anDC, anCpT()); if(m) anShowShapes(m.shapes); } });
   anCV.addEventListener('loadedmetadata', function(){ anShowShapes([]); });
   /* ---------- the clip's own controls: play, a yellow pill seek bar with the drawing moments marked, time, full screen ----------
      (full screen takes the whole player, so the drawings and tools come too) */
@@ -11884,9 +11873,9 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   let anCpDrag = false;
   const anCpFmt = function(t){ t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
   function anCpPaint(){
-    const d = anCV.duration || 0, f = d ? anCV.currentTime / d : 0;
+    const d = anCpD(), f = d ? Math.max(0, Math.min(1, anCpT() / d)) : 0;
     anCpFill.style.width = (f * 100) + '%'; anCpKnob.style.left = (f * 100) + '%';
-    anCpTime.textContent = anCpFmt(anCV.currentTime) + ' / ' + anCpFmt(d);
+    anCpTime.textContent = anCpFmt(Math.max(0, anCpT())) + ' / ' + anCpFmt(d);
     const p = anCV.paused || anCV.ended; anCpPlay.innerHTML = p ? AN_CP_ICON.play : AN_CP_ICON.pause; anCpPlay.setAttribute('aria-label', p ? 'Play' : 'Pause');
     anCpTicks.innerHTML = '';
     if(anDC && d) anMarks(anDC).forEach(function(m){ if(m.shapes && m.shapes.length) anCpTicks.appendChild(h('span', {class:'an-cp-tick', style:'left:' + (m.t / d * 100).toFixed(2) + '%', title:'Drawings at ' + anClock(m.t)})); });
@@ -11897,7 +11886,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   anCV.addEventListener('click', anCpToggle);
   anCV.addEventListener('dblclick', function(e){ e.preventDefault(); anCpFull(); });
   const anCpAt = function(e){ const r = anCpSeek.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); };
-  const anCpGo = function(f){ if(anCV.duration) anCV.currentTime = f * anCV.duration; anCpFill.style.width = (f * 100) + '%'; anCpKnob.style.left = (f * 100) + '%'; };
+  const anCpGo = function(f){ if(anCpD()) anCpSet(f * anCpD()); anCpFill.style.width = (f * 100) + '%'; anCpKnob.style.left = (f * 100) + '%'; };
   anCpSeek.addEventListener('pointerdown', function(e){
     e.preventDefault(); e.stopPropagation(); anCpDrag = true; anCpSeek.classList.add('dragging'); try{ anCpSeek.setPointerCapture(e.pointerId); }catch(x){}
     if(anDFreeze){ clearTimeout(anDFreezeT); anDFreeze = null; document.getElementById('anFreezeFlag').hidden = true; anCV.pause(); }
@@ -11906,7 +11895,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const up = function(){ anCpDrag = false; anCpSeek.classList.remove('dragging'); anCpSeek.removeEventListener('pointermove', mv); anCpSeek.removeEventListener('pointerup', up); anCpSeek.removeEventListener('pointercancel', up); anCpPaint(); };
     anCpSeek.addEventListener('pointermove', mv); anCpSeek.addEventListener('pointerup', up); anCpSeek.addEventListener('pointercancel', up);
   });
-  anCpSeek.addEventListener('keydown', function(e){ if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); e.stopPropagation(); if(anCV.duration) anCV.currentTime = Math.max(0, Math.min(anCV.duration, anCV.currentTime + (e.key === 'ArrowRight' ? 1 : -1))); });
+  anCpSeek.addEventListener('keydown', function(e){ if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); e.stopPropagation(); if(anCpD()) anCpSet(Math.max(0, Math.min(anCpD(), anCpT() + (e.key === 'ArrowRight' ? 1 : -1)))); });
   /* full screen: the real thing where the device allows it (computers, iPad), otherwise the player fills the screen (iPhone) */
   function anCpIsFull(){ return document.fullscreenElement === anCpPlayer || document.webkitFullscreenElement === anCpPlayer || anCpPlayer.classList.contains('an-full'); }
   function anCpFull(on){
@@ -11925,7 +11914,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   ['fullscreenchange', 'webkitfullscreenchange'].forEach(function(ev){ document.addEventListener(ev, function(){ anCpFullBtn.classList.toggle('on', anCpIsFull()); }); });
 
   /* the picture changes size (tool bar appears, window resized): the drawing layer follows it */
-  if(window.ResizeObserver) new ResizeObserver(function(){ if(anDC) anShowShapes(anDMode && anDMark ? anDMark.shapes : (anDFreeze ? anDFreeze.shapes : (anCV.paused && anMarkAt(anDC, anCV.currentTime) ? anMarkAt(anDC, anCV.currentTime).shapes : []))); }).observe(anStage);
+  if(window.ResizeObserver) new ResizeObserver(function(){ if(anDC) anShowShapes(anDMode && anDMark ? anDMark.shapes : (anDFreeze ? anDFreeze.shapes : (anCV.paused && anMarkAt(anDC, anCpT()) ? anMarkAt(anDC, anCpT()).shapes : []))); }).observe(anStage);
   window.addEventListener('resize', function(){ if(anDC && !anDrawSvg.hidden) anShowShapes(anDMode && anDMark ? anDMark.shapes : (anDFreeze ? anDFreeze.shapes : [])); });
 
   /* ---------- the clip with its drawings, as a video (for sharing and pre-games) ---------- */
@@ -11990,12 +11979,33 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   }
 
   async function anClipBlob(c){
-    const url = await anClipUrl(c); if(!url) return null;
-    try{ const r = await fetch(url); return await r.blob(); }catch(e){ return null; }
+    const url = c.virtual ? null : await anClipUrl(c);
+    if(url){ try{ const r = await fetch(url); return await r.blob(); }catch(e){} }
+    return await anMakeClipFile(c);
+  }
+  /* the clip's own video file (for sharing and pre-games): copied from the match video as it plays, then kept */
+  async function anMakeClipFile(c){
+    if(!(anVideo.currentSrc && anVideo.dataset.for === anKey && anClips().indexOf(c) !== -1)){ return null; }
+    try{ document.getElementById('anClipClose').click(); }catch(e){}
+    const ov = document.getElementById('anRec'); ov.hidden = false; document.getElementById('anRecBar').style.width = '0%';
+    let blob;
+    try{ blob = await anRecord(c.start, c.end); }
+    catch(e){ ov.hidden = true; anRec = null; if(e && e.message === 'stuck') showToast('The video stopped moving, so the clip was stopped · try again'); else if(e && e.message === 'nocapture') anNeedPick(); else if(e && e.message !== 'cancelled') showToast('Couldn’t make the clip’s video on this device · try again'); return null; }
+    ov.hidden = true; anRec = null;
+    c.size = blob.size; c.mime = blob.type;
+    try{
+      if(window.hufcDesktop && window.hufcDesktop.saveVideo){
+        const r = await window.hufcDesktop.saveVideo('', 'an-' + c.id + '-' + Date.now().toString(36), c.name, new File([blob], anFileName(c), {type:blob.type}));
+        if(r && r.file) c.local = r.file; else await pgMedia.put('an-' + c.id, blob);
+      } else await pgMedia.put('an-' + c.id, blob);
+      try{ if(pgUrls['an-' + c.id]){ URL.revokeObjectURL(pgUrls['an-' + c.id]); delete pgUrls['an-' + c.id]; } }catch(e){}
+      delete c.virtual; anSave(); anRenderClips();
+    }catch(e){}
+    return blob;
   }
   async function anShareClip(c){
     const blob = await anClipBlobDrawn(c);
-    if(!blob){ showToast('This clip’s video is on the device that made it'); return; }
+    if(!blob){ if(!(anVideo.currentSrc && anVideo.dataset.for === anKey)) showToast('Open the match video first, then share the clip'); return; }
     const file = new File([blob], anFileName(c), {type:blob.type || 'video/mp4'});
     /* phones and iPads: the share sheet (WhatsApp, Messages, Save Video…) */
     if(navigator.canShare && navigator.share && !(window.hufcDesktop)){
@@ -12035,7 +12045,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const c = cIn || anPgClip; if(!c) return;
     closeModal(anPgModal, true);
     const blob = await anClipBlobDrawn(c);
-    if(!blob){ showToast('This clip’s video is on the device that made it · add it to the pre-game from there'); return; }
+    if(!blob){ if(!(anVideo.currentSrc && anVideo.dataset.for === anKey)) showToast('Open the match video first, then add the clip'); return; }
     let s; try{ s = JSON.parse(localStorage.getItem(key)); }catch(e){ s = null; }
     const d = s && (s.drills || []).find(function(x){ return x.id === did; });
     if(!d){ showToast('That pre-game has changed · try again'); return; }
@@ -12083,7 +12093,16 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   async function anClipForBoard(mkey, cid){
     let m = null; try{ m = JSON.parse(localStorage.getItem(mkey)); }catch(e){}
     if(!m) return null;
-    const keepM = anM, keepK = anKey, open = !anModal.hidden;
+    let keepM = anM, keepK = anKey, open = !anModal.hidden, opened = false;
+    const c0 = ((m.analysis || {}).clips || []).find(function(x){ return x.id === cid; });
+    let hasFile = false;
+    if(c0 && !c0.virtual){ try{ hasFile = !!(await anClipUrl(c0)); }catch(e){} }
+    if(c0 && !hasFile && !open){
+      /* the clip's video hasn't been made yet: open its match for a moment to make it */
+      anOpenMatch(mkey); opened = true; open = true;
+      for(let i = 0; i < 40 && !(anVideo.currentSrc && anVideo.dataset.for === mkey && anVideo.readyState >= 1); i++) await new Promise(function(r){ setTimeout(r, 200); });
+      if(!(anVideo.currentSrc && anVideo.dataset.for === mkey)){ showToast('Open this match’s video (tap ▶ Open), then add the clip again'); return null; }
+    }
     if(!open){ anM = m; anKey = mkey; }
     const c = ((anM.analysis || {}).clips || []).find(function(x){ return x.id === cid; });
     let out = null;
@@ -12093,6 +12112,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
         if(blob){ const players = (c.pids || []).map(anPlayerLabel).filter(Boolean); out = {blob:blob, name:anFileName(c), title:c.name + (players.length ? ' — ' + players.join(', ') : '')}; }
       }
     }finally{ if(!open){ anM = keepM; anKey = keepK; } }
+    if(opened && out) closeAnalysis();
     return out;
   }
   /* remember on the clip which board it went onto */
@@ -13058,6 +13078,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.16', d:'27 Oct 2026', t:'Instant clips', n:['Save clip is instant — no more waiting for the clip to play through', 'A clip plays straight from the match video, always at the right speed', 'Its own video file is only made when you share it or put it on a pre-game (at normal speed, even if you were watching at 4×)', 'Changing where a clip starts or ends is instant too']},
     {v:'3.15', d:'27 Oct 2026', t:'Edit your clips', n:['✎ Edit on any clip: change its name, note and players — or where it starts and ends (it’s re-cut, and your drawings stay on the same moment)', 'Picking a length now keeps the clip ending where you are in the video']},
     {v:'3.14', d:'27 Oct 2026', t:'Clip fixes', n:['Fixed: the Cancel button while making a clip was covered by the seek bar', 'A clip that stops making progress stops by itself and says so', 'While a clip is being made nothing can pause it (taps, keys, syncing wait), so clips don’t have little stops in them', 'Clips are copied frame by frame at up to full HD (1080p) for smoother clips', 'No more jerky start: the video gets a short run-up before recording begins', 'With a clip open, only the clip’s play button shows (the match’s controls come back when you close it)']},
     {v:'3.13', d:'27 Oct 2026', t:'Coaches’ work stays put', n:['A coach’s saved session, lineup or pre-game stays in the club library until that coach (or the admin) presses Delete', 'Fixed: a slow or half-loaded club library could make other coaches’ sessions disappear', 'If a copy goes missing on a device, it comes back from the club library instead of being removed for everyone', 'If a coach’s own work went missing from the club library, their device puts it back', 'Deleting leaves a marker, so a coach’s (or the admin’s) delete reaches every device']},
