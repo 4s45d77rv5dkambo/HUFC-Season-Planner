@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027114532">
+<meta name="hufc-build" content="20261027120434">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1373,6 +1373,14 @@ html.view-home .lu-sheet{display:none !important;}
 .an-box{width:min(1320px, 100%); height:94vh; max-height:94vh; background:var(--white);}
 .an-head{display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--line);}
 .an-head h3{flex:1; min-width:0; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.an-head .sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
+.an-meta{flex:1; min-width:0; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.an-name{flex:1 1 220px; min-width:0; font:inherit; font-size:17px; font-weight:700; padding:6px 10px; border:1px solid transparent; border-radius:8px; background:transparent; color:inherit;}
+.an-name:hover,.an-name:focus{border-color:var(--line); background:var(--paper, #fff); outline:none;}
+.an-name[readonly]{border-color:transparent; background:transparent;}
+.an-link{display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; opacity:.9; max-width:100%;}
+.an-link select{font:inherit; font-weight:500; padding:5px 8px; border:1px solid var(--line); border-radius:8px; max-width:260px; min-width:0;}
+@media (max-width:820px){ .an-head{flex-wrap:wrap;} #anClose{margin-left:auto;} .an-meta{flex-basis:100%; order:3;} .an-link{flex:1;} .an-link select{flex:1; max-width:none;} }
 .an-body{flex:1; min-height:0; display:grid; grid-template-columns:minmax(0, 1.65fr) minmax(300px, 1fr); gap:0;}
 .an-left{min-height:0; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:10px; border-right:1px solid var(--line);}
 .an-right{min-height:0; display:flex; flex-direction:column; padding:12px 14px; gap:8px;}
@@ -2636,7 +2644,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 11:45am</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 12:04pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -2904,7 +2912,11 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 <div class="modal an-modal" id="anModal" hidden>
   <div class="modal-box an-box" role="dialog" aria-modal="true" aria-labelledby="anTitle">
     <div class="an-head">
-      <h3 id="anTitle">Match analysis</h3>
+      <h3 id="anTitle" class="sr-only">Match video</h3>
+      <div class="an-meta">
+        <input type="text" class="an-name" id="anName" maxlength="120" aria-label="Name of this match video" autocomplete="off">
+        <label class="an-link" title="Attach this video to a matchday lineup to tag its players — or leave it on its own"><span>Lineup</span><select id="anLink" aria-label="Attach to a lineup"></select></label>
+      </div>
       <label class="btn btn-small" for="anFile">Open match video…</label>
       <input type="file" class="file-input" id="anFile" accept="video/*,.mp4,.mov,.m4v">
       <button type="button" class="btn btn-small btn-primary" id="anClose">Done</button>
@@ -8971,8 +8983,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       .map(function(p){ return [clean(p.num), luShort(p.name) || clean(p.name)].filter(Boolean).join(' ') + (p.id in came ? ' (on ' + came[p.id] + "')" : ''); });
   }
   /* opponent shortened for the scoreboard: first letter of each word, short capital words kept whole, at most 5 letters (Northcote City FC -> NCFC) */
-  function luOppShort(){
-    const name = clean(lu.meta.opponent);
+  function luOppShort(opp){
+    const name = clean(opp !== undefined ? opp : lu.meta.opponent);
     if(!name) return 'OPP';
     const norm = name.replace(/\bfootball\s+club\b/ig, 'FC').replace(/\bsoccer\s+club\b/ig, 'SC');
     let words = norm.replace(/[^A-Za-z0-9\u00C0-\u024F\s-]/g, '').split(/[\s-]+/).filter(function(w){ return w && !/^(the|of|and)$/i.test(w); });
@@ -9683,7 +9695,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const m = s.meta || {};
     return !!(clean(s.title) || clean(m.opponent) || clean(m.round) || clean(m.date) || clean(m.competition) ||
       (s.squad || []).some(function(p){ return clean(p.name) || clean(p.num); }) ||
-      !!(s.analysis && ((s.analysis.file && s.analysis.file.name) || (s.analysis.tags && s.analysis.tags.length) || (s.analysis.clips && s.analysis.clips.length))));   /* a match video counts too */
+      !!mvForLineup(s.id));   /* a match video attached to it counts too */
   }
   function luList(){
     const out = [];
@@ -9786,7 +9798,9 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const games = luList().map(function(x){ return x.lu; }).filter(function(L){
       return gtTeam(L) === group && (!onlyScored || (clean(L.result.us) !== '' && clean(L.result.them) !== ''));
     });
-    const rows = {};
+    const rows = {}, anBy = {};
+    /* match videos attached to these games: their tags on our players */
+    mvList().forEach(function(x){ if(x.m.luId && x.m.analysis && Array.isArray(x.m.analysis.tags)) anBy[x.m.luId] = (anBy[x.m.luId] || []).concat(x.m.analysis.tags); });
     games.forEach(function(L){
       const total = L.periods.length * L.length, starter = {};
       (L.periods[0] ? L.periods[0].slots : []).forEach(function(sl){ if(sl.pid) starter[sl.pid] = 1; });
@@ -9795,7 +9809,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
         const k = gtKey(p.name); if(!k || seenHere[k]) return; seenHere[k] = 1;
         const r = rows[k] = rows[k] || {name:clean(p.name), num:'', pos:'', posAt:-1, played:{}, games:0, starts:0, apps:0, min:0, avail:0, last:-1, ev:{g:0, a:0, ps:0, y:0, r:0}};
         const ev = p.ev || {}; Object.keys(r.ev).forEach(function(e){ r.ev[e] += Math.max(0, parseInt(ev[e], 10) || 0); });
-        r.an = r.an || {}; (L.analysis && Array.isArray(L.analysis.tags) ? L.analysis.tags : []).forEach(function(t){ if(t.side === 'us' && t.pid === p.id) r.an[t.type] = (r.an[t.type] || 0) + 1; });
+        r.an = r.an || {}; (anBy[L.id] || []).forEach(function(t){ if(t.side === 'us' && t.pid === p.id) r.an[t.type] = (r.an[t.type] || 0) + 1; });
         if((L.savedAt || 0) >= r.last){ r.name = clean(p.name); r.num = clean(p.num); r.last = L.savedAt || 0; }
         /* position: the one typed in the squad list (latest game), otherwise where they've lined up on the pitch */
         if(clean(p.pos) && (L.savedAt || 0) >= r.posAt){ r.pos = clean(p.pos).toUpperCase(); r.posAt = L.savedAt || 0; }
@@ -10242,18 +10256,51 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* =====================================================================
      Match analysis — tag moments in a match video (e.g. a Veo download) and get clips and stats.
-     Kept with the matchday lineup (lu.analysis), so it syncs and other coaches can see it.
+     Each match video is its own item (hufc-match:<id>), synced like lineups so other coaches can see it.
+     It can be attached to a matchday lineup (luId) for its players and opponent — or not.
      The video itself stays on the device: open the file each time (its name is remembered).
      ===================================================================== */
   const AN_TYPES = ['Goal', 'Chance', 'Shot', 'Turnover won', 'Turnover lost', 'Press won', 'Good build-up', 'Corner', 'Free kick', 'Mistake'];
   const AN_LEAD = 8, AN_TAIL = 4;           /* a clip: from 8 seconds before the tag to 4 after */
+  const MV_PREFIX = 'hufc-match:';          /* a match video: its own item (synced like sessions and lineups) */
   const anModal = document.getElementById('anModal');
   const anVideo = document.getElementById('anVideo');
   let anSide = 'us', anFilter = {type:'', side:'', pid:''}, anTab = 'tags', anClipEnd = null, anLastTag = null, anWhoTimer = 0, anUrl = null;
+  let anM = null, anKey = null, anSaveT = 0;
 
+  function mvList(){
+    const out = [];
+    try{
+      for(let i = 0; i < localStorage.length; i++){
+        const k = localStorage.key(i);
+        if(!k || k.indexOf(MV_PREFIX) !== 0) continue;
+        let m = null; try{ m = JSON.parse(localStorage.getItem(k)); }catch(e){ continue; }
+        if(m && m.kind === 'match') out.push({key:k, m:m});
+      }
+    }catch(e){}
+    return out.sort(function(a, b){ return (b.m.savedAt || 0) - (a.m.savedAt || 0); });
+  }
+  function mvNew(luId){
+    const m = {kind:'match', v:1, id:newId(), title:'', luId:luId || '', group:myGroup(), savedAt:Date.now(), analysis:{}};
+    if(luId){ const L = anLoadLu(luId); if(L && L.group) m.group = L.group; }
+    return m;
+  }
+  function anOpenKey(){ return anModal.hidden ? null : anKey; }
+  function mvForLineup(luId){ return mvList().find(function(x){ return x.m.luId === luId; }) || null; }
+  function anLoadLu(id){
+    if(!id) return null;
+    if(lu && lu.id === id) return lu;
+    try{ const j = localStorage.getItem(LU_PREFIX + id); return j ? luNormalize(JSON.parse(j)) : null; }catch(e){ return null; }
+  }
+  /* the lineup this video is attached to (its players and opponent), if any */
+  function anL(){ return anM ? anLoadLu(anM.luId) : null; }
+  function anSquad(){ const L = anL(); return L ? L.squad.filter(function(p){ return clean(p.name) || clean(p.num); }) : []; }
+  function anOpp(){ const L = anL(); return L ? clean(L.meta.opponent) : ''; }
+  function anOppShort(){ return anOpp() ? luOppShort(anOpp()) : 'Them'; }
+  function anTitle(){ return clean(anM && anM.title) || (anL() ? luName(anL()) : '') || 'Match video'; }
   function anData(){
-    if(!lu.analysis || typeof lu.analysis !== 'object') lu.analysis = {};
-    const a = lu.analysis;
+    if(!anM.analysis || typeof anM.analysis !== 'object') anM.analysis = {};
+    const a = anM.analysis;
     if(!Array.isArray(a.tags)) a.tags = [];
     if(!Array.isArray(a.types)) a.types = [];
     if(a.ko === undefined) a.ko = null;
@@ -10261,31 +10308,52 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     return a;
   }
   function anTypes(){ return AN_TYPES.concat(anData().types.filter(function(t){ return AN_TYPES.indexOf(t) === -1; })); }
-  function anCanEdit(){ return !readOnly && canEdit(lu); }
-  function anSave(){ if(anCanEdit()) luSchedule(); renderAnButton(); }
+  function anCanEdit(){ return !!anM && canEdit(anM); }
+  function anSave(){
+    if(!anM || !anCanEdit()) return;
+    anM.savedAt = Date.now();
+    try{ localStorage.setItem(anKey, JSON.stringify(anM)); }catch(e){ showToast('This device is out of space · remove some old plans'); }
+    clearTimeout(anSaveT); anSaveT = setTimeout(function(){ clubSyncSoon(); }, 800);
+    renderAnButton();
+  }
   function anClock(t){ t = Math.max(0, t || 0); const m = Math.floor(t / 60), s = Math.floor(t % 60); return (m >= 60 ? Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0'); }
   /* the match minute once kick-off (and the 2nd half) are marked; otherwise the video time */
   function anHalf(t){ const a = anData(); return a.h2 != null && t >= a.h2 ? 2 : 1; }
   function anMinute(t){
-    const a = anData();
-    if(a.h2 != null && t >= a.h2) return Math.min((lu.length || 45) * 2 + 15, (lu.length || 45) + Math.floor((t - a.h2) / 60) + 1) + "'";
+    const a = anData(), len = (anL() && anL().length) || 45;
+    if(a.h2 != null && t >= a.h2) return Math.min(len * 2 + 15, len + Math.floor((t - a.h2) / 60) + 1) + "'";
     if(a.ko != null && t >= a.ko) return (Math.floor((t - a.ko) / 60) + 1) + "'";
     return anClock(t);
   }
-  function anPlayerLabel(pid){ const p = pid ? luPlayer(pid) : null; return p ? [clean(p.num), luShort(p.name) || clean(p.name)].filter(Boolean).join(' ') || 'Player' : ''; }
+  function anPlayerLabel(pid){ const p = pid ? anSquad().find(function(q){ return q.id === pid; }) : null; return p ? [clean(p.num), luShort(p.name) || clean(p.name)].filter(Boolean).join(' ') || 'Player' : ''; }
 
   /* ---------- the button on the lineup ---------- */
   function renderAnButton(){
     const b = document.getElementById('luAnBtn'); if(!b || !lu) return;
-    const n = lu.analysis && Array.isArray(lu.analysis.tags) ? lu.analysis.tags.length : 0;
-    b.textContent = n ? 'Match analysis · ' + n + (n === 1 ? ' tag' : ' tags') : 'Match analysis';
+    const x = mvForLineup(lu.id), a = x ? x.m.analysis || {} : {};
+    const n = Array.isArray(a.tags) ? a.tags.length : 0, c = Array.isArray(a.clips) ? a.clips.length : 0;
+    b.textContent = 'Match video' + (n || c ? ' · ' + [n ? n + (n === 1 ? ' tag' : ' tags') : '', c ? c + (c === 1 ? ' clip' : ' clips') : ''].filter(Boolean).join(' · ') : '');
   }
 
   /* ---------- opening the window and the video ---------- */
+  /* from a lineup: its match video (made the first time) */
   function openAnalysis(){
     luFlush();
-    anData(); anFilter = {type:'', side:'', pid:''}; anTab = 'tags';
-    document.getElementById('anTitle').textContent = 'Match analysis' + (luName(lu) ? ' · ' + luName(lu) : '');
+    let x = mvForLineup(lu.id);
+    if(!x){
+      if(!canEdit(lu)){ showToast('No match video for this game yet'); return; }
+      const m = mvNew(lu.id); x = {key:MV_PREFIX + m.id, m:m};
+      try{ localStorage.setItem(x.key, JSON.stringify(m)); }catch(e){}
+    }
+    anOpenMatch(x.key);
+  }
+  function anOpenMatch(key){
+    let m = null; try{ m = JSON.parse(localStorage.getItem(key)); }catch(e){}
+    if(!m){ showToast('That match video isn’t on this device'); return; }
+    anM = m; anKey = key;
+    anData(); anFilter = {type:'', side:'', pid:''}; anTab = 'tags'; anCut = null;
+    if(anUrl && anM.analysis.file && anVideo.dataset.for !== anKey){ anVideo.removeAttribute('src'); try{ anVideo.load(); }catch(e){} }
+    anRenderHead();
     anRenderAll();
     openModal(anModal);
   }
@@ -10295,8 +10363,36 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     try{ anVideo.pause(); }catch(e){}
     try{ document.getElementById('anClipClose').click(); }catch(e){}
     closeModal(anModal);
+    /* a new match video with nothing in it isn't kept */
+    if(anM && anCanEdit() && !anM.luId && !clean(anM.title) && !mvHasWork(anM)){ try{ localStorage.removeItem(anKey); }catch(e){} }
     renderAnButton();
+    if(document.documentElement.classList.contains('view-home')) renderHome();
   }
+  function mvHasWork(m){ const a = m.analysis || {}; return !!((a.file && a.file.name) || (a.tags && a.tags.length) || (a.clips && a.clips.length)); }
+  /* the top of the window: its name, and the lineup it's attached to */
+  function anRenderHead(){
+    const ed = anCanEdit();
+    const name = document.getElementById('anName');
+    name.value = clean(anM.title); name.placeholder = anL() ? luName(anL()) || 'Name this match video' : 'Name this match video — e.g. U18 vs Oakleigh';
+    name.readOnly = !ed;
+    const sel = document.getElementById('anLink'); sel.innerHTML = ''; sel.disabled = !ed;
+    sel.appendChild(h('option', {value:'', text:'No lineup'}));
+    luList().filter(function(x){ return inView(x.lu) || x.lu.id === anM.luId; }).forEach(function(x){
+      const o = h('option', {value:x.lu.id, text:(luName(x.lu) || 'Untitled lineup') + (clean(x.lu.meta.date) ? ' · ' + clean(x.lu.meta.date) : '')});
+      if(x.lu.id === anM.luId) o.selected = true;
+      sel.appendChild(o);
+    });
+    if(anM.luId && !anL()) sel.appendChild(h('option', {value:anM.luId, text:'(a lineup not on this device)', selected:true}));
+  }
+  document.getElementById('anName').addEventListener('input', function(){ if(!anCanEdit()) return; anM.title = this.value; anSave(); });
+  document.getElementById('anLink').addEventListener('change', function(){
+    if(!anCanEdit()) return;
+    const had = anData().tags.some(function(t){ return t.pid; }) || (anData().clips || []).some(function(c){ return c.pids && c.pids.length; });
+    anM.luId = this.value;
+    const L = anL(); if(L && L.group) anM.group = L.group;
+    anSave(); anRenderHead(); anRenderAll();
+    showToast(L ? 'Attached to “' + (luName(L) || 'lineup') + '” · its players are ready to tag' + (had ? ' (players tagged from another lineup won’t show)' : '') : 'Not attached to a lineup');
+  });
   document.getElementById('anFile').addEventListener('change', function(){
     const f = this.files && this.files[0]; this.value = ''; if(!f) return;
     if(anUrl){ try{ URL.revokeObjectURL(anUrl); }catch(e){} }
@@ -10348,7 +10444,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(!ed) return;
     const sideSeg = h('div', {class:'seg an-side'},
       h('button', {type:'button', class:anSide === 'us' ? 'active' : '', text:'Us', onclick:function(){ anSide = 'us'; anRenderButtons(); }}),
-      h('button', {type:'button', class:anSide === 'them' ? 'active' : '', text:clean(lu.meta.opponent) ? luOppShort() : 'Them', onclick:function(){ anSide = 'them'; anRenderButtons(); }}));
+      h('button', {type:'button', class:anSide === 'them' ? 'active' : '', text:anOppShort(), onclick:function(){ anSide = 'them'; anRenderButtons(); }}));
     box.appendChild(sideSeg);
     const grid = h('div', {class:'an-grid'});
     anTypes().forEach(function(t, i){
@@ -10380,14 +10476,14 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     anLastTag = tag; anSave();
     anRenderList(); anRenderStats();
     if(anSide === 'us') anAskWho(tag);
-    const b = document.getElementById('anFlash'); b.textContent = type + (anSide === 'them' ? ' (' + (clean(lu.meta.opponent) ? luOppShort() : 'them') + ')' : '') + ' · ' + anMinute(t); b.classList.remove('on'); void b.offsetWidth; b.classList.add('on');
+    const b = document.getElementById('anFlash'); b.textContent = type + (anSide === 'them' ? ' (' + anOppShort() + ')' : '') + ' · ' + anMinute(t); b.classList.remove('on'); void b.offsetWidth; b.classList.add('on');
   }
   /* straight after a tag: tap who it was (or carry on and it stays a team tag) */
   function anAskWho(tag){
     const strip = document.getElementById('anWho'); strip.innerHTML = '';
     clearTimeout(anWhoTimer);
-    const named = lu.squad.filter(function(p){ return clean(p.name) || clean(p.num); });
-    if(!named.length){ strip.hidden = true; return; }
+    const named = anSquad();
+    if(!named.length){ strip.hidden = true; return; }   /* no lineup attached: a team tag */
     strip.appendChild(h('span', {class:'an-who-lbl', text:'Who? '}));
     named.forEach(function(p){
       strip.appendChild(h('button', {type:'button', class:'an-who-p', title:clean(p.name), onclick:function(){ tag.pid = p.id; anSave(); strip.hidden = true; anRenderList(); anRenderStats(); }},
@@ -10408,14 +10504,14 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const box = document.getElementById('anFilters'); box.innerHTML = '';
     const tags = anData().tags;
     const types = anTypes().filter(function(t){ return tags.some(function(x){ return x.type === t; }); });
-    const pids = lu.squad.filter(function(p){ return tags.some(function(x){ return x.pid === p.id; }); });
+    const pids = anSquad().filter(function(p){ return tags.some(function(x){ return x.pid === p.id; }); });
     const sel = function(key, label, opts){
       const s = h('select', {'aria-label':label, onchange:function(){ anFilter[key] = this.value; anRenderList(); }},
         h('option', {value:'', text:label}), opts.map(function(o){ const e = h('option', {value:o[0], text:o[1]}); if(anFilter[key] === o[0]) e.selected = true; return e; }));
       return s;
     };
     box.append(sel('type', 'All tags', types.map(function(t){ return [t, t]; })),
-      sel('side', 'Both teams', [['us', 'Us'], ['them', clean(lu.meta.opponent) || 'Them']]),
+      sel('side', 'Both teams', [['us', 'Us'], ['them', anOpp() || 'Them']]),
       sel('pid', 'All players', pids.map(function(p){ return [p.id, anPlayerLabel(p.id)]; })));
     if(anFiltered().length > 1) box.appendChild(h('button', {type:'button', class:'btn btn-small', text:'▶ Play all', title:'Watch every tag in the list, one after another', onclick:anPlayAll}));
   }
@@ -10444,7 +10540,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
         h('button', {type:'button', class:'an-row-main', title:'Watch this moment', onclick:function(){ anQueue = null; anSeek(t.t - AN_LEAD, true); anMark(t.id); }},
           h('span', {class:'an-row-time', text:anMinute(t.t)}),
           h('span', {class:'an-row-type', text:t.type}),
-          h('span', {class:'an-row-who', text:t.side === 'them' ? (clean(lu.meta.opponent) ? luOppShort() : 'Them') : (anPlayerLabel(t.pid) || 'Us')})),
+          h('span', {class:'an-row-who', text:t.side === 'them' ? anOppShort() : (anPlayerLabel(t.pid) || 'Us')})),
         ed ? h('input', {type:'text', class:'an-row-note', value:t.note || '', placeholder:'Note', maxlength:'120', onchange:function(){ t.note = clean(this.value); anSave(); }}) : (t.note ? h('span', {class:'an-row-note ro', text:t.note}) : ''),
         ed && t.side === 'us' ? anWhoSelect(t) : '',
         ed ? h('button', {type:'button', class:'icon-btn danger', title:'Delete this tag', 'aria-label':'Delete tag', text:'✕', onclick:function(){
@@ -10458,7 +10554,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function anWhoSelect(t){
     const s = h('select', {class:'an-row-pid', 'aria-label':'Player', onchange:function(){ t.pid = this.value; anSave(); anRenderStats(); anRenderFilters(); }},
       h('option', {value:'', text:'Team'}),
-      lu.squad.filter(function(p){ return clean(p.name) || clean(p.num); }).map(function(p){ const o = h('option', {value:p.id, text:anPlayerLabel(p.id)}); if(t.pid === p.id) o.selected = true; return o; }));
+      anSquad().map(function(p){ const o = h('option', {value:p.id, text:anPlayerLabel(p.id)}); if(t.pid === p.id) o.selected = true; return o; }));
     return s;
   }
 
@@ -10467,7 +10563,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const box = document.getElementById('anStats'); box.innerHTML = '';
     const tags = anData().tags;
     if(!tags.length){ box.appendChild(h('p', {class:'an-empty-list', text:'Stats appear here as you tag the match.'})); return; }
-    const opp = clean(lu.meta.opponent) ? luOppShort() : 'Them';
+    const opp = anOppShort();
     const types = anTypes().filter(function(t){ return tags.some(function(x){ return x.type === t; }); });
     const n = function(type, side, half){ return tags.filter(function(x){ return x.type === type && x.side === side && (!half || anHalf(x.t) === half); }).length; };
     const split = anData().h2 != null;
@@ -10480,7 +10576,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     box.appendChild(h('h4', {class:'an-h', text:'Team'}));
     box.appendChild(h('div', {class:'an-scroll'}, h('table', {class:'an-table'}, h('thead', null, h('tr', null, head.map(function(x){ return h('th', {text:x}); }))), tb)));
     /* each player's tags */
-    const ps = lu.squad.filter(function(p){ return tags.some(function(x){ return x.pid === p.id; }); });
+    const ps = anSquad().filter(function(p){ return tags.some(function(x){ return x.pid === p.id; }); });
     if(ps.length){
       const ptypes = types.filter(function(t){ return tags.some(function(x){ return x.type === t && x.pid; }); });
       const pt = h('tbody');
@@ -10524,50 +10620,58 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   document.getElementById('anClose').addEventListener('click', closeAnalysis);
   document.getElementById('luAnBtn').addEventListener('click', openAnalysis);
 
-  /* ---------- from the home page: pick a match, straight into its analysis ---------- */
+  /* ---------- from the home page ---------- */
   const anPick = document.getElementById('anPick');
-  /* mode 'new': which game is this video from? · 'open': the matches already analysed */
-  function anHasWork(L){ const a = L.analysis || {}; return !!((a.file && a.file.name) || (a.tags && a.tags.length) || (a.clips && a.clips.length)); }
-  function anPickOpen(mode){
+  function anPickOpen(){
     const box = document.getElementById('anPickList'); box.innerHTML = '';
-    const isNew = mode === 'new';
-    document.getElementById('anPickTitle').textContent = isNew ? 'New match video' : 'Match videos';
-    document.getElementById('anPickText').textContent = isNew ? 'Which game is the video from? Pick its matchday lineup, or start a new one.' : 'Matches you’ve analysed — tap one for its video, tags, clips and stats.';
-    document.getElementById('anPickNew').textContent = isNew ? '+ New match' : '+ Match video';
-    const list = luList().filter(function(x){ return inView(x.lu) && (isNew || anHasWork(x.lu)); })
-      .sort(function(a, b){ return (b.lu.savedAt || 0) - (a.lu.savedAt || 0); });
-    if(!list.length) box.appendChild(h('p', {class:'an-empty-list', text:isNew ? 'No matches in this folder yet — tap “+ New match” to start one.' : 'No match videos yet. Tap “+ Match video”, pick the game, and open its video to start.'}));
+    const list = mvList().filter(function(x){ return inView(x.m) && (mvHasWork(x.m) || x.m.luId || clean(x.m.title)); });
+    if(!list.length) box.appendChild(h('p', {class:'an-empty-list', text:'No match videos yet. Tap “+ Match video” to open one — attach it to a lineup any time to tag your players.'}));
     list.forEach(function(x){
-      const L = x.lu, a = L.analysis || {}, n = Array.isArray(a.tags) ? a.tags.length : 0;
-      const sub = [clean(L.meta && L.meta.date), groupOf(L), a.file && a.file.name ? '🎞 ' + a.file.name : ''].filter(Boolean).join(' · ');
-      box.appendChild(h('button', {type:'button', class:'an-pick-row', onclick:function(){ closeModal(anPick, true); anOpenMatch(x.key); }},
-        h('span', {class:'an-pick-main'}, h('span', {class:'an-pick-title', text:luName(L) || 'Untitled lineup'}), sub ? h('span', {class:'an-pick-sub', text:sub}) : ''),
-        h('span', {class:'an-pick-n' + (n || (a.clips && a.clips.length) ? '' : ' none'), text:[n ? n + (n === 1 ? ' tag' : ' tags') : '', a.clips && a.clips.length ? a.clips.length + (a.clips.length === 1 ? ' clip' : ' clips') : ''].filter(Boolean).join(' · ') || (a.file && a.file.name ? 'Video added' : 'Not started')})));
+      const m = x.m, a = m.analysis || {}, n = (a.tags || []).length, c = (a.clips || []).length;
+      const L = anLoadLu(m.luId);
+      const title = clean(m.title) || (L ? luName(L) : '') || 'Untitled match video';
+      const sub = [L && clean(L.meta.date), groupOf(m), L ? 'Lineup ✓' : 'No lineup', a.file && a.file.name ? '🎞 ' + a.file.name : ''].filter(Boolean).join(' · ');
+      const row = h('div', {class:'an-pick-item'},
+        h('button', {type:'button', class:'an-pick-row', onclick:function(){ closeModal(anPick, true); anOpenMatch(x.key); }},
+          h('span', {class:'an-pick-main'}, h('span', {class:'an-pick-title', text:title}), h('span', {class:'an-pick-sub', text:sub})),
+          h('span', {class:'an-pick-n' + (n || c ? '' : ' none'), text:[n ? n + (n === 1 ? ' tag' : ' tags') : '', c ? c + (c === 1 ? ' clip' : ' clips') : ''].filter(Boolean).join(' · ') || (a.file && a.file.name ? 'Video added' : 'Not started')})),
+        canEdit(m) ? h('button', {type:'button', class:'icon-btn danger', title:'Delete this match video', 'aria-label':'Delete match video', text:'✕', onclick:async function(){
+          if(!(await askDelete('match video', title, 'Its tags and clips go too. The video file on your device isn’t touched.'))) return;
+          const raw = localStorage.getItem(x.key);
+          try{ localStorage.removeItem(x.key); }catch(e){}
+          clubSyncSoon(); anPickOpen();
+          showToast('Deleted “' + title + '”', function(){ try{ localStorage.setItem(x.key, raw); }catch(e){} clubSyncSoon(); anPickOpen(); });
+        }}) : '');
+      box.appendChild(row);
     });
     openModal(anPick);
   }
-  /* open the lineup, then its analysis once it's on screen */
-  function anOpenMatch(key){
-    const id = key.slice(LU_PREFIX.length);
-    if(!(window.hufcOpenItem && window.hufcOpenItem('lineup', id))) return;
-    let tries = 0;
-    (function wait(){
-      if(lu && luKey === key && isLineupView()){ openAnalysis(); return; }
-      if(tries++ < 50) setTimeout(wait, 100);
-    })();
+  function anNewFromHome(){
+    const m = mvNew(''), key = MV_PREFIX + m.id;
+    try{ localStorage.setItem(key, JSON.stringify(m)); }catch(e){ showToast('This device is out of space'); return; }
+    anOpenMatch(key);
   }
-  let anPickMode = 'open';
-  document.getElementById('homeMvNewBtn').addEventListener('click', function(){ anPickMode = 'new'; anPickOpen('new'); });
-  document.getElementById('homeMvOpenBtn').addEventListener('click', function(){ anPickMode = 'open'; anPickOpen('open'); });
+  document.getElementById('homeMvNewBtn').addEventListener('click', anNewFromHome);
+  document.getElementById('homeMvOpenBtn').addEventListener('click', anPickOpen);
   document.getElementById('anPickClose').addEventListener('click', function(){ closeModal(anPick); });
-  document.getElementById('anPickNew').addEventListener('click', function(){
-    if(anPickMode === 'open'){ anPickMode = 'new'; anPickOpen('new'); return; }
-    closeModal(anPick, true);
-    document.getElementById('homeLineupBtn').click();
-    let tries = 0;
-    (function wait(){ if(lu && isLineupView()){ openAnalysis(); return; } if(tries++ < 50) setTimeout(wait, 100); })();
-  });
+  document.getElementById('anPickNew').addEventListener('click', function(){ closeModal(anPick, true); anNewFromHome(); });
   anPick.addEventListener('click', function(e){ if(e.target === anPick) closeModal(anPick); });
+
+  /* earlier match analysis kept inside a lineup moves to its own match video (once) */
+  setTimeout(function(){
+    try{
+      luList().forEach(function(x){
+        const a = x.lu.analysis;
+        if(!a || !((a.file && a.file.name) || (a.tags && a.tags.length) || (a.clips && a.clips.length))) return;
+        if(mvForLineup(x.lu.id)) return;
+        const m = {kind:'match', v:1, id:newId(), title:'', luId:x.lu.id, group:x.lu.group || 'U18', savedAt:Date.now(), analysis:a};
+        if(x.lu.owner) m.owner = x.lu.owner; if(x.lu.madeBy) m.madeBy = x.lu.madeBy;
+        localStorage.setItem(MV_PREFIX + m.id, JSON.stringify(m));
+        const raw = JSON.parse(localStorage.getItem(x.key)); delete raw.analysis; localStorage.setItem(x.key, JSON.stringify(raw));
+        if(lu && lu.id === x.lu.id) delete lu.analysis;
+      });
+    }catch(e){ console.warn('match video move', e); }
+  }, 0);
 
   /* =====================================================================
      Clips: cut a part of the match into its own short video, name it, tag the players,
@@ -10607,7 +10711,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const name = h('input', {type:'text', class:'an-cut-name', maxlength:'80', value:anCut.name, placeholder:'Name it — e.g. Building out from the back', oninput:function(){ anCut.name = this.value; }});
     const note = h('input', {type:'text', class:'an-cut-note', maxlength:'160', value:anCut.note, placeholder:'What to look for (optional)', oninput:function(){ anCut.note = this.value; }});
     const who = h('div', {class:'an-cut-who'}, h('span', {class:'lbl', text:'Players'}),
-      lu.squad.filter(function(p){ return clean(p.name) || clean(p.num); }).map(function(p){
+      anSquad().map(function(p){
         const on = anCut.pids.indexOf(p.id) !== -1;
         return h('button', {type:'button', class:'an-who-p' + (on ? ' on' : ''), 'aria-pressed':String(on), onclick:function(){ const i = anCut.pids.indexOf(p.id); if(i === -1) anCut.pids.push(p.id); else anCut.pids.splice(i, 1); anRenderCut(); }},
           h('span', {class:'an-who-n', text:clean(p.num) || '·'}), luShort(p.name) || '');
@@ -11487,6 +11591,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     sessions:{prefix:LS_PREFIX, stamp:'savedAt'},
     lineups:{prefix:LU_PREFIX, stamp:'savedAt'},
     squads:{prefix:'hufc-squad:', stamp:'savedAt'},     /* each team's saved players */
+    matches:{prefix:'hufc-match:', stamp:'savedAt'},    /* match videos: tags and clip details (the videos stay on each device) */
     practices:{stamp:'updatedAt'}
   };
   function localGet(kind, id, lib){
@@ -11505,9 +11610,11 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(kind === 'sessions') return listSessions().map(function(x){ return {id:x.key.slice(LS_PREFIX.length), obj:x.plan}; }).filter(function(x){ return x.id !== 'draft'; });
     if(kind === 'lineups') return luList().map(function(x){ return {id:x.key.slice(LU_PREFIX.length), obj:x.lu}; });
     if(kind === 'squads') return sqList().map(function(x){ return {id:x.key.slice(SQ_PREFIX.length), obj:x.sq}; });
+    if(kind === 'matches') return mvList().map(function(x){ return {id:x.key.slice(MV_PREFIX.length), obj:x.m}; });
     return Object.keys(lib.items).map(function(id){ return {id:id, obj:lib.items[id]}; });
   }
   function openNow(kind, id){
+    if(kind === 'matches') return anOpenKey() === MV_PREFIX + id;
     if(document.documentElement.classList.contains('view-home')) return false;
     if(kind === 'sessions') return !isLineupView() && storageKey === LS_PREFIX + id;
     if(kind === 'lineups') return isLineupView() && luKey === LU_PREFIX + id;
@@ -12758,7 +12865,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 </script>
 <script>/* offline: the planner is kept on this phone; a newer one is fetched when online and offered here */
 (function(){
-  if(!('serviceWorker' in navigator) || (location.protocol !== 'https:')) return;
+  if(!('serviceWorker' in navigator) || (location.protocol !== 'https:' && location.hostname !== 'localhost')) return;
   window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
   navigator.serviceWorker.addEventListener('message', function(e){
     if(e.data !== 'hufc-updated' || document.getElementById('pwaBar')) return;
