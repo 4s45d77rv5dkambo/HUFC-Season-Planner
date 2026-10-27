@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027215649">
+<meta name="hufc-build" content="20261027215842">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2910,7 +2910,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 9:56pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 9:58pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11320,14 +11320,14 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           h('span', {class:'an-who-n', text:clean(p.num) || '·'}), luShort(p.name) || '');
       }));
     box.append(
-      h('div', {class:'an-cut-head'}, h('strong', {text:'✂ New clip'}), h('span', {class:'an-cut-len', text:(Math.round(len * 10) / 10) + (len === 1 ? ' second' : ' seconds')})),
+      h('div', {class:'an-cut-head'}, h('strong', {text:anCut.editId ? '✎ Edit clip' : '✂ New clip'}), h('span', {class:'an-cut-len', text:(Math.round(len * 10) / 10) + (len === 1 ? ' second' : ' seconds')})),
       anLenPicker(len),
       h('div', {class:'an-cut-times'}, tm('start'), tm('end')),
       name, note, who, anCutBoardPick(),
       h('div', {class:'an-cut-acts'},
         h('button', {type:'button', class:'btn btn-small', text:'Cancel', onclick:function(){ anCut = null; anRenderCut(); }}),
         h('button', {type:'button', class:'btn btn-small', text:'▶ Preview', onclick:function(){ anQueue = null; anVideo.currentTime = anCut.start; anClipEnd = anCut.end; const p = anVideo.play(); if(p && p.catch) p.catch(function(){}); }}),
-        h('button', {type:'button', class:'btn btn-small btn-primary', text:'Save clip', disabled:len < 0.9 || len > 600, title:len > 600 ? 'Keep clips under 10 minutes' : '', onclick:anCutSave})));
+        h('button', {type:'button', class:'btn btn-small btn-primary', text:anCut.editId ? 'Save changes' : 'Save clip', disabled:len < 0.9 || len > 600, title:len > 600 ? 'Keep clips under 10 minutes' : '', onclick:anCutSave})));
   }
   /* with a pre-game attached: put the clip straight onto one of its boards as it's saved (or not) */
   function anCutBoardPick(){
@@ -11353,6 +11353,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       L = Math.max(1, Math.min(60, Math.round(L)));
       anClipLen = L; try{ setSettings({clipLen:L}); }catch(e){}
       const dur = anVideo.duration || 1e9;
+      if(keep === undefined) keep = anCut.editId ? 'start' : 'end';   /* a new clip keeps ending where you are; editing keeps its start */
       if(keep === 'end'){ anCut.start = Math.max(0, anCut.end - L); }
       else { anCut.end = Math.min(dur, anCut.start + L); if(anCut.end - anCut.start < L) anCut.start = Math.max(0, anCut.end - L); }
       anRenderCut();
@@ -11360,9 +11361,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const cur = Math.max(1, Math.min(60, Math.round(len)));
     const slider = h('input', {type:'range', class:'an-len-range', min:'1', max:'60', step:'1', value:String(cur), 'aria-label':'Clip length in seconds'});
     slider.addEventListener('input', function(){
-      const L = +slider.value; anClipLen = L; anCut.end = Math.min(anVideo.duration || 1e9, anCut.start + L);
+      const L = +slider.value; anClipLen = L;
+      if(anCut.editId) anCut.end = Math.min(anVideo.duration || 1e9, anCut.start + L); else anCut.start = Math.max(0, anCut.end - L);
       const lbl = document.querySelector('.an-cut-len'); if(lbl) lbl.textContent = L + (L === 1 ? ' second' : ' seconds');
-      const t = document.querySelectorAll('.an-cut-t strong'); if(t[1]) t[1].textContent = anMinute(anCut.end) + (anData().ko != null ? ' (' + anClock(anCut.end) + ')' : '');
+      const t = document.querySelectorAll('.an-cut-t strong'); const sh = function(x){ return anMinute(x) + (anData().ko != null ? ' (' + anClock(x) + ')' : ''); }; if(t[0]) t[0].textContent = sh(anCut.start); if(t[1]) t[1].textContent = sh(anCut.end);
     });
     slider.addEventListener('change', function(){ setLen(+slider.value); });
     return h('div', {class:'an-len'},
@@ -11373,7 +11375,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       slider,
       h('div', {class:'an-len-where'},
         h('button', {type:'button', class:'btn btn-small', title:'Ends where the video is now', text:'⟵ Before now', onclick:function(){ anCut.end = anVideo.currentTime; setLen(anClipLen, 'end'); }}),
-        h('button', {type:'button', class:'btn btn-small', title:'Starts where the video is now', text:'After now ⟶', onclick:function(){ anCut.start = anVideo.currentTime; setLen(anClipLen); }})));
+        h('button', {type:'button', class:'btn btn-small', title:'Starts where the video is now', text:'After now ⟶', onclick:function(){ anCut.start = anVideo.currentTime; setLen(anClipLen, 'start'); }})));
   }
   /* records the part of the match as it plays (a 30-second clip takes 30 seconds) */
   /* the Windows program plays a remembered video straight from its file; if that can't be recorded from, pick it once */
@@ -11464,6 +11466,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     });
   }
   async function anCutSave(){
+    if(anCut.editId) return anCutSaveEdit();
     const c = {id:newId(), name:clean(anCut.name) || ('Clip ' + anMinute(anCut.start)), start:Math.round(anCut.start * 10) / 10, end:Math.round(anCut.end * 10) / 10,
       pids:anCut.pids.slice(), note:clean(anCut.note), at:Date.now()};
     const ov = document.getElementById('anRec'); ov.hidden = false;
@@ -11488,6 +11491,48 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(toBoard && toBoard.key) await anAddToBoard(toBoard.key, toBoard.did, c);
   }
   document.getElementById('anRecCancel').addEventListener('click', function(){ if(anRec) anRec.cancel(); else document.getElementById('anRec').hidden = true; });
+  /* ---------- editing a clip you've made: name, note and players straight away; a new start or end re-cuts it ---------- */
+  function anEditClip(c){
+    if(!anCanEdit()) return;
+    anCut = {editId:c.id, start:c.start, end:c.end, name:c.name, pids:(c.pids || []).slice(), note:c.note || ''};
+    if(anVideo.currentSrc){ try{ anVideo.pause(); anVideo.currentTime = c.start; }catch(e){} }
+    document.getElementById('anClipClose').click();
+    anRenderCut();
+    const box = document.getElementById('anCut'); if(box && box.scrollIntoView) box.scrollIntoView({block:'nearest', behavior:'smooth'});
+  }
+  async function anCutSaveEdit(){
+    const c = anClips().find(function(x){ return x.id === anCut.editId; });
+    if(!c){ anCut = null; anRenderCut(); return; }
+    const ns = Math.round(anCut.start * 10) / 10, ne = Math.round(anCut.end * 10) / 10, moved = Math.abs(ns - c.start) > 0.05 || Math.abs(ne - c.end) > 0.05;
+    c.name = clean(anCut.name) || c.name; c.pids = anCut.pids.slice(); c.note = clean(anCut.note);
+    if(moved){
+      if(!anVideo.currentSrc){ showToast('Open the match video to change where the clip starts or ends'); return; }
+      const ov = document.getElementById('anRec'); ov.hidden = false; document.getElementById('anRecBar').style.width = '0%';
+      let blob;
+      try{ blob = await anRecord(ns, ne); }
+      catch(e){ ov.hidden = true; anRec = null; if(e && e.message === 'stuck') showToast('The video stopped moving, so the clip was stopped · try again'); else if(e && e.message === 'nocapture') anNeedPick(); else if(e && e.message !== 'cancelled') showToast('Couldn’t re-cut the clip on this device · try again'); return; }
+      ov.hidden = true; anRec = null;
+      /* drawings stay on the same moment of the match */
+      const shift = c.start - ns, len = ne - ns;
+      (c.marks || []).forEach(function(m){ m.t = Math.round((m.t + shift) * 10) / 10; });
+      c.marks = (c.marks || []).filter(function(m){ return m.t >= 0 && m.t <= len; });
+      const oldLocal = c.local;
+      c.start = ns; c.end = ne; c.size = blob.size; c.mime = blob.type; delete c.bakeStamp;
+      try{
+        if(window.hufcDesktop && window.hufcDesktop.saveVideo){
+          const r = await window.hufcDesktop.saveVideo('', 'an-' + c.id + '-' + Date.now().toString(36), c.name, new File([blob], anFileName(c), {type:blob.type}));
+          if(r && r.file){ c.local = r.file; if(oldLocal && oldLocal !== r.file && window.hufcDesktop.deleteVideo) window.hufcDesktop.deleteVideo(oldLocal); }
+          else { delete c.local; await pgMedia.put('an-' + c.id, blob); }
+        } else await pgMedia.put('an-' + c.id, blob);
+        try{ if(pgUrls['an-' + c.id]){ URL.revokeObjectURL(pgUrls['an-' + c.id]); delete pgUrls['an-' + c.id]; } }catch(e){}
+        pgMedia.del('anb-' + c.id).catch(function(){});
+      }catch(e){ showToast('There isn’t room on this device for that clip'); return; }
+    }
+    anSave();
+    anCut = null; anRenderCut();
+    anTab = 'clips'; anRenderAll();
+    showToast(moved ? 'Clip re-cut · “' + c.name + '” (' + Math.round(c.end - c.start) + 's)' + ((c.boards || []).length ? ' · add it to the pre-game again to update it there' : '') : 'Clip updated');
+  }
 
   /* ---------- the Clips tab ---------- */
   function anRenderClips(){
@@ -11510,6 +11555,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
             setTimeout(function(){ if(anClips().indexOf(c) === -1){ if(c.local && window.hufcDesktop && window.hufcDesktop.deleteVideo) window.hufcDesktop.deleteVideo(c.local); else pgMedia.del('an-' + c.id).catch(function(){}); } }, 12000);
           }}) : ''),
         h('div', {class:'an-clip-acts'},
+          ed ? h('button', {type:'button', class:'btn btn-small', text:'✎ Edit', title:'Change the name, players or note — or where it starts and ends', onclick:function(){ anEditClip(c); }}) : '',
           h('button', {type:'button', class:'btn btn-small', text:'Share / save', onclick:function(){ anShareClip(c); }}),
           h('button', {type:'button', class:'btn btn-small btn-primary', text:(function(){ const x = anM && anPgFind(anM.pgId); return x ? 'Add to “' + (sessionName(x.plan) || 'pre-game') + '”…' : 'Add to pre-game…'; })(), onclick:function(){ anToPregame(c); }})));
       box.appendChild(row);
@@ -13012,6 +13058,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.15', d:'27 Oct 2026', t:'Edit your clips', n:['✎ Edit on any clip: change its name, note and players — or where it starts and ends (it’s re-cut, and your drawings stay on the same moment)', 'Picking a length now keeps the clip ending where you are in the video']},
     {v:'3.14', d:'27 Oct 2026', t:'Clip fixes', n:['Fixed: the Cancel button while making a clip was covered by the seek bar', 'A clip that stops making progress stops by itself and says so', 'While a clip is being made nothing can pause it (taps, keys, syncing wait), so clips don’t have little stops in them', 'Clips are copied frame by frame at up to full HD (1080p) for smoother clips', 'No more jerky start: the video gets a short run-up before recording begins', 'With a clip open, only the clip’s play button shows (the match’s controls come back when you close it)']},
     {v:'3.13', d:'27 Oct 2026', t:'Coaches’ work stays put', n:['A coach’s saved session, lineup or pre-game stays in the club library until that coach (or the admin) presses Delete', 'Fixed: a slow or half-loaded club library could make other coaches’ sessions disappear', 'If a copy goes missing on a device, it comes back from the club library instead of being removed for everyone', 'If a coach’s own work went missing from the club library, their device puts it back', 'Deleting leaves a marker, so a coach’s (or the admin’s) delete reaches every device']},
     {v:'3.12', d:'27 Oct 2026', t:'Proper full screen', n:['Full screen fills the whole screen with the match video', 'The seek bar and tag buttons float over the picture and fade while you watch — move the mouse or tap to bring them back', 'Play and full-screen buttons on the match video’s bar']},
