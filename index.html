@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027225521">
+<meta name="hufc-build" content="20261027225711">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1548,7 +1548,7 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-clip-player:fullscreen, .an-clip-player:-webkit-full-screen{width:100%; height:100%; background:#000;}
 .an-clip-player.an-full{position:fixed; inset:0; z-index:400; border-radius:0;}
 /* slim yellow pill scrollbars in the match video window and Settings (like the dropdowns) */
-:is(.an-box, .set-box) ::-webkit-scrollbar{width:10px; height:10px;}
+:is(.an-box, .set-box) ::-webkit-scrollbar{width:14px; height:14px;}
 :is(.an-box, .set-box) ::-webkit-scrollbar-track{background:#ffffff; border-radius:999px; margin:3px;}
 :is(.an-box, .set-box) ::-webkit-scrollbar-thumb{background:#ffd400; border-radius:999px; border:2px solid #ffffff; min-height:36px;}
 :is(.an-box, .set-box) ::-webkit-scrollbar-thumb:hover{background:#f2c700;}
@@ -1868,7 +1868,7 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 .pg-show-pic img{display:block; width:100%; max-height:52vh; object-fit:contain; border-radius:10px; background:#fff; cursor:zoom-in;}
 
 /* Present mode: a slim rounded scrollbar with a yellow handle */
-.pg-show ::-webkit-scrollbar{width:10px; height:10px;}
+.pg-show ::-webkit-scrollbar{width:14px; height:14px;}
 .pg-show ::-webkit-scrollbar-track{background:rgba(255,255,255,.08); border-radius:999px; margin:4px;}
 .pg-show ::-webkit-scrollbar-thumb{background:var(--yellow); border-radius:999px; border:2px solid #0d0e0f; min-height:40px;}
 .pg-show ::-webkit-scrollbar-thumb:hover{background:#ffe14d;}
@@ -1903,10 +1903,10 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 .pg-vid-btn.pg-vid-play{background:var(--yellow); color:var(--black);}
 .pg-vid-btn.pg-vid-play:hover{background:#ffe14d;}
 .pg-vid-btn svg{display:block;}
-.pg-vid-seek{position:relative; flex:1; height:22px; display:flex; align-items:center; cursor:pointer; touch-action:none; outline:none;}
-.pg-vid-track{position:relative; display:block; width:100%; height:8px; border-radius:999px; background:rgba(255,255,255,.2); overflow:hidden;}
+.pg-vid-seek{position:relative; flex:1; height:26px; display:flex; align-items:center; cursor:pointer; touch-action:none; outline:none;}
+.pg-vid-track{position:relative; display:block; width:100%; height:11px; border-radius:999px; background:rgba(255,255,255,.2); overflow:hidden;}
 .pg-vid-fill{position:absolute; left:0; top:0; bottom:0; width:0; border-radius:999px; background:var(--yellow);}
-.pg-vid-knob{position:absolute; top:50%; left:0; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:var(--yellow); border:2px solid #0d0e0f; box-shadow:0 1px 4px rgba(0,0,0,.4); transition:transform .15s ease;}
+.pg-vid-knob{position:absolute; top:50%; left:0; width:19px; height:19px; margin:-9.5px 0 0 -9.5px; border-radius:50%; background:var(--yellow); border:2px solid #0d0e0f; box-shadow:0 1px 4px rgba(0,0,0,.4); transition:transform .15s ease;}
 .pg-vid-seek:hover .pg-vid-knob, .pg-vid-seek.dragging .pg-vid-knob, .pg-vid-seek:focus-visible .pg-vid-knob{transform:scale(1.2);}
 .pg-vid-time{flex:none; font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:14px; letter-spacing:.03em; color:#fff; font-variant-numeric:tabular-nums;}
 .pg-clip-player .pg-vid{border-radius:8px;}
@@ -2676,7 +2676,7 @@ html.print-sim .txt-wrap > .sl{display:none !important;}
 </style>
 <style>
 /* ---------- the lineup and pre-game dropdowns: a slim yellow pill on a white track (everything else keeps normal scrollbars) ---------- */
-:is(.lu-sheet select, .lu-sheet .lu-combo-list, .lu-sheet .lu-pick, select.pg-form, .pg-lu-pick select)::-webkit-scrollbar{width:10px; height:10px;}
+:is(.lu-sheet select, .lu-sheet .lu-combo-list, .lu-sheet .lu-pick, select.pg-form, .pg-lu-pick select)::-webkit-scrollbar{width:14px; height:14px;}
 :is(.lu-sheet select, .lu-sheet .lu-combo-list, .lu-sheet .lu-pick, select.pg-form, .pg-lu-pick select)::-webkit-scrollbar-track{background:#ffffff; border-radius:999px; margin:3px;}
 :is(.lu-sheet select, .lu-sheet .lu-combo-list, .lu-sheet .lu-pick, select.pg-form, .pg-lu-pick select)::-webkit-scrollbar-thumb{background:#ffd400; border-radius:999px; border:2px solid #ffffff; min-height:36px;}
 :is(.lu-sheet select, .lu-sheet .lu-combo-list, .lu-sheet .lu-pick, select.pg-form, .pg-lu-pick select)::-webkit-scrollbar-thumb:hover{background:#f2c700;}
@@ -2912,7 +2912,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:55pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:57pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -13096,7 +13096,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'3.18', d:'27 Oct 2026', t:'Smooth video bar', n:['The yellow pill under every video (match videos, clips and pre-game videos) slides along smoothly as it plays, instead of jumping each second']},
+    {v:'3.18', d:'27 Oct 2026', t:'Smooth video bar', n:['The yellow pill under every video (match videos, clips and pre-game videos) slides along smoothly as it plays, instead of jumping each second', 'All the yellow pills (video bars and scroll bars) are a little wider']},
     {v:'3.17', d:'27 Oct 2026', t:'Check-over fixes', n:['Fixed: Undo after deleting a session, lineup, pre-game or match video could be undone again by the next sync — it now stays back', 'Deleting a clip also clears its saved drawn copy, and closes it if it’s playing', 'Adding a clip to a pre-game while a different match is open now works', 'The T key (us / them) updates the full-screen tag buttons too', 'Match video list uses the pre-game’s name when it has no title', 'Clearer message when a clip can’t be added to a pre-game']},
     {v:'3.16', d:'27 Oct 2026', t:'Instant clips', n:['Save clip is instant — no more waiting for the clip to play through', 'A clip plays straight from the match video, always at the right speed', 'Its own video file is only made when you share it or put it on a pre-game (at normal speed, even if you were watching at 4×)', 'Changing where a clip starts or ends is instant too']},
     {v:'3.15', d:'27 Oct 2026', t:'Edit your clips', n:['✎ Edit on any clip: change its name, note and players — or where it starts and ends (it’s re-cut, and your drawings stay on the same moment)', 'Picking a length now keeps the clip ending where you are in the video']},
