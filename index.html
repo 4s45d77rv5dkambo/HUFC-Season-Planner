@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027211723">
+<meta name="hufc-build" content="20261027212409">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2897,7 +2897,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 9:17pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 9:24pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -12034,6 +12034,13 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     }catch(e){}
   }
   function wasDeleted(key){ return !!deletedLog()[key]; }
+  /* made by you (on this device, or under your account) */
+  function isMineObj(o){
+    if(!o || !o.owner) return true;
+    if(who && who.uid && o.owner === who.uid) return true;
+    try{ const u = CLOUD && CLOUD.user ? CLOUD.user() : null; if(u && o.owner === u.uid) return true; }catch(e){}
+    return false;
+  }
   const CLOUD = window.__HUFC_CLOUD || null;   /* your HUFC account (Firebase) — see cloud.js */
   let cloudLast = 0, cloudErr = '';
   function getSettings(){ try{ return JSON.parse(localStorage.getItem(SET_KEY) || '{}') || {}; }catch(e){ return {}; } }
@@ -12760,9 +12767,18 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           const id = name.replace(/\.json$/, ''), path = base + name, remote = files[name], rs = +remote[st] || 0;
           if(openNow(kind, id)){ continue; }
           const local = localGet(kind, id, lib), ls = local ? (+local[st] || 0) : 0;
+          /* deleted on purpose (by its coach or the admin): a "deleted" marker takes it off every device */
+          if(remote && remote.deleted){
+            if(local && ls <= rs && !openNow(kind, id)){ localDel(kind, id, lib); changed++; }
+            ix[path] = Math.max(rs, ix[path] || 0); continue;
+          }
           if(!local && mineG && ix[path] && rs <= ix[path] && canEdit(remote) && complete && (kind === 'practices' || wasDeleted(SYNC_KINDS[kind].prefix + id))){            /* deleted here (Delete pressed): take it out of the folder too */
             try{ await kdir.removeEntry(name); }catch(e){}
-            delete ix[path]; changed++; continue;
+            if(kind !== 'practices'){
+              const tomb = {deleted:true, group:g}; tomb[st] = Date.now();
+              try{ await writeJSON(kdir, name, tomb); ix[path] = tomb[st]; }catch(e){ delete ix[path]; }
+            } else delete ix[path];
+            changed++; continue;
           }
           /* moved here into another of your own folders: take the old copy out */
           if(local && mineG && groupOf(local) !== g && (clubOnline ? canEdit(local) && canEdit(remote) : own.indexOf(groupOf(local)) !== -1) && ls >= rs){
@@ -12786,6 +12802,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           if(path.indexOf(base) !== 0 || files[path.slice(base.length)]) return;
           const id = path.slice(base.length).replace(/\.json$/, ''), local = localGet(kind, id, lib);
           if(local && mineG && (+local[st] || 0) > ix[path]) return;   /* changed here since — it goes back up below */
+          if(local && kind !== 'practices' && isMineObj(local)) return;   /* your own work missing from the club (and you didn't delete it): it goes back up below */
           if(local && groupOf(local) === g && !openNow(kind, id)){ localDel(kind, id, lib); changed++; }
           delete ix[path];
         });
@@ -12793,6 +12810,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
         if(mineG){
           for(const it of localItems(kind, lib)){
             if(groupOf(it.obj) !== g || (clubOnline && !canEdit(it.obj))) continue;
+            if(!complete && !isMineObj(it.obj)) continue;   /* (someone else's work: only with the whole list in) */
             const path = base + it.id + '.json', stamp = +it.obj[st] || 0;
             if(files[it.id + '.json'] && ix[path] === stamp) continue;
             if(files[it.id + '.json'] && (+files[it.id + '.json'][st] || 0) > stamp) continue;
@@ -12945,7 +12963,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'3.13', d:'27 Oct 2026', t:'Coaches’ work stays put', n:['A coach’s saved session, lineup or pre-game stays in the club library until that coach (or the admin) presses Delete', 'Fixed: a slow or half-loaded club library could make other coaches’ sessions disappear', 'If a copy goes missing on a device, it comes back from the club library instead of being removed for everyone']},
+    {v:'3.13', d:'27 Oct 2026', t:'Coaches’ work stays put', n:['A coach’s saved session, lineup or pre-game stays in the club library until that coach (or the admin) presses Delete', 'Fixed: a slow or half-loaded club library could make other coaches’ sessions disappear', 'If a copy goes missing on a device, it comes back from the club library instead of being removed for everyone', 'If a coach’s own work went missing from the club library, their device puts it back', 'Deleting leaves a marker, so a coach’s (or the admin’s) delete reaches every device']},
     {v:'3.12', d:'27 Oct 2026', t:'Proper full screen', n:['Full screen fills the whole screen with the match video', 'The seek bar and tag buttons float over the picture and fade while you watch — move the mouse or tap to bring them back', 'Play and full-screen buttons on the match video’s bar']},
     {v:'3.11', d:'27 Oct 2026', t:'The match video is just there', n:['Open a match and its video is already loaded — no extra tap', 'The Windows program plays it straight from where it is on your computer; other devices keep a copy', 'Change video… at the top of the window to use a different video']},
     {v:'3.10', d:'27 Oct 2026', t:'Match videos and pre-games', n:['Attach a match video to a pre-game (next to Lineup in the match video window) — only the clips you choose go onto it', 'When cutting a clip, pick the pre-game board it goes on (e.g. Possession) and it’s added as it’s saved', '+ Add clip on every pre-game board: pick any clip you’ve cut from your match videos, drawings included']},
