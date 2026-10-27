@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027121049">
+<meta name="hufc-build" content="20261027143717">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1511,6 +1511,86 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-pg-boards{display:flex; flex-wrap:wrap; gap:6px;}
 @media screen and (max-width:820px){ .an-list#anClipList{overflow:visible;} }
 
+/* ---------- Settings ---------- */
+.home-hero{position:relative;}
+.home-set-btn{position:absolute; top:12px; right:12px; display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #3a3b3e; border-radius:999px;
+  background:transparent; color:#c9cacc; font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:13px; letter-spacing:.08em; text-transform:uppercase; cursor:pointer;}
+.home-set-btn:hover, .home-set-btn:focus-visible{color:var(--yellow); border-color:var(--yellow);}
+.home-set-btn svg{transition:transform .4s ease;}
+.home-set-btn:hover svg{transform:rotate(60deg);}
+.home-hero .home-doc{margin-top:18px;}
+.set-box{width:min(860px, 100%); height:min(640px, 90vh); overflow:hidden;}
+.set-head{display:flex; align-items:center; gap:12px; padding:14px 18px; background:var(--black); color:var(--white); border-radius:12px 12px 0 0; border-bottom:3px solid var(--yellow);}
+.set-head h3{margin:0; flex:1; font-family:'Barlow Condensed', sans-serif; font-size:22px; letter-spacing:.04em; text-transform:uppercase;}
+.set-saved{font-size:13px; color:var(--yellow); opacity:0; transition:opacity .2s;}
+.set-saved.on{opacity:1;}
+.set-body{flex:1; min-height:0; display:grid; grid-template-columns:210px minmax(0,1fr);}
+.set-nav{padding:12px 10px; border-right:1px solid var(--line); background:var(--white); overflow:auto; display:flex; flex-direction:column; gap:2px;}
+.set-tab{display:flex; align-items:center; gap:10px; width:100%; padding:10px 12px; border:0; border-radius:8px; background:transparent; color:var(--ink);
+  font:inherit; font-size:15px; font-weight:600; text-align:left; cursor:pointer;}
+.set-tab:hover{background:var(--line-soft);}
+.set-tab.on{background:var(--black); color:var(--white);}
+.set-tab.on .set-ico{filter:none;}
+.set-ico{width:22px; text-align:center; font-size:15px;}
+.set-pane{padding:18px 20px 28px; overflow:auto; display:flex; flex-direction:column; gap:14px;}
+.set-card{background:var(--white); border:1px solid var(--line); border-radius:10px; padding:16px 18px;}
+.set-card h4{margin:0 0 4px; font-family:'Barlow Condensed', sans-serif; font-size:17px; letter-spacing:.05em; text-transform:uppercase;}
+.set-sub{margin:0 0 10px; color:var(--grey); font-size:14px; line-height:1.4;}
+.set-card > .set-sub:last-child{margin-bottom:0;}
+.set-row{display:flex; align-items:center; gap:16px; padding:12px 0; border-top:1px solid var(--line-soft);}
+.set-card h4 + .set-row, .set-card h4 + .set-sub + .set-row{border-top:0;}
+.set-row-txt{flex:1; min-width:0;}
+.set-row-lbl{font-weight:600; font-size:15px;}
+.set-row-help{color:var(--muted); font-size:13px; margin-top:2px;}
+.set-row-ctl{flex:0 1 300px; min-width:0; display:flex; justify-content:flex-end;}
+.set-input{width:100%; font:inherit; font-size:15px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--white); color:var(--ink);}
+.set-input:focus{outline:none; border-color:var(--ink); box-shadow:0 0 0 3px rgba(255,212,0,.45);}
+.set-num{width:84px;}
+.set-unit{color:var(--grey); font-size:13px;}
+.set-inline{display:flex; align-items:center; gap:8px; width:100%; justify-content:flex-end;}
+.set-inline .set-input:not(.set-num){flex:1;}
+.set-colour{width:40px; height:34px; padding:2px; border:1px solid var(--line); border-radius:8px; background:var(--white); cursor:pointer;}
+.set-seg{flex-wrap:wrap;}
+.set-seg button{padding:8px 10px; font-size:13px;}
+.set-seg button.active{background:var(--black); color:var(--yellow);}
+.set-actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;}
+.btn-danger-ghost{color:var(--danger); border-color:#e3b9b6;}
+.btn-danger-ghost:hover{border-color:var(--danger);}
+.set-who{display:flex; align-items:center; gap:14px; margin:10px 0 6px;}
+.set-avatar{width:54px; height:54px; border-radius:50%; background:var(--black); color:var(--yellow); display:grid; place-items:center;
+  font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:21px; letter-spacing:.04em; flex-shrink:0; border:2px solid var(--yellow);}
+.set-who-txt{min-width:0;}
+.set-who-name{display:flex; align-items:center; gap:8px; font-weight:700; font-size:18px;}
+.set-who-mail{color:var(--grey); font-size:14px; overflow:hidden; text-overflow:ellipsis;}
+.set-status{display:flex; align-items:center; gap:8px; font-size:14px; padding:10px 12px; border-radius:8px; background:#eef6ee;}
+.set-status.warn{background:#fff6d6;}
+.set-chips{display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 2px;}
+.set-chip{padding:7px 12px; border-radius:999px; border:1px dashed var(--line); color:var(--muted); font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:15px; letter-spacing:.05em;}
+.set-chip.on{border:1px solid var(--black); background:var(--black); color:var(--yellow);}
+.set-chip.wait{border-style:solid; border-color:var(--yellow); color:var(--ink); background:#fff6d6;}
+.set-stats{display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:8px; margin:8px 0 12px;}
+.set-stat{border:1px solid var(--line-soft); background:var(--paper); border-radius:8px; padding:10px 12px; display:flex; flex-direction:column;}
+.set-stat b{font-family:'Barlow Condensed', sans-serif; font-size:28px; line-height:1;}
+.set-stat span{color:var(--grey); font-size:13px; margin-top:3px;}
+.set-stat.hot{border-color:var(--yellow); background:#fff6d6;}
+.set-meter{height:8px; border-radius:99px; background:var(--line-soft); overflow:hidden; margin-bottom:8px;}
+.set-meter span{display:block; height:100%; background:var(--yellow);}
+.set-about{display:flex; align-items:center; gap:14px; margin:8px 0 12px;}
+.set-crest{width:56px; height:56px;}
+@media (max-width:700px){
+  .set-box{height:92vh;}
+  .set-body{grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr);}
+  .set-nav{flex-direction:row; border-right:0; border-bottom:1px solid var(--line); padding:8px; gap:6px; overflow-x:auto; scrollbar-width:none;}
+  .set-tab{width:auto; flex:0 0 auto; padding:8px 12px; font-size:14px; white-space:nowrap; border:1px solid var(--line);}
+  .set-tab.on{border-color:var(--black);}
+  .set-pane{padding:12px 12px 24px;}
+  .set-row{flex-direction:column; align-items:stretch; gap:8px;}
+  .set-row-ctl{flex:1 1 auto; justify-content:flex-start;}
+  .set-inline{justify-content:flex-start;}
+  .home-set-btn span{display:none;}
+  .home-set-btn{padding:7px;}
+}
+
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
 body.view-lineup .pregame-only{display:none !important;}
@@ -2576,6 +2656,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
 <main class="home" id="home">
   <section class="home-hero">
+    <button type="button" class="home-set-btn" id="homeSetBtn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></button>
     <img class="home-crest" alt="Heidelberg United crest" src="data:,">
     <div class="home-titles">
       <h1 class="home-app">Heidelberg United</h1>
@@ -2649,7 +2730,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 12:10pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 2:37pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -2702,6 +2783,12 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   </div>
 </div>
 
+<div class="modal set-modal" id="setModal" hidden>
+  <div class="modal-box set-box" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <div class="set-head"><h3 id="setTitle">Settings</h3><span class="set-saved" id="setSavedNote" aria-live="polite"></span><button type="button" class="btn btn-small btn-primary" id="setClose">Done</button></div>
+    <div class="set-body"><nav class="set-nav" id="setNav" aria-label="Settings sections"></nav><div class="set-pane" id="setPane"></div></div>
+  </div>
+</div>
 <div class="modal confirm-modal" id="coachModal" hidden>
   <div class="modal-box confirm-box coach-box" role="dialog" aria-modal="true" aria-labelledby="coachTitle">
     <h3 id="coachTitle">Coaches</h3>
@@ -8183,7 +8270,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function startNewSession(){
     flush();
     setReadOnly(false);
-    state = defaultState();
+    state = applySessionDefaults(defaultState());
     state.planId = newId();
     storageKey = LS_PREFIX + state.planId;
     renderAll();
@@ -9700,7 +9787,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   }
   function luNew(){
     setReadOnly(false);
-    lu = luDefault('11'); luKey = LU_PREFIX + lu.id;
+    lu = applyLineupDefaults(luDefault(luFormatDefault())); luKey = LU_PREFIX + lu.id;
     sqKeep([]);    /* (first time: brings in everyone already named in this team's lineups) */
     /* start from the team's saved squad (the first 17, in shirt-number order) */
     const sq = sqFor(sqTeam());
@@ -11391,6 +11478,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       CLOUD.name() ? h('div', {class:'coach-mail', text:u.email}) : acctNameRow(),
       h('div', {class:'acct-note' + (cloudErr || waiting ? ' warn' : ''), text:note}),
       u.admin ? item(pend ? 'Coaches — ' + pend + ' waiting' : 'Coaches', coachesOpen, pend ? 'hot' : '') : '',
+      item('Settings', function(){ settingsOpen('account'); }),
       item('Sync now', function(){ clubSync(); }),
       item('Sign out', cloudSignOut)));
     /* keep the menu on screen (on a phone the button isn't at the right edge) */
@@ -11814,6 +11902,219 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   window.addEventListener('hufc-status', function(e){ if(e.detail) setStatus(e.detail, 'warn'); });
   setInterval(function(){ if(document.visibilityState === 'visible') clubSync(); }, 60000);
   window.addEventListener('focus', function(){ clubSyncSoon(); });
+
+  /* =====================================================================
+     Settings — one window for your account, your teams, what new sessions and
+     lineups start with, backups, the club (admin) and the app itself.
+     Defaults are kept in hufc-settings (defaults:{...}) on this device.
+     ===================================================================== */
+  const setModal = document.getElementById('setModal');
+  let setTab = 'account';
+  function setDefaults(){ const d = getSettings().defaults; return d && typeof d === 'object' ? d : {}; }
+  function setDefault(k, v){ const d = Object.assign({}, setDefaults()); if(v === '' || v == null) delete d[k]; else d[k] = v; setSettings({defaults:d}); }
+  /* what a new session / lineup starts with */
+  function applySessionDefaults(st){
+    const d = setDefaults();
+    if(!st || !st.meta) return st;
+    st.meta.coach = clean(d.coach) || (CLOUD && CLOUD.name ? clean(CLOUD.name()) : '') || st.meta.coach;
+    if(clean(d.venue)) st.meta.venue = clean(d.venue);
+    if(clean(d.time)) st.meta.time = clean(d.time);
+    return st;
+  }
+  function luFormatDefault(){ const f = setDefaults().luFormat; return LU_FORMATS[f] ? f : '11'; }
+  function applyLineupDefaults(L){
+    const d = setDefaults();
+    if(!L) return L;
+    if(+d.luLength > 0) L.length = Math.min(60, Math.max(5, +d.luLength));
+    if(clean(d.luVenue)) L.meta.venue = clean(d.luVenue);
+    if(clean(d.luKickoff)) L.meta.kickoff = clean(d.luKickoff);
+    if(/^#[0-9a-f]{6}$/i.test(d.luShirt || '')) L.shirt = d.luShirt;
+    if(/^#[0-9a-f]{6}$/i.test(d.luGk || '')) L.gk = d.luGk;
+    return L;
+  }
+
+  const SET_TABS = [
+    ['account', 'Account', '👤'], ['teams', 'My teams', '⚽'], ['sessions', 'New sessions', '📋'],
+    ['lineups', 'Matchday lineups', '🟨'], ['data', 'Backup & data', '💾'], ['club', 'Club & coaches', '🛡'], ['about', 'About', 'ℹ']
+  ];
+  function setIsAdmin(){ const u = CLOUD && CLOUD.user ? CLOUD.user() : null; return !!(u && u.admin); }
+  function settingsOpen(tab){
+    if(tab) setTab = tab;
+    if(setTab === 'club' && !setIsAdmin()) setTab = 'account';
+    renderSettings();
+    openModal(setModal);
+  }
+  function renderSettings(){
+    const nav = document.getElementById('setNav'); nav.innerHTML = '';
+    SET_TABS.forEach(function(t){
+      if(t[0] === 'club' && !setIsAdmin()) return;
+      nav.appendChild(h('button', {type:'button', class:'set-tab' + (setTab === t[0] ? ' on' : ''), 'aria-current':setTab === t[0] ? 'page' : 'false',
+        onclick:function(){ setTab = t[0]; renderSettings(); }}, h('span', {class:'set-ico', 'aria-hidden':'true', text:t[2]}), h('span', {text:t[1]})));
+    });
+    const pane = document.getElementById('setPane'); pane.innerHTML = '';
+    const fn = {account:setAccount, teams:setTeams, sessions:setSessions, lineups:setLineups, data:setData, club:setClub, about:setAbout}[setTab];
+    fn(pane);
+    pane.scrollTop = 0;
+    const on = nav.querySelector('.set-tab.on'); if(on && on.scrollIntoView && nav.scrollWidth > nav.clientWidth) on.scrollIntoView({block:'nearest', inline:'center'});
+  }
+  /* building blocks */
+  function setCard(title, sub){ const c = h('section', {class:'set-card'}, title ? h('h4', {text:title}) : '', sub ? h('p', {class:'set-sub', text:sub}) : ''); return c; }
+  function setRow(label, help, control){
+    return h('div', {class:'set-row'}, h('div', {class:'set-row-txt'}, h('div', {class:'set-row-lbl', text:label}), help ? h('div', {class:'set-row-help', text:help}) : ''), h('div', {class:'set-row-ctl'}, control));
+  }
+  function setText(key, ph, opts){
+    opts = opts || {};
+    const i = h('input', {type:opts.type || 'text', class:'set-input', value:setDefaults()[key] || '', placeholder:ph || '', maxlength:'80', 'aria-label':opts.label || ph || key});
+    let t = 0;
+    i.addEventListener('input', function(){ clearTimeout(t); t = setTimeout(function(){ setDefault(key, i.value.trim()); setSaved(); }, 350); });
+    return i;
+  }
+  function setSaved(){ const s = document.getElementById('setSavedNote'); if(!s) return; s.textContent = 'Saved'; s.classList.add('on'); clearTimeout(s._t); s._t = setTimeout(function(){ s.classList.remove('on'); }, 1400); }
+
+  /* ---------- Account ---------- */
+  function setAccount(p){
+    const u = CLOUD && CLOUD.user ? CLOUD.user() : null;
+    const c = setCard('Account');
+    if(!CLOUD){
+      c.append(h('p', {class:'set-sub', text:'This online planner signs you in through Claude, and your work syncs with the club library automatically.'}));
+      p.appendChild(c); return;
+    }
+    if(!u){
+      c.append(h('p', {class:'set-sub', text:'Sign in to keep the same plans on your phone, iPad and computer, and to see the club library.'}),
+        h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn btn-primary', text:'Sign in', onclick:function(){ closeModal(setModal, true); cloudOpen(); }})));
+      p.appendChild(c); return;
+    }
+    const name = CLOUD.name() || '';
+    const waiting = CLOUD.member() === false;
+    c.append(h('div', {class:'set-who'},
+      h('span', {class:'set-avatar', text:initials(name || u.email)}),
+      h('div', {class:'set-who-txt'},
+        h('div', {class:'set-who-name'}, name || 'Add your name', u.admin ? h('span', {class:'admin-badge', text:'Admin'}) : ''),
+        h('div', {class:'set-who-mail', text:u.email}))));
+    const nameIn = h('input', {type:'text', class:'set-input', value:name, placeholder:'Your name', maxlength:'60', autocapitalize:'words', 'aria-label':'Your name'});
+    const nameSave = h('button', {type:'button', class:'btn btn-small', text:'Save', onclick:async function(){
+      const v = nameIn.value.trim(); if(!v || v === name) return;
+      nameSave.disabled = true;
+      try{ await CLOUD.setName(v); showToast('Saved · coaches will see you as ' + v); renderSettings(); }catch(e){ nameSave.disabled = false; showToast('No internet — try again when you’re online'); }
+    }});
+    c.append(setRow('Name', 'What other coaches see on your work', h('div', {class:'set-inline'}, nameIn, nameSave)));
+    p.appendChild(c);
+    const s = setCard('Sync');
+    const off = cloudErr && /No internet/.test(cloudErr);
+    const st = clubBusy ? 'Syncing now…' : waiting ? 'Waiting for the club admin to approve you — your work is kept on this device until then.'
+      : cloudErr ? cloudErr : cloudLast ? 'Up to date · last synced ' + new Date(cloudLast).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : 'Connecting…';
+    s.append(h('div', {class:'set-status' + (off || cloudErr || waiting ? ' warn' : '')}, h('span', {class:'cs-dot' + (off ? ' off' : (cloudErr || waiting) ? ' warn' : '')}), h('span', {text:st})),
+      h('div', {class:'set-actions'},
+        h('button', {type:'button', class:'btn', text:'Sync now', onclick:async function(){ await clubSync(); renderSettings(); }}),
+        h('button', {type:'button', class:'btn btn-danger-ghost', text:'Sign out', onclick:function(){ closeModal(setModal, true); cloudSignOut(); }})));
+    p.appendChild(s);
+  }
+  /* ---------- My teams ---------- */
+  function setTeams(p){
+    const ms = myGroups(), limited = !!(CLOUD && CLOUD.allowedGroups && CLOUD.allowedGroups());
+    const asked = localGroups().filter(function(g){ return ms.indexOf(g) === -1; });
+    const c = setCard('The teams I coach', limited ? 'The club admin confirms your teams. You can save work in these; everything else in the Club library is view-only.' : 'Pick every age group you coach. You can save work in these.');
+    c.append(h('div', {class:'set-chips'}, AGE_GROUPS.map(function(g){
+      const on = ms.indexOf(g) !== -1, wait = asked.indexOf(g) !== -1;
+      return h('span', {class:'set-chip' + (on ? ' on' : '') + (wait ? ' wait' : ''), title:wait ? 'Waiting for the club admin' : '', text:g + (wait ? ' · waiting' : '')});
+    })), h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn', text:limited ? 'Ask for different teams…' : 'Change teams…', onclick:function(){ closeModal(setModal, true); askGroup(); }})));
+    p.appendChild(c);
+    if(ms.length > 1){
+      const f = setCard('Where new work goes');
+      const sel = h('select', {class:'set-input', 'aria-label':'Team for new work'}, ms.map(function(g){ return h('option', {value:g, text:g, selected:g === ms[0]}); }));
+      sel.addEventListener('change', function(){
+        const gs = [sel.value].concat(ms.filter(function(g){ return g !== sel.value; }));
+        setSettings({groups:gs, group:gs[0]}); window.dispatchEvent(new CustomEvent('hufc-settings-changed', {detail:{groups:gs}}));
+        setSaved(); renderHome();
+      });
+      f.append(setRow('Main team', 'New sessions and lineups go here when you’re not inside one of your team folders', sel));
+      p.appendChild(f);
+    }
+  }
+  /* ---------- New sessions ---------- */
+  function setSessions(p){
+    const c = setCard('Every new session starts with', 'Fill in what’s usually the same — you can still change it in each session.');
+    c.append(
+      setRow('Coach', 'Shown on the plan and the PDF', setText('coach', (CLOUD && CLOUD.name && CLOUD.name()) || 'e.g. David Ambelidis', {label:'Coach'})),
+      setRow('Venue', 'Where you usually train', setText('venue', 'e.g. Olympic Village, Heidelberg West', {label:'Venue'})),
+      setRow('Start time', 'Your usual training time', setText('time', 'e.g. 6:30pm', {label:'Start time'})));
+    p.appendChild(c);
+  }
+  /* ---------- Matchday lineups ---------- */
+  function setLineups(p){
+    const d = setDefaults();
+    const c = setCard('Every new lineup starts with');
+    const fmt = h('div', {class:'seg set-seg'}, ['11', '9', '7', '5'].filter(function(k){ return LU_FORMATS[k]; }).map(function(k){
+      return h('button', {type:'button', class:luFormatDefault() === k ? 'active' : '', text:LU_FORMATS[k].label.replace(' (5-a-side)', ''), onclick:function(){ setDefault('luFormat', k); setSaved(); renderSettings(); }});
+    }));
+    const len = h('input', {type:'number', class:'set-input set-num', min:'5', max:'60', value:d.luLength || '', placeholder:String(LU_FORMATS[luFormatDefault()].length), 'aria-label':'Minutes each half'});
+    len.addEventListener('change', function(){ const v = parseInt(len.value, 10); setDefault('luLength', v > 0 ? Math.min(60, Math.max(5, v)) : ''); setSaved(); });
+    const colour = function(key, def, label){
+      const i = h('input', {type:'color', class:'set-colour', value:d[key] || def, 'aria-label':label});
+      i.addEventListener('input', function(){ setDefault(key, i.value); setSaved(); });
+      return i;
+    };
+    c.append(
+      setRow('Format', '', fmt),
+      setRow('Minutes each half', 'Leave empty for the usual length for the format', h('div', {class:'set-inline'}, len, h('span', {class:'set-unit', text:'min'}))),
+      setRow('Home ground', 'Filled in as the venue', setText('luVenue', 'e.g. Olympic Village', {label:'Home ground'})),
+      setRow('Kick-off', '', setText('luKickoff', 'e.g. 12:30pm', {label:'Kick-off'})),
+      setRow('Kit colours', 'Outfield shirts and goalkeeper', h('div', {class:'set-inline'}, colour('luShirt', '#ffd400', 'Shirt colour'), h('span', {class:'set-unit', text:'Players'}), colour('luGk', '#6a3d9a', 'Goalkeeper colour'), h('span', {class:'set-unit', text:'Keeper'}))));
+    p.appendChild(c);
+  }
+  /* ---------- Backup & data ---------- */
+  function setData(p){
+    const c = setCard('Backup', 'One file with all your sessions, pre-games, lineups, match videos (tags and clip details), practices and squads.');
+    c.append(h('div', {class:'set-actions'},
+      h('button', {type:'button', class:'btn btn-primary', text:'Back up everything', onclick:function(){ document.getElementById('backupBtn').click(); }}),
+      h('button', {type:'button', class:'btn', text:'Bring in a backup…', onclick:function(){ closeModal(setModal, true); document.getElementById('restoreBtn').click(); }})));
+    p.appendChild(c);
+    const i = setCard('Bring in practices');
+    i.append(setRow('From session files', 'Adds the practices from sessions you exported or another coach sent you', h('button', {type:'button', class:'btn', text:'Import…', onclick:function(){ closeModal(setModal, true); document.getElementById('libImportBtn').click(); }})));
+    p.appendChild(i);
+    const n = {s:0, p:0, l:0, m:0, bytes:0};
+    try{
+      for(let k = 0; k < localStorage.length; k++){
+        const key = localStorage.key(k); if(!key || key.indexOf('hufc-') !== 0) continue;
+        const v = localStorage.getItem(key) || ''; n.bytes += (key.length + v.length) * 2;
+        if(key.indexOf(LS_PREFIX) === 0 && key !== LS_PREFIX + 'draft'){ let d = null; try{ d = JSON.parse(v); }catch(e){} if(d && d.doc === 'pregame') n.p++; else if(d) n.s++; }
+        else if(key.indexOf(LU_PREFIX) === 0) n.l++;
+        else if(key.indexOf(MV_PREFIX) === 0) n.m++;
+      }
+    }catch(e){}
+    const mb = n.bytes / 1048576;
+    const u = setCard('On this device');
+    u.append(h('div', {class:'set-stats'},
+      [[n.s, 'Sessions'], [n.p, 'Pre-games'], [n.l, 'Lineups'], [n.m, 'Match videos']].map(function(x){ return h('div', {class:'set-stat'}, h('b', {text:String(x[0])}), h('span', {text:x[1]})); })),
+      h('div', {class:'set-meter', title:mb.toFixed(1) + ' MB used'}, h('span', {style:'width:' + Math.min(100, Math.max(2, mb / 10 * 100)).toFixed(1) + '%'})),
+      h('p', {class:'set-sub', text:(mb < 0.1 ? Math.max(1, Math.round(n.bytes / 1024)) + ' KB' : mb.toFixed(1) + ' MB') + ' of about 10 MB used by plans. Match videos and clips are stored separately.'}));
+    p.appendChild(u);
+  }
+  /* ---------- Club (admin) ---------- */
+  function setClub(p){
+    const list = CLOUD && CLOUD.coaches ? CLOUD.coaches() : [];
+    const pend = list.filter(function(c){ return !c.approved || (c.asked.length && c.asked.slice().sort().join() !== c.given.slice().sort().join()); }).length;
+    const c = setCard('Coaches', 'Approve new coaches, confirm their teams, and keep the club roster.');
+    c.append(h('div', {class:'set-stats'},
+      h('div', {class:'set-stat'}, h('b', {text:String(list.filter(function(x){ return x.approved; }).length)}), h('span', {text:'Approved'})),
+      h('div', {class:'set-stat' + (pend ? ' hot' : '')}, h('b', {text:String(pend)}), h('span', {text:'Waiting'}))),
+      h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn btn-primary', text:pend ? 'Review ' + pend + ' waiting' : 'Open coaches', onclick:function(){ closeModal(setModal, true); coachesOpen(); }})));
+    p.appendChild(c);
+  }
+  /* ---------- About ---------- */
+  function setAbout(p){
+    const ver = (document.querySelector('.home-version') || {}).textContent || '';
+    const where = window.hufcDesktop ? 'Windows program' : (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) ? 'iPhone / iPad app' : CLOUD ? 'In the browser' : 'Online planner';
+    const c = setCard('HUFC Season Planner');
+    c.append(h('div', {class:'set-about'}, h('img', {class:'set-crest', alt:'', src:document.querySelector('.home-crest').src}),
+      h('div', null, h('div', {class:'set-who-name', text:'Heidelberg United FC'}), h('div', {class:'set-who-mail', text:where + ' · ' + ver.replace('HUFC Session Planner · ', '')}))),
+      h('p', {class:'set-sub', text:'Updates arrive by themselves: the app shows an Update bar, the Windows program offers Reload.'}));
+    p.appendChild(c);
+  }
+
+  document.getElementById('setClose').addEventListener('click', function(){ closeModal(setModal); });
+  setModal.addEventListener('click', function(e){ if(e.target === setModal) closeModal(setModal); });
+  document.getElementById('homeSetBtn').addEventListener('click', function(){ settingsOpen(); });
 
   /* =====================================================================
      Pre-game plan: what we show the players before a match — our shape in each
