@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027214800">
+<meta name="hufc-build" content="20261027215133">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2902,7 +2902,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 9:48pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 9:51pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11383,13 +11383,17 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       window.__HUFC_REC = true; document.getElementById('anVideoWrap').classList.add('recording');
       const mime = anRecMime();
       /* copy the picture at up to 1080p (full HD), one copy per new frame */
-      let draw = 0, vfc = 0, settled = false;
+      let draw = 0, vfc = 0, settled = false, recRef = null, recOn = false;
+      const pre = Math.max(0, start - 1.5);   /* start playing a little earlier so the video is running smoothly when recording begins */
       const vw = anVideo.videoWidth || 1280, vh = anVideo.videoHeight || 720, sc = Math.min(1, 1920 / vw, 1080 / vh);
       const cv = document.createElement('canvas'); cv.width = Math.round(vw * sc / 2) * 2; cv.height = Math.round(vh * sc / 2) * 2;
       const g = cv.getContext('2d', {alpha:false});
       const paint = function(){
         try{ g.drawImage(anVideo, 0, 0, cv.width, cv.height); }catch(e){}
         if(settled) return;
+        if(recRef && !recOn && !anVideo.paused && anVideo.currentTime >= start - 0.02){
+          try{ recRef.start(1000); recOn = true; }catch(e){ finish(false, 'record'); return; }
+        }
         if(anVideo.requestVideoFrameCallback) vfc = anVideo.requestVideoFrameCallback(paint); else draw = requestAnimationFrame(paint);
       };
       paint();
@@ -11425,10 +11429,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
         try{ anVideo.pause(); }catch(e){}
       };
       const tick = function(){
-        const done = Math.min(1, (anVideo.currentTime - start) / (end - start));
+        const done = Math.max(0, Math.min(1, (anVideo.currentTime - start) / (end - start)));
         const bar = document.getElementById('anRecBar'); if(bar) bar.style.width = Math.round(done * 100) + '%';
         const tx = document.getElementById('anRecText'); if(tx) tx.textContent = 'Making your clip… ' + Math.max(0, Math.round(anVideo.currentTime - start)) + ' / ' + Math.round(end - start) + 's';
-        if(anVideo.currentTime >= end) finish(true);
+        if(recOn && anVideo.currentTime >= end) finish(true);
       };
       anRec = {cancel:function(){ finish(false); }};
       anVideo.playbackRate = 1;
@@ -11436,13 +11440,14 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       function go(){
         anVideo.removeEventListener('seeked', go);
         if(settled) return;
-        try{ rec.start(1000); }catch(e){ finish(false, 'record'); return; }
+        recRef = rec;
         anVideo.addEventListener('timeupdate', tick);
         const p = anVideo.play(); if(p && p.catch) p.catch(function(){ finish(false, 'record'); });
+        if(start - pre < 0.05) setTimeout(function(){ if(!recOn && !settled){ try{ rec.start(1000); recOn = true; }catch(e){ finish(false, 'record'); } } }, 250);
       }
       anVideo.addEventListener('seeked', go);
       anClipEnd = null; anQueue = null;
-      anVideo.currentTime = start;
+      anVideo.currentTime = pre;
       /* if the video doesn't move for 8 seconds, stop and say so (never sit there stuck) */
       dog = setInterval(function(){
         const t = anVideo.currentTime;
@@ -12997,7 +13002,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'3.14', d:'27 Oct 2026', t:'Clip fixes', n:['Fixed: the Cancel button while making a clip was covered by the seek bar', 'A clip that stops making progress stops by itself and says so', 'While a clip is being made nothing can pause it (taps, keys, syncing wait), so clips don’t have little stops in them', 'Clips are copied frame by frame at up to full HD (1080p) for smoother clips']},
+    {v:'3.14', d:'27 Oct 2026', t:'Clip fixes', n:['Fixed: the Cancel button while making a clip was covered by the seek bar', 'A clip that stops making progress stops by itself and says so', 'While a clip is being made nothing can pause it (taps, keys, syncing wait), so clips don’t have little stops in them', 'Clips are copied frame by frame at up to full HD (1080p) for smoother clips', 'No more jerky start: the video gets a short run-up before recording begins']},
     {v:'3.13', d:'27 Oct 2026', t:'Coaches’ work stays put', n:['A coach’s saved session, lineup or pre-game stays in the club library until that coach (or the admin) presses Delete', 'Fixed: a slow or half-loaded club library could make other coaches’ sessions disappear', 'If a copy goes missing on a device, it comes back from the club library instead of being removed for everyone', 'If a coach’s own work went missing from the club library, their device puts it back', 'Deleting leaves a marker, so a coach’s (or the admin’s) delete reaches every device']},
     {v:'3.12', d:'27 Oct 2026', t:'Proper full screen', n:['Full screen fills the whole screen with the match video', 'The seek bar and tag buttons float over the picture and fade while you watch — move the mouse or tap to bring them back', 'Play and full-screen buttons on the match video’s bar']},
     {v:'3.11', d:'27 Oct 2026', t:'The match video is just there', n:['Open a match and its video is already loaded — no extra tap', 'The Windows program plays it straight from where it is on your computer; other devices keep a copy', 'Change video… at the top of the window to use a different video']},
