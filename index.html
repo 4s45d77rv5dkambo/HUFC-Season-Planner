@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027211128">
+<meta name="hufc-build" content="20261027211723">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -380,6 +380,7 @@ This typically indicates that your device does not have a healthy Internet conne
         }
       },
       async __refresh(){ await allReady(); },
+      __complete(){ return true; },   /* allReady() only returns once every coach's list is here */
       async queryPermission(){ return 'granted'; }, async requestPermission(){ return 'granted'; }};
   }
 
@@ -2896,7 +2897,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 9:11pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 9:17pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -7621,7 +7622,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           ev.stopPropagation();
           if(!(await askDelete(pre ? 'pre-game' : 'session', sessionName(s) || (pre ? 'Untitled pre-game' : 'Untitled session'), pre ? '' : 'Its practices stay in Saved practices.'))) return;
           const raw = localStorage.getItem(x.key);
-          try{ localStorage.removeItem(x.key); }catch(e){}
+          try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){}
           redraw(); clubSyncSoon();
           showToast('Removed “' + (sessionName(s) || 'Untitled session') + '”', function(){ try{ localStorage.setItem(x.key, raw); }catch(e){} redraw(); clubSyncSoon(); });
         }})
@@ -7870,7 +7871,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       if(!(await askDelete('lineup', name))) return;
       luFlush();
       const key = luKey, raw = localStorage.getItem(key);
-      try{ localStorage.removeItem(key); }catch(e){}
+      try{ localStorage.removeItem(key); noteDeleted(key); }catch(e){}
       delDone(name, key, raw);
       return;
     }
@@ -7879,7 +7880,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(!(await askDelete(what, name, pre ? '' : 'Its practices stay in Saved practices.'))) return;
     flush();
     const key = storageKey, raw = localStorage.getItem(key);
-    try{ localStorage.removeItem(key); }catch(e){}
+    try{ localStorage.removeItem(key); noteDeleted(key); }catch(e){}
     delDone(name, key, raw);
   });
   function delDone(name, key, raw){
@@ -10048,7 +10049,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
             ev.stopPropagation();
             if(!(await askDelete('lineup', name || 'Untitled lineup'))) return;
             const raw = localStorage.getItem(x.key);
-            try{ localStorage.removeItem(x.key); }catch(e){}
+            try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){}
             refresh(); clubSyncSoon();
             showToast('Removed “' + (name || 'Untitled lineup') + '”', function(){ try{ localStorage.setItem(x.key, raw); }catch(e){} refresh(); clubSyncSoon(); });
           }})));
@@ -11179,7 +11180,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
         canEdit(m) ? h('button', {type:'button', class:'icon-btn danger', title:'Delete this match video', 'aria-label':'Delete match video', text:'✕', onclick:async function(){
           if(!(await askDelete('match video', title, 'Its tags and clips go too. The video file on your device isn’t touched.'))) return;
           const raw = localStorage.getItem(x.key);
-          try{ localStorage.removeItem(x.key); }catch(e){}
+          try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){}
           setTimeout(function(){ if(!localStorage.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); try{ localStorage.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
           clubSyncSoon(); anPickOpen();
           showToast('Deleted “' + title + '”', function(){ try{ localStorage.setItem(x.key, raw); }catch(e){} clubSyncSoon(); anPickOpen(); });
@@ -11209,7 +11210,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
             ev.stopPropagation();
             if(!(await askDelete('match video', title, 'Its tags and clips go too. The video file on your device isn’t touched.'))) return;
             const raw = localStorage.getItem(x.key);
-            try{ localStorage.removeItem(x.key); }catch(e){}
+            try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){}
             clubSyncSoon(); renderHome();
             showToast('Deleted “' + title + '”', function(){ try{ localStorage.setItem(x.key, raw); }catch(e){} clubSyncSoon(); renderHome(); });
           }}) : null));
@@ -12021,6 +12022,18 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
      ===================================================================== */
   const AGE_GROUPS = ['U13','U14','U15','U16','U18','U20','U23'];
   const SET_KEY = 'hufc-settings', SYNC_KEY = 'hufc-sync-index';
+  /* things a coach deleted on purpose (pressed Delete): only these are taken out of the club library for everyone.
+     Anything else that's missing here is never deleted from the club — a coach's saved work stays until they (or the admin) delete it. */
+  const DEL_KEY = 'hufc-deleted';
+  function deletedLog(){ try{ return JSON.parse(localStorage.getItem(DEL_KEY) || '{}') || {}; }catch(e){ return {}; } }
+  function noteDeleted(key){
+    try{
+      const d = deletedLog(), now = Date.now(); d[key] = now;
+      Object.keys(d).forEach(function(k){ if(now - d[k] > 90 * 864e5) delete d[k]; });
+      localStorage.setItem(DEL_KEY, JSON.stringify(d));
+    }catch(e){}
+  }
+  function wasDeleted(key){ return !!deletedLog()[key]; }
   const CLOUD = window.__HUFC_CLOUD || null;   /* your HUFC account (Firebase) — see cloud.js */
   let cloudLast = 0, cloudErr = '';
   function getSettings(){ try{ return JSON.parse(localStorage.getItem(SET_KEY) || '{}') || {}; }catch(e){ return {}; } }
@@ -12294,6 +12307,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       async createWritable(){ let buf = ''; return {async write(s){ buf += s; }, async close(){ await ocall('write', p, buf); }}; }};
   }
   function bridgeDir(path, name){
+    let complete = false;
     const P = function(n){ return path ? path + '/' + n : n; };
     const nf = function(){ const e = new Error('not found'); e.name = 'NotFoundError'; return e; };
     return {kind:'directory', name:name || 'Online planner', __bridge:true,
@@ -12301,7 +12315,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       async getFileHandle(n, o){ const p = P(n); if(!(o && o.create) && !(await ocall('exists', p))) throw nf(); return bridgeFile(p, n); },
       async removeEntry(n){ await ocall('remove', P(n)); },
       async *values(){ const all = await ocall('readAll', path) || {}; for(const n of Object.keys(all)) yield bridgeFile(P(n), n, all[n]); },
-      async __refresh(){ await ocall('refresh'); },
+      async __refresh(){ const r = await ocall('refresh'); complete = r !== false; },
+      __complete(){ return complete; },
       async queryPermission(){ return 'granted'; }, async requestPermission(){ return 'granted'; }};
   }
   function applyOnline(s){
@@ -12679,11 +12694,12 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function writeIndex(ix){ try{ localStorage.setItem(syncKey(), JSON.stringify(ix)); }catch(e){} }
   async function subdir(dir, name, create){ try{ return await dir.getDirectoryHandle(name, {create:!!create}); }catch(e){ return null; } }
   async function readDirFiles(dir){
-    const out = {};
+    const out = {}, bad = [];
     for await (const entry of dir.values()){
       if(entry.kind !== 'file' || !/\.json$/.test(entry.name)) continue;
-      try{ out[entry.name] = JSON.parse(await (await entry.getFile()).text()); }catch(e){}
+      try{ out[entry.name] = JSON.parse(await (await entry.getFile()).text()); }catch(e){ bad.push(entry.name); }
     }
+    Object.defineProperty(out, '__bad', {value:bad, enumerable:false});   /* there, but couldn't be read: never treated as deleted */
     return out;
   }
   async function writeJSON(dir, name, obj){
@@ -12728,6 +12744,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const own = myGroups(), canEdit = H.canEdit, clubOnline = H.online;
     let changed = 0, pushErr = null;
     if(H.dir.__refresh) await H.dir.__refresh();
+    const complete = H.dir.__complete ? !!H.dir.__complete() : (H.online && window.__HUFC_CLUB_COMPLETE ? !!window.__HUFC_CLUB_COMPLETE() : true);
     const ix = H.readIndex(), lib = readLibrary();
     for(const g of AGE_GROUPS){
       const mineG = clubOnline || own.indexOf(g) !== -1;   /* online, what you may change is decided per item */
@@ -12743,7 +12760,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           const id = name.replace(/\.json$/, ''), path = base + name, remote = files[name], rs = +remote[st] || 0;
           if(openNow(kind, id)){ continue; }
           const local = localGet(kind, id, lib), ls = local ? (+local[st] || 0) : 0;
-          if(!local && mineG && ix[path] && rs <= ix[path] && canEdit(remote)){            /* deleted here: take it out of the folder too */
+          if(!local && mineG && ix[path] && rs <= ix[path] && canEdit(remote) && complete && (kind === 'practices' || wasDeleted(SYNC_KINDS[kind].prefix + id))){            /* deleted here (Delete pressed): take it out of the folder too */
             try{ await kdir.removeEntry(name); }catch(e){}
             delete ix[path]; changed++; continue;
           }
@@ -12752,11 +12769,20 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
             try{ await kdir.removeEntry(name); }catch(e){}
             delete ix[path]; delete files[name]; continue;
           }
+          if(!local && kind !== 'practices' && wasDeleted(SYNC_KINDS[kind].prefix + id) && rs <= (ix[path] || 0)){ ix[path] = Math.max(rs, ix[path] || 0); continue; }   /* deleted here, waiting to go from the club */
           if(!local || ls < rs){ remote.group = g; localSet(kind, id, remote, lib); changed++; }
           ix[path] = Math.max(rs, ix[path] || 0);
         }
-        /* things removed from the folder by their coach (or moved to another folder) */
-        Object.keys(ix).forEach(function(path){
+        /* things removed from the folder by their coach (or moved to another folder) —
+           only when the whole list has really arrived, never for a file that's there but unreadable,
+           and never lots at once (that's a list that didn't load properly, not coaches deleting) */
+        const gone = !complete ? [] : Object.keys(ix).filter(function(path){
+          if(path.indexOf(base) !== 0) return false;
+          const nm = path.slice(base.length);
+          return !files[nm] && (files.__bad || []).indexOf(nm) === -1;
+        });
+        if(gone.length > 3 && gone.length > Object.keys(files).length * 0.25){ console.warn('sync: ' + gone.length + ' missing from ' + base + ' — not removing anything (list looks incomplete)'); gone.length = 0; }
+        gone.forEach(function(path){
           if(path.indexOf(base) !== 0 || files[path.slice(base.length)]) return;
           const id = path.slice(base.length).replace(/\.json$/, ''), local = localGet(kind, id, lib);
           if(local && mineG && (+local[st] || 0) > ix[path]) return;   /* changed here since — it goes back up below */
@@ -12919,6 +12945,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.13', d:'27 Oct 2026', t:'Coaches’ work stays put', n:['A coach’s saved session, lineup or pre-game stays in the club library until that coach (or the admin) presses Delete', 'Fixed: a slow or half-loaded club library could make other coaches’ sessions disappear', 'If a copy goes missing on a device, it comes back from the club library instead of being removed for everyone']},
     {v:'3.12', d:'27 Oct 2026', t:'Proper full screen', n:['Full screen fills the whole screen with the match video', 'The seek bar and tag buttons float over the picture and fade while you watch — move the mouse or tap to bring them back', 'Play and full-screen buttons on the match video’s bar']},
     {v:'3.11', d:'27 Oct 2026', t:'The match video is just there', n:['Open a match and its video is already loaded — no extra tap', 'The Windows program plays it straight from where it is on your computer; other devices keep a copy', 'Change video… at the top of the window to use a different video']},
     {v:'3.10', d:'27 Oct 2026', t:'Match videos and pre-games', n:['Attach a match video to a pre-game (next to Lineup in the match video window) — only the clips you choose go onto it', 'When cutting a clip, pick the pre-game board it goes on (e.g. Possession) and it’s added as it’s saved', '+ Add clip on every pre-game board: pick any clip you’ve cut from your match videos, drawings included']},
