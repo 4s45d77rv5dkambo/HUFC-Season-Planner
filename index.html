@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027223148">
+<meta name="hufc-build" content="20261027225521">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2912,7 +2912,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:31pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 10:55pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -10879,6 +10879,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     [a.ko, a.h1e, a.h2, a.h2e].forEach(function(t){ if(t != null) anMTicks.appendChild(h('span', {class:'an-cp-tick', style:'left:' + (t / d * 100).toFixed(2) + '%'})); });
   }
   ['timeupdate', 'loadedmetadata', 'durationchange', 'seeked', 'emptied'].forEach(function(ev){ anVideo.addEventListener(ev, function(){ if(!anMDrag) anMainPaint(); }); });
+  /* the pill slides along smoothly while the video plays (not a jump each second) */
+  let anMRaf = 0;
+  const anMRun = function(){ cancelAnimationFrame(anMRaf); const step = function(){ if(anVideo.paused || anVideo.ended){ anMRaf = 0; return; } if(!anMDrag){ const d = anVideo.duration || 0, f = d ? anVideo.currentTime / d * 100 : 0; anMFill.style.width = f + '%'; anMKnob.style.left = f + '%'; } anMRaf = requestAnimationFrame(step); }; anMRaf = requestAnimationFrame(step); };
+  ['play', 'playing'].forEach(function(ev){ anVideo.addEventListener(ev, anMRun); });
   const anMAt = function(e){ const r = anMSeek.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); };
   const anMGo = function(f){ if(anVideo.duration){ anVideo.currentTime = f * anVideo.duration; anClipEnd = null; } anMFill.style.width = (f * 100) + '%'; anMKnob.style.left = (f * 100) + '%'; anMTime.textContent = anClock(f * (anVideo.duration || 0)) + ' / ' + anClock(anVideo.duration || 0); };
   anMSeek.addEventListener('pointerdown', function(e){
@@ -11883,6 +11887,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(anDC && d) anMarks(anDC).forEach(function(m){ if(m.shapes && m.shapes.length) anCpTicks.appendChild(h('span', {class:'an-cp-tick', style:'left:' + (m.t / d * 100).toFixed(2) + '%', title:'Drawings at ' + anClock(m.t)})); });
   }
   ['timeupdate', 'loadedmetadata', 'durationchange', 'seeked', 'play', 'pause', 'ended'].forEach(function(ev){ anCV.addEventListener(ev, function(){ if(!anCpDrag) anCpPaint(); }); });
+  /* smooth: the pill slides along while the clip plays */
+  let anCpRaf = 0;
+  const anCpRun = function(){ cancelAnimationFrame(anCpRaf); const step = function(){ if(anCV.paused || anCV.ended){ anCpRaf = 0; return; } if(!anCpDrag){ const d = anCpD(), f = d ? Math.max(0, Math.min(1, anCpT() / d)) * 100 : 0; anCpFill.style.width = f + '%'; anCpKnob.style.left = f + '%'; } anCpRaf = requestAnimationFrame(step); }; anCpRaf = requestAnimationFrame(step); };
+  ['play', 'playing'].forEach(function(ev){ anCV.addEventListener(ev, anCpRun); });
   const anCpToggle = function(){ if(anDMode) return; if(anCV.paused || anCV.ended) anCV.play().catch(function(){}); else anCV.pause(); };
   anCpPlay.addEventListener('click', anCpToggle);
   anCV.addEventListener('click', anCpToggle);
@@ -13088,6 +13096,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.18', d:'27 Oct 2026', t:'Smooth video bar', n:['The yellow pill under every video (match videos, clips and pre-game videos) slides along smoothly as it plays, instead of jumping each second']},
     {v:'3.17', d:'27 Oct 2026', t:'Check-over fixes', n:['Fixed: Undo after deleting a session, lineup, pre-game or match video could be undone again by the next sync — it now stays back', 'Deleting a clip also clears its saved drawn copy, and closes it if it’s playing', 'Adding a clip to a pre-game while a different match is open now works', 'The T key (us / them) updates the full-screen tag buttons too', 'Match video list uses the pre-game’s name when it has no title', 'Clearer message when a clip can’t be added to a pre-game']},
     {v:'3.16', d:'27 Oct 2026', t:'Instant clips', n:['Save clip is instant — no more waiting for the clip to play through', 'A clip plays straight from the match video, always at the right speed', 'Its own video file is only made when you share it or put it on a pre-game (at normal speed, even if you were watching at 4×)', 'Changing where a clip starts or ends is instant too']},
     {v:'3.15', d:'27 Oct 2026', t:'Edit your clips', n:['✎ Edit on any clip: change its name, note and players — or where it starts and ends (it’s re-cut, and your drawings stay on the same moment)', 'Picking a length now keeps the clip ending where you are in the video']},
@@ -13954,6 +13963,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const toggle = function(){ if(v.paused || v.ended) v.play().catch(function(){}); else v.pause(); };
     const wake = function(){ wrap.classList.add('awake'); clearTimeout(idle); idle = setTimeout(function(){ if(!dragging) wrap.classList.remove('awake'); }, 2200); };
     ['timeupdate', 'loadedmetadata', 'durationchange', 'seeked'].forEach(function(ev){ v.addEventListener(ev, function(){ if(!dragging) show(); }); });
+    /* the pill slides along smoothly while it plays */
+    let raf = 0;
+    const run = function(){ cancelAnimationFrame(raf); const step = function(){ if(v.paused || v.ended || !v.isConnected){ raf = 0; return; } if(!dragging){ const f = v.duration ? v.currentTime / v.duration * 100 : 0; fill.style.width = f + '%'; knob.style.left = f + '%'; } raf = requestAnimationFrame(step); }; raf = requestAnimationFrame(step); };
+    ['play', 'playing'].forEach(function(ev){ v.addEventListener(ev, run); });
     ['play', 'pause', 'ended'].forEach(function(ev){ v.addEventListener(ev, function(){ state(); wake(); }); });
     v.addEventListener('volumechange', function(){ snd.innerHTML = v.muted ? PG_VID_ICON.mute : PG_VID_ICON.sound; snd.setAttribute('aria-label', v.muted ? 'Sound on' : 'Sound off'); });
     v.addEventListener('click', toggle);
