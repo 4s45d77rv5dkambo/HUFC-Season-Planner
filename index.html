@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028100545">
+<meta name="hufc-build" content="20261028101145">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1663,6 +1663,12 @@ td.gt-an{font-size:14px; text-transform:none;}
 .set-tab.on{background:var(--black); color:var(--white);}
 .set-tab.on .set-ico{filter:none;}
 .set-ico{width:22px; text-align:center; font-size:15px;}
+.set-ico-img{display:inline-flex; align-items:center; justify-content:center; height:22px; flex-shrink:0;}
+.set-ico-img img{width:20px; height:22px; object-fit:contain;}
+.set-ico-img svg{display:block;}
+.set-ico-crest{width:24px; height:24px; border-radius:6px; background:#0d0e0f;}
+.set-ico-crest img{width:19px; height:21px;}
+.set-tab.on .set-ico-crest{box-shadow:0 0 0 1px #3a3b3e;}
 .set-pane{padding:18px 20px 28px; overflow:auto; display:flex; flex-direction:column; gap:14px;}
 .set-card{background:var(--white); border:1px solid var(--line); border-radius:10px; padding:16px 18px;}
 .set-card h4{margin:0 0 4px; font-family:'Barlow Condensed', sans-serif; font-size:17px; letter-spacing:.05em; text-transform:uppercase;}
@@ -2955,7 +2961,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 10:05am</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 10:11am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -13147,7 +13153,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'3.20', d:'28 Oct 2026', t:'A proper Windows app', n:['The Windows program (v1.5.9) has its own black title bar with the crest — no more File / Edit / View / Help strip', 'The ☰ button on the title bar holds your planner folder, back up, zoom and About', '“Everything is saved” sits quietly in the title bar instead of its own white strip', 'A slim yellow scroll bar in the program', 'A bigger, sharper crest on the title bar']},
+    {v:'3.20', d:'28 Oct 2026', t:'A proper Windows app', n:['The Windows program (v1.5.9) has its own black title bar with the crest — no more File / Edit / View / Help strip', 'The ☰ button on the title bar holds your planner folder, back up, zoom and About', '“Everything is saved” sits quietly in the title bar instead of its own white strip', 'A slim yellow scroll bar in the program', 'A bigger, sharper crest on the title bar', 'Settings: the crest on Club & sharing, and a little pitch with a formation on Matchday lineups']},
     {v:'3.19', d:'28 Oct 2026', t:'Match video buttons', n:['Every button in the match video windows is clear white, and turns black with yellow text when you hover over it or pick it']},
     {v:'3.18', d:'27 Oct 2026', t:'Smooth video bar', n:['The yellow pill under every video (match videos, clips and pre-game videos) slides along smoothly as it plays, instead of jumping each second', 'All the yellow pills (video bars and scroll bars) are a little wider']},
     {v:'3.17', d:'27 Oct 2026', t:'Check-over fixes', n:['Fixed: Undo after deleting a session, lineup, pre-game or match video could be undone again by the next sync — it now stays back', 'Deleting a clip also clears its saved drawn copy, and closes it if it’s playing', 'Adding a clip to a pre-game while a different match is open now works', 'The T key (us / them) updates the full-screen tag buttons too', 'Match video list uses the pre-game’s name when it has no title', 'Clearer message when a clip can’t be added to a pre-game']},
@@ -13193,8 +13199,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   ];
   const SET_TABS = [
     ['account', 'Account', '👤'], ['teams', 'My teams', '⚽'], ['sessions', 'New sessions', '📋'],
-    ['lineups', 'Matchday lineups', '🟨'], ['data', 'Backup & data', '💾'], ['club', 'Club & sharing', '🛡'], ['about', 'About', 'ℹ']
+    ['lineups', 'Matchday lineups', {html:'<svg viewBox="0 0 24 24" width="22" height="22"><rect x="3.5" y="1" width="17" height="22" rx="2" fill="#2e9d5b" stroke="#1f7a43" stroke-width=".8"/><path d="M3.5 12h17" stroke="#fff" stroke-width=".9" opacity=".85"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="#fff" stroke-width=".9" opacity=".85"/><path d="M8.5 23v-3h7v3M8.5 1v3h7V1" fill="none" stroke="#fff" stroke-width=".9" opacity=".85"/><circle cx="12" cy="20.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="6.6" cy="16.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="10.2" cy="17.2" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="13.8" cy="17.2" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="17.4" cy="16.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="8" cy="11.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="12" cy="12.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="16" cy="11.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="7.4" cy="5.8" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="12" cy="4.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="16.6" cy="5.8" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/></svg>'}], ['data', 'Backup & data', '💾'], ['club', 'Club & sharing', {crest:true}], ['about', 'About', 'ℹ']
   ];
+  /* a tab's picture: an emoji, a drawing, or the club crest */
+  function setTabIco(ic){
+    if(ic && ic.crest){ const c = document.getElementById('winbarCrest'); return h('span', {class:'set-ico set-ico-img set-ico-crest', 'aria-hidden':'true'}, h('img', {src:c ? c.src : '', alt:''})); }
+    if(ic && ic.html) return h('span', {class:'set-ico set-ico-img', 'aria-hidden':'true', html:ic.html});
+    return h('span', {class:'set-ico', 'aria-hidden':'true', text:ic});
+  }
   function setIsAdmin(){ const u = CLOUD && CLOUD.user ? CLOUD.user() : null; return !!(u && u.admin) || (!CLOUD && !!(who && who.admin)); }
   function settingsOpen(tab){
     if(tab) setTab = tab;
@@ -13207,7 +13219,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     SET_TABS.forEach(function(t){
       if(t[0] === 'club' && !setIsAdmin()) return;
       nav.appendChild(h('button', {type:'button', class:'set-tab' + (setTab === t[0] ? ' on' : ''), 'aria-current':setTab === t[0] ? 'page' : 'false',
-        onclick:function(){ setTab = t[0]; renderSettings(); }}, h('span', {class:'set-ico', 'aria-hidden':'true', text:t[2]}), h('span', {text:t[1]})));
+        onclick:function(){ setTab = t[0]; renderSettings(); }}, setTabIco(t[2]), h('span', {text:t[1]})));
     });
     const pane = document.getElementById('setPane'); pane.innerHTML = '';
     const fn = {account:setAccount, teams:setTeams, sessions:setSessions, lineups:setLineups, data:setData, club:setClub, about:setAbout}[setTab];
