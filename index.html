@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027144111">
+<meta name="hufc-build" content="20261027144249">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1580,6 +1580,19 @@ td.gt-an{font-size:14px; text-transform:none;}
 .set-about .set-who-name{font-family:'Barlow Condensed', sans-serif; font-size:24px; letter-spacing:.03em; text-transform:uppercase; color:var(--white);}
 .set-about .set-who-mail{color:#c9cacc;}
 .set-about .set-club{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:12.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--yellow); margin:2px 0 6px;}
+.set-hist{list-style:none; margin:8px 0 0; padding:0 0 0 14px; border-left:2px solid var(--line);}
+.set-hist-item{position:relative; padding:0 0 16px 14px;}
+.set-hist-item::before{content:''; position:absolute; left:-21px; top:4px; width:12px; height:12px; border-radius:50%; background:var(--white); border:2px solid var(--muted);}
+.set-hist-item.latest::before{background:var(--yellow); border-color:var(--black);}
+.set-hist-item.more{display:none;}
+.set-hist.all .set-hist-item.more{display:block;}
+.set-hist-top{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.set-ver{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:13px; letter-spacing:.05em; padding:2px 7px; border-radius:5px; background:var(--black); color:var(--yellow);}
+.set-hist-t{font-weight:700; font-size:15px;}
+.set-new{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; padding:2px 6px; border-radius:5px; background:var(--yellow); color:var(--black);}
+.set-hist-d{margin-left:auto; color:var(--muted); font-size:13px;}
+.set-hist-n{margin:6px 0 0; padding-left:18px; color:var(--grey); font-size:14px; line-height:1.45;}
+.set-hist-n li + li{margin-top:2px;}
 @media (max-width:700px){
   .set-box{height:92vh;}
   .set-body{grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr);}
@@ -1591,6 +1604,11 @@ td.gt-an{font-size:14px; text-transform:none;}
   .set-row-ctl{flex:1 1 auto; justify-content:flex-start;}
   .set-inline{justify-content:flex-start;}
   .home-set-btn span{display:none;}
+  .set-about{padding:12px 14px; gap:12px;}
+  .set-crest{width:58px; height:58px;}
+  .set-about .set-who-name{font-size:20px;}
+  .set-about .set-club{font-size:11px; letter-spacing:.12em;}
+  .set-about .set-who-mail{font-size:13px;}
   .home-set-btn{padding:7px;}
 }
 
@@ -2733,7 +2751,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 2:41pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 2:42pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11936,6 +11954,20 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     return L;
   }
 
+  /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
+  const SET_HISTORY = [
+    {v:'3.0', d:'27 Oct 2026', t:'Settings', n:['A Settings window (⚙ on the home page): your account, your teams, and what new sessions and lineups start with', 'Backups, storage on this device, and coach approvals (admin) in one place', 'This update history']},
+    {v:'2.9', d:'27 Oct 2026', t:'Delete from inside a plan', n:['A Delete button in the top bar of every session, pre-game and lineup — it asks first, and you can Undo']},
+    {v:'2.8', d:'27 Oct 2026', t:'Match videos on their own', n:['A match video no longer needs a lineup', 'Attach or detach a lineup from inside the match video window — its players and opponent come with it', 'Name each match video']},
+    {v:'2.7', d:'27 Oct 2026', t:'Clips', n:['+ Match video and Open match videos on the home page', 'Cut clips (up to 30 seconds) from a full match, name them and tag players', 'Share or save a clip, or put it straight onto a pre-game board']},
+    {v:'2.6', d:'27 Oct 2026', t:'Match analysis', n:['Open a match video (e.g. from Veo), mark kick-off and the 2nd half, and tag moments with one tap', 'Tap any tag to replay it, filter by tag or player, and see match stats', 'Tags on players add up in Game time & player stats', 'Picture diagrams are now the same size as normal diagrams']},
+    {v:'2.5', d:'26 Oct 2026', t:'Who made what', n:['Home cards show the age group and coach', 'Inside a plan, the coach’s name sits under its title']},
+    {v:'2.4', d:'26 Oct 2026', t:'Club roster', n:['The admin keeps a roster of coaches with their teams and emails', 'Coaches on the roster get their teams straight away when they sign up', 'A tidier Coaches window']},
+    {v:'2.3', d:'26 Oct 2026', t:'Approvals and faster opening', n:['New coaches need the admin’s approval before they see the club library', 'The admin confirms each coach’s age groups', 'The planner opens faster, and the folder bar is tidier with an account button']},
+    {v:'2.2', d:'25 Oct 2026', t:'Sync and the club library', n:['Sign in once to keep the same plans on your computer, iPhone and iPad', 'Every coach sees the whole club’s work; you can only change your own, and the admin can change anything']},
+    {v:'2.1', d:'25 Oct 2026', t:'Files on iPhone', n:['The iPhone and iPad app can open backups and plan files']},
+    {v:'2.0', d:'23 Oct 2026', t:'iPhone and iPad app', n:['Add the planner to your home screen — it works offline, without Claude', 'Updates arrive by themselves with an Update bar']}
+  ];
   const SET_TABS = [
     ['account', 'Account', '👤'], ['teams', 'My teams', '⚽'], ['sessions', 'New sessions', '📋'],
     ['lineups', 'Matchday lineups', '🟨'], ['data', 'Backup & data', '💾'], ['club', 'Club & coaches', '🛡'], ['about', 'About', 'ℹ']
@@ -12110,9 +12142,24 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const where = window.hufcDesktop ? 'Windows program' : (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) ? 'iPhone / iPad app' : CLOUD ? 'In the browser' : 'Online planner';
     const c = setCard('HUFC Season Planner');
     c.append(h('div', {class:'set-about'}, h('img', {class:'set-crest', alt:'', src:document.querySelector('.home-crest').src}),
-      h('div', null, h('div', {class:'set-who-name', text:'Heidelberg United'}), h('div', {class:'set-club', text:'Football Club · Est. 1958'}), h('div', {class:'set-who-mail', text:where + ' · ' + ver.replace('HUFC Session Planner · ', '')}))),
+      h('div', null, h('div', {class:'set-who-name', text:'Heidelberg United'}), h('div', {class:'set-club', text:'Football Club · Est. 1958'}),
+        h('div', {class:'set-who-mail', text:'Version ' + SET_HISTORY[0].v + ' · ' + where + ' · ' + ver.replace('HUFC Session Planner · ', '')}))),
       h('p', {class:'set-sub', text:'Updates arrive by themselves: the app shows an Update bar, the Windows program offers Reload.'}));
     p.appendChild(c);
+    const hc = setCard('Update history');
+    const list = h('ol', {class:'set-hist'});
+    const SHOW = 4;
+    SET_HISTORY.forEach(function(e, i){
+      list.appendChild(h('li', {class:'set-hist-item' + (i === 0 ? ' latest' : '') + (i >= SHOW ? ' more' : '')},
+        h('div', {class:'set-hist-top'}, h('span', {class:'set-ver', text:'v' + e.v}), h('span', {class:'set-hist-t', text:e.t}), i === 0 ? h('span', {class:'set-new', text:'Latest'}) : '', h('span', {class:'set-hist-d', text:e.d})),
+        h('ul', {class:'set-hist-n'}, e.n.map(function(x){ return h('li', {text:x}); }))));
+    });
+    hc.append(list);
+    if(SET_HISTORY.length > SHOW){
+      const more = h('button', {type:'button', class:'btn btn-small', text:'Show all ' + SET_HISTORY.length + ' updates', onclick:function(){ list.classList.add('all'); more.remove(); }});
+      hc.append(h('div', {class:'set-actions'}, more));
+    }
+    p.appendChild(hc);
   }
 
   document.getElementById('setClose').addEventListener('click', function(){ closeModal(setModal); });
