@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027152347">
+<meta name="hufc-build" content="20261027193124">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1500,7 +1500,7 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-cp-stage{position:relative; flex:1; min-height:0; overflow:hidden;}
 .an-draw{position:absolute; left:0; top:0; overflow:visible; pointer-events:none; touch-action:none;}
 .an-cp-stage.drawing .an-draw{pointer-events:auto; cursor:crosshair; outline:2px dashed rgba(255,212,0,.55); outline-offset:-2px;}
-.an-freeze-flag{position:absolute; bottom:10px; left:50%; transform:translateX(-50%); background:rgba(13,14,15,.82); color:var(--yellow); font-weight:700; font-size:13px; padding:5px 12px; border-radius:99px; pointer-events:none; white-space:nowrap;}
+.an-freeze-flag{position:absolute; bottom:62px; left:50%; transform:translateX(-50%); background:rgba(13,14,15,.82); color:var(--yellow); font-weight:700; font-size:13px; padding:5px 12px; border-radius:99px; pointer-events:none; white-space:nowrap;}
 .an-draw-bar{display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px 10px; background:#111; color:#fff; border-top:1px solid #2a2b2d; min-height:48px;}
 .an-draw-bar .btn{background:#1d1e20; color:#fff; border-color:#3a3b3e;}
 .an-draw-bar .btn:hover{border-color:#fff;}
@@ -1535,6 +1535,43 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-pg-title{font-weight:700;}
 .an-pg-boards{display:flex; flex-wrap:wrap; gap:6px;}
 @media screen and (max-width:820px){ .an-list#anClipList{overflow:visible;} }
+
+/* the clip player's own controls (like pre-game clips): always shown, hidden while drawing */
+.an-cp-bar{opacity:1; z-index:2;}
+.an-cp-stage.drawing .an-cp-bar{display:none;}
+.an-cp-stage.drawing .an-freeze-flag{bottom:10px;}
+.an-cp-stage video{cursor:pointer;}
+.an-cp-ticks{position:absolute; left:0; right:0; top:50%; height:0; pointer-events:none;}
+.an-cp-tick{position:absolute; top:-7px; width:4px; height:14px; margin-left:-2px; border-radius:2px; background:#fff; box-shadow:0 0 0 1.5px #0d0e0f;}
+.pg-vid-btn.on{background:var(--yellow); color:var(--black);}
+.an-clip-player:fullscreen, .an-clip-player:-webkit-full-screen{width:100%; height:100%; background:#000;}
+.an-clip-player.an-full{position:fixed; inset:0; z-index:400; border-radius:0;}
+/* slim yellow pill scrollbars in the match video window and Settings (like the dropdowns) */
+:is(.an-box, .set-box) ::-webkit-scrollbar{width:10px; height:10px;}
+:is(.an-box, .set-box) ::-webkit-scrollbar-track{background:#ffffff; border-radius:999px; margin:3px;}
+:is(.an-box, .set-box) ::-webkit-scrollbar-thumb{background:#ffd400; border-radius:999px; border:2px solid #ffffff; min-height:36px;}
+:is(.an-box, .set-box) ::-webkit-scrollbar-thumb:hover{background:#f2c700;}
+:is(.an-box, .set-box) ::-webkit-scrollbar-button{display:none; width:0; height:0;}
+@supports not selector(::-webkit-scrollbar){ :is(.an-box, .set-box) *{scrollbar-color:#ffd400 #ffffff; scrollbar-width:thin;} }
+
+/* the halves: set / clear each mark */
+.an-halves{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+.an-half-set{border-style:dashed;}
+.an-half-chip{display:inline-flex; align-items:center; border:1px solid var(--black); border-radius:99px; overflow:hidden; background:var(--black);}
+.an-half-go{border:0; background:transparent; color:var(--yellow); font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:13.5px; letter-spacing:.04em; text-transform:uppercase; padding:6px 10px; cursor:pointer;}
+.an-half-x{border:0; border-left:1px solid #3a3b3e; background:transparent; color:#bbb; padding:6px 9px; cursor:pointer;}
+.an-half-x:hover{color:#ff6b61;}
+
+/* clip length: quick picks and a slider from 1 second to 1 minute */
+.an-len{display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap; margin:6px 0 4px;}
+.an-len .lbl{font-weight:700; font-size:13px;}
+.an-len-picks{display:flex; gap:4px; flex-wrap:wrap;}
+.an-len-pick{border:1px solid var(--line); background:var(--white); border-radius:99px; padding:4px 10px; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:13px; letter-spacing:.04em; cursor:pointer;}
+.an-len-pick:hover{border-color:var(--black);}
+.an-len-pick.on{background:var(--black); color:var(--yellow); border-color:var(--black);}
+.an-len-range{flex:1 1 160px; min-width:120px; accent-color:#0d0e0f;}
+.an-len-where{display:flex; gap:6px;}
+.an-nudge{min-width:0 !important; padding-left:8px; padding-right:8px;}
 
 /* ---------- Settings ---------- */
 .home-hero{position:relative;}
@@ -2789,6 +2826,16 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   <section class="home-block">
     <div class="home-head">
+      <h2>Match videos</h2><span class="home-count" id="matchesCount"></span>
+      <span class="home-head-spacer"></span>
+      <input type="search" class="lib-search" id="matchSearch" placeholder="Search match videos" aria-label="Search match videos">
+    </div>
+    <div class="session-list" id="homeMatches"></div>
+    <div class="home-more" id="matchesMore" hidden></div>
+  </section>
+
+  <section class="home-block">
+    <div class="home-head">
       <h2>Saved practices</h2><span class="home-count" id="libCount"></span>
       <span class="home-head-spacer"></span>
       <input type="search" class="lib-search" id="libSearch" placeholder="Search practices" aria-label="Search practices">
@@ -2801,7 +2848,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 3:23pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 7:31pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3093,7 +3140,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           <div class="an-rec" id="anRec" hidden><div class="an-rec-box"><span class="an-rec-dot"></span><span id="anRecText">Making your clip…</span><div class="an-rec-track"><div class="an-rec-bar" id="anRecBar"></div></div><button type="button" class="btn btn-small" id="anRecCancel">Cancel</button></div></div>
           <div class="an-clip-player" id="anClipPlayer" hidden>
             <div class="an-clip-top"><strong id="anClipTitle"></strong><button type="button" class="btn btn-small" id="anClipClose">Close</button></div>
-            <div class="an-cp-stage" id="anCpStage"><video id="anClipVid" playsinline controls></video><svg class="an-draw" id="anDraw" xmlns="http://www.w3.org/2000/svg" hidden></svg><div class="an-freeze-flag" id="anFreezeFlag" hidden></div></div>
+            <div class="an-cp-stage" id="anCpStage"><video id="anClipVid" playsinline></video><svg class="an-draw" id="anDraw" xmlns="http://www.w3.org/2000/svg" hidden></svg><div class="an-freeze-flag" id="anFreezeFlag" hidden></div><div class="pg-vid-bar an-cp-bar" id="anCpBar"></div></div>
             <div class="an-draw-bar" id="anDrawBar"></div>
           </div>
         </div>
@@ -3105,8 +3152,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           <select id="anSpeed" aria-label="Speed"><option value="0.5">½×</option><option value="1" selected>1×</option><option value="1.5">1½×</option><option value="2">2×</option><option value="4">4×</option></select>
           <button type="button" class="btn btn-small an-cut-btn" id="anCutBtn" title="Cut a part of the match into its own video">✂ Clip</button>
           <span class="an-gap"></span>
-          <button type="button" class="btn btn-small" id="anKo" title="Mark the moment the game kicks off — tags then show the match minute">Mark kick-off</button>
-          <button type="button" class="btn btn-small" id="anH2" title="Mark the start of the 2nd half">Mark 2nd half</button>
+          <div class="an-halves" id="anHalves" role="group" aria-label="Halves"></div>
         </div>
         <div class="an-cut" id="anCut" hidden></div>
         <div id="anTagArea"><div class="an-btns" id="anBtns"></div></div>
@@ -7567,6 +7613,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     homeFill('pregames', document.getElementById('homePregames'), document.getElementById('pregamesMore'), pregames, homeQuery('pregameSearch'), planMatches, card,
       'No pre-game plans yet. Start one with + New pre-game.');
     renderLineupCards();
+    try{ renderMatchCards(); }catch(e){ console.warn(e); }
     renderLibraryGrid();
   }
   document.getElementById('sessionSearch').addEventListener('input', renderHome);
@@ -10512,6 +10559,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(!Array.isArray(a.types)) a.types = [];
     if(a.ko === undefined) a.ko = null;
     if(a.h2 === undefined) a.h2 = null;
+    if(a.h1e === undefined) a.h1e = null;
+    if(a.h2e === undefined) a.h2e = null;
     return a;
   }
   function anTypes(){ return AN_TYPES.concat(anData().types.filter(function(t){ return AN_TYPES.indexOf(t) === -1; })); }
@@ -10528,8 +10577,11 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function anHalf(t){ const a = anData(); return a.h2 != null && t >= a.h2 ? 2 : 1; }
   function anMinute(t){
     const a = anData(), len = (anL() && anL().length) || 45;
-    if(a.h2 != null && t >= a.h2) return Math.min(len * 2 + 15, len + Math.floor((t - a.h2) / 60) + 1) + "'";
-    if(a.ko != null && t >= a.ko) return (Math.floor((t - a.ko) / 60) + 1) + "'";
+    const mm = function(from, base, cap){ const m = Math.floor((t - from) / 60) + 1, n = base + m; return (n > cap ? cap + '+' + (n - cap) : n) + "'"; };
+    if(a.h2e != null && t >= a.h2e) return 'FT';
+    if(a.h2 != null && t >= a.h2) return mm(a.h2, len, len * 2);
+    if(a.h1e != null && t >= a.h1e) return 'HT';
+    if(a.ko != null && t >= a.ko) return mm(a.ko, 0, len);
     return anClock(t);
   }
   function anPlayerLabel(pid){ const p = pid ? anSquad().find(function(q){ return q.id === pid; }) : null; return p ? [clean(p.num), luShort(p.name) || clean(p.name)].filter(Boolean).join(' ') || 'Player' : ''; }
@@ -10634,14 +10686,30 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   document.getElementById('anBack').addEventListener('click', function(){ anVideo.currentTime = Math.max(0, anVideo.currentTime - 5); });
   document.getElementById('anFwd').addEventListener('click', function(){ anVideo.currentTime = anVideo.currentTime + 5; });
   document.getElementById('anSpeed').addEventListener('change', function(){ anVideo.playbackRate = parseFloat(this.value) || 1; });
-  document.getElementById('anKo').addEventListener('click', function(){
-    if(!anCanEdit() || !anVideo.currentSrc) return;
-    anData().ko = Math.round(anVideo.currentTime); anSave(); anRenderAll(); showToast('Kick-off marked at ' + anClock(anVideo.currentTime) + ' · times now show as match minutes');
-  });
-  document.getElementById('anH2').addEventListener('click', function(){
-    if(!anCanEdit() || !anVideo.currentSrc) return;
-    anData().h2 = Math.round(anVideo.currentTime); anSave(); anRenderAll(); showToast('2nd half marked at ' + anClock(anVideo.currentTime));
-  });
+  /* the halves: mark when each half starts and ends (tap a mark to jump there, ✕ to clear it) */
+  const AN_HALVES = [['ko', 'Kick-off', '1st half starts'], ['h1e', 'Half-time', '1st half ends'], ['h2', '2nd half', '2nd half starts'], ['h2e', 'Full time', '2nd half ends']];
+  function anRenderHalves(){
+    const box = document.getElementById('anHalves'); if(!box) return; box.innerHTML = '';
+    const a = anData(), ed = anCanEdit();
+    AN_HALVES.forEach(function(x){
+      const k = x[0], v = a[k];
+      if(v == null){
+        if(!ed) return;
+        box.appendChild(h('button', {type:'button', class:'btn btn-small an-half-set', title:'Mark where the ' + x[2].replace(/s$/, '') + ' — at the video’s time now', text:'＋ ' + x[1], onclick:function(){
+          if(!anVideo.currentSrc){ showToast('Open the match video first'); return; }
+          a[k] = Math.round(anVideo.currentTime); anSave(); anRenderAll();
+          showToast(x[2].charAt(0).toUpperCase() + x[2].slice(1) + ' at ' + anClock(a[k]) + (k === 'ko' ? ' · tags now show the match minute' : ''));
+        }}));
+        return;
+      }
+      box.appendChild(h('span', {class:'an-half-chip'},
+        h('button', {type:'button', class:'an-half-go', title:'Go to ' + x[1].toLowerCase(), text:x[1] + ' ' + anClock(v), onclick:function(){ if(anVideo.currentSrc){ anVideo.currentTime = v; } }}),
+        ed ? h('button', {type:'button', class:'an-half-x', title:'Clear this mark', 'aria-label':'Clear ' + x[1], text:'✕', onclick:function(){
+          a[k] = null; anSave(); anRenderAll();
+          showToast(x[1] + ' mark cleared', function(){ a[k] = v; anSave(); anRenderAll(); });
+        }}) : ''));
+    });
+  }
 
   /* ---------- tagging ---------- */
   function anRenderButtons(){
@@ -10807,10 +10875,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     anRenderVideoState(); anRenderButtons(); anRenderList(); anRenderStats(); anRenderClips(); anRenderCut(); anRenderTabs();
     document.getElementById('anCutBtn').hidden = !anCanEdit();
     const ed = anCanEdit();
-    document.getElementById('anKo').hidden = !ed; document.getElementById('anH2').hidden = !ed;
-    const a = anData();
-    document.getElementById('anKo').textContent = a.ko != null ? 'Kick-off ' + anClock(a.ko) + ' ✓' : 'Mark kick-off';
-    document.getElementById('anH2').textContent = a.h2 != null ? '2nd half ' + anClock(a.h2) + ' ✓' : 'Mark 2nd half';
+    anRenderHalves();
     document.getElementById('anRo').hidden = ed;
   }
   document.addEventListener('keydown', function(e){
@@ -10818,7 +10883,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     /* the clip player is open: its own keys (Esc finishes drawing / closes it, space plays it) */
     if(!document.getElementById('anClipPlayer').hidden){
       const tg = (e.target && e.target.tagName) || '';
-      if(e.key === 'Escape'){ e.preventDefault(); if(anDMode) anDrawDone(); else document.getElementById('anClipClose').click(); return; }
+      if(e.key === 'Escape'){ e.preventDefault(); if(anDMode) anDrawDone(); else if(anCpIsFull()) anCpFull(false); else document.getElementById('anClipClose').click(); return; }
       if(e.key === ' ' && tg !== 'INPUT' && tg !== 'SELECT' && !anDMode){ e.preventDefault(); if(anCV.paused) anCV.play().catch(function(){}); else anCV.pause(); return; }
       if((e.key === 'z' || e.key === 'Z') && (e.ctrlKey || e.metaKey) && anDMode && anDMark && anDMark.shapes.length){ e.preventDefault(); anDMark.shapes.pop(); anSave(); anShowShapes(anDMark.shapes); anRenderDrawBar(); }
       return;
@@ -10839,7 +10904,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   const anPick = document.getElementById('anPick');
   function anPickOpen(){
     const box = document.getElementById('anPickList'); box.innerHTML = '';
-    const list = mvList().filter(function(x){ return inView(x.m) && (mvHasWork(x.m) || x.m.luId || clean(x.m.title)); });
+    const list = mvList().filter(function(x){ return mvHasWork(x.m) || x.m.luId || clean(x.m.title); });
     if(!list.length) box.appendChild(h('p', {class:'an-empty-list', text:'No match videos yet. Tap “+ Match video” to open one — attach it to a lineup any time to tag your players.'}));
     list.forEach(function(x){
       const m = x.m, a = m.analysis || {}, n = (a.tags || []).length, c = (a.clips || []).length;
@@ -10861,6 +10926,38 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     });
     openModal(anPick);
   }
+  /* ---------- the Match videos section on the home page ---------- */
+  function mvTitle(m){ const L = anLoadLu(m.luId); return clean(m.title) || (L ? luName(L) : '') || 'Untitled match video'; }
+  function renderMatchCards(){
+    const box = document.getElementById('homeMatches'); if(!box) return;
+    const all = mvList().filter(function(x){ return inView(x.m) && (mvHasWork(x.m) || x.m.luId || clean(x.m.title)); });
+    document.getElementById('matchesCount').textContent = all.length ? all.length + (all.length === 1 ? ' match' : ' matches') : '';
+    const q = clean(document.getElementById('matchSearch').value).toLowerCase();
+    const match = function(x, qq){ return (mvTitle(x.m) + ' ' + ((x.m.analysis || {}).file || {}).name).toLowerCase().indexOf(qq) !== -1; };
+    homeFill('matches', box, document.getElementById('matchesMore'), all, q, match, function(x){
+      const m = x.m, a = m.analysis || {}, n = (a.tags || []).length, c = (a.clips || []).length, L = anLoadLu(m.luId), title = mvTitle(m);
+      const card = h('div', {class:'session-card mv-card', role:'button', tabindex:'0', title:'Open this match video'},
+        ownerTag(m),
+        h('div', {class:'session-title' + (clean(m.title) || L ? '' : ' untitled'), text:title}),
+        h('div', {class:'session-meta', text:[L && clean(L.meta.date), L ? 'Lineup: ' + (luName(L) || 'attached') : 'No lineup', a.file && a.file.name ? '🎞 ' + a.file.name : ''].filter(Boolean).join(' · ')}),
+        h('div', {class:'session-foot'},
+          h('span', {text:[n + (n === 1 ? ' tag' : ' tags'), c + (c === 1 ? ' clip' : ' clips')].join(' · ')}),
+          h('span', {text:'· ' + whenText(m.savedAt)}),
+          canEdit(m) ? h('button', {type:'button', class:'icon-btn danger', title:'Delete this match video', 'aria-label':'Delete match video', text:'✕', onclick:async function(ev){
+            ev.stopPropagation();
+            if(!(await askDelete('match video', title, 'Its tags and clips go too. The video file on your device isn’t touched.'))) return;
+            const raw = localStorage.getItem(x.key);
+            try{ localStorage.removeItem(x.key); }catch(e){}
+            clubSyncSoon(); renderHome();
+            showToast('Deleted “' + title + '”', function(){ try{ localStorage.setItem(x.key, raw); }catch(e){} clubSyncSoon(); renderHome(); });
+          }}) : null));
+      const go = function(){ anOpenMatch(x.key); };
+      card.addEventListener('click', go);
+      card.addEventListener('keydown', function(ev){ if(ev.key === 'Enter') go(); });
+      return card;
+    }, 'No match videos yet. Tap + Match video to add one.');
+  }
+  document.getElementById('matchSearch').addEventListener('input', renderMatchCards);
   function anNewFromHome(){
     const m = mvNew(''), key = MV_PREFIX + m.id;
     try{ localStorage.setItem(key, JSON.stringify(m)); }catch(e){ showToast('This device is out of space'); return; }
@@ -10895,6 +10992,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
      (in the computer program, in the planner's Videos folder). Elsewhere it plays from the match video.
      ===================================================================== */
   let anCut = null, anRec = null;
+  let anClipLen = 15;   /* seconds — the length you pick for clips (1 to 60) */
+  try{ const L = +JSON.parse(localStorage.getItem('hufc-settings') || '{}').clipLen; if(L >= 1 && L <= 60) anClipLen = L; }catch(e){}
   function anClips(){ const a = anData(); if(!Array.isArray(a.clips)) a.clips = []; return a.clips; }
   function anRecMime(){
     const MR = window.MediaRecorder; if(!MR || !MR.isTypeSupported) return '';
@@ -10911,7 +11010,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(!anVideo.currentSrc){ showToast('Open the match video first'); return; }
     if(!anRecMime()){ showToast('This browser can’t make video clips · use the computer program, Chrome or Safari'); return; }
     const now = anVideo.currentTime;
-    anCut = {start:Math.max(0, now - 20), end:Math.min(anVideo.duration || now + 10, now + 10), name:'', pids:[], note:''};
+    anCut = {start:Math.max(0, now - anClipLen), end:now, name:'', pids:[], note:''};
+    if(anCut.end - anCut.start < 1) anCut.end = Math.min(anVideo.duration || anCut.start + anClipLen, anCut.start + anClipLen);
     anRenderCut();
     setTimeout(function(){ const n = document.querySelector('.an-cut-name'); if(n) try{ n.focus(); }catch(e){} }, 30);   /* straight into naming it */
   }
@@ -10921,7 +11021,9 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const len = Math.max(0, anCut.end - anCut.start);
     const tm = function(which){
       return h('span', {class:'an-cut-t'}, h('span', {class:'lbl', text:which === 'start' ? 'From' : 'To'}), h('strong', {text:anMinute(anCut[which]) + (anData().ko != null ? ' (' + anClock(anCut[which]) + ')' : '')}),
-        h('button', {type:'button', class:'btn btn-small', text:'Set to now', onclick:function(){ anCut[which] = anVideo.currentTime; if(anCut.end < anCut.start + 1){ if(which === 'start') anCut.end = anCut.start + 30; else anCut.start = Math.max(0, anCut.end - 30); } anRenderCut(); }}));
+        h('button', {type:'button', class:'btn btn-small an-nudge', title:'1 second earlier', text:'−1s', onclick:function(){ anCutMove(which, -1); }}),
+        h('button', {type:'button', class:'btn btn-small an-nudge', title:'1 second later', text:'+1s', onclick:function(){ anCutMove(which, 1); }}),
+        h('button', {type:'button', class:'btn btn-small', text:'Set to now', onclick:function(){ anCut[which] = anVideo.currentTime; if(anCut.end < anCut.start + 1){ if(which === 'start') anCut.end = anCut.start + anClipLen; else anCut.start = Math.max(0, anCut.end - anClipLen); } anRenderCut(); }}));
     };
     const name = h('input', {type:'text', class:'an-cut-name', maxlength:'80', value:anCut.name, placeholder:'Name it — e.g. Building out from the back', oninput:function(){ anCut.name = this.value; }});
     const note = h('input', {type:'text', class:'an-cut-note', maxlength:'160', value:anCut.note, placeholder:'What to look for (optional)', oninput:function(){ anCut.note = this.value; }});
@@ -10932,15 +11034,50 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           h('span', {class:'an-who-n', text:clean(p.num) || '·'}), luShort(p.name) || '');
       }));
     box.append(
-      h('div', {class:'an-cut-head'}, h('strong', {text:'✂ New clip'}), h('span', {class:'an-cut-len', text:Math.round(len) + ' seconds'}),
-        h('button', {type:'button', class:'btn btn-small', text:'Last 30s', title:'The 30 seconds before where the video is now', onclick:function(){ anCut.end = anVideo.currentTime; anCut.start = Math.max(0, anCut.end - 30); anRenderCut(); }}),
-        h('button', {type:'button', class:'btn btn-small', text:'Next 30s', title:'The 30 seconds from where the video is now', onclick:function(){ anCut.start = anVideo.currentTime; anCut.end = Math.min(anVideo.duration || anCut.start + 30, anCut.start + 30); anRenderCut(); }})),
+      h('div', {class:'an-cut-head'}, h('strong', {text:'✂ New clip'}), h('span', {class:'an-cut-len', text:(Math.round(len * 10) / 10) + (len === 1 ? ' second' : ' seconds')})),
+      anLenPicker(len),
       h('div', {class:'an-cut-times'}, tm('start'), tm('end')),
       name, note, who,
       h('div', {class:'an-cut-acts'},
         h('button', {type:'button', class:'btn btn-small', text:'Cancel', onclick:function(){ anCut = null; anRenderCut(); }}),
         h('button', {type:'button', class:'btn btn-small', text:'▶ Preview', onclick:function(){ anQueue = null; anVideo.currentTime = anCut.start; anClipEnd = anCut.end; const p = anVideo.play(); if(p && p.catch) p.catch(function(){}); }}),
-        h('button', {type:'button', class:'btn btn-small btn-primary', text:'Save clip', disabled:len < 2 || len > 600, title:len > 600 ? 'Keep clips under 10 minutes' : '', onclick:anCutSave})));
+        h('button', {type:'button', class:'btn btn-small btn-primary', text:'Save clip', disabled:len < 0.9 || len > 600, title:len > 600 ? 'Keep clips under 10 minutes' : '', onclick:anCutSave})));
+  }
+  function anCutMove(which, d){
+    const dur = anVideo.duration || 1e9;
+    anCut[which] = Math.max(0, Math.min(dur, anCut[which] + d));
+    if(anCut.end - anCut.start < 1){ if(which === 'start') anCut.start = Math.max(0, anCut.end - 1); else anCut.end = Math.min(dur, anCut.start + 1); }
+    if(anCut.end - anCut.start > 600){ if(which === 'start') anCut.end = anCut.start + 600; else anCut.start = anCut.end - 600; }
+    anVideo.currentTime = anCut[which];
+    anRenderCut();
+  }
+  /* pick the clip's length: a slider from 1 second to 1 minute, quick picks, and which side of "now" it sits */
+  function anLenPicker(len){
+    const setLen = function(L, keep){
+      L = Math.max(1, Math.min(60, Math.round(L)));
+      anClipLen = L; try{ setSettings({clipLen:L}); }catch(e){}
+      const dur = anVideo.duration || 1e9;
+      if(keep === 'end'){ anCut.start = Math.max(0, anCut.end - L); }
+      else { anCut.end = Math.min(dur, anCut.start + L); if(anCut.end - anCut.start < L) anCut.start = Math.max(0, anCut.end - L); }
+      anRenderCut();
+    };
+    const cur = Math.max(1, Math.min(60, Math.round(len)));
+    const slider = h('input', {type:'range', class:'an-len-range', min:'1', max:'60', step:'1', value:String(cur), 'aria-label':'Clip length in seconds'});
+    slider.addEventListener('input', function(){
+      const L = +slider.value; anClipLen = L; anCut.end = Math.min(anVideo.duration || 1e9, anCut.start + L);
+      const lbl = document.querySelector('.an-cut-len'); if(lbl) lbl.textContent = L + (L === 1 ? ' second' : ' seconds');
+      const t = document.querySelectorAll('.an-cut-t strong'); if(t[1]) t[1].textContent = anMinute(anCut.end) + (anData().ko != null ? ' (' + anClock(anCut.end) + ')' : '');
+    });
+    slider.addEventListener('change', function(){ setLen(+slider.value); });
+    return h('div', {class:'an-len'},
+      h('span', {class:'lbl', text:'Length'}),
+      h('div', {class:'an-len-picks'}, [3, 5, 10, 15, 20, 30, 45, 60].map(function(L){
+        return h('button', {type:'button', class:'an-len-pick' + (cur === L ? ' on' : ''), text:L === 60 ? '1 min' : L + 's', onclick:function(){ setLen(L); }});
+      })),
+      slider,
+      h('div', {class:'an-len-where'},
+        h('button', {type:'button', class:'btn btn-small', title:'Ends where the video is now', text:'⟵ Before now', onclick:function(){ anCut.end = anVideo.currentTime; setLen(anClipLen, 'end'); }}),
+        h('button', {type:'button', class:'btn btn-small', title:'Starts where the video is now', text:'After now ⟶', onclick:function(){ anCut.start = anVideo.currentTime; setLen(anClipLen); }})));
   }
   /* records the part of the match as it plays (a 30-second clip takes 30 seconds) */
   function anRecord(start, end){
@@ -11055,7 +11192,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(url){
       try{ anVideo.pause(); }catch(e){}
       document.getElementById('anClipTitle').textContent = c.name;
-      anDC = c; anDMode = false; anDMark = null; anDFreeze = null; anDLast = 0; v.controls = true; anStage.classList.remove('drawing');
+      anDC = c; anDMode = false; anDMark = null; anDFreeze = null; anDLast = 0; anStage.classList.remove('drawing'); anCpPaint();
       document.getElementById('anFreezeFlag').hidden = true;
       v.src = url; pl.hidden = false; anShowShapes([]); anRenderDrawBar();
       const p = v.play(); if(p && p.catch) p.catch(function(){});
@@ -11067,6 +11204,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   }
   document.getElementById('anClipClose').addEventListener('click', function(){
     if(anDMode) anDrawDone();
+    anCpFull(false);
     clearTimeout(anDFreezeT); anDFreeze = null; anDC = null;
     const v = document.getElementById('anClipVid'); try{ v.pause(); }catch(e){} v.removeAttribute('src'); document.getElementById('anClipPlayer').hidden = true;
     anShowShapes([]);
@@ -11255,7 +11393,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const t = Math.round(anCV.currentTime * 10) / 10;
     anDMark = anMarkAt(anDC, t);
     if(!anDMark){ anDMark = {id:newId(), t:t, hold:4, shapes:[]}; anMarks(anDC).push(anDMark); }
-    anDMode = true; anCV.controls = false;
+    anDMode = true;
     anStage.classList.add('drawing');
     anRenderDrawBar(); anShowShapes(anDMark.shapes);
     document.getElementById('anFreezeFlag').hidden = false;
@@ -11264,13 +11402,13 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function anDrawDone(){
     if(!anDMode) return;
     const tb = anStage.querySelector('.an-text-in'); if(tb) tb.blur();
-    anDMode = false; anCV.controls = true; anStage.classList.remove('drawing');
+    anDMode = false; anStage.classList.remove('drawing');
     document.getElementById('anFreezeFlag').hidden = true;
     if(anDMark && !anDMark.shapes.length){ const all = anMarks(anDC), i = all.indexOf(anDMark); if(i !== -1) all.splice(i, 1); }
     anSave();
     const m = anDMark; anDMark = null;
     anShowShapes(m && m.shapes.length ? m.shapes : []);
-    anRenderDrawBar(); anRenderClips();
+    anRenderDrawBar(); anRenderClips(); anCpPaint();
     if(m && m.shapes.length) showToast('Saved · the clip freezes here for ' + m.hold + 's to show your drawings');
   }
   /* drawing with a finger or the mouse */
@@ -11357,6 +11495,63 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   });
   anCV.addEventListener('pause', function(){ if(!anDMode && !anDFreeze && anDC){ const m = anMarkAt(anDC, anCV.currentTime); if(m) anShowShapes(m.shapes); } });
   anCV.addEventListener('loadedmetadata', function(){ anShowShapes([]); });
+  /* ---------- the clip's own controls: play, a yellow pill seek bar with the drawing moments marked, time, full screen ----------
+     (full screen takes the whole player, so the drawings and tools come too) */
+  const AN_CP_ICON = {   /* (the same icons as pre-game clips — pregame.js loads after this file) */
+    play:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M8 5.5 L19 12 L8 18.5 Z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+    pause:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"/><rect x="13.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"/></svg>',
+    full:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>'
+  };
+  const anCpBarEl = document.getElementById('anCpBar'), anCpPlayer = document.getElementById('anClipPlayer');
+  const anCpPlay = h('button', {type:'button', class:'pg-vid-btn pg-vid-play', 'aria-label':'Play', html:AN_CP_ICON.play});
+  const anCpFill = h('span', {class:'pg-vid-fill'}), anCpKnob = h('span', {class:'pg-vid-knob'}), anCpTicks = h('span', {class:'an-cp-ticks'});
+  const anCpSeek = h('div', {class:'pg-vid-seek', role:'slider', tabindex:'0', 'aria-label':'Seek'}, h('span', {class:'pg-vid-track'}, anCpFill), anCpTicks, anCpKnob);
+  const anCpTime = h('span', {class:'pg-vid-time', text:'0:00 / 0:00'});
+  const anCpFullBtn = h('button', {type:'button', class:'pg-vid-btn', 'aria-label':'Full screen', title:'Full screen', html:AN_CP_ICON.full});
+  anCpBarEl.append(anCpPlay, anCpSeek, anCpTime, anCpFullBtn);
+  let anCpDrag = false;
+  const anCpFmt = function(t){ t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+  function anCpPaint(){
+    const d = anCV.duration || 0, f = d ? anCV.currentTime / d : 0;
+    anCpFill.style.width = (f * 100) + '%'; anCpKnob.style.left = (f * 100) + '%';
+    anCpTime.textContent = anCpFmt(anCV.currentTime) + ' / ' + anCpFmt(d);
+    const p = anCV.paused || anCV.ended; anCpPlay.innerHTML = p ? AN_CP_ICON.play : AN_CP_ICON.pause; anCpPlay.setAttribute('aria-label', p ? 'Play' : 'Pause');
+    anCpTicks.innerHTML = '';
+    if(anDC && d) anMarks(anDC).forEach(function(m){ if(m.shapes && m.shapes.length) anCpTicks.appendChild(h('span', {class:'an-cp-tick', style:'left:' + (m.t / d * 100).toFixed(2) + '%', title:'Drawings at ' + anClock(m.t)})); });
+  }
+  ['timeupdate', 'loadedmetadata', 'durationchange', 'seeked', 'play', 'pause', 'ended'].forEach(function(ev){ anCV.addEventListener(ev, function(){ if(!anCpDrag) anCpPaint(); }); });
+  const anCpToggle = function(){ if(anDMode) return; if(anCV.paused || anCV.ended) anCV.play().catch(function(){}); else anCV.pause(); };
+  anCpPlay.addEventListener('click', anCpToggle);
+  anCV.addEventListener('click', anCpToggle);
+  anCV.addEventListener('dblclick', function(e){ e.preventDefault(); anCpFull(); });
+  const anCpAt = function(e){ const r = anCpSeek.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); };
+  const anCpGo = function(f){ if(anCV.duration) anCV.currentTime = f * anCV.duration; anCpFill.style.width = (f * 100) + '%'; anCpKnob.style.left = (f * 100) + '%'; };
+  anCpSeek.addEventListener('pointerdown', function(e){
+    e.preventDefault(); e.stopPropagation(); anCpDrag = true; anCpSeek.classList.add('dragging'); try{ anCpSeek.setPointerCapture(e.pointerId); }catch(x){}
+    if(anDFreeze){ clearTimeout(anDFreezeT); anDFreeze = null; document.getElementById('anFreezeFlag').hidden = true; anCV.pause(); }
+    anCpGo(anCpAt(e));
+    const mv = function(ev){ anCpGo(anCpAt(ev)); };
+    const up = function(){ anCpDrag = false; anCpSeek.classList.remove('dragging'); anCpSeek.removeEventListener('pointermove', mv); anCpSeek.removeEventListener('pointerup', up); anCpSeek.removeEventListener('pointercancel', up); anCpPaint(); };
+    anCpSeek.addEventListener('pointermove', mv); anCpSeek.addEventListener('pointerup', up); anCpSeek.addEventListener('pointercancel', up);
+  });
+  anCpSeek.addEventListener('keydown', function(e){ if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); e.stopPropagation(); if(anCV.duration) anCV.currentTime = Math.max(0, Math.min(anCV.duration, anCV.currentTime + (e.key === 'ArrowRight' ? 1 : -1))); });
+  /* full screen: the real thing where the device allows it (computers, iPad), otherwise the player fills the screen (iPhone) */
+  function anCpIsFull(){ return document.fullscreenElement === anCpPlayer || document.webkitFullscreenElement === anCpPlayer || anCpPlayer.classList.contains('an-full'); }
+  function anCpFull(on){
+    if(on === undefined) on = !anCpIsFull();
+    if(!on){
+      if(document.fullscreenElement === anCpPlayer){ try{ document.exitFullscreen(); }catch(e){} }
+      else if(document.webkitFullscreenElement === anCpPlayer){ try{ document.webkitExitFullscreen(); }catch(e){} }
+      anCpPlayer.classList.remove('an-full'); return;
+    }
+    const req = anCpPlayer.requestFullscreen || anCpPlayer.webkitRequestFullscreen;
+    const fake = function(){ anCpPlayer.classList.add('an-full'); };
+    if(!req){ fake(); return; }
+    try{ const r = req.call(anCpPlayer); if(r && r.catch) r.catch(fake); }catch(e){ fake(); }
+  }
+  anCpFullBtn.addEventListener('click', function(){ anCpFull(); });
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(function(ev){ document.addEventListener(ev, function(){ anCpFullBtn.classList.toggle('on', anCpIsFull()); }); });
+
   /* the picture changes size (tool bar appears, window resized): the drawing layer follows it */
   if(window.ResizeObserver) new ResizeObserver(function(){ if(anDC) anShowShapes(anDMode && anDMark ? anDMark.shapes : (anDFreeze ? anDFreeze.shapes : (anCV.paused && anMarkAt(anDC, anCV.currentTime) ? anMarkAt(anDC, anCV.currentTime).shapes : []))); }).observe(anStage);
   window.addEventListener('resize', function(){ if(anDC && !anDrawSvg.hidden) anShowShapes(anDMode && anDMark ? anDMark.shapes : (anDFreeze ? anDFreeze.shapes : [])); });
@@ -12392,6 +12587,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.7', d:'27 Oct 2026', t:'Match videos: halves, clip length, full screen', n:['Mark when each half starts and ends — tap a mark to jump there, ✕ to clear it; times show 45+2’, HT and FT', 'Choose a clip’s length, from 1 second to 1 minute, and nudge the start or end a second at a time', 'Clips play with the planner’s own yellow controls, and full screen keeps your drawings', 'Match videos have their own section on the home page']},
     {v:'3.6', d:'27 Oct 2026', t:'Draw on clips', n:['Pause a clip and tap ✏ Draw: run, pass, dribble and shot arrows (the same as in sessions), highlighted areas, rings and text', 'When the clip plays it freezes there to show your drawings, then carries on (choose how long)', 'Clips you share or add to a pre-game include the drawings']},
     {v:'3.5', d:'27 Oct 2026', t:'Updates straight away', n:['New versions arrive within a minute or so — on the Home page the planner switches over by itself', 'In the middle of a plan it waits until you go Home, or tap Update now (your work is saved first)', 'Windows program 1.5.8 checks every minute']},
     {v:'3.4', d:'27 Oct 2026', t:'Bigger folder buttons', n:['My folder, Club library and the age groups are big buttons right across the page', 'They turn black and yellow when you point at them']},
