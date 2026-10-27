@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027194640">
+<meta name="hufc-build" content="20261027195635">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1590,6 +1590,11 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-tag-tick.them{background:#ff6b61;}
 .an-video-wrap .an-flash{z-index:3;}
 
+/* cutting a clip: straight onto a pre-game board */
+.an-cut-boardrow{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:6px;}
+.an-cut-boardrow .lbl{font-weight:700; font-size:13px;}
+.an-cut-board{font:inherit; font-size:14px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--white); max-width:100%;}
+
 /* ---------- Settings ---------- */
 .home-hero{position:relative;}
 .home-set-btn{position:absolute; top:12px; right:12px; display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #3a3b3e; border-radius:999px;
@@ -2870,7 +2875,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 7:46pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 7:56pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11227,11 +11232,21 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       h('div', {class:'an-cut-head'}, h('strong', {text:'✂ New clip'}), h('span', {class:'an-cut-len', text:(Math.round(len * 10) / 10) + (len === 1 ? ' second' : ' seconds')})),
       anLenPicker(len),
       h('div', {class:'an-cut-times'}, tm('start'), tm('end')),
-      name, note, who,
+      name, note, who, anCutBoardPick(),
       h('div', {class:'an-cut-acts'},
         h('button', {type:'button', class:'btn btn-small', text:'Cancel', onclick:function(){ anCut = null; anRenderCut(); }}),
         h('button', {type:'button', class:'btn btn-small', text:'▶ Preview', onclick:function(){ anQueue = null; anVideo.currentTime = anCut.start; anClipEnd = anCut.end; const p = anVideo.play(); if(p && p.catch) p.catch(function(){}); }}),
         h('button', {type:'button', class:'btn btn-small btn-primary', text:'Save clip', disabled:len < 0.9 || len > 600, title:len > 600 ? 'Keep clips under 10 minutes' : '', onclick:anCutSave})));
+  }
+  /* with a pre-game attached: put the clip straight onto one of its boards as it's saved (or not) */
+  function anCutBoardPick(){
+    const x = anM && anPgFind(anM.pgId);
+    if(!x || !canEdit(x.plan) || !(x.plan.drills || []).length) return '';
+    const sel = h('select', {class:'an-cut-board', 'aria-label':'Pre-game board'},
+      h('option', {value:'', text:'Don’t add it yet'}),
+      x.plan.drills.map(function(d, i){ return h('option', {value:d.id, text:(i + 1) + '. ' + (clean(d.name) || 'Board ' + (i + 1)), selected:anCut.board === d.id}); }));
+    sel.addEventListener('change', function(){ anCut.board = sel.value; anCut.boardKey = x.key; });
+    return h('label', {class:'an-cut-boardrow'}, h('span', {class:'lbl', text:'Add to “' + (sessionName(x.plan) || 'pre-game') + '”'}), sel);
   }
   function anCutMove(which, d){
     const dur = anVideo.duration || 1e9;
@@ -11344,9 +11359,11 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       } else await pgMedia.put('an-' + c.id, blob);
     }catch(e){ showToast('There isn’t room on this device for that clip'); return; }
     anClips().push(c); anSave();
+    const toBoard = anCut.board ? {key:anCut.boardKey || (anPgFind(anM.pgId) || {}).key, did:anCut.board} : null;
     anCut = null; anRenderCut();
     anTab = 'clips'; anRenderAll();
     showToast('Clip saved · “' + c.name + '” (' + Math.round(c.end - c.start) + 's)');
+    if(toBoard && toBoard.key) await anAddToBoard(toBoard.key, toBoard.did, c);
   }
   document.getElementById('anRecCancel').addEventListener('click', function(){ if(anRec) anRec.cancel(); });
 
@@ -11363,7 +11380,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           h('button', {type:'button', class:'pg-play an-clip-play', title:'Watch the clip', 'aria-label':'Watch the clip', html:PG_PLAY, onclick:function(){ anPlayClip(c); }}),
           h('div', {class:'an-clip-text'},
             ed ? h('input', {type:'text', class:'an-clip-name', value:c.name, maxlength:'80', 'aria-label':'Clip name', onchange:function(){ c.name = clean(this.value) || c.name; anSave(); }}) : h('strong', {text:c.name}),
-            h('span', {class:'an-clip-sub', text:anMinute(c.start) + ' · ' + Math.round(c.end - c.start) + 's' + (players.length ? ' · ' + players.join(', ') : '') + ((c.marks || []).filter(function(m){ return m.shapes && m.shapes.length; }).length ? ' · ✏ ' + c.marks.filter(function(m){ return m.shapes && m.shapes.length; }).length + ' drawn' : '') + (c.note ? ' · ' + c.note : '')})),
+            h('span', {class:'an-clip-sub', text:anMinute(c.start) + ' · ' + Math.round(c.end - c.start) + 's' + (players.length ? ' · ' + players.join(', ') : '') + ((c.boards || []).length ? ' · On ' + c.boards.map(function(b){ return b.name; }).join(', ') : '') + ((c.marks || []).filter(function(m){ return m.shapes && m.shapes.length; }).length ? ' · ✏ ' + c.marks.filter(function(m){ return m.shapes && m.shapes.length; }).length + ' drawn' : '') + (c.note ? ' · ' + c.note : '')})),
           ed ? h('button', {type:'button', class:'icon-btn danger', title:'Delete this clip', 'aria-label':'Delete clip', text:'✕', onclick:function(){
             const all = anClips(), i = all.indexOf(c); if(i === -1) return;
             all.splice(i, 1); anSave(); anRenderClips();
@@ -11849,8 +11866,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(others.length) box.appendChild(h('button', {type:'button', class:'btn btn-small an-pg-more', text:'Another pre-game…', onclick:function(){ anPgShowAll = true; anToPregame(c); }}));
     openModal(anPgModal);
   }
-  async function anAddToBoard(key, did){
-    const c = anPgClip; if(!c) return;
+  async function anAddToBoard(key, did, cIn){
+    const c = cIn || anPgClip; if(!c) return;
     closeModal(anPgModal, true);
     const blob = await anClipBlobDrawn(c);
     if(!blob){ showToast('This clip’s video is on the device that made it · add it to the pre-game from there'); return; }
@@ -11870,6 +11887,9 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     try{ localStorage.setItem(key, JSON.stringify(s)); }catch(e){ showToast('Couldn’t save the pre-game'); return; }
     clubSyncSoon();
     closeModal(anPgModal);
+    /* remember where it went, so the Clips tab shows it */
+    c.boards = (c.boards || []).filter(function(b){ return b.did !== did; }).concat([{pg:s.planId || key.slice(LS_PREFIX.length), did:did, name:clean(d.name) || 'board'}]);
+    anSave(); anRenderClips();
     showToast('Added to “' + (sessionName(s) || 'pre-game') + '” · ' + (clean(d.name) || 'board'));
   }
   document.getElementById('anPgClose').addEventListener('click', function(){ closeModal(anPgModal); });
@@ -12782,7 +12802,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'3.10', d:'27 Oct 2026', t:'Match videos and pre-games', n:['Attach a match video to a pre-game (next to Lineup in the match video window) — its clips go straight onto that pre-game', 'A pre-game shows its match video and opens it in one tap, or starts a new one attached to it']},
+    {v:'3.10', d:'27 Oct 2026', t:'Match videos and pre-games', n:['Attach a match video to a pre-game (next to Lineup in the match video window) — only the clips you choose go onto it', 'When cutting a clip, pick the pre-game board it goes on (e.g. Possession) and it’s added as it’s saved', 'A pre-game shows its match video and opens it in one tap, or starts a new one attached to it']},
     {v:'3.9', d:'27 Oct 2026', t:'Easier to watch', n:['Tap the match video to play or pause, double-tap (or ⛶) for full screen — the tag buttons come too', 'A yellow seek bar on the match video: drag or tap to skip anywhere, with your tags and the halves marked', 'Fixed: the clip player’s play and full-screen buttons were invisible']},
     {v:'3.8', d:'27 Oct 2026', t:'Match videos remember the video', n:['The video opens again by itself when you come back to a match — no more picking it from your files each time', 'On a computer the planner remembers where the file is; on an iPhone or iPad it keeps a copy on the device', 'No more black screen when a match’s video isn’t on this device']},
     {v:'3.7', d:'27 Oct 2026', t:'Match videos: halves, clip length, full screen', n:['Mark when each half starts and ends — tap a mark to jump there, ✕ to clear it; times show 45+2’, HT and FT', 'Choose a clip’s length, from 1 second to 1 minute, and nudge the start or end a second at a time', 'Clips play with the planner’s own yellow controls, and full screen keeps your drawings', 'Match videos have their own section on the home page']},
