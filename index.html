@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027194417">
+<meta name="hufc-build" content="20261027194640">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1903,6 +1903,11 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 .pg-show-pitch.is-p3d .p3d.on{width:100% !important; height:100%; aspect-ratio:auto; border-radius:10px;}
 @media screen and (max-width: 760px){ .pg-show-pitch.is-p3d .p3d.on{height:56vh;} }
 
+/* the match videos attached to a pre-game */
+.pg-mv-row{display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:4px;}
+.pg-mv-open{max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.an-pg-more{margin-top:10px;}
+
 
 /* ---------- Age-group folders, club library, view-only ---------- */
 .folder-bar{display:flex; align-items:center; justify-content:space-between; gap:12px 20px; flex-wrap:wrap; margin:22px 0 6px;}
@@ -2865,7 +2870,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 7:44pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 7:46pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3143,6 +3148,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       <div class="an-meta">
         <input type="text" class="an-name" id="anName" maxlength="120" aria-label="Name of this match video" autocomplete="off">
         <label class="an-link" title="Attach this video to a matchday lineup to tag its players — or leave it on its own"><span>Lineup</span><select id="anLink" aria-label="Attach to a lineup"></select></label>
+        <label class="an-link" title="Attach this video to a pre-game plan: its clips go straight onto that pre-game, and the pre-game links back here"><span>Pre-game</span><select id="anPgLink" aria-label="Attach to a pre-game"></select></label>
       </div>
       <button type="button" class="btn btn-small" data-an-open>Open match video…</button>
       <input type="file" class="file-input" id="anFile" accept="video/*,.mp4,.mov,.m4v">
@@ -10559,6 +10565,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   }
   function anOpenKey(){ return anModal.hidden ? null : anKey; }
   function mvForLineup(luId){ return mvList().find(function(x){ return x.m.luId === luId; }) || null; }
+  /* the pre-game plan this video is attached to, if any */
+  function anPgList(){ return listSessions().filter(function(x){ return isPre(x.plan); }); }
+  function anPgFind(id){ if(!id) return null; return anPgList().find(function(x){ return (x.plan.planId || x.key.slice(LS_PREFIX.length)) === id; }) || null; }
+  function anPgId(x){ return x.plan.planId || x.key.slice(LS_PREFIX.length); }
   function anLoadLu(id){
     if(!id) return null;
     if(lu && lu.id === id) return lu;
@@ -10569,7 +10579,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function anSquad(){ const L = anL(); return L ? L.squad.filter(function(p){ return clean(p.name) || clean(p.num); }) : []; }
   function anOpp(){ const L = anL(); return L ? clean(L.meta.opponent) : ''; }
   function anOppShort(){ return anOpp() ? luOppShort(anOpp()) : 'Them'; }
-  function anTitle(){ return clean(anM && anM.title) || (anL() ? luName(anL()) : '') || 'Match video'; }
+  function anTitle(){ return anM ? mvTitle(anM) : 'Match video'; }
   function anData(){
     if(!anM.analysis || typeof anM.analysis !== 'object') anM.analysis = {};
     const a = anM.analysis;
@@ -10643,16 +10653,17 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     try{ document.getElementById('anClipClose').click(); }catch(e){}
     closeModal(anModal);
     /* a new match video with nothing in it isn't kept */
-    if(anM && anCanEdit() && !anM.luId && !clean(anM.title) && !mvHasWork(anM)){ try{ localStorage.removeItem(anKey); }catch(e){} }
+    if(anM && anCanEdit() && !anM.luId && !anM.pgId && !clean(anM.title) && !mvHasWork(anM)){ try{ localStorage.removeItem(anKey); }catch(e){} }
     renderAnButton();
     if(document.documentElement.classList.contains('view-home')) renderHome();
+    else if(typeof isPre === 'function' && isPre()) { try{ pgRenderMatchCell(); }catch(e){} }
   }
   function mvHasWork(m){ const a = m.analysis || {}; return !!((a.file && a.file.name) || (a.tags && a.tags.length) || (a.clips && a.clips.length)); }
   /* the top of the window: its name, and the lineup it's attached to */
   function anRenderHead(){
     const ed = anCanEdit();
     const name = document.getElementById('anName');
-    name.value = clean(anM.title); name.placeholder = anL() ? luName(anL()) || 'Name this match video' : 'Name this match video — e.g. U18 vs Oakleigh';
+    name.value = clean(anM.title); name.placeholder = anL() ? luName(anL()) || 'Name this match video' : (anM.pgId && anPgFind(anM.pgId) ? sessionName(anPgFind(anM.pgId).plan) || 'Name this match video' : 'Name this match video — e.g. U18 vs Oakleigh');
     name.readOnly = !ed;
     const sel = document.getElementById('anLink'); sel.innerHTML = ''; sel.disabled = !ed;
     sel.appendChild(h('option', {value:'', text:'No lineup'}));
@@ -10662,8 +10673,24 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       sel.appendChild(o);
     });
     if(anM.luId && !anL()) sel.appendChild(h('option', {value:anM.luId, text:'(a lineup not on this device)', selected:true}));
+    const ps = document.getElementById('anPgLink'); ps.innerHTML = ''; ps.disabled = !ed;
+    ps.appendChild(h('option', {value:'', text:'No pre-game'}));
+    anPgList().filter(function(x){ return inView(x.plan) || anPgId(x) === anM.pgId; }).sort(function(a, b){ return (b.plan.savedAt || 0) - (a.plan.savedAt || 0); }).forEach(function(x){
+      const o = h('option', {value:anPgId(x), text:(sessionName(x.plan) || 'Untitled pre-game') + (clean(x.plan.meta.date) ? ' · ' + clean(x.plan.meta.date) : '')});
+      if(anPgId(x) === anM.pgId) o.selected = true;
+      ps.appendChild(o);
+    });
+    if(anM.pgId && !anPgFind(anM.pgId)) ps.appendChild(h('option', {value:anM.pgId, text:'(a pre-game not on this device)', selected:true}));
   }
   document.getElementById('anName').addEventListener('input', function(){ if(!anCanEdit()) return; anM.title = this.value; anSave(); });
+  document.getElementById('anPgLink').addEventListener('change', function(){
+    if(!anCanEdit()) return;
+    anM.pgId = this.value || '';
+    const x = anPgFind(anM.pgId);
+    if(x && !anM.luId && x.plan.group) anM.group = x.plan.group;
+    anSave(); anRenderHead(); anRenderClips();
+    showToast(x ? 'Attached to “' + (sessionName(x.plan) || 'pre-game') + '” · add clips straight to it, and open this video from the pre-game' : 'Not attached to a pre-game');
+  });
   document.getElementById('anLink').addEventListener('change', function(){
     if(!anCanEdit()) return;
     const had = anData().tags.some(function(t){ return t.pid; }) || (anData().clips || []).some(function(c){ return c.pids && c.pids.length; });
@@ -11058,7 +11085,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   const anPick = document.getElementById('anPick');
   function anPickOpen(){
     const box = document.getElementById('anPickList'); box.innerHTML = '';
-    const list = mvList().filter(function(x){ return mvHasWork(x.m) || x.m.luId || clean(x.m.title); });
+    const list = mvList().filter(function(x){ return mvHasWork(x.m) || x.m.luId || x.m.pgId || clean(x.m.title); });
     if(!list.length) box.appendChild(h('p', {class:'an-empty-list', text:'No match videos yet. Tap “+ Match video” to open one — attach it to a lineup any time to tag your players.'}));
     list.forEach(function(x){
       const m = x.m, a = m.analysis || {}, n = (a.tags || []).length, c = (a.clips || []).length;
@@ -11082,10 +11109,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     openModal(anPick);
   }
   /* ---------- the Match videos section on the home page ---------- */
-  function mvTitle(m){ const L = anLoadLu(m.luId); return clean(m.title) || (L ? luName(L) : '') || 'Untitled match video'; }
+  function mvTitle(m){ const L = anLoadLu(m.luId), P = !L && m.pgId ? anPgFind(m.pgId) : null; return clean(m.title) || (L ? luName(L) : '') || (P ? sessionName(P.plan) : '') || 'Untitled match video'; }
   function renderMatchCards(){
     const box = document.getElementById('homeMatches'); if(!box) return;
-    const all = mvList().filter(function(x){ return inView(x.m) && (mvHasWork(x.m) || x.m.luId || clean(x.m.title)); });
+    const all = mvList().filter(function(x){ return inView(x.m) && (mvHasWork(x.m) || x.m.luId || x.m.pgId || clean(x.m.title)); });
     document.getElementById('matchesCount').textContent = all.length ? all.length + (all.length === 1 ? ' match' : ' matches') : '';
     const q = clean(document.getElementById('matchSearch').value).toLowerCase();
     const match = function(x, qq){ return (mvTitle(x.m) + ' ' + ((x.m.analysis || {}).file || {}).name).toLowerCase().indexOf(qq) !== -1; };
@@ -11113,6 +11140,14 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     }, 'No match videos yet. Tap + Match video to add one.');
   }
   document.getElementById('matchSearch').addEventListener('input', renderMatchCards);
+  /* from a pre-game: its match videos, or a new one attached to it */
+  function mvForPregame(pgId){ return mvList().filter(function(x){ return x.m.pgId === pgId; }); }
+  function anNewForPregame(pgId, group){
+    const m = mvNew(''); m.pgId = pgId; if(group) m.group = group;
+    const key = MV_PREFIX + m.id;
+    try{ localStorage.setItem(key, JSON.stringify(m)); }catch(e){ showToast('This device is out of space'); return; }
+    anOpenMatch(key);
+  }
   function anNewFromHome(){
     const m = mvNew(''), key = MV_PREFIX + m.id;
     try{ localStorage.setItem(key, JSON.stringify(m)); }catch(e){ showToast('This device is out of space'); return; }
@@ -11337,7 +11372,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           }}) : ''),
         h('div', {class:'an-clip-acts'},
           h('button', {type:'button', class:'btn btn-small', text:'Share / save', onclick:function(){ anShareClip(c); }}),
-          ed || true ? h('button', {type:'button', class:'btn btn-small btn-primary', text:'Add to pre-game…', onclick:function(){ anToPregame(c); }}) : ''));
+          h('button', {type:'button', class:'btn btn-small btn-primary', text:(function(){ const x = anM && anPgFind(anM.pgId); return x ? 'Add to “' + (sessionName(x.plan) || 'pre-game') + '”…' : 'Add to pre-game…'; })(), onclick:function(){ anToPregame(c); }})));
       box.appendChild(row);
     });
   }
@@ -11791,12 +11826,16 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* ---------- put a clip on a pre-game board ---------- */
   const anPgModal = document.getElementById('anPg');
-  let anPgClip = null;
+  let anPgClip = null, anPgShowAll = false;
   function anToPregame(c){
     anPgClip = c;
     const box = document.getElementById('anPgList'); box.innerHTML = '';
-    const plans = listSessions().filter(function(x){ return isPre(x.plan) && canEdit(x.plan); })
+    const linked = anM && anPgFind(anM.pgId);
+    let plans = listSessions().filter(function(x){ return isPre(x.plan) && canEdit(x.plan); })
       .sort(function(a, b){ return (b.plan.savedAt || 0) - (a.plan.savedAt || 0); });
+    const others = linked && canEdit(linked.plan) && !anPgShowAll ? plans.filter(function(x){ return x.key !== linked.key; }) : [];
+    if(linked && canEdit(linked.plan) && !anPgShowAll) plans = [linked];
+    anPgShowAll = false;
     document.getElementById('anPgName').textContent = '“' + c.name + '”';
     if(!plans.length) box.appendChild(h('p', {class:'an-empty-list', text:'No pre-game plans yet. Make one with “+ New pre-game” on the home page, then add the clip.'}));
     plans.forEach(function(x){
@@ -11807,6 +11846,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
           return h('button', {type:'button', class:'btn btn-small', text:(i + 1) + '. ' + (clean(d.name) || 'Board ' + (i + 1)), onclick:function(){ anAddToBoard(x.key, d.id); }});
         }))));
     });
+    if(others.length) box.appendChild(h('button', {type:'button', class:'btn btn-small an-pg-more', text:'Another pre-game…', onclick:function(){ anPgShowAll = true; anToPregame(c); }}));
     openModal(anPgModal);
   }
   async function anAddToBoard(key, did){
@@ -12742,6 +12782,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.10', d:'27 Oct 2026', t:'Match videos and pre-games', n:['Attach a match video to a pre-game (next to Lineup in the match video window) — its clips go straight onto that pre-game', 'A pre-game shows its match video and opens it in one tap, or starts a new one attached to it']},
     {v:'3.9', d:'27 Oct 2026', t:'Easier to watch', n:['Tap the match video to play or pause, double-tap (or ⛶) for full screen — the tag buttons come too', 'A yellow seek bar on the match video: drag or tap to skip anywhere, with your tags and the halves marked', 'Fixed: the clip player’s play and full-screen buttons were invisible']},
     {v:'3.8', d:'27 Oct 2026', t:'Match videos remember the video', n:['The video opens again by itself when you come back to a match — no more picking it from your files each time', 'On a computer the planner remembers where the file is; on an iPhone or iPad it keeps a copy on the device', 'No more black screen when a match’s video isn’t on this device']},
     {v:'3.7', d:'27 Oct 2026', t:'Match videos: halves, clip length, full screen', n:['Mark when each half starts and ends — tap a mark to jump there, ✕ to clear it; times show 45+2’, HT and FT', 'Choose a clip’s length, from 1 second to 1 minute, and nudge the start or end a second at a time', 'Clips play with the planner’s own yellow controls, and full screen keeps your drawings', 'Match videos have their own section on the home page']},
@@ -13192,8 +13233,23 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       cell('Our formation', luCombo({value:clean(state.focus.ours), ph:'e.g. 4-3-3', label:'Our formation', options:forms, onChange:formSet('ours')})),
       cell('Their formation', luCombo({value:clean(state.focus.theirs), ph:'e.g. 4-4-2', label:'Their formation', options:forms, onChange:formSet('theirs')})),
       cell('Key messages', textField({value:state.focus.theme, ph:'The two or three things that win us this game', label:'Key messages', onInput:function(v){ state.focus.theme = v; scheduleSave(); }})),
-      h('div', {class:'cell'}, h('span', {class:'lbl', text:'Boards'}), h('div', {class:'total-val', id:'totalVal'}), h('div', {class:'total-sub', id:'totalSub'}))
+      h('div', {class:'cell'}, h('span', {class:'lbl', text:'Boards'}), h('div', {class:'total-val', id:'totalVal'}), h('div', {class:'total-sub', id:'totalSub'})),
+      h('div', {class:'cell pg-mv-cell no-print', id:'pgMvCell'})
     );
+    pgRenderMatchCell();
+  }
+  /* the match videos attached to this pre-game: open one, or start a new one attached to it */
+  function pgRenderMatchCell(){
+    const cell = document.getElementById('pgMvCell'); if(!cell || !state) return;
+    cell.innerHTML = '';
+    const id = state.planId; if(!id) return;
+    const list = mvForPregame(id);
+    cell.append(h('span', {class:'lbl', text:'Match video'}));
+    const row = h('div', {class:'pg-mv-row'});
+    list.forEach(function(x){ row.appendChild(h('button', {type:'button', class:'btn btn-small pg-mv-open', title:'Open the match video', text:'🎞 ' + mvTitle(x.m), onclick:function(){ flush(); anOpenMatch(x.key); }})); });
+    if(canEdit(state)) row.appendChild(h('button', {type:'button', class:'btn btn-small', text:list.length ? '＋ Another' : '＋ Attach a match video', title:'Start a match video attached to this pre-game — its clips go straight onto these boards', onclick:function(){ flush(); anNewForPregame(id, state.group); }}));
+    else if(!list.length) row.appendChild(h('span', {class:'pg-lu-hint', text:'None attached'}));
+    cell.append(row);
   }
   function pgAutoName(s){ s = s || state; const o = clean(s.meta.opponent); return o ? 'vs ' + o : ''; }
   function pgRefresh(){
