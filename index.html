@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028101229">
+<meta name="hufc-build" content="20261028101535">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2961,7 +2961,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 10:12am</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 10:15am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3560,8 +3560,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   };
   function fixedShape(type, shape){ return CATEGORY[type] === 'marker' ? (DEFAULT_SHAPE[type] || 'circle') : shape; }
   /* HUFC kits first: yellow (home), grey (second), black (third) */
-  const SWATCHES = ['#ffd400','#8e9399','#0d0e0f','#2b2c2e','#ffffff','#6a3d9a','#e0473c','#4f7cff','#3cb878','#ef7d1a'];
-  const KIT_NAMES = {'#ffd400':'HUFC home kit (yellow)', '#8e9399':'HUFC second kit (grey)', '#0d0e0f':'HUFC third kit (black)'};
+  const SWATCHES = ['#ffd400','#0d0e0f','#8e9399','#2b2c2e','#ffffff','#6a3d9a','#e0473c','#4f7cff','#3cb878','#ef7d1a'];
+  const KIT_NAMES = {'#ffd400':'HUFC home kit (yellow)', '#0d0e0f':'HUFC away kit (black)', '#8e9399':'HUFC third kit (grey)'};
   const LINE_COLORS = ['#ffffff','#ffd400','#0d0e0f','#4f7cff','#e0473c'];
   const PLACEABLE = ['player-a','player-b','player-c','gk-a','gk-b','ball','balls','cone','flat','mannequin','goal-big','goal-small','coach','text'];
   const LINEABLE = ['pass','shoot','run','dribble','zone','mark'];
@@ -8998,7 +8998,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   };
   const LU_FUTSAL_LABELS = {DEF:{1:['FIX'], 2:['LD','RD'], 3:['LD','FIX','RD'], 4:['LD','LFX','RFX','RD']}, MID:{1:['MID'], 2:['LA','RA']}, ATT:{1:['PIV'], 2:['LA','RA'], 3:['LA','PIV','RA']}};
   /* HUFC kits first: yellow (home), grey (second), black (third) */
-  const LU_SHIRTS = ['#ffd400','#8e9399','#0d0e0f','#ffffff','#6a3d9a','#e0473c','#4f7cff','#3cb878'];
+  const LU_SHIRTS = ['#ffd400','#0d0e0f','#8e9399','#ffffff','#6a3d9a','#e0473c','#4f7cff','#3cb878'];
   /* the shapes of a formation on a full pitch (or a futsal court), team attacking upwards */
   /* wingers start out wide, near the touchline (a 300-wide pitch) */
   const LU_WIDE = {LW:44, RW:256};
@@ -9083,6 +9083,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     s.v = 3;
     /* kit names now with capital colours */
     s.meta.kit = String(s.meta.kit || '').replace(/^(Home kit|Away kit|3rd kit) – (yellow|grey|black)$/, function(m, a, b){ return a + ' – ' + b.charAt(0).toUpperCase() + b.slice(1); });
+    /* the away kit is now black and the 3rd kit grey: a lineup saved with the old names keeps the same colour */
+    if(s.meta.kit === 'Away kit – Grey') s.meta.kit = '3rd kit – Grey'; else if(s.meta.kit === '3rd kit – Black') s.meta.kit = 'Away kit – Black';
     s.shirt = s.shirt || '#ffd400'; s.gk = (!s.gk || s.gk === '#e0473c') ? '#6a3d9a' : s.gk;
     s.title = s.title || ''; s.id = s.id || newId();
     s.removed = Array.isArray(s.removed) ? s.removed.filter(function(k){ return LU_OPT_SECS[k]; }) : [];
@@ -9170,7 +9172,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* opponents in the dropdown (anything else can still be typed) */
   const LU_OPPONENTS = ['Altona Magic SC', 'Ashburton United SC', 'Avondale FC', 'Ballarat City FC', 'Bendigo City FC', 'Bentleigh Greens SC', 'Berwick City SC', 'Boroondara Eagles FC', 'Box Hill United SC', 'Brimbank Stallions FC', 'Brunswick City SC', 'Brunswick Juventus FC', 'FC Bulleen Lions', 'CS George Cross FC', 'Dandenong City SC', 'Dandenong Thunder FC', 'Doreen United SC', 'Eastern Lions SC', 'Eltham Redbacks FC', 'Essendon Royals SC', 'Geelong SC', 'Gippsland FC', 'Glen Eira FC', 'Goulburn Valley Suns FC', 'Green Gully SC', 'Hume City FC', 'Keilor Park SC', 'Kingston City FC', 'Langwarrin SC', 'Malvern City FC', 'Manningham United FC', 'Melbourne City FC', 'Melbourne Knights FC', 'Melbourne Victory FC', 'Monash City Villarreal FC', 'Moreland City FC', 'Mornington SC', 'Murray United FC', 'North Geelong Warriors FC', 'Northcote City FC', 'Nunawading City FC', 'Oakleigh Cannons FC', 'Pascoe Vale FC', 'Port Melbourne Sharks SC', 'Preston Lions FC', 'Ringwood City FC', 'South Melbourne FC', 'St Albans Dinamo FC', 'Werribee City FC', 'Whittlesea Ranges FC'];   /* the Junior Boys NPL clubs */
   const LU_HOMEAWAY = ['Home', 'Away', 'Neutral'];
-  const LU_KITS = ['Home kit – Yellow', 'Away kit – Grey', '3rd kit – Black'];
+  const LU_KITS = ['Home kit – Yellow', 'Away kit – Black', '3rd kit – Grey'];
   /* a box with its own list: click for every choice, or type and it suggests (and fills in) the closest one. Anything typed is kept. */
   function luCombo(o){
     const inp = h('input', {type:'text', class:'lu-combo-in', placeholder:o.ph || '', 'aria-label':o.label, autocomplete:'off', spellcheck:'false', value:o.value || ''});
@@ -13153,6 +13155,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.21', d:'28 Oct 2026', t:'Kits swapped', n:['The away (2nd) kit is now black and the 3rd kit grey — in the lineup Kit list and the shirt colours', 'Lineups that already had a kit picked keep the same colour']},
     {v:'3.20', d:'28 Oct 2026', t:'A proper Windows app', n:['The Windows program (v1.5.9) has its own black title bar with the crest — no more File / Edit / View / Help strip', 'The ☰ button on the title bar holds your planner folder, back up, zoom and About', '“Everything is saved” sits quietly in the title bar instead of its own white strip', 'A slim yellow scroll bar in the program', 'A bigger, sharper crest on the title bar', 'Settings: the crest on Club & sharing, and a little pitch with a formation on Matchday lineups']},
     {v:'3.19', d:'28 Oct 2026', t:'Match video buttons', n:['Every button in the match video windows is clear white, and turns black with yellow text when you hover over it or pick it']},
     {v:'3.18', d:'27 Oct 2026', t:'Smooth video bar', n:['The yellow pill under every video (match videos, clips and pre-game videos) slides along smoothly as it plays, instead of jumping each second', 'All the yellow pills (video bars and scroll bars) are a little wider']},
