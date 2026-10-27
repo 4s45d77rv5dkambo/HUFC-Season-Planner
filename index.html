@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027151809">
+<meta name="hufc-build" content="20261027152347">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1508,7 +1508,7 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-draw-bar .btn:disabled{opacity:.4;}
 .an-dtools{display:flex; gap:4px; background:#1d1e20; border:1px solid #3a3b3e; border-radius:10px; padding:3px;}
 .an-dtool{display:inline-flex; align-items:center; gap:6px; border:0; background:transparent; color:#ddd; font:inherit; font-size:13px; font-weight:600; padding:6px 10px; border-radius:7px; cursor:pointer;}
-.an-dtool .an-dico{font-size:16px; line-height:1;}
+.an-dtool .an-dico{display:inline-flex; width:20px; height:20px;} .an-dtool .an-dico svg{width:20px; height:20px;}
 .an-dtool.on{background:var(--yellow); color:var(--black);}
 .an-dcols{display:flex; gap:6px; padding:0 4px;}
 .an-dcol{width:24px; height:24px; border-radius:50%; border:2px solid #3a3b3e; cursor:pointer; padding:0;}
@@ -2801,7 +2801,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 3:18pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 3:23pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11078,9 +11078,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
      (x, y run 0–1 across the picture). Shared clips and pre-game clips get the drawings in the video.
      ===================================================================== */
   const AN_DRAW_COLOURS = ['#ffd400', '#ffffff', '#ff3b30', '#22d3ee'];
-  const AN_DRAW_TOOLS = [['arrow', '➜', 'Arrow'], ['run', '⤳', 'Run'], ['area', '▱', 'Area'], ['ring', '◯', 'Ring'], ['text', 'T', 'Text']];
+  const AN_DRAW_TOOLS = [['run', 'Run'], ['pass', 'Pass'], ['dribble', 'Dribble'], ['shoot', 'Shot'], ['area', 'Area'], ['ring', 'Ring'], ['text', 'Text']];
+  const AN_DRAW_ICONS = {"run": "<svg viewBox=\"0 0 24 24\"><line x1=\"3\" y1=\"18\" x2=\"15.63\" y2=\"8.34\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M20,5 L16.66,11.33 L16.64,7.57 L13.01,6.57 Z\" fill=\"currentColor\"/></svg>", "pass": "<svg viewBox=\"0 0 24 24\"><line x1=\"3\" y1=\"18\" x2=\"15.63\" y2=\"8.34\" stroke=\"currentColor\" stroke-width=\"2\" stroke-dasharray=\"3,2.5\" stroke-linecap=\"round\"/><path d=\"M20,5 L16.66,11.33 L16.64,7.57 L13.01,6.57 Z\" fill=\"currentColor\"/></svg>", "dribble": "<svg viewBox=\"0 0 24 24\"><path d=\"M3,18 C4.5,19 5.8,16.8 5.6,15 C5.4,13.2 7.2,13 8.6,14 C10,15 11.2,13.5 10.9,11.6 C10.7,10 12.5,10.1 13.6,9.6 L16.4,7.6\" stroke=\"currentColor\" stroke-width=\"1.6\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M20,4.8 L16.72,11.16 L16.67,7.4 L13.03,6.43 Z\" fill=\"currentColor\"/></svg>", "shoot": "<svg viewBox=\"0 0 24 24\"><path d=\"M3.82,19.07 L15.97,9.78 M2.18,16.93 L14.33,7.63\" stroke=\"currentColor\" stroke-width=\"1.3\" fill=\"none\"/><path d=\"M20,5 L16.66,11.33 L16.64,7.57 L13.01,6.57 Z\" fill=\"currentColor\"/></svg>", "area": "<svg viewBox=\"0 0 24 24\"><path d=\"M4,8 L13,4 L20,9 L17,18 L6,17 Z\" fill=\"currentColor\" fill-opacity=\".3\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-dasharray=\"3,2\" stroke-linejoin=\"round\"/></svg>", "ring": "<svg viewBox=\"0 0 24 24\"><ellipse cx=\"12\" cy=\"13\" rx=\"8\" ry=\"5.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/></svg>", "text": "<svg viewBox=\"0 0 24 24\"><path d=\"M5,6 H19 M12,6 V19\" stroke=\"currentColor\" stroke-width=\"2.6\" stroke-linecap=\"round\"/></svg>"};
   const anCV = document.getElementById('anClipVid'), anDrawSvg = document.getElementById('anDraw'), anStage = document.getElementById('anCpStage');
-  let anDC = null, anDMode = false, anDMark = null, anDTool = 'arrow', anDColour = AN_DRAW_COLOURS[0], anDLive = null, anDLast = 0, anDFreeze = null, anDRaf = 0;
+  let anDC = null, anDMode = false, anDMark = null, anDTool = 'run', anDColour = AN_DRAW_COLOURS[0], anDLive = null, anDLast = 0, anDFreeze = null, anDRaf = 0;
   function anMarks(c){ if(!Array.isArray(c.marks)) c.marks = []; return c.marks; }
   /* the picture's box inside the player (the video is letterboxed) */
   function anPicRect(){
@@ -11109,14 +11110,38 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const ang = Math.atan2(b[1] - a[1], b[0] - a[0]), s = size;
     return [[b[0], b[1]], [b[0] - s * Math.cos(ang - 0.45), b[1] - s * Math.sin(ang - 0.45)], [b[0] - s * Math.cos(ang + 0.45), b[1] - s * Math.sin(ang + 0.45)]];
   }
+  const AN_LINES = {run:1, pass:1, dribble:1, shoot:1, arrow:1};
+  /* a freehand line, sampled so we can walk along it */
+  function anSamp(P){ const cum = [0]; for(let i = 1; i < P.length; i++) cum.push(cum[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1])); return {pts:P, cum:cum, len:cum[cum.length - 1]}; }
+  function anAt(S, d){
+    d = Math.max(0, Math.min(S.len, d));
+    let i = 1; while(i < S.cum.length - 1 && S.cum[i] < d) i++;
+    const a = S.pts[i - 1], b = S.pts[i], seg = (S.cum[i] - S.cum[i - 1]) || 0.0001, t = (d - S.cum[i - 1]) / seg;
+    const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
+    return {x:a[0] + dx * t, y:a[1] + dy * t, tx:dx / l, ty:dy / l};
+  }
   /* one shape, drawn in pixels for a picture w × h — the same drawing for the screen (SVG) and the saved video (canvas) */
   function anShapeParts(sh, w, h){
     const px = sh.p.map(function(q){ return [q[0] * w, q[1] * h]; }), lw = Math.max(3, w / 220);
-    if(sh.k === 'arrow' || sh.k === 'run'){
+    if(AN_LINES[sh.k]){
       if(px.length < 2) return null;
-      const line = sh.k === 'arrow' ? [px[0], px[px.length - 1]] : px;
-      const a = line[Math.max(0, line.length - (sh.k === 'run' ? 4 : 2))], b = line[line.length - 1];
-      return {path:sh.k === 'arrow' ? 'M' + line[0][0] + ' ' + line[0][1] + ' L' + b[0] + ' ' + b[1] : anSmooth(line), dash:sh.k === 'run', lw:lw, head:anHead(a, b, lw * 4.2), line:line};
+      const S = anSamp(sh.k === 'arrow' ? [px[0], px[px.length - 1]] : px);
+      if(S.len < 4) return null;
+      const hl = lw * 4.2, tip = anAt(S, S.len), bk = anAt(S, Math.max(0, S.len - hl * 0.9));
+      const head = anHead([bk.x, bk.y], [tip.x, tip.y], hl), stop = Math.max(0, S.len - hl * 0.6);
+      const along = function(d0, d1, off){ const out = [], n = Math.max(2, Math.ceil((d1 - d0) / Math.max(1, lw * 0.6))); for(let i = 0; i <= n; i++){ const q = anAt(S, d0 + (d1 - d0) * i / n), o = off ? off(d0 + (d1 - d0) * i / n) : 0; out.push([q.x - q.ty * o, q.y + q.tx * o]); } return out; };
+      const poly = function(P){ return P.map(function(q, i){ return (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join(' '); };
+      const centre = poly(along(0, stop));
+      let lines;
+      if(sh.k === 'dribble'){
+        /* a wave that settles into a short straight finish under the head, like the session dribble */
+        const straight = Math.min(lw * 3, stop * 0.25), wl = Math.max(1, stop - straight), half = wl / Math.max(3, Math.min(14, Math.round(wl / (lw * 6)))), peak = lw * 1.9;
+        lines = [{d:poly(along(0, stop, function(d){ if(d >= wl) return 0; const env = Math.max(0, Math.min(1, d / (half * 0.5), (wl - d) / (half * 0.9))); return peak * Math.sin(Math.PI * d / half) * env; })), w:lw * 0.8}];
+      } else if(sh.k === 'shoot'){
+        const gap = lw * 0.8;
+        lines = [{d:poly(along(0, stop, function(){ return gap; })) + ' ' + poly(along(0, stop, function(){ return -gap; })), w:lw * 0.55}];
+      } else lines = [{d:centre, w:lw, dash:sh.k === 'pass'}];
+      return {lines:lines, halo:sh.k === 'dribble' ? lines[0].d : centre, haloW:sh.k === 'shoot' ? lw * 3 : sh.k === 'dribble' ? lw * 2 : lw * 2.2, haloDash:sh.k === 'pass', head:head, lw:lw};
     }
     if(sh.k === 'area'){ if(px.length < 3) return null; return {path:anSmooth(px.concat([px[0]])) + ' Z', fill:true, lw:lw * 0.8, line:px}; }
     if(sh.k === 'text'){ if(!sh.s) return null; return {text:sh.s, x:px[0][0], y:px[0][1], size:Math.max(14, w / 26)}; }
@@ -11146,9 +11171,9 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       mk('path', {d:P.path, fill:sh.c, 'fill-opacity':'0.28', stroke:sh.c, 'stroke-width':P.lw, 'stroke-linejoin':'round', 'stroke-dasharray':P.lw * 2.5 + ' ' + P.lw * 1.8});
       return g;
     }
-    const dash = P.dash ? P.lw * 2.6 + ' ' + P.lw * 1.9 : 'none';
-    mk('path', {d:P.path, fill:'none', stroke:'rgba(0,0,0,.55)', 'stroke-width':P.lw * 2.2, 'stroke-linecap':'round', 'stroke-linejoin':'round', 'stroke-dasharray':P.dash ? P.lw * 2.6 + ' ' + P.lw * 1.9 : 'none'});
-    mk('path', {d:P.path, fill:'none', stroke:sh.c, 'stroke-width':P.lw, 'stroke-linecap':'round', 'stroke-linejoin':'round', 'stroke-dasharray':dash});
+    const dsh = P.lw * 2.6 + ' ' + P.lw * 1.9;
+    mk('path', {d:P.halo, fill:'none', stroke:'rgba(0,0,0,.55)', 'stroke-width':P.haloW, 'stroke-linecap':'round', 'stroke-linejoin':'round', 'stroke-dasharray':P.haloDash ? dsh : 'none'});
+    P.lines.forEach(function(L){ mk('path', {d:L.d, fill:'none', stroke:sh.c, 'stroke-width':L.w, 'stroke-linecap':'round', 'stroke-linejoin':'round', 'stroke-dasharray':L.dash ? dsh : 'none'}); });
     mk('polygon', {points:P.head.map(function(q){ return q.join(','); }).join(' '), fill:sh.c, stroke:'rgba(0,0,0,.55)', 'stroke-width':P.lw * 0.6, 'stroke-linejoin':'round'});
     return g;
   }
@@ -11168,15 +11193,15 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       g.fillStyle = sh.c + '22'; g.fill(); g.strokeStyle = sh.c; g.lineWidth = P.lw; g.stroke();
       g.restore(); return;
     }
-    const path = new Path2D(P.path);
     if(P.fill){
+      const path = new Path2D(P.path);
       g.globalAlpha = 0.28; g.fillStyle = sh.c; g.fill(path); g.globalAlpha = 1;
       g.setLineDash([P.lw * 2.5, P.lw * 1.8]); g.strokeStyle = sh.c; g.lineWidth = P.lw; g.stroke(path);
       g.restore(); return;
     }
-    if(P.dash) g.setLineDash([P.lw * 2.6, P.lw * 1.9]);
-    g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = P.lw * 2.2; g.stroke(path);
-    g.strokeStyle = sh.c; g.lineWidth = P.lw; g.stroke(path);
+    const dsh = [P.lw * 2.6, P.lw * 1.9];
+    g.setLineDash(P.haloDash ? dsh : []); g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = P.haloW; g.stroke(new Path2D(P.halo));
+    P.lines.forEach(function(L){ g.setLineDash(L.dash ? dsh : []); g.strokeStyle = sh.c; g.lineWidth = L.w; g.stroke(new Path2D(L.d)); });
     g.setLineDash([]);
     g.beginPath(); g.moveTo(P.head[0][0], P.head[0][1]); g.lineTo(P.head[1][0], P.head[1][1]); g.lineTo(P.head[2][0], P.head[2][1]); g.closePath();
     g.fillStyle = sh.c; g.fill(); g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = P.lw * 0.6; g.stroke();
@@ -11199,7 +11224,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const ed = anCanEdit();
     if(anDMode){
       const tools = h('div', {class:'an-dtools'}, AN_DRAW_TOOLS.map(function(t){
-        return h('button', {type:'button', class:'an-dtool' + (anDTool === t[0] ? ' on' : ''), title:t[2], onclick:function(){ anDTool = t[0]; anRenderDrawBar(); }}, h('span', {class:'an-dico', text:t[1]}), h('span', {text:t[2]}));
+        return h('button', {type:'button', class:'an-dtool' + (anDTool === t[0] ? ' on' : ''), title:t[1], 'aria-label':t[1], onclick:function(){ anDTool = t[0]; anRenderDrawBar(); }}, h('span', {class:'an-dico', html:AN_DRAW_ICONS[t[0]]}), h('span', {text:t[1]}));
       }));
       const cols = h('div', {class:'an-dcols'}, AN_DRAW_COLOURS.map(function(c){
         return h('button', {type:'button', class:'an-dcol' + (anDColour === c ? ' on' : ''), style:'background:' + c, title:'Colour', 'aria-label':'Colour', onclick:function(){ anDColour = c; anRenderDrawBar(); }});
@@ -11232,7 +11257,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(!anDMark){ anDMark = {id:newId(), t:t, hold:4, shapes:[]}; anMarks(anDC).push(anDMark); }
     anDMode = true; anCV.controls = false;
     anStage.classList.add('drawing');
-    anShowShapes(anDMark.shapes); anRenderDrawBar();
+    anRenderDrawBar(); anShowShapes(anDMark.shapes);
     document.getElementById('anFreezeFlag').hidden = false;
     document.getElementById('anFreezeFlag').textContent = '✏ Drawing at ' + anClock(t) + ' — drag on the picture';
   }
@@ -11261,13 +11286,13 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   anDrawSvg.addEventListener('pointermove', function(e){
     if(!anDMode || !anDLive) return;
     const q = anPt(e);
-    if(anDLive.k === 'arrow' || anDLive.k === 'ring') anDLive.p[1] = q; else anDLive.p.push(q);
+    if(anDLive.k === 'ring') anDLive.p[1] = q; else anDLive.p.push(q);
     anShowShapes(anDMark.shapes);
   });
   function anPtrEnd(){
     if(!anDMode || !anDLive) return;
     const sh = anDLive; anDLive = null;
-    if(sh.k === 'run' || sh.k === 'area'){ const r = anPicRect(); sh.p = anThin(sh.p.map(function(q){ return [q[0] * r.w, q[1] * r.h]; }), 9).map(function(q){ return [q[0] / r.w, q[1] / r.h]; }); }
+    if(sh.k !== 'ring'){ const r = anPicRect(); sh.p = anThin(sh.p.map(function(q){ return [q[0] * r.w, q[1] * r.h]; }), 9).map(function(q){ return [q[0] / r.w, q[1] / r.h]; }); }
     const a = sh.p[0], b = sh.p[sh.p.length - 1], big = Math.hypot(a[0] - b[0], a[1] - b[1]) > 0.02 || sh.p.length > 4;
     if(big){ sh.p = sh.p.map(function(q){ return [Math.round(q[0] * 1000) / 1000, Math.round(q[1] * 1000) / 1000]; }); anDMark.shapes.push(sh); anSave(); }
     anShowShapes(anDMark.shapes); anRenderDrawBar();
@@ -11332,6 +11357,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   });
   anCV.addEventListener('pause', function(){ if(!anDMode && !anDFreeze && anDC){ const m = anMarkAt(anDC, anCV.currentTime); if(m) anShowShapes(m.shapes); } });
   anCV.addEventListener('loadedmetadata', function(){ anShowShapes([]); });
+  /* the picture changes size (tool bar appears, window resized): the drawing layer follows it */
+  if(window.ResizeObserver) new ResizeObserver(function(){ if(anDC) anShowShapes(anDMode && anDMark ? anDMark.shapes : (anDFreeze ? anDFreeze.shapes : (anCV.paused && anMarkAt(anDC, anCV.currentTime) ? anMarkAt(anDC, anCV.currentTime).shapes : []))); }).observe(anStage);
   window.addEventListener('resize', function(){ if(anDC && !anDrawSvg.hidden) anShowShapes(anDMode && anDMark ? anDMark.shapes : (anDFreeze ? anDFreeze.shapes : [])); });
 
   /* ---------- the clip with its drawings, as a video (for sharing and pre-games) ---------- */
@@ -12365,7 +12392,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'3.6', d:'27 Oct 2026', t:'Draw on clips', n:['Pause a clip and tap ✏ Draw to add arrows, runs, highlighted areas, rings and text', 'When the clip plays it freezes there to show your drawings, then carries on (choose how long)', 'Clips you share or add to a pre-game include the drawings']},
+    {v:'3.6', d:'27 Oct 2026', t:'Draw on clips', n:['Pause a clip and tap ✏ Draw: run, pass, dribble and shot arrows (the same as in sessions), highlighted areas, rings and text', 'When the clip plays it freezes there to show your drawings, then carries on (choose how long)', 'Clips you share or add to a pre-game include the drawings']},
     {v:'3.5', d:'27 Oct 2026', t:'Updates straight away', n:['New versions arrive within a minute or so — on the Home page the planner switches over by itself', 'In the middle of a plan it waits until you go Home, or tap Update now (your work is saved first)', 'Windows program 1.5.8 checks every minute']},
     {v:'3.4', d:'27 Oct 2026', t:'Bigger folder buttons', n:['My folder, Club library and the age groups are big buttons right across the page', 'They turn black and yellow when you point at them']},
     {v:'3.3', d:'27 Oct 2026', t:'Share the planner', n:['The admin can copy or share the iPhone/iPad link and the Windows download from Settings → Club & sharing', 'A download page for the Windows program']},
