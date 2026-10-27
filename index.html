@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027120434">
+<meta name="hufc-build" content="20261027121049">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1743,6 +1743,10 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 .ro-inner{max-width:900px; margin:0 auto; padding:8px 16px; display:flex; align-items:center; gap:10px; font-size:14px;}
 .ro-text{flex:1;}
 body.read-only #saveBtn, body.read-only #undoBtn, body.read-only #redoBtn{display:none !important;}
+body.read-only #delBtn{display:none !important;}
+.btn-del{display:inline-flex; align-items:center; gap:6px;}
+.btn-del svg{flex:0 0 auto;}
+.btn-del:hover, .btn-del:focus-visible{color:#c62828; border-color:#c62828;}
 body.read-only .sheet .board-tools, body.read-only .sheet .add-link, body.read-only .sheet .sheet-actions, body.read-only .sheet .hint,
 body.read-only .sheet .drill-actions, body.read-only .sheet .icon-btn, body.read-only .lu-sheet .no-print{display:none !important;}
 .group-box h3{margin:0 0 8px; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:22px; letter-spacing:.03em; text-transform:uppercase;}
@@ -1992,7 +1996,7 @@ html.has-selbar .home{padding-bottom:70px;}
 :where(html:not(.print-sim)) .appbar #newBtn,:where(html:not(.print-sim)) .appbar #openBtn{display:none;}
 :where(html:not(.print-sim)) html.view-home .appbar{display:none;}
 :where(html:not(.print-sim)) .appbar .btn{flex:1; padding:8px 6px; min-width:0;}
-:where(html:not(.print-sim)) .appbar .btn-hist,:where(html:not(.print-sim)) .appbar .btn-home{flex:0 0 38px;}
+:where(html:not(.print-sim)) .appbar .btn-hist,:where(html:not(.print-sim)) .appbar .btn-home,:where(html:not(.print-sim)) .appbar .btn-del{flex:0 0 38px; justify-content:center;}
 :where(html:not(.print-sim)) .inspector{position:fixed; left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom, 0px)); top:auto; z-index:75;
     max-height:46vh; overflow:auto; padding:10px 12px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.28);
     animation:sheetUp .16s ease-out;}
@@ -2559,6 +2563,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
         <button type="button" role="menuitem" class="session-only" id="fileBtn">Plan file<span>A small file for another coach’s planner · they double-click it, or use Open… → Import</span></button>
       </div>
     </div>
+    <button type="button" class="btn btn-del editor-only" id="delBtn" title="Delete this" aria-label="Delete"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg><span class="btn-label"> Delete</span></button>
     <button type="button" class="btn btn-primary editor-only" id="saveBtn" title="Save in the app (Ctrl+S)">Save</button>
     <input type="file" class="file-input" id="openInput" accept=".hufcsession,.hufcpregame,.html,.htm,.json,text/html,application/json">
   </div>
@@ -2644,7 +2649,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 12:04pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 12:10pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -7589,6 +7594,32 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     setStatus('Opened “' + (sessionName(state) || 'Untitled session') + '”');
   }
   document.getElementById('homeBtn').addEventListener('click', function(){ swap(showHome); });
+  /* Delete, from inside a session, pre-game or lineup: asks first, then back to Home (with Undo) */
+  document.getElementById('delBtn').addEventListener('click', async function(){
+    const isLu = isLineupView();
+    if(isLu){
+      if(!lu || !canEdit(lu)){ showToast('Only the coach who made this can delete it'); return; }
+      const name = luName(lu) || 'Untitled lineup';
+      if(!(await askDelete('lineup', name))) return;
+      luFlush();
+      const key = luKey, raw = localStorage.getItem(key);
+      try{ localStorage.removeItem(key); }catch(e){}
+      delDone(name, key, raw);
+      return;
+    }
+    if(!state || !canEdit(state)){ showToast('Only the coach who made this can delete it'); return; }
+    const pre = isPre(), what = pre ? 'pre-game' : 'session', name = sessionName(state) || (pre ? 'Untitled pre-game' : 'Untitled session');
+    if(!(await askDelete(what, name, pre ? '' : 'Its practices stay in Saved practices.'))) return;
+    flush();
+    const key = storageKey, raw = localStorage.getItem(key);
+    try{ localStorage.removeItem(key); }catch(e){}
+    delDone(name, key, raw);
+  });
+  function delDone(name, key, raw){
+    const undo = function(){ if(raw){ try{ localStorage.setItem(key, raw); }catch(e){} } clubSyncSoon(); if(document.documentElement.classList.contains('view-home')) renderHome(); };
+    swap(function(){ showHome(); showToast('Deleted “' + name + '”', undo); });
+    clubSyncSoon();
+  }
   document.getElementById('homeNewBtn').addEventListener('click', function(){ swap(startNewSession); });
   document.getElementById('homeOpenBtn').addEventListener('click', openSessions);
   document.getElementById('libSearch').addEventListener('input', renderLibraryGrid);
