@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HUFC Season Planner for Windows</title>
+<link rel="icon" href="icon-192.png">
+<style>
+:root{--black:#0d0e0f;--yellow:#ffd400;--paper:#f4f4f1;--grey:#5b5d61;--line:#dcddd9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:#1c1d1f;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.hero{background:var(--black);color:#fff;border-bottom:4px solid var(--yellow);padding:28px 16px}
+.wrap{max-width:680px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:16px}
+.brand img{width:72px;height:72px}
+h1{margin:0;font-size:26px;letter-spacing:.02em;text-transform:uppercase}
+.sub{color:var(--yellow);font-size:13px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}
+main{padding:22px 16px 40px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;background:var(--yellow);color:var(--black);font:700 17px/1 system-ui,"Segoe UI",sans-serif;padding:16px 22px;cursor:pointer;width:100%;text-transform:uppercase;letter-spacing:.04em}
+.btn:disabled{opacity:.6;cursor:default}
+.meta{color:var(--grey);font-size:14px;margin:10px 0 0;text-align:center}
+.bar{height:10px;border-radius:99px;background:#ececE8;overflow:hidden;margin-top:14px;display:none}
+.bar span{display:block;height:100%;width:0;background:var(--black);transition:width .2s}
+ol{padding-left:22px;margin:0}
+ol li{margin:8px 0}
+h2{font-size:15px;text-transform:uppercase;letter-spacing:.08em;margin:26px 0 10px}
+.note{font-size:14px;color:var(--grey)}
+.err{color:#b3261e;font-size:14px;margin-top:10px;display:none}
+</style></head>
+<body>
+<header class="hero"><div class="wrap brand"><img src="icon-192.png" alt=""><div><h1>HUFC Season Planner</h1><div class="sub">For Windows · Heidelberg United FC</div></div></div></header>
+<main class="wrap">
+  <div class="card">
+    <button class="btn" id="go">⬇ Download for Windows</button>
+    <div class="bar" id="bar"><span></span></div>
+    <p class="meta" id="meta"></p>
+    <p class="err" id="err"></p>
+  </div>
+  <h2>Install</h2>
+  <ol>
+    <li>Open your <b>Downloads</b> folder, right-click <b>HUFC Season Planner.zip</b> and choose <b>Extract All…</b> → <b>Extract</b>.</li>
+    <li>In the new folder, double-click <b>Install HUFC Season Planner</b>. If Windows says it protected your PC, click <b>More info</b> → <b>Run anyway</b>.</li>
+    <li>The planner opens and puts a shortcut on your desktop. Sign in with the email you gave the club.</li>
+  </ol>
+  <p class="note">After this it updates itself — you never need to download it again. On an iPhone or iPad, use the app link instead: <a href="./">open the planner</a> in Safari, then Share → Add to Home Screen.</p>
+</main>
+<script>
+const INFO = {"version": "1.5.7", "size": 106825268, "parts": ["part1.bin", "part2.bin", "part3.bin", "part4.bin"], "sha": "a620131f669b092c", "built": "27 Oct 2026"};
+const meta = document.getElementById('meta'), go = document.getElementById('go'), bar = document.getElementById('bar'), fill = bar.firstElementChild, err = document.getElementById('err');
+meta.textContent = 'Version ' + INFO.version + ' · ' + (INFO.size / 1048576).toFixed(0) + ' MB · ' + INFO.built;
+go.addEventListener('click', async function(){
+  go.disabled = true; err.style.display = 'none'; bar.style.display = 'block';
+  try{
+    const parts = []; let got = 0;
+    for(const n of INFO.parts){
+      const r = await fetch('win/' + n + '?v=' + INFO.sha, {cache:'no-store'});
+      if(!r.ok) throw new Error('part ' + n + ' ' + r.status);
+      const rd = r.body.getReader(), chunks = [];
+      for(;;){ const x = await rd.read(); if(x.done) break; chunks.push(x.value); got += x.value.length; fill.style.width = (got / INFO.size * 100).toFixed(1) + '%'; go.textContent = 'Downloading… ' + Math.round(got / INFO.size * 100) + '%'; }
+      parts.push(new Blob(chunks));
+    }
+    const blob = new Blob(parts, {type:'application/zip'});
+    if(blob.size !== INFO.size) throw new Error('size');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'HUFC Season Planner.zip';
+    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 60000);
+    go.textContent = '✓ Downloaded — now follow the steps below'; 
+  }catch(e){
+    err.textContent = 'The download didn’t finish — check your internet and try again.'; err.style.display = 'block';
+    go.disabled = false; go.textContent = '⬇ Try again'; bar.style.display = 'none';
+  }
+});
+</script>
+</body></html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027144740">
+<meta name="hufc-build" content="20261027145108">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1594,6 +1594,13 @@ td.gt-an{font-size:14px; text-transform:none;}
 .set-hist-d{margin-left:auto; color:var(--muted); font-size:13px;}
 .set-hist-n{margin:6px 0 0; padding-left:18px; color:var(--grey); font-size:14px; line-height:1.45;}
 .set-hist-n li + li{margin-top:2px;}
+.set-link{border:1px solid var(--line-soft); background:var(--paper); border-radius:10px; padding:12px 14px; margin-top:10px;}
+.set-link-top{display:flex; gap:10px; align-items:flex-start;}
+.set-link-ico{font-size:22px; line-height:1.1;}
+.set-link-url{margin:8px 0 0; font-size:14px; word-break:break-all;}
+.set-link-url a{color:var(--ink);}
+.set-link .set-actions{margin-top:8px;}
+a.btn{text-decoration:none;}
 @media (max-width:700px){
   .set-box{height:92vh;}
   .set-body{grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr);}
@@ -2752,7 +2759,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 2:47pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 2:51pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11957,6 +11964,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.3', d:'27 Oct 2026', t:'Share the planner', n:['The admin can copy or share the iPhone/iPad link and the Windows download from Settings → Club & sharing', 'A download page for the Windows program']},
     {v:'3.2', d:'27 Oct 2026', t:'Full update history', n:['Every update since v1.0 is listed here', 'Closing Coaches, your teams or sign-in from Settings brings you back to Settings']},
     {v:'3.1', d:'27 Oct 2026', t:'Cleaner home page', n:['Back up everything, Bring in a backup and Import from session files moved off the home page into Settings → Backup & data']},
     {v:'3.0', d:'27 Oct 2026', t:'Settings', n:['A Settings window (⚙ on the home page): your account, your teams, and what new sessions and lineups start with', 'Backups, storage on this device, and coach approvals (admin) in one place', 'This update history']},
@@ -11985,9 +11993,9 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   ];
   const SET_TABS = [
     ['account', 'Account', '👤'], ['teams', 'My teams', '⚽'], ['sessions', 'New sessions', '📋'],
-    ['lineups', 'Matchday lineups', '🟨'], ['data', 'Backup & data', '💾'], ['club', 'Club & coaches', '🛡'], ['about', 'About', 'ℹ']
+    ['lineups', 'Matchday lineups', '🟨'], ['data', 'Backup & data', '💾'], ['club', 'Club & sharing', '🛡'], ['about', 'About', 'ℹ']
   ];
-  function setIsAdmin(){ const u = CLOUD && CLOUD.user ? CLOUD.user() : null; return !!(u && u.admin); }
+  function setIsAdmin(){ const u = CLOUD && CLOUD.user ? CLOUD.user() : null; return !!(u && u.admin) || (!CLOUD && !!(who && who.admin)); }
   function settingsOpen(tab){
     if(tab) setTab = tab;
     if(setTab === 'club' && !setIsAdmin()) setTab = 'account';
@@ -12141,8 +12149,34 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     p.appendChild(u);
   }
   /* ---------- Club (admin) ---------- */
+  const APP_URL = 'https://4s45d77rv5dkambo.github.io/HUFC-Season-Planner/';
+  const WIN_URL = APP_URL + 'windows.html';
+  function setLinkRow(title, help, url, icon){
+    const copy = h('button', {type:'button', class:'btn btn-small', text:'Copy link', onclick:async function(){
+      try{ await navigator.clipboard.writeText(url); }catch(e){ const t = h('textarea', {}); t.value = url; document.body.appendChild(t); t.select(); try{ document.execCommand('copy'); }catch(e2){} t.remove(); }
+      copy.textContent = 'Copied ✓'; setTimeout(function(){ copy.textContent = 'Copy link'; }, 1600);
+    }});
+    const share = navigator.share ? h('button', {type:'button', class:'btn btn-small', text:'Share…', onclick:function(){ navigator.share({title:'HUFC Season Planner', text:title, url:url}).catch(function(){}); }}) : '';
+    return h('div', {class:'set-link'},
+      h('div', {class:'set-link-top'}, h('span', {class:'set-link-ico', 'aria-hidden':'true', text:icon}), h('div', null, h('div', {class:'set-row-lbl', text:title}), h('div', {class:'set-row-help', text:help}))),
+      h('div', {class:'set-link-url'}, h('a', {href:url, target:'_blank', rel:'noopener', text:url.replace('https://', '')})),
+      h('div', {class:'set-actions'}, copy, share, h('a', {class:'btn btn-small', href:url, target:'_blank', rel:'noopener', text:'Open'})));
+  }
   function setClub(p){
-    const list = CLOUD && CLOUD.coaches ? CLOUD.coaches() : [];
+    const sh = setCard('Share the planner', 'Only you see this. Send a coach these links — they sign up with their email and you approve them in Coaches.');
+    sh.append(
+      setLinkRow('iPhone & iPad app', 'Open in Safari → Share → Add to Home Screen. Works offline.', APP_URL, '📱'),
+      setLinkRow('Windows program', 'A download page for the installer. It updates itself after that.', WIN_URL, '💻'));
+    const msg = 'Hi! Here’s the Heidelberg United Season Planner.\n\niPhone / iPad: ' + APP_URL + '\n(open in Safari, tap Share → Add to Home Screen)\n\nWindows computer: ' + WIN_URL + '\n\nSign up with your email and I’ll approve you for your team.';
+    const mb = h('button', {type:'button', class:'btn btn-primary', text:'Copy a message with both links', onclick:async function(){
+      try{ await navigator.clipboard.writeText(msg); }catch(e){}
+      if(navigator.share && /iPhone|iPad|Android/i.test(navigator.userAgent)){ navigator.share({text:msg}).catch(function(){}); }
+      mb.textContent = 'Copied ✓ — paste it into WhatsApp, a text or an email'; setTimeout(function(){ mb.textContent = 'Copy a message with both links'; }, 2400);
+    }});
+    sh.append(h('div', {class:'set-actions'}, mb));
+    p.appendChild(sh);
+    if(!CLOUD) return;
+    const list = CLOUD.coaches ? CLOUD.coaches() : [];
     const pend = list.filter(function(c){ return !c.approved || (c.asked.length && c.asked.slice().sort().join() !== c.given.slice().sort().join()); }).length;
     const c = setCard('Coaches', 'Approve new coaches, confirm their teams, and keep the club roster.');
     c.append(h('div', {class:'set-stats'},
