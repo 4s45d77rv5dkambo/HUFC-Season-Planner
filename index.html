@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027210222">
+<meta name="hufc-build" content="20261027211128">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1578,10 +1578,21 @@ td.gt-an{font-size:14px; text-transform:none;}
 #anVideo{cursor:pointer;}
 .an-full-btn{display:inline-flex; align-items:center; justify-content:center;}
 .an-full-btn.on{background:var(--black); color:var(--yellow); border-color:var(--black);}
-.an-left:fullscreen, .an-left:-webkit-full-screen{background:var(--paper); padding:12px 16px; overflow-y:auto; width:100%; height:100%;}
-.an-left.an-full{position:fixed; inset:0; z-index:400; background:var(--paper); padding:10px 12px; overflow-y:auto;}
-.an-left:fullscreen .an-video-wrap, .an-left.an-full .an-video-wrap{aspect-ratio:auto; height:min(72vh, calc(100vh - 230px)); width:100%;}
-.an-left:fullscreen video, .an-left.an-full video{width:100%; height:100%; object-fit:contain;}
+/* full screen: the video fills the whole screen; the seek bar and tag buttons float over it and fade while you watch */
+.an-video-wrap:fullscreen, .an-video-wrap:-webkit-full-screen{width:100vw; height:100vh; max-width:none; aspect-ratio:auto; border-radius:0; background:#000;}
+.an-video-wrap.an-full{position:fixed; inset:0; z-index:400; width:100vw; height:100vh; aspect-ratio:auto; border-radius:0; background:#000;}
+.an-video-wrap:fullscreen video, .an-video-wrap.an-full video{width:100%; height:100%; object-fit:contain;}
+.an-fs-tags{display:none;}
+.an-video-wrap:fullscreen .an-fs-tags, .an-video-wrap.an-full .an-fs-tags{display:flex; position:absolute; left:12px; right:12px; bottom:64px; z-index:3; gap:6px; flex-wrap:wrap; justify-content:center; opacity:0; transition:opacity .25s; pointer-events:none;}
+.an-video-wrap.awake .an-fs-tags{opacity:1; pointer-events:auto;}
+.an-video-wrap:fullscreen .pg-vid-bar.an-main-bar, .an-video-wrap.an-full .pg-vid-bar.an-main-bar{opacity:0; transition:opacity .25s;}
+.an-video-wrap:fullscreen.awake .pg-vid-bar.an-main-bar, .an-video-wrap.an-full.awake .pg-vid-bar.an-main-bar{opacity:1;}
+.an-fs-tag{border:1px solid rgba(255,255,255,.35); background:rgba(13,14,15,.72); color:#fff; font:inherit; font-size:14px; font-weight:600; padding:8px 12px; border-radius:99px; cursor:pointer;}
+.an-fs-tag:hover{background:var(--yellow); color:var(--black); border-color:var(--yellow);}
+.an-fs-tag.them{border-color:rgba(255,107,97,.7);}
+.an-fs-side{display:inline-flex; border:1px solid rgba(255,255,255,.35); border-radius:99px; overflow:hidden; background:rgba(13,14,15,.72);}
+.an-fs-side button{border:0; background:transparent; color:#fff; font:inherit; font-size:13px; font-weight:700; padding:8px 12px; cursor:pointer; text-transform:uppercase;}
+.an-fs-side button.on{background:var(--yellow); color:var(--black);}
 
 /* the match video's seek bar (like clips and pre-game videos) */
 .an-video-wrap .pg-vid-bar.an-main-bar{opacity:1; z-index:2; padding-top:26px;}
@@ -2885,7 +2896,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 9:02pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 9:11pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3171,8 +3182,8 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     </div>
     <div class="an-body">
       <div class="an-left" id="anLeft">
-        <div class="an-video-wrap">
-          <video id="anVideo" playsinline preload="metadata" hidden></video><div class="pg-vid-bar an-main-bar" id="anMainBar" hidden></div>
+        <div class="an-video-wrap" id="anVideoWrap">
+          <video id="anVideo" playsinline preload="metadata" hidden></video><div class="an-fs-tags" id="anFsTags"></div><div class="pg-vid-bar an-main-bar" id="anMainBar" hidden></div>
           <div class="an-empty" id="anEmpty"><p id="anFileLbl"></p><div class="an-empty-acts" id="anEmptyActs"></div></div>
           <div class="an-flash" id="anFlash" aria-live="polite"></div>
           <div class="an-rec" id="anRec" hidden><div class="an-rec-box"><span class="an-rec-dot"></span><span id="anRecText">Making your clip…</span><div class="an-rec-track"><div class="an-rec-bar" id="anRecBar"></div></div><button type="button" class="btn btn-small" id="anRecCancel">Cancel</button></div></div>
@@ -10564,6 +10575,11 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   const AN_TYPES = ['Goal', 'Chance', 'Shot', 'Turnover won', 'Turnover lost', 'Press won', 'Good build-up', 'Corner', 'Free kick', 'Mistake'];
   const AN_LEAD = 8, AN_TAIL = 4;           /* a clip: from 8 seconds before the tag to 4 after */
   const MV_PREFIX = 'hufc-match:';          /* a match video: its own item (synced like sessions and lineups) */
+  const AN_CP_ICON = {   /* (the same icons as pre-game clips — pregame.js loads after this file) */
+    play:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M8 5.5 L19 12 L8 18.5 Z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+    pause:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"/><rect x="13.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"/></svg>',
+    full:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>'
+  };
   const anModal = document.getElementById('anModal');
   const anVideo = document.getElementById('anVideo');
   let anSide = 'us', anFilter = {type:'', side:'', pid:''}, anTab = 'tags', anClipEnd = null, anLastTag = null, anWhoTimer = 0, anUrl = null;
@@ -10827,7 +10843,10 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   const anMFill = h('span', {class:'pg-vid-fill'}), anMKnob = h('span', {class:'pg-vid-knob'}), anMTicks = h('span', {class:'an-cp-ticks'});
   const anMSeek = h('div', {class:'pg-vid-seek', role:'slider', tabindex:'0', 'aria-label':'Skip through the match'}, h('span', {class:'pg-vid-track'}, anMFill), anMTicks, anMKnob);
   const anMTime = h('span', {class:'pg-vid-time', text:'0:00 / 0:00'});
-  anMainBar.append(anMSeek, anMTime);
+  const anMPlay = h('button', {type:'button', class:'pg-vid-btn pg-vid-play', 'aria-label':'Play', html:AN_CP_ICON.play, onclick:function(e){ e.stopPropagation(); if(anVideo.paused){ anClipEnd = null; anVideo.play().catch(function(){}); } else anVideo.pause(); }});
+  const anMFull = h('button', {type:'button', class:'pg-vid-btn', 'aria-label':'Full screen', title:'Full screen', html:AN_CP_ICON.full, onclick:function(e){ e.stopPropagation(); anFull(); }});
+  anMainBar.append(anMPlay, anMSeek, anMTime, anMFull);
+  ['play', 'pause', 'ended'].forEach(function(ev){ anVideo.addEventListener(ev, function(){ const pz = anVideo.paused || anVideo.ended; anMPlay.innerHTML = pz ? AN_CP_ICON.play : AN_CP_ICON.pause; anMPlay.setAttribute('aria-label', pz ? 'Play' : 'Pause'); }); });
   let anMDrag = false, anMTickSig = '';
   function anMainPaint(){
     const d = anVideo.duration || 0, f = d ? anVideo.currentTime / d : 0;
@@ -10855,7 +10874,24 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   anMainBar.addEventListener('dblclick', function(e){ e.stopPropagation(); });
 
   /* tap the video to play / pause; double-tap (or ⛶) for full screen — the controls and tag buttons come too */
-  const anLeft = document.getElementById('anLeft');
+  const anLeft = document.getElementById('anVideoWrap');   /* full screen: the video itself fills the screen */
+  const anFsTags = document.getElementById('anFsTags');
+  let anFsWakeT = 0;
+  function anFsWake(){ anLeft.classList.add('awake'); clearTimeout(anFsWakeT); anFsWakeT = setTimeout(function(){ anLeft.classList.remove('awake'); }, 2600); }
+  anLeft.addEventListener('pointermove', anFsWake);
+  anLeft.addEventListener('pointerdown', anFsWake);
+  /* in full screen: a strip of tag buttons over the picture (and the number keys still work) */
+  function anRenderFsTags(){
+    anFsTags.innerHTML = '';
+    if(!anCanEdit()) return;
+    const side = h('div', {class:'an-fs-side'},
+      h('button', {type:'button', class:anSide === 'us' ? 'on' : '', text:'Us', onclick:function(e){ e.stopPropagation(); anSide = 'us'; anRenderFsTags(); anRenderButtons(); }}),
+      h('button', {type:'button', class:anSide === 'them' ? 'on' : '', text:anOppShort(), onclick:function(e){ e.stopPropagation(); anSide = 'them'; anRenderFsTags(); anRenderButtons(); }}));
+    anFsTags.appendChild(side);
+    anTypes().forEach(function(t){ anFsTags.appendChild(h('button', {type:'button', class:'an-fs-tag' + (anSide === 'them' ? ' them' : ''), text:t, onclick:function(e){ e.stopPropagation(); anAddTag(t); anFsWake(); }})); });
+  }
+  anFsTags.addEventListener('click', function(e){ e.stopPropagation(); });
+  anFsTags.addEventListener('dblclick', function(e){ e.stopPropagation(); });
   let anTapT = 0;
   anVideo.addEventListener('click', function(){
     clearTimeout(anTapT);
@@ -10865,6 +10901,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   function anIsFull(){ return document.fullscreenElement === anLeft || document.webkitFullscreenElement === anLeft || anLeft.classList.contains('an-full'); }
   function anFull(on){
     if(on === undefined) on = !anIsFull();
+    if(on){ anRenderFsTags(); anFsWake(); }
     if(!on){
       if(document.fullscreenElement === anLeft){ try{ document.exitFullscreen(); }catch(e){} }
       else if(document.webkitFullscreenElement === anLeft){ try{ document.webkitExitFullscreen(); }catch(e){} }
@@ -11742,11 +11779,6 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
   anCV.addEventListener('loadedmetadata', function(){ anShowShapes([]); });
   /* ---------- the clip's own controls: play, a yellow pill seek bar with the drawing moments marked, time, full screen ----------
      (full screen takes the whole player, so the drawings and tools come too) */
-  const AN_CP_ICON = {   /* (the same icons as pre-game clips — pregame.js loads after this file) */
-    play:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M8 5.5 L19 12 L8 18.5 Z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
-    pause:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"/><rect x="13.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"/></svg>',
-    full:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>'
-  };
   const anCpBarEl = document.getElementById('anCpBar'), anCpPlayer = document.getElementById('anClipPlayer');
   const anCpPlay = h('button', {type:'button', class:'pg-vid-btn pg-vid-play', 'aria-label':'Play', html:AN_CP_ICON.play});
   const anCpFill = h('span', {class:'pg-vid-fill'}), anCpKnob = h('span', {class:'pg-vid-knob'}), anCpTicks = h('span', {class:'an-cp-ticks'});
@@ -12887,6 +12919,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.12', d:'27 Oct 2026', t:'Proper full screen', n:['Full screen fills the whole screen with the match video', 'The seek bar and tag buttons float over the picture and fade while you watch — move the mouse or tap to bring them back', 'Play and full-screen buttons on the match video’s bar']},
     {v:'3.11', d:'27 Oct 2026', t:'The match video is just there', n:['Open a match and its video is already loaded — no extra tap', 'The Windows program plays it straight from where it is on your computer; other devices keep a copy', 'Change video… at the top of the window to use a different video']},
     {v:'3.10', d:'27 Oct 2026', t:'Match videos and pre-games', n:['Attach a match video to a pre-game (next to Lineup in the match video window) — only the clips you choose go onto it', 'When cutting a clip, pick the pre-game board it goes on (e.g. Possession) and it’s added as it’s saved', '+ Add clip on every pre-game board: pick any clip you’ve cut from your match videos, drawings included']},
     {v:'3.9', d:'27 Oct 2026', t:'Easier to watch', n:['Tap the match video to play or pause, double-tap (or ⛶) for full screen — the tag buttons come too', 'A yellow seek bar on the match video: drag or tap to skip anywhere, with your tags and the halves marked', 'Fixed: the clip player’s play and full-screen buttons were invisible']},
