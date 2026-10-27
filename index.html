@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027143717">
+<meta name="hufc-build" content="20261027144111">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1575,8 +1575,11 @@ td.gt-an{font-size:14px; text-transform:none;}
 .set-stat.hot{border-color:var(--yellow); background:#fff6d6;}
 .set-meter{height:8px; border-radius:99px; background:var(--line-soft); overflow:hidden; margin-bottom:8px;}
 .set-meter span{display:block; height:100%; background:var(--yellow);}
-.set-about{display:flex; align-items:center; gap:14px; margin:8px 0 12px;}
-.set-crest{width:56px; height:56px;}
+.set-about{display:flex; align-items:center; gap:16px; margin:10px 0 14px; padding:16px 18px; background:var(--black); color:var(--white); border-radius:10px; border-bottom:4px solid var(--yellow);}
+.set-crest{width:84px; height:84px; flex-shrink:0;}
+.set-about .set-who-name{font-family:'Barlow Condensed', sans-serif; font-size:24px; letter-spacing:.03em; text-transform:uppercase; color:var(--white);}
+.set-about .set-who-mail{color:#c9cacc;}
+.set-about .set-club{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:12.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--yellow); margin:2px 0 6px;}
 @media (max-width:700px){
   .set-box{height:92vh;}
   .set-body{grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr);}
@@ -2730,7 +2733,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 2:37pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 2:41pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -12107,7 +12110,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     const where = window.hufcDesktop ? 'Windows program' : (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) ? 'iPhone / iPad app' : CLOUD ? 'In the browser' : 'Online planner';
     const c = setCard('HUFC Season Planner');
     c.append(h('div', {class:'set-about'}, h('img', {class:'set-crest', alt:'', src:document.querySelector('.home-crest').src}),
-      h('div', null, h('div', {class:'set-who-name', text:'Heidelberg United FC'}), h('div', {class:'set-who-mail', text:where + ' · ' + ver.replace('HUFC Session Planner · ', '')}))),
+      h('div', null, h('div', {class:'set-who-name', text:'Heidelberg United'}), h('div', {class:'set-club', text:'Football Club · Est. 1958'}), h('div', {class:'set-who-mail', text:where + ' · ' + ver.replace('HUFC Session Planner · ', '')}))),
       h('p', {class:'set-sub', text:'Updates arrive by themselves: the app shows an Update bar, the Windows program offers Reload.'}));
     p.appendChild(c);
   }
