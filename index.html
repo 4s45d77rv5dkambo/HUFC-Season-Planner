@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027215551">
+<meta name="hufc-build" content="20261027215649">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1626,6 +1626,10 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-left.clip-open .an-ctl, .an-left.clip-open .an-tag-area, .an-left.clip-open #anTagArea, .an-left.clip-open #anCut, .an-left.clip-open #anWho, .an-left.clip-open .an-main-bar{display:none !important;}
 .an-left.clip-open .an-video-wrap{aspect-ratio:auto; height:min(70vh, 620px);}
 
+/* watching a clip: only the clip's controls (the match's play button, tags and cutting come back when you close it) */
+.an-modal.clip-open #anCtl, .an-modal.clip-open #anTagArea, .an-modal.clip-open #anCut, .an-modal.clip-open #anWho{display:none !important;}
+.an-modal.clip-open .an-clip-top strong::before{content:'CLIP · '; color:var(--yellow); font-family:'Barlow Condensed', sans-serif; letter-spacing:.06em;}
+
 /* ---------- Settings ---------- */
 .home-hero{position:relative;}
 .home-set-btn{position:absolute; top:12px; right:12px; display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #3a3b3e; border-radius:999px;
@@ -2906,7 +2910,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 9:55pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 9:56pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11519,7 +11523,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
       document.getElementById('anClipTitle').textContent = c.name;
       anDC = c; anDMode = false; anDMark = null; anDFreeze = null; anDLast = 0; anStage.classList.remove('drawing'); anCpPaint();
       document.getElementById('anFreezeFlag').hidden = true;
-      v.src = url; pl.hidden = false; anShowShapes([]); anRenderDrawBar();
+      v.src = url; pl.hidden = false; anModal.classList.add('clip-open'); anShowShapes([]); anRenderDrawBar();
       document.getElementById('anLeft').classList.add('clip-open');
       const p = v.play(); if(p && p.catch) p.catch(function(){});
       return;
@@ -11532,7 +11536,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     if(anDMode) anDrawDone();
     anCpFull(false);
     clearTimeout(anDFreezeT); anDFreeze = null; anDC = null;
-    const v = document.getElementById('anClipVid'); try{ v.pause(); }catch(e){} v.removeAttribute('src'); document.getElementById('anClipPlayer').hidden = true;
+    const v = document.getElementById('anClipVid'); try{ v.pause(); }catch(e){} v.removeAttribute('src'); document.getElementById('anClipPlayer').hidden = true; anModal.classList.remove('clip-open');
     document.getElementById('anLeft').classList.remove('clip-open');
     anShowShapes([]);
   });
