@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261027145108">
+<meta name="hufc-build" content="20261027145744">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1839,6 +1839,22 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 .folder-sep{width:1px; height:22px; background:var(--line); margin:0 4px;}
 .folder-side{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
 .folder-side select{font-size:14px; padding:4px 6px; border:1px solid var(--line); border-radius:6px; background:var(--white);}
+/* folders: big buttons right across the page, your teams and the club status on the line below */
+.folder-bar{flex-direction:column; align-items:stretch; gap:10px;}
+.folder-chips{display:flex; flex-wrap:nowrap; gap:8px; width:100%;}
+.folder-chips .folder-sep{display:none;}
+.folder-chip{flex:1 1 0; min-width:0; display:flex; align-items:center; justify-content:center; gap:8px; padding:13px 10px; border-radius:12px; font-size:18px; letter-spacing:.06em; white-space:nowrap; border-width:1.5px;}
+.folder-chip:nth-child(1), .folder-chip:nth-child(2){flex:2 0 auto; padding-left:18px; padding-right:18px;}
+.folder-chip > span{display:inline-flex; align-items:center; gap:8px; min-width:0;}
+.folder-chip .fc-sub{font-size:13px; padding:1px 8px;}
+.folder-chip.is-mine:not(.on){box-shadow:inset 0 0 0 1.5px var(--yellow);}
+.folder-side{justify-content:flex-end;}
+@media (max-width:760px){
+  .folder-chips{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px;}
+  .folder-chip:nth-child(1), .folder-chip:nth-child(2){grid-column:span 2;}
+  .folder-chip{font-size:16px; padding:12px 6px;}
+  .folder-side{justify-content:flex-start;}
+}
 .folder-note{margin:2px 0 18px; font-size:14px; color:var(--grey);}
 .club-status{display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--grey); flex-wrap:wrap;}
 .cs-dot{width:9px; height:9px; border-radius:50%; background:#2e9e5b; flex:none;}
@@ -2759,7 +2775,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 2:51pm</p>
+  <p class="home-version">HUFC Session Planner · updated 27 Oct 2026, 2:57pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11964,6 +11980,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.4', d:'27 Oct 2026', t:'Bigger folder buttons', n:['My folder, Club library and the age groups are big buttons right across the page']},
     {v:'3.3', d:'27 Oct 2026', t:'Share the planner', n:['The admin can copy or share the iPhone/iPad link and the Windows download from Settings → Club & sharing', 'A download page for the Windows program']},
     {v:'3.2', d:'27 Oct 2026', t:'Full update history', n:['Every update since v1.0 is listed here', 'Closing Coaches, your teams or sign-in from Settings brings you back to Settings']},
     {v:'3.1', d:'27 Oct 2026', t:'Cleaner home page', n:['Back up everything, Bring in a backup and Import from session files moved off the home page into Settings → Backup & data']},
