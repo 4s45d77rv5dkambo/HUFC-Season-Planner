@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028182219">
+<meta name="hufc-build" content="20261028183219">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3004,7 +3004,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:22pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:32pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -9583,8 +9583,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
               const before = luJSON();
               period.slots.forEach(function(sl){ sl.pid = null; });
               period.subs = [];
+              /* the whole lineup now empty: this game's goals, assists and cards go too, so no one is counted for a game that's been cleared */
+              const empty = !lu.periods.some(function(pr){ return pr.slots.some(function(sl){ return sl.pid; }); });
+              let hadEv = false;
+              if(empty) lu.squad.forEach(function(p){ if(p.ev && Object.keys(p.ev).some(function(k){ return +p.ev[k] > 0; })) hadEv = true; delete p.ev; });
               luRender(); luSchedule();
-              showToast('Cleared “' + (period.name || 'the pitch') + '” — back to the positions', function(){ luApply(before); luCommit(); });
+              showToast('Cleared “' + (period.name || 'the pitch') + '” — back to the positions' + (empty ? ' · this game no longer counts in the stats' + (hadEv ? ' (its goals, assists and cards are cleared too)' : '') : ''), function(){ luApply(before); luCommit(); });
             }}),
           idx > 0 ? h('button', {type:'button', class:'icon-btn', title:'Same team as finished the half before (subs included)', 'aria-label':'Copy the lineup from the half before', text:'⧉', onclick:function(){
             const prev = lu.periods[idx - 1], end = luTimeline(prev, idx - 1).slot;   /* the team as it finished that half, subs included */
@@ -10265,7 +10269,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function gtCompute(group, onlyScored){
     const games = luList().map(function(x){ return x.lu; }).filter(function(L){
-      return gtTeam(L) === group && (!onlyScored || (clean(L.result.us) !== '' && clean(L.result.them) !== ''));
+      /* (a lineup with nobody on the pitch in any half — not filled in yet, or cleared — isn't a game played) */
+      const used = (L.periods || []).some(function(pr){ return (pr.slots || []).some(function(sl){ return sl.pid; }); });
+      return used && gtTeam(L) === group && (!onlyScored || (clean(L.result.us) !== '' && clean(L.result.them) !== ''));
     });
     const rows = {}, anBy = {};
     /* match videos attached to these games: their tags on our players */
@@ -13365,6 +13371,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.32', d:'28 Oct 2026', t:'Cleared lineups leave the stats', n:['A lineup with nobody on the pitch (cleared, or not filled in yet) no longer counts in Game time & player stats', 'Clearing the last half of a lineup also clears that game’s goals, assists and cards (Undo puts them back)']},
     {v:'3.31', d:'28 Oct 2026', t:'Watch another coach’s animations', n:['A coach viewing another coach’s session can now play its animations and step through them (and play its video clips) — nothing can be changed', 'iPad and iPhone: the age-group buttons on the home page sit centred, with a shorter last row in the middle']},
     {v:'3.30', d:'28 Oct 2026', t:'3D pitch fix', n:['Fixed: green squares showing over the stands in the 3D stadium view with chequered grass (iPad and everywhere)', 'Clearer message on a match with no download link yet', 'Put on Drive only shows on the computer that has the video', 'iPhone and iPad: a yellow scroll pill while you scroll, like on the computer']},
     {v:'3.29', d:'28 Oct 2026', t:'Open video link', n:['A match video downloaded on the computer remembers the link it was downloaded from, by itself (Windows program 1.6.3)', 'On your phone, iPad — and for other coaches — the match shows a clear “🔗 Open video link” button that opens that exact file to download', 'You can still paste or change the link with 🔗 Video link on the computer', 'Open match videos looks like Open sessions and Open lineups (cards, search)', 'Fixed: “Delete this match video?” appeared behind the window']},
