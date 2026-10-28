@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028173936">
+<meta name="hufc-build" content="20261028174348">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2989,7 +2989,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 5:39pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 5:43pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -10820,6 +10820,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     anRenderAll();
     openModal(anModal);
     anRestoreVideo();
+    anCheckDrive(key);
   }
   function closeAnalysis(){
     try{ anFull(false); }catch(e){}
@@ -11022,7 +11023,17 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   /* the match video from Google Drive (put there by the computer that has the file): streams, with every tag and clip */
   /* this match's video on Drive — its own copy, or another match's with the very same video */
-  function anDriveCopy(){ return (anM && anM.drive) || (anM ? driveSameVideo(anM) : null); }
+  function anDriveCopy(){ const d = (anM && anM.drive && !driveGone[anM.drive.id] && anM.drive) || (anM ? driveSameVideo(anM) : null); return d || null; }
+  /* when a match opens: is its Drive copy still there? (deleted from Drive: forget it, so the saved link or the file is used instead) */
+  function anCheckDrive(key){
+    const d = anDriveCopy(); if(!d) return;
+    driveAlive(d).then(function(ok){
+      if(ok || anKey !== key) return;
+      if(anM.drive && anM.drive.id === d.id && anCanEdit()){ delete anM.drive; anSave(); }
+      if(/googleapis\.com\/drive/.test(anVideo.getAttribute('src') || '')){ try{ anVideo.pause(); }catch(e){} anVideo.removeAttribute('src'); delete anVideo.dataset.for; try{ anVideo.load(); }catch(e){} }
+      anRenderHead(); anRenderVideoState();
+    });
+  }
   function anStreamDrive(key){
     const url = driveStreamUrl(anDriveCopy()); if(!url) return;
     let tried = 0;
@@ -14992,7 +15003,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function driveSameVideo(m){
     const f = (m && m.analysis && m.analysis.file) || null;
     if(!f || !f.name || !(+f.size)) return null;
-    const hit = mvList().find(function(x){ const g = (x.m.analysis && x.m.analysis.file) || {}; return x.m.id !== m.id && x.m.drive && x.m.drive.id && g.name === f.name && +g.size === +f.size; });
+    const hit = mvList().find(function(x){ const g = (x.m.analysis && x.m.analysis.file) || {}; return x.m.id !== m.id && x.m.drive && x.m.drive.id && !driveGone[x.m.drive.id] && g.name === f.name && +g.size === +f.size; });
     return hit ? hit.m.drive : null;
   }
   function driveMatchTodo(){
@@ -15083,6 +15094,18 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     });
   }
   /* a match video's stream from Drive (for a device without the file) */
+  /* a Drive copy someone deleted (or binned) isn't used any more: no streaming from it, no "Get the video" pointing at it */
+  const driveGone = {};
+  async function driveAlive(drive){
+    if(!drive || !drive.id || !DRIVE_API_KEY) return true;
+    if(driveGone[drive.id]) return false;
+    try{
+      const r = await fetch('https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(drive.id) + '?fields=id,trashed&key=' + DRIVE_API_KEY);
+      if(r.status === 404){ driveGone[drive.id] = 1; return false; }
+      if(r.ok){ const j = await r.json().catch(function(){ return {}; }); if(j.trashed){ driveGone[drive.id] = 1; return false; } }
+    }catch(e){}
+    return true;   /* (no internet, or Google wouldn't say: leave it be) */
+  }
   function driveStreamUrl(drive){ return DRIVE_API_KEY && drive && drive.id ? 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(drive.id) + '?alt=media&key=' + DRIVE_API_KEY : ''; }
   /* take a Drive copy away later (a deleted match, or a match given a different video) */
   function driveRemoveLater(drive, stillUsed){
