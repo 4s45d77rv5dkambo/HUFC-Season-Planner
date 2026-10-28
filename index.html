@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028172625">
+<meta name="hufc-build" content="20261028173936">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2989,7 +2989,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 5:26pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 5:39pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3270,6 +3270,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         <label class="an-link" title="Attach this video to a pre-game plan: its clips go straight onto that pre-game, and the pre-game links back here"><span>Pre-game</span><select id="anPgLink" aria-label="Attach to a pre-game"></select></label>
       </div>
       <button type="button" class="btn btn-small" id="anGetBtn" title="Where coaches get this video (a Veo, OneDrive or Google Drive link) — shown on devices that don’t have it">🔗 Video link</button>
+      <button type="button" class="btn btn-small btn-primary" id="anDlBtn" hidden title="Download this match video to this device — then it opens here without the internet">⤓ Get the video</button>
       <button type="button" class="btn btn-small" id="anDriveBtn" hidden title="Put this whole match on Google Drive so it plays on every device (a full match is big — it uses your Drive space)">☁ Put on Drive</button>
       <button type="button" class="btn btn-small" data-an-open>Open match video…</button>
       <input type="file" class="file-input" id="anFile" accept="video/*,.mp4,.mov,.m4v">
@@ -10862,6 +10863,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     anRenderDriveBtn();
   }
   /* ---------- where coaches get this match's video (a Veo, OneDrive or Drive link) ---------- */
+  /* where to get the video: the link its coach saved, or its copy on Google Drive */
+  function anGetLink(){ if(!anM) return ''; const d = anDriveCopy(); return anM.getLink || (d && d.url) || ''; }
+  function anRenderDlBtn(){
+    const b = document.getElementById('anDlBtn'); if(!b) return;
+    const has = !!anVideo.currentSrc && anVideo.dataset.for === anKey, streaming = has && /googleapis\.com\/drive/.test(anVideo.currentSrc);
+    b.hidden = !anGetLink() || (has && !streaming);   /* (not when the video is already on this device) */
+  }
+  anVideo.addEventListener('loadedmetadata', function(){ try{ anRenderDlBtn(); }catch(e){} });
+  anVideo.addEventListener('emptied', function(){ try{ anRenderDlBtn(); }catch(e){} });
+  document.getElementById('anDlBtn').addEventListener('click', function(){ const u = anGetLink(); if(u) window.open(u, '_blank', 'noopener'); });
   function anCleanLink(t){ t = clean(t); if(!t) return ''; if(!/^[a-z][a-z0-9+.-]*:/i.test(t)) t = 'https://' + t; try{ const u = new URL(t); return /^https?:$/.test(u.protocol) ? u.href : ''; }catch(e){ return ''; } }
   document.getElementById('anGetBtn').addEventListener('click', function(){
     if(!anCanEdit()){ if(anM && anM.getLink) window.open(anM.getLink, '_blank', 'noopener'); return; }
@@ -11131,7 +11142,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const acts = document.getElementById('anEmptyActs');
     if(acts){
       acts.innerHTML = '';
-      if(anM && anM.getLink && !has) acts.appendChild(h('a', {class:'btn btn-primary an-get-go', href:anM.getLink, target:'_blank', rel:'noopener', text:'Get the video ↗'}));
+      if(anM && anGetLink() && !has) acts.appendChild(h('a', {class:'btn btn-primary an-get-go', href:anGetLink(), target:'_blank', rel:'noopener', text:'Get the video ↗'}));
       if(anReopen) acts.appendChild(h('button', {type:'button', class:'btn btn-primary', text:'▶ Open ' + ((a.file && a.file.name) || 'the video'), onclick:anReopenFile}));
       acts.appendChild(h('button', {type:'button', class:'btn' + (anReopen ? '' : ' btn-primary'), text:anReopen ? 'Pick a different file…' : 'Open match video…', onclick:anOpenVideoFile}));
     }
@@ -11140,9 +11151,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     document.getElementById('anCtl').hidden = !has;
     const want = a.file && a.file.name ? a.file.name : '';
     document.getElementById('anFileLbl').textContent = has ? '' : anReopen ? 'Tap to open this match’s video again: ' + want
-      : (anM && anM.getLink) ? 'Get this match’s video' + (want ? ' (“' + want + '”)' : '') + ', then tap Open match video… and pick it — your tags and clips line up straight away.'
+      : (anM && anGetLink()) ? 'Get this match’s video' + (want ? ' (“' + want + '”)' : '') + ', then tap Open match video… and pick it — your tags and clips line up straight away.'
       : want ? 'This match’s video: ' + want + ' — open it from this device' : 'Open the match video (e.g. the MP4 downloaded from Veo)';
-    try{ anRenderDriveBtn(); }catch(e){}
+    try{ anRenderDriveBtn(); anRenderDlBtn(); }catch(e){}
   }
   function anSeek(t, clip){
     if(!anVideo.currentSrc){ showToast('Open the match video first'); return; }
@@ -13297,7 +13308,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'3.28', d:'28 Oct 2026', t:'Match videos without using Drive space', n:['Full match videos no longer go to Google Drive unless you ask (Settings → Google Drive, or a match’s ☁ button) — clips on boards still do', 'Each match can say where to get its video (a Veo, OneDrive or Drive link): on a device without it, the match shows “Get the video” and the file name to open']},
+    {v:'3.28', d:'28 Oct 2026', t:'Match videos without using Drive space', n:['Full match videos no longer go to Google Drive unless you ask (Settings → Google Drive, or a match’s ☁ button) — clips on boards still do', 'Each match can say where to get its video (a Veo, OneDrive or Drive link): on a device without it, the match shows “Get the video” and the file name to open', 'A match that’s on Google Drive shows “⤓ Get the video” by itself — no link needed']},
     {v:'3.27', d:'28 Oct 2026', t:'Match videos get their own screen', n:['A match video now opens as its own full screen, like a session or lineup, with ⌂ Home at the top left']},
     {v:'3.26', d:'28 Oct 2026', t:'Same video, one upload', n:['Two match videos made from the same video file share the copy on Google Drive — no second upload, and both open on your phone']},
     {v:'3.25', d:'28 Oct 2026', t:'Match videos on Google Drive', n:['Full match videos go up to Google Drive from the Windows program in the background (Settings → Google Drive → Full match videos too)', 'Open that match on your phone or iPad and the video plays straight away, with every tag and clip — no picking the file', 'A big upload that gets cut short carries on from where it got to', 'Videos and clips added on an iPhone or iPad go up from there too, so a coach on any device can add them and everyone sees them', 'Adding a video without Google Drive connected offers to connect it', 'Windows program 1.6.2']},
