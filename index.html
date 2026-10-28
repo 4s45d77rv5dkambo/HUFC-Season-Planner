@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028113929">
+<meta name="hufc-build" content="20261028114320">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1967,6 +1967,9 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 .pg-mv-open{max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .an-pg-more{margin-top:10px;}
 
+.pg-clip-save{flex-shrink:0;}
+.pg-clip-save svg{display:block;}
+
 
 /* ---------- Age-group folders, club library, view-only ---------- */
 .folder-bar{display:flex; align-items:center; justify-content:space-between; gap:12px 20px; flex-wrap:wrap; margin:22px 0 6px;}
@@ -2962,7 +2965,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 11:39am</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 11:43am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -5722,6 +5725,22 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return parts.join(' – ') + '.html';
   }
   /* hand a finished file to the person: a normal download, or the online version's save prompt */
+  /* a file to keep or send: on a phone or iPad the share sheet (Save Video, Save to Files, WhatsApp, Mail…); on a computer a normal Save.
+     (If the phone says the tap was too long ago — the file took a moment to get ready — one more tap opens it.) */
+  function hufcShareFile(file, title){
+    if(navigator.canShare && navigator.share && !window.hufcDesktop){
+      let ok = false; try{ ok = navigator.canShare({files:[file]}); }catch(e){}
+      if(ok){
+        const go = function(){ return navigator.share({files:[file], title:title || file.name}); };
+        return go().then(function(){ return true; }, function(e){
+          if(e && e.name === 'AbortError') return false;
+          if(e && e.name === 'NotAllowedError'){ showToast('“' + (title || file.name) + '” is ready', function(){ go().catch(function(){}); }, 'Save / send'); return false; }
+          return saveFile(file, file.name).then(function(r){ if(r) showToast('Saved “' + file.name + '”'); return r; });
+        });
+      }
+    }
+    return saveFile(file, file.name).then(function(r){ if(r) showToast('Saved “' + file.name + '”'); return r; });
+  }
   function saveFile(blob, fileName){
     if(window.__HUFC_SAVE) return window.__HUFC_SAVE(blob, fileName);
     /* the computer program: the usual Windows Save box, with the file already named */
@@ -12106,13 +12125,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const blob = await anClipBlobDrawn(c);
     if(!blob){ if(!(anVideo.currentSrc && anVideo.dataset.for === anKey)) showToast('Open the match video first, then share the clip'); return; }
     const file = new File([blob], anFileName(c), {type:blob.type || 'video/mp4'});
-    /* phones and iPads: the share sheet (WhatsApp, Messages, Save Video…) */
-    if(navigator.canShare && navigator.share && !(window.hufcDesktop)){
-      try{ if(navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:c.name, text:c.name + (c.note ? ' — ' + c.note : '')}); return; } }
-      catch(e){ if(e && e.name === 'AbortError') return; }
-    }
-    const ok = await saveFile(file, file.name);
-    if(ok) showToast('Saved “' + file.name + '”');
+    /* phones and iPads: the share sheet (WhatsApp, Messages, Save Video…); computers: a normal Save */
+    await hufcShareFile(file, c.name);
   }
 
   /* ---------- put a clip on a pre-game board ---------- */
@@ -13185,7 +13199,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'3.23', d:'28 Oct 2026', t:'Clips on your phone', n:['A clip added on another device (e.g. your computer) can now play on your iPhone: save the clip onto the phone (WhatsApp, email, OneDrive…), tap it in the planner and choose it — it plays there from then on', 'Works for clips on pre-game boards and clips in a match video’s Clips tab']},
+    {v:'3.23', d:'28 Oct 2026', t:'Clips on your phone', n:['A clip added on another device (e.g. your computer) can now play on your iPhone: save the clip onto the phone (WhatsApp, email, OneDrive…), tap it in the planner and choose it — it plays there from then on', 'Works for clips on pre-game boards and clips in a match video’s Clips tab', 'A ⤓ save button on every video clip on a pre-game board: on your phone it opens the share sheet (Save Video to Photos, Save to Files, WhatsApp…), on a computer a normal Save']},
     {v:'3.22', d:'28 Oct 2026', t:'YouTube on iPhone', n:['Fixed: YouTube links on pre-game boards wouldn’t play in the iPhone / iPad app — they play there now (and still in the Windows program)']},
     {v:'3.21', d:'28 Oct 2026', t:'Kits swapped', n:['The away (2nd) kit is now black and the 3rd kit grey — in the lineup Kit list and the shirt colours', 'Lineups that already had a kit picked keep the same colour', 'Practice diagrams: Team A yellow, Team B black, Team C grey (diagrams drawn before switch over too)']},
     {v:'3.20', d:'28 Oct 2026', t:'A proper Windows app', n:['The Windows program (v1.5.9) has its own black title bar with the crest — no more File / Edit / View / Help strip', 'The ☰ button on the title bar holds your planner folder, back up, zoom and About', '“Everything is saved” sits quietly in the title bar instead of its own white strip', 'A slim yellow scroll bar in the program', 'A bigger, sharper crest on the title bar', 'Settings: the crest on Club & sharing, and a little pitch with a formation on Matchday lineups']},
@@ -14371,6 +14385,21 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* play / stop drawn as shapes, so they sit dead centre in the round button */
   const PG_PLAY = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M8.5 5.2 L19 12 L8.5 18.8 Z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
   const PG_STOP = '<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>';
+  const PG_SAVE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10.5l5 5 5-5M5 19.5h14"/></svg>';
+  /* save a clip's video off the planner: on a phone the share sheet (Save Video to Photos, Save to Files, WhatsApp…); on a computer a normal Save */
+  async function pgSaveClip(c){
+    let url = c.kind === 'asset' ? '/_blob/' + c.asset : await pgClipUrl(c);
+    if(!url){ showToast('This video isn’t on this device yet · tap ▶ and choose it first'); return; }
+    let file = null;
+    try{
+      const r = await fetch(url); if(!r.ok) throw new Error('fetch');
+      const b = await r.blob();
+      const ext = /mp4/.test(b.type) ? '.mp4' : /webm/.test(b.type) ? '.webm' : /quicktime/.test(b.type) ? '.mov' : '';
+      let nm = clean(c.name) || ((clean(c.title) || 'clip').replace(/[\\/:*?"<>|]+/g, ' ').trim() + (ext || '.mp4'));
+      file = new File([b], nm, {type:b.type || 'video/mp4'});
+    }catch(e){ showToast('Couldn’t get that video ready · try again'); return; }
+    hufcShareFile(file, clean(c.title) || file.name);
+  }
   function pgClipRow(d, c){
     const title = h('input', {type:'text', class:'pg-clip-title', value:c.title || '', placeholder:'Name this clip', 'aria-label':'Clip name', oninput:function(e){ c.title = e.target.value; scheduleSave(); }});
     const sub = c.kind === 'link' ? pgSource(c.url) + ' · ' + c.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 60)
@@ -14387,6 +14416,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('div', {class:'pg-clip-line'},
         play,
         h('div', {class:'pg-clip-text'}, title, h('div', {class:'pg-clip-sub', text:sub})),
+        (c.kind === 'file' || c.kind === 'asset') ? h('button', {type:'button', class:'icon-btn no-print pg-clip-save', title:'Save or send this video (to your phone’s Photos or Files, WhatsApp, email…)', 'aria-label':'Save or send this video', html:PG_SAVE_ICON, onclick:function(){ pgSaveClip(c); }}) : '',
         h('button', {type:'button', class:'icon-btn danger no-print pg-clip-x', title:'Remove clip', 'aria-label':'Remove clip', text:'✕', onclick:function(){
           syncBoards();
           d.clips.splice(d.clips.indexOf(c), 1);
