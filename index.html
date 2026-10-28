@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028142447">
+<meta name="hufc-build" content="20261028151853">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2973,7 +2973,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 2:24pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 3:18pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -10941,14 +10941,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       try{ if(hd.queryPermission) perm = await hd.queryPermission({mode:'read'}); }catch(e){}
       if(perm === 'granted'){ try{ const f = await hd.getFile(); if(anKey === key) anUseFile(f, 'handle'); return; }catch(e){} }
       /* the computer asks once each time the planner starts — unless the video is on Google Drive, which just plays */
-      if(!(anM.drive && driveStreamUrl(anM.drive))){ anReopen = hd; anRenderVideoState(); return; }
+      if(!driveStreamUrl(anDriveCopy())){ anReopen = hd; anRenderVideoState(); return; }
     }
-    if(anM.drive && driveStreamUrl(anM.drive)){ anStreamDrive(key); return; }
+    if(driveStreamUrl(anDriveCopy())){ anStreamDrive(key); return; }
     anRenderVideoState();
   }
   /* the match video from Google Drive (put there by the computer that has the file): streams, with every tag and clip */
+  /* this match's video on Drive — its own copy, or another match's with the very same video */
+  function anDriveCopy(){ return (anM && anM.drive) || (anM ? driveSameVideo(anM) : null); }
   function anStreamDrive(key){
-    const url = driveStreamUrl(anM.drive); if(!url) return;
+    const url = driveStreamUrl(anDriveCopy()); if(!url) return;
     let tried = 0;
     const fail = function(){
       if(anVideo.dataset.for !== key) return;
@@ -13228,6 +13230,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.26', d:'28 Oct 2026', t:'Same video, one upload', n:['Two match videos made from the same video file share the copy on Google Drive — no second upload, and both open on your phone']},
     {v:'3.25', d:'28 Oct 2026', t:'Match videos on Google Drive', n:['Full match videos go up to Google Drive from the Windows program in the background (Settings → Google Drive → Full match videos too)', 'Open that match on your phone or iPad and the video plays straight away, with every tag and clip — no picking the file', 'A big upload that gets cut short carries on from where it got to', 'Videos and clips added on an iPhone or iPad go up from there too, so a coach on any device can add them and everyone sees them', 'Adding a video without Google Drive connected offers to connect it', 'Windows program 1.6.2']},
     {v:'3.24', d:'28 Oct 2026', t:'Google Drive for videos', n:['Settings → Google Drive: connect your Google Drive once, and videos you put on pre-game boards go up by themselves', 'They then play on every device — phone, iPad, computer — and for every coach', 'Windows program 1.6.0']},
     {v:'3.23', d:'28 Oct 2026', t:'Clips on your phone', n:['A clip added on another device (e.g. your computer) can now play on your iPhone: save the clip onto the phone (WhatsApp, email, OneDrive…), tap it in the planner and choose it — it plays there from then on', 'Works for clips on pre-game boards and clips in a match video’s Clips tab', 'A ⤓ save button on every video clip on a pre-game board: on your phone it opens the share sheet (Save Video to Photos, Save to Files, WhatsApp…), on a computer a normal Save']},
@@ -14904,10 +14907,19 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const DRIVE_MATCHES_OFF = 'hufc-gdrive-matches-off';
   function driveMatchesOn(){ try{ return localStorage.getItem(DRIVE_MATCHES_OFF) !== '1'; }catch(e){ return true; } }
   let driveMatchBusy = false, driveMatchFailUntil = 0;
+  /* the same video as another match that's already on Drive (same file name and size): share its copy */
+  function driveSameVideo(m){
+    const f = (m && m.analysis && m.analysis.file) || null;
+    if(!f || !f.name || !(+f.size)) return null;
+    const hit = mvList().find(function(x){ const g = (x.m.analysis && x.m.analysis.file) || {}; return x.m.id !== m.id && x.m.drive && x.m.drive.id && g.name === f.name && +g.size === +f.size; });
+    return hit ? hit.m.drive : null;
+  }
   function driveMatchTodo(){
     if(!driveMatchesOn() || !(driveDesk() || driveWeb())) return [];
     return mvList().filter(function(x){
       if(!canEdit(x.m) || x.m.drive || driveTried['m' + x.m.id]) return false;
+      const same = driveSameVideo(x.m);
+      if(same){ driveMarkMatch(x.key, Object.assign({}, same)); return false; }
       if(!driveDesk()) return true;   /* (the app: whether this phone kept a copy is checked when it's its turn) */
       let p = ''; try{ p = localStorage.getItem(AN_PATH_PREFIX + x.m.id) || ''; }catch(e){}
       return !!p;
