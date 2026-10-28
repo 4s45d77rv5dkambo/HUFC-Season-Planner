@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028180101">
+<meta name="hufc-build" content="20261028181643">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1780,6 +1780,14 @@ a.btn{text-decoration:none;}
 .set-switch input:checked + span::after{transform:translateX(20px); background:var(--yellow);}
 .set-switch input:focus-visible + span{outline:2px solid var(--black); outline-offset:2px;}
 
+/* iPhone / iPad: their own scroll indicator can't be coloured, so the planner draws a yellow pill instead (touch.js-style, in pillScroll) */
+@media (pointer:coarse){
+  html.pill-scroll, html.pill-scroll *{scrollbar-width:none;}
+  html.pill-scroll::-webkit-scrollbar, html.pill-scroll *::-webkit-scrollbar{display:none; width:0; height:0;}
+}
+.touch-pill{position:fixed; z-index:3500; width:5px; border-radius:999px; background:#ffd400; box-shadow:0 0 0 1.5px rgba(13,14,15,.55); opacity:0; transition:opacity .35s ease; pointer-events:none;}
+.touch-pill.on{opacity:1; transition:opacity .08s ease;}
+
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
 body.view-lineup .pregame-only{display:none !important;}
@@ -2990,7 +2998,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:01pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:16pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3754,7 +3762,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const y0 = CHECK_Y0 - Math.ceil(CHECK_Y0 / CHECK + 1) * CHECK;
       for(let y = y0, r = 0; y < 460; y += CHECK, r++){
         for(let x = 0, c = 0; x < 300; x += CHECK, c++){
-          if(((Math.round((y - CHECK_Y0) / CHECK) % 2) + 2) % 2 === c % 2) out += '<rect x="' + x + '" y="' + y + '" width="' + CHECK + '" height="' + CHECK + '" fill="#37ab6e" shape-rendering="crispEdges"/>';
+          if(((Math.round((y - CHECK_Y0) / CHECK) % 2) + 2) % 2 !== c % 2) continue;
+          /* (cut to the pitch: squares sticking out past the ends showed as green blocks over the stands in 3D) */
+          const yy = Math.max(0, y), hh = Math.min(460, y + CHECK) - yy, ww = Math.min(300, x + CHECK) - x;
+          if(hh > 0 && ww > 0) out += '<rect x="' + x + '" y="' + yy + '" width="' + ww + '" height="' + hh + '" fill="#37ab6e" shape-rendering="crispEdges"/>';
         }
       }
       return out;
@@ -13332,6 +13343,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.30', d:'28 Oct 2026', t:'3D pitch fix', n:['Fixed: green squares showing over the stands in the 3D stadium view with chequered grass (iPad and everywhere)', 'Clearer message on a match with no download link yet', 'Put on Drive only shows on the computer that has the video', 'iPhone and iPad: a yellow scroll pill while you scroll, like on the computer']},
     {v:'3.29', d:'28 Oct 2026', t:'Open video link', n:['A match video downloaded on the computer remembers the link it was downloaded from, by itself (Windows program 1.6.3)', 'On your phone, iPad — and for other coaches — the match shows a clear “🔗 Open video link” button that opens that exact file to download', 'You can still paste or change the link with 🔗 Video link on the computer', 'Open match videos looks like Open sessions and Open lineups (cards, search)', 'Fixed: “Delete this match video?” appeared behind the window']},
     {v:'3.28', d:'28 Oct 2026', t:'Match videos without using Drive space', n:['Full match videos no longer go to Google Drive unless you ask (Settings → Google Drive, or a match’s ☁ button) — clips on boards still do', 'Each match can say where to get its video (a Veo, OneDrive or Drive link): on a device without it, the match shows “Get the video” and the file name to open', 'A match that’s on Google Drive shows “⤓ Get the video” by itself — no link needed']},
     {v:'3.27', d:'28 Oct 2026', t:'Match videos get their own screen', n:['A match video now opens as its own full screen, like a session or lineup, with ⌂ Home at the top left']},
@@ -13654,6 +13666,34 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   document.getElementById('setClose').addEventListener('click', function(){ closeModal(setModal); });
   setModal.addEventListener('click', function(e){ if(e.target === setModal) closeModal(setModal); });
   document.getElementById('homeSetBtn').addEventListener('click', function(){ settingsOpen(); });
+
+  /* ---------- iPhone / iPad: a yellow scroll pill while scrolling (Apple's own indicator can't be coloured) ---------- */
+  (function(){
+    const touch = window.matchMedia && window.matchMedia('(pointer:coarse)').matches && !(window.hufcDesktop);
+    if(!touch) return;
+    document.documentElement.classList.add('pill-scroll');
+    const pill = document.createElement('div'); pill.className = 'touch-pill'; pill.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(pill);
+    let hideT = 0, raf = 0, last = null;
+    function draw(el){
+      const doc = el === document || el === document.documentElement || el === document.body || el === document.scrollingElement;
+      const sh = doc ? document.documentElement.scrollHeight : el.scrollHeight;
+      const ch = doc ? window.innerHeight : el.clientHeight;
+      const top = doc ? (window.scrollY || document.documentElement.scrollTop) : el.scrollTop;
+      if(sh <= ch + 2){ pill.classList.remove('on'); return; }
+      const r = doc ? {top:0, right:window.innerWidth, height:window.innerHeight} : el.getBoundingClientRect();
+      const box = doc ? window.innerHeight : r.height;
+      const th = Math.max(36, box * ch / sh), y = (box - th - 6) * Math.min(1, Math.max(0, top / (sh - ch))) + 3;
+      pill.style.height = th + 'px'; pill.style.top = (r.top + y) + 'px'; pill.style.left = (r.right - 8) + 'px';
+      pill.classList.add('on');
+      clearTimeout(hideT); hideT = setTimeout(function(){ pill.classList.remove('on'); }, 900);
+    }
+    document.addEventListener('scroll', function(e){
+      last = e.target;
+      if(raf) return;
+      raf = requestAnimationFrame(function(){ raf = 0; try{ draw(last); }catch(x){} });
+    }, true);
+  })();
 
   /* =====================================================================
      Pre-game plan: what we show the players before a match — our shape in each
