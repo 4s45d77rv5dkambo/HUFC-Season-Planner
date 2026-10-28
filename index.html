@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028205729">
+<meta name="hufc-build" content="20261028212900">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1178,6 +1178,8 @@ html.view-home .lu-sheet{display:none !important;}
 .lu-combo-list{position:absolute; left:0; top:calc(100% + 3px); z-index:90; min-width:100%; width:max-content; max-width:240px; max-height:230px; overflow:auto;
   background:var(--white); border:1px solid var(--black); border-radius:8px; box-shadow:0 10px 24px rgba(0,0,0,.16); padding:4px;}
 .lu-combo-list[hidden]{display:none;}
+.lu-combo-list{overscroll-behavior:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y;}
+.lu-combo-list.up{top:auto; bottom:calc(100% + 3px);}
 .lu-combo-opt{padding:6px 9px; border-radius:5px; font-size:14px; white-space:nowrap; cursor:pointer; color:var(--ink); font-style:normal;}
 .lu-combo-opt.cur{font-weight:600;}
 .lu-combo-opt.hi, .lu-combo-opt:hover{background:#fff6c2;}
@@ -1381,9 +1383,12 @@ html.view-home .lu-sheet{display:none !important;}
 .an-name:hover,.an-name:focus{border-color:var(--line); background:var(--paper, #fff); outline:none;}
 .an-name[readonly]{border-color:transparent; background:transparent;}
 .an-teams{flex:1 1 300px; min-width:0; display:flex; align-items:center; gap:6px;}
-.an-team{flex:1 1 0; min-width:0; font:inherit; font-size:15px; font-weight:600; padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:var(--paper, #fff); color:inherit;}
-.an-team:focus{outline:none; border-color:var(--black); box-shadow:0 0 0 2px var(--yellow);}
-.an-team[readonly]{border-color:transparent; background:transparent;}
+.an-team-box{flex:1 1 0; min-width:0; display:block;}
+.an-team.lu-combo .lu-combo-in{height:34px; font:inherit; font-size:15px; font-weight:600; padding:0 24px 0 10px; border:1px solid var(--line); border-radius:8px; background:var(--paper, #fff); color:inherit;}
+.an-team.lu-combo .lu-combo-in:focus{outline:none; border-color:var(--black); box-shadow:0 0 0 2px var(--yellow);}
+.an-team.lu-combo .lu-combo-btn{height:34px; right:6px;}
+.an-team.lu-combo .lu-combo-in[readonly]{border-color:transparent; background:transparent;}
+.an-team.lu-combo .lu-combo-list{z-index:120; max-width:280px;}
 .an-team-logo{flex:none; width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center;}
 .an-team-logo img{max-width:32px; max-height:32px; object-fit:contain; display:block;}
 .an-team-logo.none:empty{display:none;}
@@ -1690,7 +1695,13 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-row.an-row-phase .icon-btn{color:#fff;}
 
 .an-phase-warn{margin:0 0 6px; padding:8px 10px; border-radius:8px; background:#fff4cc; border:1px solid #f0c400; color:#5c4300; font-size:13.5px; line-height:1.4;}
-@media (max-width:480px){ .an-teams{gap:4px;} .an-team{font-size:14px; padding:6px 7px;} .an-team-logo, .an-team-logo img{width:26px; max-width:26px; max-height:26px;} .an-vs{font-size:12px;} }
+@media (max-width:480px){ .an-teams{gap:4px;} .an-team.lu-combo .lu-combo-in{font-size:14px; padding:0 20px 0 7px;} .an-team-logo, .an-team-logo img{width:26px; max-width:26px; max-height:26px;} .an-vs{font-size:12px;} }
+.an-head{z-index:5;}
+
+.an-team-logo.dark{background:#0d0e0f; border-radius:50%;}
+.an-team-logo.dark img{max-width:26px; max-height:26px;}
+.an-side-logo.dark{background:#0d0e0f; border-radius:50%; padding:1.5px; box-sizing:border-box; width:20px; height:20px;}
+@media (max-width:480px){ .an-team-logo.dark img{max-width:21px; max-height:21px;} }
 
 /* ---------- Settings ---------- */
 .home-hero{position:relative;}
@@ -3108,7 +3119,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 8:57pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 9:29pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3387,11 +3398,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         <input type="text" class="an-name" id="anName" maxlength="120" aria-label="Name of this match video" autocomplete="off">
         <div class="an-teams" title="The two teams — the tag buttons, tags and stats use each club’s initials">
           <span class="an-team-logo" id="anUsLogo"></span>
-          <input type="text" class="an-team" id="anUs" maxlength="60" aria-label="Our team" placeholder="Heidelberg United FC" autocomplete="off" autocapitalize="words" list="anClubs">
+          <span class="an-team-box" id="anUsBox"></span>
           <span class="an-vs">vs</span>
           <span class="an-team-logo" id="anThemLogo"></span>
-          <input type="text" class="an-team" id="anThem" maxlength="60" aria-label="The team we’re playing" placeholder="Opponent — e.g. Northcote City" autocomplete="off" autocapitalize="words" list="anClubs">
-          <datalist id="anClubs"></datalist>
+          <span class="an-team-box" id="anThemBox"></span>
         </div>
         <label class="an-link" title="Attach this video to a matchday lineup to tag its players — or leave it on its own"><span>Lineup</span><select id="anLink" aria-label="Attach to a lineup"></select></label>
         <label class="an-link" title="Attach this video to a pre-game plan: its clips go straight onto that pre-game, and the pre-game links back here"><span>Pre-game</span><select id="anPgLink" aria-label="Attach to a pre-game"></select></label>
@@ -9414,6 +9424,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         list.appendChild(it);
       });
       list.hidden = false; inp.setAttribute('aria-expanded', 'true'); wrap.classList.add('open');
+      /* keep the whole list on screen: open upward when there's more room above, and never taller than the space there is */
+      list.classList.remove('up'); list.style.maxHeight = '';
+      const r = inp.getBoundingClientRect(), vh = window.innerHeight || document.documentElement.clientHeight;
+      const below = vh - r.bottom - 12, above = r.top - 12;
+      if(below < 180 && above > below){ list.classList.add('up'); list.style.maxHeight = Math.max(120, Math.min(300, above)) + 'px'; }
+      else list.style.maxHeight = Math.max(120, Math.min(300, below)) + 'px';
       const target = list.children[hi >= 0 ? hi : 0]; if(target) list.scrollTop = Math.max(0, target.offsetTop - list.clientHeight / 2 + target.offsetHeight / 2);
     }
     function pick(t){ inp.value = t; paint(); o.onChange(t); filtering = false; close(); }
@@ -9449,6 +9465,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       }
     });
     btn.addEventListener('mousedown', function(e){ e.preventDefault(); });
+    list.addEventListener('mousedown', function(e){ e.preventDefault(); });   /* (scrolling the list with the mouse keeps the box open) */
     btn.addEventListener('click', function(){ if(!list.hidden) close(); else { if(document.activeElement !== inp) inp.focus(); else openAll(); } });
     paint();
     return wrap;
@@ -9618,7 +9635,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* any club's logo by its name: Heidelberg's crest, a built-in club logo, or one a coach added (null when there's none) */
   function luLogoFor(name){
     const k = luLogoKey(name); if(!k) return null;
-    if(/^heidelberg( united)?$/.test(k) || k === 'hufc') return LU_CREST;
+    if(/^heidelberg( united)?$/.test(k) || k === 'hufc'){ const c = document.getElementById('winbarCrest'); return (c && c.src && c.src.indexOf('data:') === 0) ? c.src : LU_CREST; }   /* (the sharpened crest made for small sizes — the same one as the Windows title bar) */
     return LU_BUILTIN_LOGOS[k] || luLogos()[k] || null;
   }
   function luOppLogo(){ const k = luLogoKey(lu.meta.opponent); return k ? LU_BUILTIN_LOGOS[k] || luLogos()[k] || null : null; }
@@ -10920,17 +10937,17 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* the two clubs' logos: beside each team's name at the top, and on the team buttons */
   function anThemLogo(){ return anOpp() ? luLogoFor(anOpp()) : null; }
   function anUsLogo(){ return luLogoFor(anUs()); }
-  function anTeamBtn(label, src){ return src ? [h('img', {class:'an-side-logo', alt:'', src:src}), label] : [label]; }
+  /* Heidelberg's crest is white and yellow: it sits on a small black badge so it stays crisp on the light background */
+  function anIsHufc(name){ return /^(heidelberg( united)?|hufc)$/.test(luLogoKey(name || '')); }
+  function anTeamBtn(label, src, name){ return src ? [h('img', {class:'an-side-logo' + (anIsHufc(name) ? ' dark' : ''), alt:'', src:src}), label] : [label]; }
   function anRenderTeamLogos(){
     if(!anM) return;
     [['anUsLogo', anUsLogo(), anUs(), 'us'], ['anThemLogo', anThemLogo(), anOpp(), 'them']].forEach(function(x){
       const box = document.getElementById(x[0]); if(!box) return;
-      box.innerHTML = ''; box.classList.toggle('none', !x[1]);
+      box.innerHTML = ''; box.classList.toggle('none', !x[1]); box.classList.toggle('dark', !!x[1] && anIsHufc(x[2]));
       if(x[1]) box.appendChild(h('img', {alt:x[2], src:x[1]}));
       else if(x[2] && anCanEdit()) box.appendChild(h('button', {type:'button', class:'an-logo-add', title:'Add ' + x[2] + '’s logo (a picture from this device)', 'aria-label':'Add a logo for ' + x[2], text:'+', onclick:function(){ anPickLogo(x[2]); }}));
     });
-    const dl = document.getElementById('anClubs');
-    if(dl && !dl.children.length) LU_OPPONENTS.concat(['Heidelberg United FC']).forEach(function(n){ dl.appendChild(h('option', {value:n})); });
   }
   /* a club without a logo: pick a picture, kept small and sharp, for every match and lineup against them */
   function anPickLogo(name){
@@ -11040,10 +11057,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const name = document.getElementById('anName');
     name.value = clean(anM.title); name.placeholder = anL() ? luName(anL()) || 'Name this match video' : (anM.pgId && anPgFind(anM.pgId) ? sessionName(anPgFind(anM.pgId).plan) || 'Name this match video' : 'Name this match video — e.g. U18 vs Oakleigh');
     name.readOnly = !ed;
-    const us = document.getElementById('anUs'), them = document.getElementById('anThem');
-    us.value = clean(anM.us); them.value = clean(anM.them);
-    them.placeholder = (anL() && clean(anL().meta.opponent)) || 'Opponent — e.g. Northcote City';
-    us.readOnly = !ed; them.readOnly = !ed;
+    anTeamBoxes(ed);
     if(!clean(anM.title) && clean(anM.them)) name.placeholder = anUs() + ' vs ' + clean(anM.them);
     anRenderTeamLogos();
     const sel = document.getElementById('anLink'); sel.innerHTML = ''; sel.disabled = !ed;
@@ -11299,19 +11313,26 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     showToast('Going up to Google Drive in the background · the bar at the top shows how far');
   });
   document.getElementById('anName').addEventListener('input', function(){ if(!anCanEdit()) return; anM.title = this.value; anSave(); });
-  /* the teams: every label (tag buttons, tags, filters, stats) follows as you type */
-  ['anUs', 'anThem'].forEach(function(id){
-    const inp = document.getElementById(id);
-    inp.addEventListener('input', function(){
-      if(!anCanEdit()) return;
-      anM[id === 'anUs' ? 'us' : 'them'] = this.value; anSave();
-      const name = document.getElementById('anName');
-      if(!clean(anM.title)) name.placeholder = clean(anM.them) ? anUs() + ' vs ' + clean(anM.them) : (anL() ? luName(anL()) || 'Name this match video' : 'Name this match video — e.g. U18 vs Oakleigh');
-      anRenderButtons(); anRenderList(); anRenderStats(); anRenderTeamLogos();
-      try{ anRenderFsTags(); }catch(e){}
+  /* the teams: pick from the clubs list (or type any team); every label (tag buttons, tags, filters, stats) follows */
+  function anTeamBoxes(ed){
+    [['anUsBox', 'anUs', 'us', 'Heidelberg United FC', 'Our team'], ['anThemBox', 'anThem', 'them', (anL() && clean(anL().meta.opponent)) || 'Opponent — e.g. Northcote City', 'The team we’re playing']].forEach(function(x){
+      const box = document.getElementById(x[0]); if(!box) return;
+      box.innerHTML = '';
+      const c = luCombo({value:clean(anM[x[2]]), ph:x[3], label:x[4], options:['Heidelberg United FC'].concat(LU_OPPONENTS), onChange:function(v){
+        if(!anCanEdit()) return;
+        anM[x[2]] = v; anSave();
+        const name = document.getElementById('anName');
+        if(!clean(anM.title)) name.placeholder = clean(anM.them) ? anUs() + ' vs ' + clean(anM.them) : (anL() ? luName(anL()) || 'Name this match video' : 'Name this match video — e.g. U18 vs Oakleigh');
+        anRenderButtons(); anRenderList(); anRenderStats(); anRenderTeamLogos();
+        try{ anRenderFsTags(); }catch(e){}
+      }});
+      c.classList.add('an-team');
+      const inp = c.querySelector('input'); inp.id = x[1]; inp.maxLength = 60; inp.setAttribute('autocapitalize', 'words');
+      inp.addEventListener('keydown', function(e){ e.stopPropagation(); });   /* (typing a name never fires the tagging keys) */
+      if(!ed){ inp.readOnly = true; const b = c.querySelector('.lu-combo-btn'); if(b) b.hidden = true; inp.addEventListener('focus', function(){ c.querySelector('.lu-combo-list').hidden = true; }); }
+      box.appendChild(c);
     });
-    inp.addEventListener('keydown', function(e){ e.stopPropagation(); if(e.key === 'Enter') this.blur(); });
-  });
+  }
   document.getElementById('anPgLink').addEventListener('change', function(){
     if(!anCanEdit()) return;
     anM.pgId = this.value || '';
@@ -11516,8 +11537,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     anFsTags.innerHTML = '';
     if(!anCanEdit()) return;
     const side = h('div', {class:'an-fs-side'},
-      h('button', {type:'button', class:anSide === 'us' ? 'on' : '', onclick:function(e){ e.stopPropagation(); anSide = 'us'; anRenderFsTags(); anRenderButtons(); }}, anTeamBtn(anUsShort(), anUsLogo())),
-      h('button', {type:'button', class:anSide === 'them' ? 'on' : '', onclick:function(e){ e.stopPropagation(); anSide = 'them'; anRenderFsTags(); anRenderButtons(); }}, anTeamBtn(anOppShort(), anThemLogo())));
+      h('button', {type:'button', class:anSide === 'us' ? 'on' : '', onclick:function(e){ e.stopPropagation(); anSide = 'us'; anRenderFsTags(); anRenderButtons(); }}, anTeamBtn(anUsShort(), anUsLogo(), anUs())),
+      h('button', {type:'button', class:anSide === 'them' ? 'on' : '', onclick:function(e){ e.stopPropagation(); anSide = 'them'; anRenderFsTags(); anRenderButtons(); }}, anTeamBtn(anOppShort(), anThemLogo(), anOpp())));
     anFsTags.appendChild(side);
     anTypes().forEach(function(t){ anFsTags.appendChild(h('button', {type:'button', class:'an-fs-tag' + (anSide === 'them' ? ' them' : ''), text:t, onclick:function(e){ e.stopPropagation(); anAddTag(t); anFsWake(); }})); });
   }
@@ -11626,8 +11647,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     document.getElementById('anTagArea').hidden = !ed;
     if(!ed) return;
     const sideSeg = h('div', {class:'seg an-side'},
-      h('button', {type:'button', class:anSide === 'us' ? 'active' : '', title:anUs(), onclick:function(){ anSide = 'us'; anRenderButtons(); }}, anTeamBtn(anUsShort(), anUsLogo())),
-      h('button', {type:'button', class:anSide === 'them' ? 'active' : '', title:anOpp() || 'The team we’re playing', onclick:function(){ anSide = 'them'; anRenderButtons(); }}, anTeamBtn(anOppShort(), anThemLogo())));
+      h('button', {type:'button', class:anSide === 'us' ? 'active' : '', title:anUs(), onclick:function(){ anSide = 'us'; anRenderButtons(); }}, anTeamBtn(anUsShort(), anUsLogo(), anUs())),
+      h('button', {type:'button', class:anSide === 'them' ? 'active' : '', title:anOpp() || 'The team we’re playing', onclick:function(){ anSide = 'them'; anRenderButtons(); }}, anTeamBtn(anOppShort(), anThemLogo(), anOpp())));
     /* the match itself: game start, half-time, 2nd half and full time are tags too (and set the match clock) */
     const a0 = anData();
     box.appendChild(h('div', {class:'an-phase-row'}, AN_PHASES.map(function(x){
@@ -13931,6 +13952,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.38', d:'28 Oct 2026', t:'Team list and crest', n:['Choosing a team (in a match video, and Opponent and the other pick-lists in a lineup): the list scrolls with your finger on iPhone and iPad, always fits on the screen (opening upward when there’s more room), and stays open while you scroll', 'Match videos pick the teams from the clubs list, or type any team', 'The Heidelberg crest beside the teams is the sharp one, on a small black badge']},
     {v:'3.37', d:'28 Oct 2026', t:'Teams and logos in match videos', n:['Type our team and the team we’re playing at the top of a match video (e.g. Heidelberg United FC vs Northcote City) — both clubs’ logos show beside them', 'The Us / Them buttons, tags, filters and stats use each club’s initials and logo (HUFC · NC)', 'A club without a logo: tap + beside its name to add one', 'A video link that looks temporary (like Hudl’s) warns that it may stop working, and suggests ☁ Put on Drive', 'Match tags tagged out of order (e.g. Half-time after 2nd half start) are pointed out', 'Present on a phone: the board’s message and video clips come first, then the pitch', 'A new coach is told the club admin needs to approve them', 'Windows program 1.6.4: Google Drive uploads never skip a piece']},
     {v:'3.36', d:'28 Oct 2026', t:'Checked and tightened', n:['Match video download: a link that has run out, no internet, or a full device each get a clear message (and no internet no longer stops the app keeping a copy later)', 'Deleting a match while its video downloads stops the download', 'The big clip view: Esc closes just the clip (not Present), and the arrow keys and space work the clip, not the slides behind it', 'Google Drive: a copy another match still plays from is never taken away, and an upload piece Google missed is sent again', 'The sign-in page: keys can’t reach the planner behind it, and in the Windows program the title bar stays so the window can still be moved', 'Messages (Undo, saved…) show over Present and the big clip view']},
     {v:'3.35', d:'28 Oct 2026', t:'Sign-in page, clip viewer, match tags', n:['A proper sign-in page the first time the planner opens (sign in or create an account) — it remembers who signed in on that device until they sign out', 'Pre-game clips on iPhone and iPad: the full-screen button opens the clip filling the screen (any way up), pinch or double-tap to zoom in, drag to look around', 'Cancel a match video download (and throw away what came so far) on any device', 'Game start, Half-time, 2nd half start and Full time are now tag buttons in a match video, and show in the list of tags at their time']},
