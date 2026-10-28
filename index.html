@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028185939">
+<meta name="hufc-build" content="20261028195021">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2077,6 +2077,9 @@ html.pg-vid-open, html.pg-vid-open body{overflow:hidden;}
 
 .pg-clip-save{flex-shrink:0;}
 .pg-clip-save svg{display:block;}
+/* toasts (Undo, saved…) still show over Present and the big clip view */
+html.pg-showing .toast{z-index:2100;}
+html.pg-vid-open .toast{z-index:4100;}
 
 
 /* ---------- Age-group folders, club library, view-only ---------- */
@@ -2934,7 +2937,7 @@ html.app-frame body{padding-top:40px;}
 html.app-frame .appbar{top:40px;}
 html.app-frame.view-home .appbar{display:none;}
 html.app-frame .appbar .status > *{display:none;}
-html.app-frame :is(.modal, .pg-show, .pg-pic-view, .an-clip-player.an-full, .an-video-wrap.an-full){top:40px;}
+html.app-frame :is(.modal, .pg-show, .pg-pic-view, .an-clip-player.an-full, .an-video-wrap.an-full, .wl, .pg-vid.pg-vid-max){top:40px;}   /* (the title bar stays, so the window can still be moved) */
 html.app-frame .an-video-wrap.an-full{height:calc(100vh - 40px);}
 /* the page's own scroll bar: a slim yellow pill that starts under the title bar */
 html.app-frame::-webkit-scrollbar{width:14px;}
@@ -3080,7 +3083,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:59pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 7:50pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11106,7 +11109,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(d.got){ await anDlDrop(id); d.got = 0; d.n = 0; }   /* (can't carry on from where it stopped: start again) */
         if(!res || res.status !== 200) res = await fetch(url, {signal:ctl.signal});
       }
-      if(!res.ok) throw new Error('http ' + res.status);
+      if(!res.ok) throw Object.assign(new Error('http ' + res.status), {status:res.status});
       const ct = (res.headers.get('content-type') || '').split(';')[0].trim();
       if(/^text\//i.test(ct)) throw new Error('not a video');
       const len = +res.headers.get('content-length') || 0;
@@ -11132,6 +11135,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       anDl = null;
       if(d.cancel){ anDlPart = null; try{ await anDlDrop(id); }catch(x){} if(anKey === key) showToast('Download cancelled'); }
       else if(e && e.name === 'AbortError'){ anDlPart = d.got ? d : null; }
+      else if(e && e.name === 'QuotaExceededError'){ anDlPart = d.got ? d : null; if(anKey === key) showToast('This device is out of room for the whole match · free some space and tap Continue download, or watch it from the link', function(){ anStreamLink(key, url, link); }, 'Watch'); }
+      else if(e && e.status){ anDlPart = d.got ? d : null; if(anKey === key) showToast(e.status === 403 || e.status === 404 || e.status === 410 ? 'This video link has stopped working (it may have run out) · on the computer that has the video, open the match and put in a fresh link with 🔗 Video link' : 'The video’s website said no (' + e.status + ') · try again later'); }
+      else if(navigator.onLine === false){ anDlPart = d.got ? d : null; if(anKey === key) showToast(d.got ? 'No internet · tap Continue download when you’re back online and it carries on from ' + anDlPct(d) : 'No internet · tap Open video link again when you’re back online'); }
       else if(d.got > 0){ anDlPart = d; if(anKey === key) showToast('The download stopped at ' + anDlPct(d) + ' · tap Continue download to carry on', function(){ anGetVideo(); }, 'Continue'); }
       else{ anNoDl[url] = 1; if(anKey === key){ if(!(anVideo.dataset.for === key && anVideo.getAttribute('src') === url)) anStreamLink(key, url, link); showToast('Playing this match straight from its link (this site doesn’t let the planner keep a copy)'); } }   /* the site won't let the planner download it: play it straight from the link */
     }
@@ -11767,7 +11773,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
             if(!(await askDelete('match video', title, 'Its tags and clips go too. The video file on your device isn’t touched.'))) return;
             const raw = localStorage.getItem(x.key);
             try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){} if(m.drive) driveRemoveLater(m.drive, function(){ return !!localStorage.getItem(x.key); });
-            setTimeout(function(){ if(!localStorage.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); anDlDrop(m.id).catch(function(){}); try{ localStorage.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
+            setTimeout(function(){ if(!localStorage.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); if(anDl && anDl.id === m.id){ anDl.cancel = true; try{ anDl.stop.abort(); }catch(e){} } anDlDrop(m.id).catch(function(){}); try{ localStorage.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
             clubSyncSoon(); renderHome(); if(after) after();
             showToast('Deleted “' + title + '”', function(){ undoDeleted(x.key, raw); clubSyncSoon(); renderHome(); if(after) after(); });
           }}) : null));
@@ -13273,6 +13279,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('button', {type:'button', class:'wl-link wl-skip', id:'wl-skip', onclick:welcomeSkip})));
     document.body.appendChild(welcomeEl);
     welcomeEl.addEventListener('keydown', function(e){ e.stopPropagation(); if(e.key === 'Escape' && welcomeManual){ e.preventDefault(); welcomeClose(); } });
+    /* while it's up, keys never reach the planner behind it (shortcuts, undo, delete…) */
+    document.addEventListener('keydown', function(e){
+      if(!welcomeShown() || welcomeEl.contains(e.target)) return;
+      e.stopImmediatePropagation();
+      if(e.key === 'Escape' && welcomeManual){ e.preventDefault(); welcomeClose(); }
+      else if(e.key !== 'Tab') e.preventDefault();
+    }, true);
   }
   function welcomeSet(m){
     welcomeMode = m;
@@ -13786,6 +13799,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.36', d:'28 Oct 2026', t:'Checked and tightened', n:['Match video download: a link that has run out, no internet, or a full device each get a clear message (and no internet no longer stops the app keeping a copy later)', 'Deleting a match while its video downloads stops the download', 'The big clip view: Esc closes just the clip (not Present), and the arrow keys and space work the clip, not the slides behind it', 'Google Drive: a copy another match still plays from is never taken away, and an upload piece Google missed is sent again', 'The sign-in page: keys can’t reach the planner behind it, and in the Windows program the title bar stays so the window can still be moved', 'Messages (Undo, saved…) show over Present and the big clip view']},
     {v:'3.35', d:'28 Oct 2026', t:'Sign-in page, clip viewer, match tags', n:['A proper sign-in page the first time the planner opens (sign in or create an account) — it remembers who signed in on that device until they sign out', 'Pre-game clips on iPhone and iPad: the full-screen button opens the clip filling the screen (any way up), pinch or double-tap to zoom in, drag to look around', 'Cancel a match video download (and throw away what came so far) on any device', 'Game start, Half-time, 2nd half start and Full time are now tag buttons in a match video, and show in the list of tags at their time']},
     {v:'3.34', d:'28 Oct 2026', t:'Match videos download into the app', n:['On iPhone, iPad and in the browser, Open video link downloads the match video into the planner itself, with a progress bar — and it opens by itself the moment it’s finished, with every tag and clip', 'Watch while it downloads, pause it, and carry on later from where it stopped', 'It’s kept on the device, so it just opens next time', 'A site that won’t let the planner keep a copy plays straight from the link instead; a link to a web page opens in the browser, and coming back offers to open the file', 'The yellow scroll pill on iPhone and iPad now glides smoothly']},
     {v:'3.33', d:'28 Oct 2026', t:'Goals & assists go when cleared', n:['Clearing a half now takes away the goal, assist and card icons of every player no longer in the game — they no longer count in the stats', 'Lineups that were cleared before this update lose their leftover goals, assists and cards too', 'Undo puts them back']},
@@ -14852,7 +14866,18 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(pgVidOpen === wrap) pgVidOpen = null;
     }
   }
-  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && pgVidOpen){ e.preventDefault(); e.stopPropagation(); pgVidViewer(pgVidOpen, false); } }, true);
+  document.addEventListener('keydown', function(e){
+    if(!pgVidOpen) return;
+    if(e.key === 'Escape'){ e.preventDefault(); e.stopImmediatePropagation(); pgVidViewer(pgVidOpen, false); return; }
+    /* the big view is on top: the arrow keys and space are for the clip, not the slides or the plan behind it */
+    if(e.key === ' ' || e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'PageUp' || e.key === 'PageDown'){
+      e.preventDefault(); e.stopImmediatePropagation();
+      const v = pgVidOpen.querySelector('video'); if(!v) return;
+      if(e.key === ' ') pgVidOpen._toggle && pgVidOpen._toggle();
+      else if(e.key === 'ArrowLeft' && v.duration) v.currentTime = Math.max(0, v.currentTime - 5);
+      else if(e.key === 'ArrowRight' && v.duration) v.currentTime = Math.min(v.duration, v.currentTime + 5);
+    }
+  }, true);
   /* pinch / double-tap zoom and drag-around, on the big view (two fingers on a small clip open the big view) */
   function pgVidZoomable(wrap, v){
     let z = 1, tx = 0, ty = 0, anim = false;
@@ -14947,7 +14972,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(wrap.classList.contains('pg-vid-max') || e.touches.length < 2) return;
       e.preventDefault(); pgVidViewer(wrap, true);
     }, {passive:false});
-    window.addEventListener('resize', function(){ if(!wrap.classList.contains('pg-vid-max')) return; fit(); if(z > 1){ clamp(); paint(); } });
+    const onResize = function(){ if(!wrap.isConnected){ window.removeEventListener('resize', onResize); return; } if(!wrap.classList.contains('pg-vid-max')) return; fit(); if(z > 1){ clamp(); paint(); } };
+    window.addEventListener('resize', onResize);
   }
   /* a shared clip is deleted from the planner's store once no plan uses it (after the undo window) */
   function pgForgetAsset(aid){
@@ -15545,10 +15571,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(SK) try{ localStorage.setItem(SK, JSON.stringify({url:session, size:blob.size, at:Date.now()})); }catch(e){}
     }
     const CH = 8 * 1024 * 1024;
+    let again = 0;
     for(let pos = id ? blob.size : from; pos < blob.size;){
       const end = Math.min(blob.size, pos + CH);
       const r = await fetch(session, {method:'PUT', headers:{'Content-Range':'bytes ' + pos + '-' + (end - 1) + '/' + blob.size}, body:blob.slice(pos, end)});
-      if(r.status === 308){ const rg = r.headers.get('range'); pos = rg ? +rg.split('-')[1] + 1 : end; }
+      if(r.status === 308){
+        const rg = r.headers.get('range');
+        if(rg){ pos = +rg.split('-')[1] + 1; again = 0; }
+        else if(++again > 3) throw new Error('Google Drive didn’t take the video');
+        /* (no Range: Google kept none of that piece, so it goes again from where it was) */
+      }
       else if(r.ok){ id = ((await r.json().catch(function(){ return {}; })) || {}).id || ''; pos = blob.size; }
       else throw new Error('The upload stopped (' + r.status + ')');
       if(onProg) onProg(Math.min(1, pos / blob.size));
@@ -15771,6 +15803,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!drive || !drive.id) return;
     setTimeout(async function(){
       try{ if(stillUsed && stillUsed()) return; }catch(e){ return; }
+      /* another match or plan still plays from this copy (e.g. a second match with the very same video): it stays */
+      try{ for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if(k && (k.indexOf(MV_PREFIX) === 0 || k.indexOf(LS_PREFIX) === 0) && (localStorage.getItem(k) || '').indexOf(drive.id) !== -1) return; } }catch(e){ return; }
       if(driveDesk()){ try{ await window.hufcDesktop.gdrive.remove(drive.id); }catch(e){} }
       else if(driveWebToken()){ try{ await driveWebApi('DELETE', 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(drive.id)); }catch(e){} }
     }, 15000);
