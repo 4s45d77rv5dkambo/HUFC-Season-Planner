@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028171631">
+<meta name="hufc-build" content="20261028172625">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1651,6 +1651,13 @@ td.gt-an{font-size:14px; text-transform:none;}
 @media (min-width:821px){ .an-body{max-width:1600px; width:100%; margin:0 auto; border-left:1px solid var(--line); border-right:1px solid var(--line);} }
 @media (max-width:820px){ .an-head #anClose{margin-left:0;} .an-head [data-an-open]{margin-left:auto;} }
 
+/* where to get this match's video */
+.an-get-row{display:flex; align-items:center; gap:8px; padding:8px 16px; border-bottom:1px solid var(--line); background:#fffbe0; flex-wrap:wrap;}
+.an-get-row[hidden]{display:none;}
+.an-get-lbl{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase;}
+.an-get-in{flex:1 1 280px; min-width:0; font:inherit; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:#fff;}
+.an-empty .an-get-go{text-decoration:none;}
+
 /* ---------- Settings ---------- */
 .home-hero{position:relative;}
 .home-set-btn{position:absolute; top:12px; right:12px; display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #3a3b3e; border-radius:999px;
@@ -2982,7 +2989,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 5:16pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 5:26pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3262,10 +3269,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         <label class="an-link" title="Attach this video to a matchday lineup to tag its players — or leave it on its own"><span>Lineup</span><select id="anLink" aria-label="Attach to a lineup"></select></label>
         <label class="an-link" title="Attach this video to a pre-game plan: its clips go straight onto that pre-game, and the pre-game links back here"><span>Pre-game</span><select id="anPgLink" aria-label="Attach to a pre-game"></select></label>
       </div>
+      <button type="button" class="btn btn-small" id="anGetBtn" title="Where coaches get this video (a Veo, OneDrive or Google Drive link) — shown on devices that don’t have it">🔗 Video link</button>
+      <button type="button" class="btn btn-small" id="anDriveBtn" hidden title="Put this whole match on Google Drive so it plays on every device (a full match is big — it uses your Drive space)">☁ Put on Drive</button>
       <button type="button" class="btn btn-small" data-an-open>Open match video…</button>
       <input type="file" class="file-input" id="anFile" accept="video/*,.mp4,.mov,.m4v">
       <button type="button" class="btn btn-home" id="anClose" title="Back to Home (your match video is saved)"><span aria-hidden="true">⌂</span><span class="btn-label"> Home</span></button>
     </div>
+    <div class="an-get-row" id="anGetRow" hidden><span class="an-get-lbl">Where to get this video</span><input type="url" id="anGetIn" class="an-get-in" placeholder="Paste the Veo, OneDrive or Google Drive link for this match" autocomplete="off"><button type="button" class="btn btn-small btn-primary" id="anGetSave">Save</button><button type="button" class="btn btn-small" id="anGetCancel">Cancel</button></div>
     <div class="an-body">
       <div class="an-left" id="anLeft">
         <div class="an-video-wrap" id="anVideoWrap">
@@ -7926,14 +7936,19 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* "Are you sure?" before anything is deleted from the Home page (Cancel is the safe default) */
   const confirmBox = document.getElementById('confirmModal');
   let confirmDone = null;
-  function askDelete(what, name, extra){
+  function askDelete(what, name, extra, opts){
     return new Promise(function(resolve){
       if(confirmDone) confirmDone(false);
-      document.getElementById('confirmTitle').textContent = 'Delete this ' + what + '?';
+      const yes = document.getElementById('confirmYes');
+      document.getElementById('confirmTitle').textContent = opts ? opts.title : 'Delete this ' + what + '?';
       const msg = document.getElementById('confirmMsg');
       msg.innerHTML = '';
-      msg.append('“', h('strong', {text:name}), '” will be removed from the app.' + (extra ? ' ' + extra : ''));
-      document.getElementById('confirmYes').textContent = 'Delete ' + what;
+      if(opts) msg.textContent = opts.text || '';
+      else msg.append('“', h('strong', {text:name}), '” will be removed from the app.' + (extra ? ' ' + extra : ''));
+      yes.textContent = opts ? opts.yes || 'OK' : 'Delete ' + what;
+      /* (a question that isn't a delete gets a normal button, not a red one) */
+      if(!yes.dataset.cls) yes.dataset.cls = yes.className;
+      yes.className = opts ? 'btn btn-primary' : yes.dataset.cls;
       confirmDone = function(ok){ confirmDone = null; closeModal(confirmBox); resolve(ok); };
       openModal(confirmBox);
       setTimeout(function(){ document.getElementById('confirmNo').focus(); }, 0);
@@ -10841,7 +10856,46 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       ps.appendChild(o);
     });
     if(anM.pgId && !anPgFind(anM.pgId)) ps.appendChild(h('option', {value:anM.pgId, text:'(a pre-game not on this device)', selected:true}));
+    const gb = document.getElementById('anGetBtn');
+    gb.hidden = !ed && !anM.getLink; gb.textContent = anM.getLink ? '🔗 Video link ✓' : '🔗 Video link';
+    document.getElementById('anGetRow').hidden = true;
+    anRenderDriveBtn();
   }
+  /* ---------- where coaches get this match's video (a Veo, OneDrive or Drive link) ---------- */
+  function anCleanLink(t){ t = clean(t); if(!t) return ''; if(!/^[a-z][a-z0-9+.-]*:/i.test(t)) t = 'https://' + t; try{ const u = new URL(t); return /^https?:$/.test(u.protocol) ? u.href : ''; }catch(e){ return ''; } }
+  document.getElementById('anGetBtn').addEventListener('click', function(){
+    if(!anCanEdit()){ if(anM && anM.getLink) window.open(anM.getLink, '_blank', 'noopener'); return; }
+    const row = document.getElementById('anGetRow'), inp = document.getElementById('anGetIn');
+    row.hidden = !row.hidden; inp.value = anM.getLink || '';
+    if(!row.hidden) setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(e){} }, 0);
+  });
+  function anGetSave(){
+    const inp = document.getElementById('anGetIn'), v = anCleanLink(inp.value);
+    if(clean(inp.value) && !v){ showToast('That doesn’t look like a web link'); return; }
+    anM.getLink = v; anSave(); anRenderHead(); anRenderVideoState();
+    showToast(v ? 'Saved · coaches without this video see where to get it' : 'Video link removed');
+  }
+  document.getElementById('anGetSave').addEventListener('click', anGetSave);
+  document.getElementById('anGetIn').addEventListener('keydown', function(e){ e.stopPropagation(); if(e.key === 'Enter'){ e.preventDefault(); anGetSave(); } if(e.key === 'Escape'){ e.preventDefault(); document.getElementById('anGetRow').hidden = true; } });
+  document.getElementById('anGetCancel').addEventListener('click', function(){ document.getElementById('anGetRow').hidden = true; });
+  /* ---------- this one match onto Google Drive (when every match isn't going up) ---------- */
+  function anRenderDriveBtn(){
+    const b = document.getElementById('anDriveBtn'); if(!b || !anM) return;
+    const a = anData();
+    const can = anCanEdit() && driveAvailable() && !!(a.file && a.file.name) && !anM.drive && !driveSameVideo(anM);
+    b.hidden = !can;
+    b.textContent = anM.driveWant ? '☁ Going up to Drive…' : '☁ Put on Drive';
+    b.disabled = !!anM.driveWant;
+  }
+  document.getElementById('anDriveBtn').addEventListener('click', async function(){
+    const st = await driveRefreshState();
+    if(!st.connected){ showToast('Connect Google Drive first', function(){ settingsOpen('drive'); }, 'Connect'); return; }
+    const a = anData();
+    const gb = a.file && a.file.size ? Math.round(a.file.size / 1e8) / 10 : 0;
+    if(!(await askDelete('', '', '', {title:'Put this whole match on Google Drive?', text:'It plays on every device and for every coach, but it uses ' + (gb ? 'about ' + gb + ' GB' : 'a lot') + ' of your Drive space (15 GB free) and can take an hour or more to go up. Keep the planner open while it does.', yes:'Put it on Drive'}))) return;
+    anM.driveWant = true; anSave(); anRenderDriveBtn(); driveSoon(0);
+    showToast('Going up to Google Drive in the background · the bar at the top shows how far');
+  });
   document.getElementById('anName').addEventListener('input', function(){ if(!anCanEdit()) return; anM.title = this.value; anSave(); });
   document.getElementById('anPgLink').addEventListener('change', function(){
     if(!anCanEdit()) return;
@@ -11077,6 +11131,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const acts = document.getElementById('anEmptyActs');
     if(acts){
       acts.innerHTML = '';
+      if(anM && anM.getLink && !has) acts.appendChild(h('a', {class:'btn btn-primary an-get-go', href:anM.getLink, target:'_blank', rel:'noopener', text:'Get the video ↗'}));
       if(anReopen) acts.appendChild(h('button', {type:'button', class:'btn btn-primary', text:'▶ Open ' + ((a.file && a.file.name) || 'the video'), onclick:anReopenFile}));
       acts.appendChild(h('button', {type:'button', class:'btn' + (anReopen ? '' : ' btn-primary'), text:anReopen ? 'Pick a different file…' : 'Open match video…', onclick:anOpenVideoFile}));
     }
@@ -11084,7 +11139,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     anVideo.hidden = !has;
     document.getElementById('anCtl').hidden = !has;
     const want = a.file && a.file.name ? a.file.name : '';
-    document.getElementById('anFileLbl').textContent = has ? '' : anReopen ? 'Tap to open this match’s video again: ' + want : want ? 'This match’s video: ' + want + ' — open it from this device' : 'Open the match video (e.g. the MP4 downloaded from Veo)';
+    document.getElementById('anFileLbl').textContent = has ? '' : anReopen ? 'Tap to open this match’s video again: ' + want
+      : (anM && anM.getLink) ? 'Get this match’s video' + (want ? ' (“' + want + '”)' : '') + ', then tap Open match video… and pick it — your tags and clips line up straight away.'
+      : want ? 'This match’s video: ' + want + ' — open it from this device' : 'Open the match video (e.g. the MP4 downloaded from Veo)';
+    try{ anRenderDriveBtn(); }catch(e){}
   }
   function anSeek(t, clip){
     if(!anVideo.currentSrc){ showToast('Open the match video first'); return; }
@@ -13239,6 +13297,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.28', d:'28 Oct 2026', t:'Match videos without using Drive space', n:['Full match videos no longer go to Google Drive unless you ask (Settings → Google Drive, or a match’s ☁ button) — clips on boards still do', 'Each match can say where to get its video (a Veo, OneDrive or Drive link): on a device without it, the match shows “Get the video” and the file name to open']},
     {v:'3.27', d:'28 Oct 2026', t:'Match videos get their own screen', n:['A match video now opens as its own full screen, like a session or lineup, with ⌂ Home at the top left']},
     {v:'3.26', d:'28 Oct 2026', t:'Same video, one upload', n:['Two match videos made from the same video file share the copy on Google Drive — no second upload, and both open on your phone']},
     {v:'3.25', d:'28 Oct 2026', t:'Match videos on Google Drive', n:['Full match videos go up to Google Drive from the Windows program in the background (Settings → Google Drive → Full match videos too)', 'Open that match on your phone or iPad and the video plays straight away, with every tag and clip — no picking the file', 'A big upload that gets cut short carries on from where it got to', 'Videos and clips added on an iPhone or iPad go up from there too, so a coach on any device can add them and everyone sees them', 'Adding a video without Google Drive connected offers to connect it', 'Windows program 1.6.2']},
@@ -13325,9 +13384,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       }
       body.append(setRow('Connected', st.email || 'Your Google account', h('button', {type:'button', class:'btn btn-small', text:'Disconnect', onclick:async function(){ await driveDisconnect(); renderSettings(); }})));
       if(driveDesk() || driveWeb()){
-        const box = h('input', {type:'checkbox', checked:driveMatchesOn(), 'aria-label':'Full match videos too', onchange:function(){ try{ if(this.checked) localStorage.removeItem(DRIVE_MATCHES_OFF); else localStorage.setItem(DRIVE_MATCHES_OFF, '1'); }catch(e){} if(this.checked) driveSoon(0); }});
+        const box = h('input', {type:'checkbox', checked:driveMatchesOn(), 'aria-label':'Full match videos too', onchange:function(){ try{ if(this.checked) localStorage.setItem(DRIVE_MATCHES_ON, '1'); else localStorage.removeItem(DRIVE_MATCHES_ON); }catch(e){} if(this.checked) driveSoon(0); }});
         const mw = driveMatchTodo().length;
-        body.append(setRow('Full match videos too', 'The whole match goes up in the background, so it opens on your phone and iPad with every tag and clip. A full match can take an hour or more — keep the planner open; if it stops, it carries on from where it got to.' + (mw ? ' ' + mw + (mw === 1 ? ' match video' : ' match videos') + ' to go up.' : ''), h('label', {class:'set-switch'}, box, h('span', {'aria-hidden':'true'}))));
+        body.append(setRow('Full match videos too', 'Off: full matches stay on each device (a match uses a lot of your Drive space) — coaches open their own copy of the same video, and you can still put one match up with its ☁ button. On: every match goes up in the background (an hour or more each).' + (mw ? ' ' + mw + (mw === 1 ? ' match video' : ' match videos') + ' to go up.' : ''), h('label', {class:'set-switch'}, box, h('span', {'aria-hidden':'true'}))));
       }
       if(driveWeb() && !driveWebToken() && waiting){
         body.append(h('p', {class:'set-sub', text:waiting + (waiting === 1 ? ' video is' : ' videos are') + ' waiting to go up from this device. Google asks you to sign in again each visit before uploading from the app.'}),
@@ -14914,8 +14973,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
      written in two parts only so GitHub's secret scanner doesn't mistake it for a password) */
   const DRIVE_API_KEY = ['AIzaSyAUofnjW8C4YKUV', 'IV2r0fgToMikGDPETWI'].join('');
   const DRIVE_MATCH_MAX = 12 * 1024 * 1024 * 1024;
-  const DRIVE_MATCHES_OFF = 'hufc-gdrive-matches-off';
-  function driveMatchesOn(){ try{ return localStorage.getItem(DRIVE_MATCHES_OFF) !== '1'; }catch(e){ return true; } }
+  /* full matches only go up when asked (they're big): for every match (Settings), or one match at a time (its ☁ button) */
+  const DRIVE_MATCHES_ON = 'hufc-gdrive-matches-on';
+  function driveMatchesOn(){ try{ return localStorage.getItem(DRIVE_MATCHES_ON) === '1'; }catch(e){ return false; } }
   let driveMatchBusy = false, driveMatchFailUntil = 0;
   /* the same video as another match that's already on Drive (same file name and size): share its copy */
   function driveSameVideo(m){
@@ -14925,9 +14985,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return hit ? hit.m.drive : null;
   }
   function driveMatchTodo(){
-    if(!driveMatchesOn() || !(driveDesk() || driveWeb())) return [];
+    if(!(driveDesk() || driveWeb())) return [];
+    const all = driveMatchesOn();
     return mvList().filter(function(x){
       if(!canEdit(x.m) || x.m.drive || driveTried['m' + x.m.id]) return false;
+      if(!all && !x.m.driveWant) return false;
       const same = driveSameVideo(x.m);
       if(same){ driveMarkMatch(x.key, Object.assign({}, same)); return false; }
       if(!driveDesk()) return true;   /* (the app: whether this phone kept a copy is checked when it's its turn) */
