@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028175031">
+<meta name="hufc-build" content="20261028180101">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2990,7 +2990,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 5:50pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:01pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -10909,7 +10909,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function anRenderDriveBtn(){
     const b = document.getElementById('anDriveBtn'); if(!b || !anM) return;
     const a = anData();
-    const can = anCanEdit() && driveAvailable() && !!(a.file && a.file.name) && !anM.drive && !driveSameVideo(anM);
+    const can = driveDesk() && anCanEdit() && driveAvailable() && !!(a.file && a.file.name) && !anM.drive && !driveSameVideo(anM);   /* (only the computer that has the file can put it up) */
     b.hidden = !can;
     b.textContent = anM.driveWant ? '☁ Going up to Drive…' : '☁ Put on Drive';
     b.disabled = !!anM.driveWant;
@@ -11181,7 +11181,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const want = a.file && a.file.name ? a.file.name : '';
     document.getElementById('anFileLbl').textContent = has ? '' : anReopen ? 'Tap to open this match’s video again: ' + want
       : (anM && anGetLink()) ? 'Tap Open video link to download this match’s video' + (want ? ' (“' + want + '”)' : '') + ', then tap Open match video… and pick it — your tags and clips line up straight away.'
-      : want ? 'This match’s video: ' + want + ' — open it from this device' : 'Open the match video (e.g. the MP4 downloaded from Veo)';
+      : want ? 'This match’s video: ' + want + ' — there’s no download link for it yet. ' + (anDesk() ? 'Open it from this computer.' : 'On the computer that has it, open this match and tap 🔗 Video link to add one — then a “Open video link” button appears here.') : 'Open the match video (e.g. the MP4 downloaded from Veo)';
     try{ anRenderDriveBtn(); anRenderDlBtn(); }catch(e){}
   }
   function anSeek(t, clip){
