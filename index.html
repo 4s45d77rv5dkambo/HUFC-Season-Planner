@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028174348">
+<meta name="hufc-build" content="20261028175031">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2164,6 +2164,7 @@ html.has-selbar .home{padding-bottom:70px;}
 .modal{position:fixed; inset:0; z-index:90; background:rgba(13,14,15,.55); display:flex; align-items:flex-start; justify-content:center; padding:5vh 16px;}
 /* "Are you sure?" boxes open on top of a list (Open sessions, lineups, pre-games) */
 .modal.confirm-modal{z-index:95;}
+#confirmModal{z-index:99;}   /* "are you sure?" always sits on top of the window it came from */
 .modal[hidden]{display:none;}
 .modal-box{background:var(--paper); border-radius:12px; width:min(1000px, 100%); max-height:90vh; display:flex; flex-direction:column; box-shadow:0 20px 50px rgba(0,0,0,.3);}
 .modal-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:16px 18px; border-bottom:1px solid var(--line); background:var(--white); border-radius:12px 12px 0 0;}
@@ -2989,7 +2990,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 5:43pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 5:50pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3270,7 +3271,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         <label class="an-link" title="Attach this video to a pre-game plan: its clips go straight onto that pre-game, and the pre-game links back here"><span>Pre-game</span><select id="anPgLink" aria-label="Attach to a pre-game"></select></label>
       </div>
       <button type="button" class="btn btn-small" id="anGetBtn" title="Where coaches get this video (a Veo, OneDrive or Google Drive link) — shown on devices that don’t have it">🔗 Video link</button>
-      <button type="button" class="btn btn-small btn-primary" id="anDlBtn" hidden title="Download this match video to this device — then it opens here without the internet">⤓ Get the video</button>
+      <button type="button" class="btn btn-small btn-primary" id="anDlBtn" hidden title="Open the link to this match’s video file and download it to this device — then it opens here with every tag and clip">🔗 Open video link</button>
       <button type="button" class="btn btn-small" id="anDriveBtn" hidden title="Put this whole match on Google Drive so it plays on every device (a full match is big — it uses your Drive space)">☁ Put on Drive</button>
       <button type="button" class="btn btn-small" data-an-open>Open match video…</button>
       <input type="file" class="file-input" id="anFile" accept="video/*,.mp4,.mov,.m4v">
@@ -3316,12 +3317,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   </div>
 </div>
 
-<div class="modal confirm-modal" id="anPick" hidden>
-  <div class="modal-box confirm-box an-pick-box" role="dialog" aria-modal="true" aria-labelledby="anPickTitle">
-    <h3 id="anPickTitle">Match videos</h3>
-    <p id="anPickText"></p>
-    <div class="an-pick-list" id="anPickList"></div>
-    <div class="confirm-actions"><button type="button" class="btn" id="anPickNew">+ New matchday lineup</button><button type="button" class="btn btn-primary" id="anPickClose">Close</button></div>
+<div class="modal" id="anPick" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="anPickTitle">
+    <div class="modal-head">
+      <h3 id="anPickTitle">Your match videos</h3>
+      <input type="search" class="lib-search" id="anPickSearch" placeholder="Search match videos" aria-label="Search match videos">
+      <button type="button" class="btn btn-primary" id="anPickClose">Close</button>
+    </div>
+    <div class="session-list picker-grid" id="anPickList"></div>
   </div>
 </div>
 
@@ -10863,6 +10866,18 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     document.getElementById('anGetRow').hidden = true;
     anRenderDriveBtn();
   }
+  /* a video downloaded from the web: Windows notes where it came from, so the match keeps that link by itself
+     (the download address of the exact file, and the page it was downloaded from) */
+  function anAutoSource(fp){
+    if(!anM || !anCanEdit() || anM.getLink || !(window.hufcDesktop && window.hufcDesktop.videoSource) || !fp) return;
+    const key = anKey;
+    window.hufcDesktop.videoSource(fp).then(function(r){
+      if(!r || anKey !== key || anM.getLink || !(r.file || r.page)) return;
+      anM.getLink = r.file || r.page; if(r.page && r.page !== anM.getLink) anM.getPage = r.page;
+      anSave(); anRenderHead(); anRenderVideoState();
+      showToast('Saved the link this video was downloaded from · on your phone and for other coaches, tap Open video link to get it');
+    }).catch(function(){});
+  }
   /* ---------- where coaches get this match's video (a Veo, OneDrive or Drive link) ---------- */
   /* where to get the video: the link its coach saved, or its copy on Google Drive */
   function anGetLink(){ if(!anM) return ''; const d = anDriveCopy(); return anM.getLink || (d && d.url) || ''; }
@@ -10954,7 +10969,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }
     if(anDesk()){
       const fp = window.hufcDesktop.pathOf(f);
-      if(fp){ try{ localStorage.setItem(AN_PATH_PREFIX + id, fp); }catch(e){} return; }
+      if(fp){ try{ localStorage.setItem(AN_PATH_PREFIX + id, fp); }catch(e){} anAutoSource(fp); return; }
     }
     /* everywhere else: keep a copy on the device so the video is just there next time */
     anKeepCopy(id, f, how === 'handle');
@@ -11003,7 +11018,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         const url = anFileUrl(fp);
         anVideo.addEventListener('loadeddata', function(){ anVideo.onerror = null; }, {once:true});
         anVideo.onerror = function(){ anVideo.onerror = null; if(anVideo.dataset.for === key){ anVideo.removeAttribute('src'); delete anVideo.dataset.for; try{ anVideo.load(); }catch(e){} anRenderVideoState(); showToast('This match’s video has moved or been renamed · open it again'); } };
-        anFiles[key] = {url:url, name:(anData().file || {}).name || 'video'}; anSetVideo(url, key); return;
+        anFiles[key] = {url:url, name:(anData().file || {}).name || 'video'}; anSetVideo(url, key); anAutoSource(fp); return;
       }
     }
     let blob = null; try{ blob = await pgMedia.get('mvf-' + id); }catch(e){}
@@ -11153,7 +11168,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const acts = document.getElementById('anEmptyActs');
     if(acts){
       acts.innerHTML = '';
-      if(anM && anGetLink() && !has) acts.appendChild(h('a', {class:'btn btn-primary an-get-go', href:anGetLink(), target:'_blank', rel:'noopener', text:'Get the video ↗'}));
+      if(anM && anGetLink() && !has){
+        acts.appendChild(h('a', {class:'btn btn-primary an-get-go', href:anGetLink(), target:'_blank', rel:'noopener', text:'🔗 Open video link'}));
+        if(anM.getPage && anM.getPage !== anGetLink()) acts.appendChild(h('a', {class:'btn an-get-go', href:anM.getPage, target:'_blank', rel:'noopener', text:'Open the page it came from'}));
+      }
       if(anReopen) acts.appendChild(h('button', {type:'button', class:'btn btn-primary', text:'▶ Open ' + ((a.file && a.file.name) || 'the video'), onclick:anReopenFile}));
       acts.appendChild(h('button', {type:'button', class:'btn' + (anReopen ? '' : ' btn-primary'), text:anReopen ? 'Pick a different file…' : 'Open match video…', onclick:anOpenVideoFile}));
     }
@@ -11162,7 +11180,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     document.getElementById('anCtl').hidden = !has;
     const want = a.file && a.file.name ? a.file.name : '';
     document.getElementById('anFileLbl').textContent = has ? '' : anReopen ? 'Tap to open this match’s video again: ' + want
-      : (anM && anGetLink()) ? 'Get this match’s video' + (want ? ' (“' + want + '”)' : '') + ', then tap Open match video… and pick it — your tags and clips line up straight away.'
+      : (anM && anGetLink()) ? 'Tap Open video link to download this match’s video' + (want ? ' (“' + want + '”)' : '') + ', then tap Open match video… and pick it — your tags and clips line up straight away.'
       : want ? 'This match’s video: ' + want + ' — open it from this device' : 'Open the match video (e.g. the MP4 downloaded from Veo)';
     try{ anRenderDriveBtn(); anRenderDlBtn(); }catch(e){}
   }
@@ -11395,40 +11413,28 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* ---------- from the home page ---------- */
   const anPick = document.getElementById('anPick');
-  function anPickOpen(){
-    const box = document.getElementById('anPickList'); box.innerHTML = '';
-    const list = mvList().filter(function(x){ return mvHasWork(x.m) || x.m.luId || x.m.pgId || clean(x.m.title); });
-    if(!list.length) box.appendChild(h('p', {class:'an-empty-list', text:'No match videos yet. Tap “+ Match video” to open one — attach it to a lineup any time to tag your players.'}));
-    list.forEach(function(x){
-      const m = x.m, a = m.analysis || {}, n = (a.tags || []).length, c = (a.clips || []).length;
-      const L = anLoadLu(m.luId);
-      const title = mvTitle(m);
-      const sub = [L && clean(L.meta.date), groupOf(m), L ? 'Lineup ✓' : 'No lineup', a.file && a.file.name ? '🎞 ' + a.file.name : ''].filter(Boolean).join(' · ');
-      const row = h('div', {class:'an-pick-item'},
-        h('button', {type:'button', class:'an-pick-row', onclick:function(){ closeModal(anPick, true); anOpenMatch(x.key); }},
-          h('span', {class:'an-pick-main'}, h('span', {class:'an-pick-title', text:title}), h('span', {class:'an-pick-sub', text:sub})),
-          h('span', {class:'an-pick-n' + (n || c ? '' : ' none'), text:[n ? n + (n === 1 ? ' tag' : ' tags') : '', c ? c + (c === 1 ? ' clip' : ' clips') : ''].filter(Boolean).join(' · ') || (a.file && a.file.name ? 'Video added' : 'Not started')})),
-        canEdit(m) ? h('button', {type:'button', class:'icon-btn danger', title:'Delete this match video', 'aria-label':'Delete match video', text:'✕', onclick:async function(){
-          if(!(await askDelete('match video', title, 'Its tags and clips go too. The video file on your device isn’t touched.'))) return;
-          const raw = localStorage.getItem(x.key);
-          try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){} if(m.drive) driveRemoveLater(m.drive, function(){ return !!localStorage.getItem(x.key); });
-          setTimeout(function(){ if(!localStorage.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); try{ localStorage.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
-          clubSyncSoon(); anPickOpen();
-          showToast('Deleted “' + title + '”', function(){ undoDeleted(x.key, raw); clubSyncSoon(); anPickOpen(); });
-        }}) : '');
-      box.appendChild(row);
-    });
-    openModal(anPick);
+  /* the Open match videos window: every match video, searchable — like Open sessions and Open lineups */
+  function anPickRender(){
+    const grid = document.getElementById('anPickList'); grid.innerHTML = '';
+    const all = mvList().filter(function(x){ return mvHasWork(x.m) || x.m.luId || x.m.pgId || clean(x.m.title); })
+      .sort(function(a, b){ return (b.m.savedAt || 0) - (a.m.savedAt || 0); });
+    const q = clean(document.getElementById('anPickSearch').value).toLowerCase();
+    const list = all.filter(function(x){ return !q || (mvTitle(x.m) + ' ' + ((x.m.analysis || {}).file || {}).name + ' ' + groupOf(x.m)).toLowerCase().indexOf(q) !== -1; });
+    if(!all.length) grid.appendChild(h('div', {class:'home-empty', text:'No match videos yet. Start one with + Match video.'}));
+    else if(!list.length) grid.appendChild(h('div', {class:'home-empty', text:'No match videos match that search.'}));
+    list.forEach(function(x){ grid.appendChild(mvCard(x, anPickRender)); });
   }
+  function anPickOpen(){
+    document.getElementById('anPickSearch').value = '';
+    anPickRender();
+    openModal(anPick);
+    setTimeout(function(){ try{ document.getElementById('anPickSearch').focus(); }catch(e){} }, 0);
+  }
+  document.getElementById('anPickSearch').addEventListener('input', anPickRender);
   /* ---------- the Match videos section on the home page ---------- */
   function mvTitle(m){ const L = anLoadLu(m.luId), P = !L && m.pgId ? anPgFind(m.pgId) : null; return clean(m.title) || (L ? luName(L) : '') || (P ? sessionName(P.plan) : '') || 'Untitled match video'; }
-  function renderMatchCards(){
-    const box = document.getElementById('homeMatches'); if(!box) return;
-    const all = mvList().filter(function(x){ return inView(x.m) && (mvHasWork(x.m) || x.m.luId || x.m.pgId || clean(x.m.title)); });
-    document.getElementById('matchesCount').textContent = all.length ? all.length + (all.length === 1 ? ' match' : ' matches') : '';
-    const q = clean(document.getElementById('matchSearch').value).toLowerCase();
-    const match = function(x, qq){ return (mvTitle(x.m) + ' ' + ((x.m.analysis || {}).file || {}).name).toLowerCase().indexOf(qq) !== -1; };
-    homeFill('matches', box, document.getElementById('matchesMore'), all, q, match, function(x){
+  /* one match video as a card (home page and the Open match videos window) */
+  function mvCard(x, after){
       const m = x.m, a = m.analysis || {}, n = (a.tags || []).length, c = (a.clips || []).length, L = anLoadLu(m.luId), title = mvTitle(m);
       const card = h('div', {class:'session-card mv-card', role:'button', tabindex:'0', title:'Open this match video'},
         ownerTag(m),
@@ -11442,14 +11448,22 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
             if(!(await askDelete('match video', title, 'Its tags and clips go too. The video file on your device isn’t touched.'))) return;
             const raw = localStorage.getItem(x.key);
             try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){} if(m.drive) driveRemoveLater(m.drive, function(){ return !!localStorage.getItem(x.key); });
-            clubSyncSoon(); renderHome();
-            showToast('Deleted “' + title + '”', function(){ undoDeleted(x.key, raw); clubSyncSoon(); renderHome(); });
+            setTimeout(function(){ if(!localStorage.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); try{ localStorage.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
+            clubSyncSoon(); renderHome(); if(after) after();
+            showToast('Deleted “' + title + '”', function(){ undoDeleted(x.key, raw); clubSyncSoon(); renderHome(); if(after) after(); });
           }}) : null));
-      const go = function(){ anOpenMatch(x.key); };
+      const go = function(){ if(!anPick.hidden) closeModal(anPick, true); anOpenMatch(x.key); };
       card.addEventListener('click', go);
       card.addEventListener('keydown', function(ev){ if(ev.key === 'Enter') go(); });
       return card;
-    }, 'No match videos yet. Tap + Match video to add one.');
+  }
+  function renderMatchCards(){
+    const box = document.getElementById('homeMatches'); if(!box) return;
+    const all = mvList().filter(function(x){ return inView(x.m) && (mvHasWork(x.m) || x.m.luId || x.m.pgId || clean(x.m.title)); });
+    document.getElementById('matchesCount').textContent = all.length ? all.length + (all.length === 1 ? ' match' : ' matches') : '';
+    const q = clean(document.getElementById('matchSearch').value).toLowerCase();
+    const match = function(x, qq){ return (mvTitle(x.m) + ' ' + ((x.m.analysis || {}).file || {}).name).toLowerCase().indexOf(qq) !== -1; };
+    homeFill('matches', box, document.getElementById('matchesMore'), all, q, match, function(x){ return mvCard(x); }, 'No match videos yet. Tap + Match video to add one.');
   }
   document.getElementById('matchSearch').addEventListener('input', renderMatchCards);
   /* from a pre-game: its match videos, or a new one attached to it */
@@ -11468,7 +11482,6 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   document.getElementById('homeMvNewBtn').addEventListener('click', anNewFromHome);
   document.getElementById('homeMvOpenBtn').addEventListener('click', anPickOpen);
   document.getElementById('anPickClose').addEventListener('click', function(){ closeModal(anPick); });
-  document.getElementById('anPickNew').addEventListener('click', function(){ closeModal(anPick, true); anNewFromHome(); });
   anPick.addEventListener('click', function(e){ if(e.target === anPick) closeModal(anPick); });
 
   /* earlier match analysis kept inside a lineup moves to its own match video (once) */
@@ -13319,6 +13332,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.29', d:'28 Oct 2026', t:'Open video link', n:['A match video downloaded on the computer remembers the link it was downloaded from, by itself (Windows program 1.6.3)', 'On your phone, iPad — and for other coaches — the match shows a clear “🔗 Open video link” button that opens that exact file to download', 'You can still paste or change the link with 🔗 Video link on the computer', 'Open match videos looks like Open sessions and Open lineups (cards, search)', 'Fixed: “Delete this match video?” appeared behind the window']},
     {v:'3.28', d:'28 Oct 2026', t:'Match videos without using Drive space', n:['Full match videos no longer go to Google Drive unless you ask (Settings → Google Drive, or a match’s ☁ button) — clips on boards still do', 'Each match can say where to get its video (a Veo, OneDrive or Drive link): on a device without it, the match shows “Get the video” and the file name to open', 'A match that’s on Google Drive shows “⤓ Get the video” by itself — no link needed']},
     {v:'3.27', d:'28 Oct 2026', t:'Match videos get their own screen', n:['A match video now opens as its own full screen, like a session or lineup, with ⌂ Home at the top left']},
     {v:'3.26', d:'28 Oct 2026', t:'Same video, one upload', n:['Two match videos made from the same video file share the copy on Google Drive — no second upload, and both open on your phone']},
