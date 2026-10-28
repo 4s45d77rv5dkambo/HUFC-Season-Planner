@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028183854">
+<meta name="hufc-build" content="20261028184848">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1657,6 +1657,10 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-get-lbl{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase;}
 .an-get-in{flex:1 1 280px; min-width:0; font:inherit; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:#fff;}
 .an-empty .an-get-go{text-decoration:none;}
+.an-dl{flex:1 1 100%; max-width:460px; margin:0 auto 4px;}
+.an-dl-track{height:12px; border-radius:999px; background:rgba(255,255,255,.18); overflow:hidden; box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);}
+.an-dl-bar{height:100%; width:0; border-radius:999px; background:#ffd400; transition:width .4s linear;}
+.an-dl-txt{margin:8px 0 0; font-size:13.5px; line-height:1.4; text-align:center;}
 
 /* ---------- Settings ---------- */
 .home-hero{position:relative;}
@@ -3004,7 +3008,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:38pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:48pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -10919,12 +10923,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function anGetLink(){ if(!anM) return ''; const d = anDriveCopy(); return anM.getLink || (d && d.url) || ''; }
   function anRenderDlBtn(){
     const b = document.getElementById('anDlBtn'); if(!b) return;
-    const has = !!anVideo.currentSrc && anVideo.dataset.for === anKey, streaming = has && /googleapis\.com\/drive/.test(anVideo.currentSrc);
-    b.hidden = !anGetLink() || (has && !streaming);   /* (not when the video is already on this device) */
+    const has = !!anVideo.currentSrc && anVideo.dataset.for === anKey, streaming = has && /^https?:/.test(anVideo.getAttribute('src') || '');
+    const mine = anDl && anM && anDl.id === anM.id;
+    b.hidden = !anGetLink() || (has && !streaming && !mine) || (streaming && !mine && !anDesk() && !!anNoDl[anFileLink(anGetLink())]);   /* (not when the video is already on this device) */
+    b.textContent = mine ? '⤓ Downloading ' + anDlPct() : anDlPart && anM && anDlPart.id === anM.id ? '⤓ Continue download (' + anDlPct(anDlPart) + ')' : (has && anFileLink(anGetLink()) && !anDesk()) ? '⤓ Keep on this device' : '🔗 Open video link';
   }
   anVideo.addEventListener('loadedmetadata', function(){ try{ anRenderDlBtn(); }catch(e){} });
   anVideo.addEventListener('emptied', function(){ try{ anRenderDlBtn(); }catch(e){} });
-  document.getElementById('anDlBtn').addEventListener('click', function(){ const u = anGetLink(); if(u) window.open(u, '_blank', 'noopener'); });
+  document.getElementById('anDlBtn').addEventListener('click', function(){ anGetVideo(); });
   function anCleanLink(t){ t = clean(t); if(!t) return ''; if(!/^[a-z][a-z0-9+.-]*:/i.test(t)) t = 'https://' + t; try{ const u = new URL(t); return /^https?:$/.test(u.protocol) ? u.href : ''; }catch(e){ return ''; } }
   document.getElementById('anGetBtn').addEventListener('click', function(){
     if(!anCanEdit()){ if(anM && anM.getLink) window.open(anM.getLink, '_blank', 'noopener'); return; }
@@ -10941,6 +10947,152 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   document.getElementById('anGetSave').addEventListener('click', anGetSave);
   document.getElementById('anGetIn').addEventListener('keydown', function(e){ e.stopPropagation(); if(e.key === 'Enter'){ e.preventDefault(); anGetSave(); } if(e.key === 'Escape'){ e.preventDefault(); document.getElementById('anGetRow').hidden = true; } });
   document.getElementById('anGetCancel').addEventListener('click', function(){ document.getElementById('anGetRow').hidden = true; });
+
+  /* ---------- the match video into the app from its link (iPhone, iPad, any browser) ----------
+     · a link to the video file itself (Hudl, a Veo download, Dropbox, Google Drive, any .mp4): the planner downloads it
+       itself, keeps it on the device and opens it the moment it's done (it can be watched from the link meanwhile)
+     · a link to a web page: it opens in the browser; coming back to the planner offers to open what was downloaded */
+  function anFileLink(u){
+    let x; try{ x = new URL(u); }catch(e){ return ''; }
+    if(!/^https?:$/.test(x.protocol)) return '';
+    if(/(^|\.)googleapis\.com$/.test(x.hostname) && /\/drive\//.test(x.pathname)) return x.href;
+    if(x.hostname === 'drive.google.com' || x.hostname === 'docs.google.com'){
+      const m = x.pathname.match(/\/file\/d\/([\w-]{10,})/), id = m ? m[1] : x.searchParams.get('id');
+      return id ? driveStreamUrl({id:id}) : '';
+    }
+    if(/(^|\.)dropbox\.com$/.test(x.hostname) && !/dropboxusercontent/.test(x.hostname)){ x.hostname = 'dl.dropboxusercontent.com'; x.searchParams.delete('dl'); return x.href; }
+    if(/\.(mp4|m4v|mov|webm|mkv)$/i.test(x.pathname)) return x.href;
+    return '';
+  }
+  let anDl = null, anDlPart = null, anAwait = null; const anNoDl = {};   /* the download going now · a stopped one for the open match · a link opened in the browser */
+  const AN_DL_PIECE = 16 * 1024 * 1024;   /* saved to the device in pieces as it comes (a whole match never sits in memory) */
+  function anDlPct(d){ d = d || anDl; return d && d.total ? Math.min(99, Math.floor(d.got * 100 / d.total)) + '%' : d ? anDlSize(d.got) : ''; }
+  function anDlSize(n){ return n >= 1e9 ? (Math.round(n / 1e8) / 10) + ' GB' : Math.round(n / 1e6) + ' MB'; }
+  function anDlMeta(id){ return pgMedia.get('mvn-' + id).catch(function(){ return null; }); }
+  async function anDlDrop(id){
+    const m = await anDlMeta(id);
+    if(m) for(let i = 0; i < m.n; i++){ try{ await pgMedia.del('mvp-' + id + '-' + i); }catch(e){} }
+    try{ await pgMedia.del('mvn-' + id); }catch(e){}
+  }
+  async function anDlBlob(id){
+    const m = await anDlMeta(id); if(!m || !m.done) return null;
+    const parts = [];
+    for(let i = 0; i < m.n; i++){ const b = await pgMedia.get('mvp-' + id + '-' + i); if(!b) return null; parts.push(b); }
+    return new Blob(parts, {type:m.type || 'video/mp4'});
+  }
+  function anDlPaint(){
+    try{ anRenderDlBtn(); }catch(e){}
+    const bar = document.getElementById('anDlBar'), txt = document.getElementById('anDlTxt');
+    if(!anDl || !anM || anDl.id !== anM.id) return;
+    if(bar) bar.style.width = (anDl.total ? Math.min(100, anDl.got * 100 / anDl.total) : 5) + '%';
+    if(txt) txt.textContent = 'Downloading the match video… ' + anDlPct() + (anDl.total ? ' · ' + anDlSize(anDl.got) + ' of ' + anDlSize(anDl.total) : '') + ' — keep the planner open; it opens here by itself when it’s done';
+  }
+  /* "Open video link": into the app if it can be, otherwise the browser */
+  function anGetVideo(){
+    if(!anM) return;
+    const link = anGetLink(); if(!link) return;
+    if(anDl){ if(anDl.id === anM.id) showToast('Downloading ' + anDlPct() + ' · it opens here by itself when it’s done'); else showToast('Another match video is downloading · wait for it to finish'); return; }
+    const url = anFileLink(link);
+    if(anDesk() || !url){ anOpenLinkOut(link); return; }
+    if(anNoDl[url]){ anStreamLink(anKey, url, link); return; }
+    anDownload();
+  }
+  function anOpenLinkOut(link){
+    window.open(link, '_blank', 'noopener');
+    if(!anDesk()) anAwait = {key:anKey, at:Date.now()};
+  }
+  /* back from the browser after downloading: one tap puts the file in the app */
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden || !anAwait || !anM || anAwait.key !== anKey || anModal.hidden) return;
+    if(anVideo.currentSrc && anVideo.dataset.for === anKey){ anAwait = null; return; }
+    if(Date.now() - anAwait.at > 3 * 3600e3){ anAwait = null; return; }
+    showToast('Downloaded the match video? Tap Open it and pick it — your tags and clips line up straight away', function(){ anAwait = null; anOpenVideoFile(); }, 'Open it');
+  });
+  async function anDownload(){
+    const key = anKey, id = anM.id, link = anGetLink(), url = anFileLink(link);
+    let meta = await anDlMeta(id);
+    if(anKey !== key || anDl) return;
+    if(meta && meta.url !== url){ await anDlDrop(id); meta = null; }
+    if(meta && meta.done){ anRestoreVideo(); return; }
+    const want = (anData().file || {}).size || (meta && meta.total) || 0;
+    if(want && navigator.storage && navigator.storage.estimate){
+      try{ const e = await navigator.storage.estimate(); if(e && e.quota && (e.quota - (e.usage || 0)) < (want - (meta ? meta.got : 0)) * 1.05){ showToast('Not enough room on this device to keep the whole match · playing it from the link instead'); anStreamLink(key, url, link); return; } }catch(e){}
+    }
+    try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+    const ctl = new AbortController();
+    const d = anDl = {id:id, key:key, url:url, got:meta ? meta.got : 0, total:(meta && meta.total) || want, n:meta ? meta.n : 0, stop:ctl};
+    anDlPart = null;
+    let lock = null; try{ if(navigator.wakeLock) lock = await navigator.wakeLock.request('screen'); }catch(e){}
+    const relock = async function(){ if(!document.hidden && anDl === d){ try{ if(navigator.wakeLock) lock = await navigator.wakeLock.request('screen'); }catch(e){} } };
+    document.addEventListener('visibilitychange', relock);
+    anRenderVideoState(); anDlPaint();
+    let ok = false, flush = null;
+    try{
+      let res = null;
+      if(d.got){ try{ res = await fetch(url, {signal:ctl.signal, headers:{Range:'bytes=' + d.got + '-'}}); }catch(e){ if(e && e.name === 'AbortError') throw e; res = null; } }
+      if(!res || (d.got && res.status !== 206)){
+        if(d.got){ await anDlDrop(id); d.got = 0; d.n = 0; }   /* (can't carry on from where it stopped: start again) */
+        if(!res || res.status !== 200) res = await fetch(url, {signal:ctl.signal});
+      }
+      if(!res.ok) throw new Error('http ' + res.status);
+      const ct = (res.headers.get('content-type') || '').split(';')[0].trim();
+      if(/^text\//i.test(ct)) throw new Error('not a video');
+      const len = +res.headers.get('content-length') || 0;
+      if(len) d.total = d.got + len;
+      const type = /^video\//i.test(ct) ? ct : 'video/mp4';
+      let buf = [], bufLen = 0, paint = 0;
+      const save = async function(done){
+        if(bufLen){ await pgMedia.put('mvp-' + id + '-' + d.n, new Blob(buf, {type:type})); d.n++; buf = []; bufLen = 0; }
+        await pgMedia.put('mvn-' + id, {url:url, n:d.n, got:d.got, total:d.total, type:type, done:!!done});
+      };
+      flush = save;
+      const rd = res.body.getReader();
+      for(;;){
+        const r = await rd.read(); if(r.done) break;
+        buf.push(r.value); bufLen += r.value.byteLength; d.got += r.value.byteLength;
+        if(bufLen >= AN_DL_PIECE) await save(false);
+        const t = Date.now(); if(t - paint > 400){ paint = t; anDlPaint(); }
+      }
+      await save(true);
+      ok = true;
+    }catch(e){
+      if(flush && d.got){ try{ await flush(false); }catch(x){} }   /* (what came so far stays, so it carries on from there) */
+      anDl = null;
+      if(e && e.name === 'AbortError'){ anDlPart = d.got ? d : null; }
+      else if(d.got > 0){ anDlPart = d; if(anKey === key) showToast('The download stopped at ' + anDlPct(d) + ' · tap Continue download to carry on', function(){ anGetVideo(); }, 'Continue'); }
+      else{ anNoDl[url] = 1; if(anKey === key){ if(!(anVideo.dataset.for === key && anVideo.getAttribute('src') === url)) anStreamLink(key, url, link); showToast('Playing this match straight from its link (this site doesn’t let the planner keep a copy)'); } }   /* the site won't let the planner download it: play it straight from the link */
+    }
+    document.removeEventListener('visibilitychange', relock);
+    try{ if(lock) lock.release(); }catch(e){}
+    if(ok){
+      anDl = null; anDlPart = null;
+      const blob = await anDlBlob(id);
+      if(blob && anKey === key && anM && anM.id === id){
+        const old = anFiles[key]; if(old && old.url && /^blob:/.test(old.url)){ try{ URL.revokeObjectURL(old.url); }catch(e){} }
+        const watching = anVideo.dataset.for === key && /^https?:/.test(anVideo.getAttribute('src') || ''), at = watching ? anVideo.currentTime : 0, playing = watching && !anVideo.paused;
+        const u = URL.createObjectURL(blob); anFiles[key] = {url:u, name:(anData().file || {}).name || 'video'};
+        anSetVideo(u, key);
+        if(at){ anVideo.addEventListener('loadedmetadata', function(){ try{ anVideo.currentTime = at; if(playing){ const p = anVideo.play(); if(p && p.catch) p.catch(function(){}); } }catch(e){} }, {once:true}); }
+      }
+      showToast('Match video downloaded · it’s kept on this device and opens by itself from now on');
+    }
+    anRenderVideoState();
+  }
+  function anDlPause(){ if(anDl){ try{ anDl.stop.abort(); }catch(e){} } }
+  /* play the match straight from its link (while it downloads, or when it can't be downloaded) */
+  function anStreamLink(key, url, link){
+    if(anKey !== key) return;
+    const fail = function(){
+      anVideo.removeEventListener('error', fail);
+      if(anVideo.dataset.for !== key || anVideo.getAttribute('src') !== url) return;
+      anVideo.removeAttribute('src'); delete anVideo.dataset.for; try{ anVideo.load(); }catch(e){}
+      anRenderVideoState();
+      if(!anDl) showToast('This link doesn’t play in the planner · open it in the browser, then come back and open the file', function(){ anOpenLinkOut(link); }, 'Open link');
+    };
+    anVideo.addEventListener('error', fail);
+    anVideo.addEventListener('loadedmetadata', function(){ anVideo.removeEventListener('error', fail); }, {once:true});
+    anVideo.removeAttribute('crossorigin'); anVideo.src = url; anVideo.dataset.for = key; anRenderVideoState();
+  }
   /* ---------- this one match onto Google Drive (when every match isn't going up) ---------- */
   function anRenderDriveBtn(){
     const b = document.getElementById('anDriveBtn'); if(!b || !anM) return;
@@ -11058,7 +11210,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       }
     }
     let blob = null; try{ blob = await pgMedia.get('mvf-' + id); }catch(e){}
+    if(!blob){ try{ blob = await anDlBlob(id); }catch(e){} }
     if(anKey !== key) return;
+    if(!blob && !(anDl && anDl.id === id)){ const dm = await anDlMeta(id); if(anKey !== key) return; anDlPart = dm && !dm.done && dm.got ? {id:id, got:dm.got, total:dm.total} : (anDlPart && anDlPart.id !== id ? anDlPart : null); }
     if(blob){ const url = URL.createObjectURL(blob); anFiles[key] = {url:url, name:(anData().file || {}).name || 'video'}; anSetVideo(url, key); return; }
     let hd = null; try{ hd = await pgMedia.get('mvh-' + id); }catch(e){}
     if(anKey !== key) return;
@@ -11204,8 +11358,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const acts = document.getElementById('anEmptyActs');
     if(acts){
       acts.innerHTML = '';
-      if(anM && anGetLink() && !has){
-        acts.appendChild(h('a', {class:'btn btn-primary an-get-go', href:anGetLink(), target:'_blank', rel:'noopener', text:'🔗 Open video link'}));
+      const dlHere = anDl && anM && anDl.id === anM.id;
+      if(dlHere && !has){
+        acts.appendChild(h('div', {class:'an-dl'}, h('div', {class:'an-dl-track'}, h('div', {class:'an-dl-bar', id:'anDlBar'})), h('p', {class:'an-dl-txt', id:'anDlTxt'})));
+        acts.appendChild(h('button', {type:'button', class:'btn btn-primary', text:'▶ Watch while it downloads', onclick:function(){ anStreamLink(anKey, anDl.url, anGetLink()); }}));
+        acts.appendChild(h('button', {type:'button', class:'btn', text:'Pause download', onclick:anDlPause}));
+        setTimeout(anDlPaint, 0);
+      } else if(anM && anGetLink() && !has){
+        const part = anDlPart && anDlPart.id === anM.id;
+        acts.appendChild(h('button', {type:'button', class:'btn btn-primary an-get-go', text:part ? '⤓ Continue download (' + anDlPct(anDlPart) + ')' : '🔗 Open video link', onclick:anGetVideo}));
         if(anM.getPage && anM.getPage !== anGetLink()) acts.appendChild(h('a', {class:'btn an-get-go', href:anM.getPage, target:'_blank', rel:'noopener', text:'Open the page it came from'}));
       }
       if(anReopen) acts.appendChild(h('button', {type:'button', class:'btn btn-primary', text:'▶ Open ' + ((a.file && a.file.name) || 'the video'), onclick:anReopenFile}));
@@ -11216,7 +11377,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     document.getElementById('anCtl').hidden = !has;
     const want = a.file && a.file.name ? a.file.name : '';
     document.getElementById('anFileLbl').textContent = has ? '' : anReopen ? 'Tap to open this match’s video again: ' + want
-      : (anM && anGetLink()) ? 'Tap Open video link to download this match’s video' + (want ? ' (“' + want + '”)' : '') + ', then tap Open match video… and pick it — your tags and clips line up straight away.'
+      : (anDl && anM && anDl.id === anM.id) ? ''
+      : (anM && anGetLink()) ? (!anDesk() && anFileLink(anGetLink()) ? 'Tap Open video link — the match video' + (want ? ' (“' + want + '”)' : '') + ' downloads into the planner and opens here by itself when it’s done, with every tag and clip.' : 'Tap Open video link to download this match’s video' + (want ? ' (“' + want + '”)' : '') + ', then come back here and tap Open it — your tags and clips line up straight away.')
       : want ? 'This match’s video: ' + want + ' — there’s no download link for it yet. ' + (anDesk() ? 'Open it from this computer.' : 'On the computer that has it, open this match and tap 🔗 Video link to add one — then a “Open video link” button appears here.') : 'Open the match video (e.g. the MP4 downloaded from Veo)';
     try{ anRenderDriveBtn(); anRenderDlBtn(); }catch(e){}
   }
@@ -11484,7 +11646,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
             if(!(await askDelete('match video', title, 'Its tags and clips go too. The video file on your device isn’t touched.'))) return;
             const raw = localStorage.getItem(x.key);
             try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){} if(m.drive) driveRemoveLater(m.drive, function(){ return !!localStorage.getItem(x.key); });
-            setTimeout(function(){ if(!localStorage.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); try{ localStorage.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
+            setTimeout(function(){ if(!localStorage.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); anDlDrop(m.id).catch(function(){}); try{ localStorage.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
             clubSyncSoon(); renderHome(); if(after) after();
             showToast('Deleted “' + title + '”', function(){ undoDeleted(x.key, raw); clubSyncSoon(); renderHome(); if(after) after(); });
           }}) : null));
@@ -13384,6 +13546,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.34', d:'28 Oct 2026', t:'Match videos download into the app', n:['On iPhone, iPad and in the browser, Open video link downloads the match video into the planner itself, with a progress bar — and it opens by itself the moment it’s finished, with every tag and clip', 'Watch while it downloads, pause it, and carry on later from where it stopped', 'It’s kept on the device, so it just opens next time', 'A site that won’t let the planner keep a copy plays straight from the link instead; a link to a web page opens in the browser, and coming back offers to open the file', 'The yellow scroll pill on iPhone and iPad now glides smoothly']},
     {v:'3.33', d:'28 Oct 2026', t:'Goals & assists go when cleared', n:['Clearing a half now takes away the goal, assist and card icons of every player no longer in the game — they no longer count in the stats', 'Lineups that were cleared before this update lose their leftover goals, assists and cards too', 'Undo puts them back']},
     {v:'3.32', d:'28 Oct 2026', t:'Cleared lineups leave the stats', n:['A lineup with nobody on the pitch (cleared, or not filled in yet) no longer counts in Game time & player stats', 'Clearing the last half of a lineup also clears that game’s goals, assists and cards (Undo puts them back)']},
     {v:'3.31', d:'28 Oct 2026', t:'Watch another coach’s animations', n:['A coach viewing another coach’s session can now play its animations and step through them (and play its video clips) — nothing can be changed', 'iPad and iPhone: the age-group buttons on the home page sit centred, with a shorter last row in the middle']},
