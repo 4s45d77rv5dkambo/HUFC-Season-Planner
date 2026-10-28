@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028140650">
+<meta name="hufc-build" content="20261028141510">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2973,7 +2973,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 2:06pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 2:15pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -10875,7 +10875,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(anCanEdit() && (!a.file || a.file.name !== f.name || a.file.size !== f.size)){
       if(a.file && anM.drive){ const old = anM.drive, mk = anKey; delete anM.drive; driveRemoveLater(old, function(){ const m = JSON.parse(localStorage.getItem(mk) || 'null'); return !!(m && m.drive && m.drive.id === old.id); }); }
       a.file = {name:f.name, size:f.size}; anSave();
-      if(anDesk()) setTimeout(function(){ driveSoon(0); }, 1500);
+      setTimeout(function(){ driveSoon(0); driveSuggest(); }, 1500);
     }
     if(anDesk()){
       const fp = window.hufcDesktop.pathOf(f);
@@ -13228,7 +13228,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'3.25', d:'28 Oct 2026', t:'Match videos on Google Drive', n:['Full match videos go up to Google Drive from the Windows program in the background (Settings → Google Drive → Full match videos too)', 'Open that match on your phone or iPad and the video plays straight away, with every tag and clip — no picking the file', 'A big upload that gets cut short carries on from where it got to', 'Windows program 1.6.1']},
+    {v:'3.25', d:'28 Oct 2026', t:'Match videos on Google Drive', n:['Full match videos go up to Google Drive from the Windows program in the background (Settings → Google Drive → Full match videos too)', 'Open that match on your phone or iPad and the video plays straight away, with every tag and clip — no picking the file', 'A big upload that gets cut short carries on from where it got to', 'Videos and clips added on an iPhone or iPad go up from there too, so a coach on any device can add them and everyone sees them', 'Adding a video without Google Drive connected offers to connect it', 'Windows program 1.6.1']},
     {v:'3.24', d:'28 Oct 2026', t:'Google Drive for videos', n:['Settings → Google Drive: connect your Google Drive once, and videos you put on pre-game boards go up by themselves', 'They then play on every device — phone, iPad, computer — and for every coach', 'Windows program 1.6.0']},
     {v:'3.23', d:'28 Oct 2026', t:'Clips on your phone', n:['A clip added on another device (e.g. your computer) can now play on your iPhone: save the clip onto the phone (WhatsApp, email, OneDrive…), tap it in the planner and choose it — it plays there from then on', 'Works for clips on pre-game boards and clips in a match video’s Clips tab', 'A ⤓ save button on every video clip on a pre-game board: on your phone it opens the share sheet (Save Video to Photos, Save to Files, WhatsApp…), on a computer a normal Save']},
     {v:'3.22', d:'28 Oct 2026', t:'YouTube on iPhone', n:['Fixed: YouTube links on pre-game boards wouldn’t play in the iPhone / iPad app — they play there now (and still in the Windows program)']},
@@ -13311,7 +13311,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         return;
       }
       body.append(setRow('Connected', st.email || 'Your Google account', h('button', {type:'button', class:'btn btn-small', text:'Disconnect', onclick:async function(){ await driveDisconnect(); renderSettings(); }})));
-      if(driveDesk()){
+      if(driveDesk() || driveWeb()){
         const box = h('input', {type:'checkbox', checked:driveMatchesOn(), 'aria-label':'Full match videos too', onchange:function(){ try{ if(this.checked) localStorage.removeItem(DRIVE_MATCHES_OFF); else localStorage.setItem(DRIVE_MATCHES_OFF, '1'); }catch(e){} if(this.checked) driveSoon(0); }});
         const mw = driveMatchTodo().length;
         body.append(setRow('Full match videos too', 'The whole match goes up in the background, so it opens on your phone and iPad with every tag and clip. A full match can take an hour or more — keep the planner open; if it stops, it carries on from where it got to.' + (mw ? ' ' + mw + (mw === 1 ? ' match video' : ' match videos') + ' to go up.' : ''), h('label', {class:'set-switch'}, box, h('span', {'aria-hidden':'true'}))));
@@ -14262,7 +14262,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           if(r && r.file){
             syncBoards();
             d.clips.push({id:id, kind:'file', name:f.name, size:f.size, title:title, local:r.file});
-            rerender(); saveLocal(); driveSoon();
+            rerender(); saveLocal(); driveSoon(); driveSuggest();
             setStatus('Video added · saved in your Videos folder');
             return;
           }
@@ -14273,7 +14273,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       pgMedia.put(id, f).then(function(){
         syncBoards();
         d.clips.push({id:id, kind:'file', name:f.name, size:f.size, title:title});
-        rerender(); saveLocal(); driveSoon();
+        rerender(); saveLocal(); driveSoon(); driveSuggest();
         if(!assets) setStatus('Video added · it plays from this device');
       }).catch(function(){ setStatus('This browser couldn’t keep the video — try a smaller clip', 'warn'); });
     });
@@ -14294,7 +14294,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           }catch(e){ setStatus('There isn’t room on this device for that clip', 'warn'); return; }
           syncBoards();
           d.clips.push(clip);
-          rerender(); saveLocal(); driveSoon();
+          rerender(); saveLocal(); driveSoon(); driveSuggest();
           anClipMarkBoard(mkey, cid, {pg:state.planId, did:d.id, name:clean(d.name) || 'board'});
           setStatus('Clip added to this board');
         });
@@ -14769,15 +14769,30 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     w.folder = id; try{ localStorage.setItem(DRIVE_WEB_KEY, JSON.stringify(w)); }catch(e){}
     return id;
   }
-  async function driveWebUpload(blob, name, onProg){
-    const parent = await driveWebFolder();
-    const mime = blob.type || 'video/mp4';
-    const start = await driveWebApi('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id', {name:name, parents:[parent], mimeType:mime},
-      {'X-Upload-Content-Type':mime, 'X-Upload-Content-Length':String(blob.size)});
-    if(!start.ok) throw new Error('Google Drive didn’t start the upload (' + start.status + ')');
-    const session = start.headers.get('location'); if(!session) throw new Error('Google Drive didn’t start the upload');
-    const CH = 8 * 1024 * 1024; let id = '';
-    for(let pos = 0; pos < blob.size;){
+  async function driveWebUpload(blob, name, onProg, resumeKey){
+    const mime = blob.type || 'video/mp4', SK = resumeKey ? 'hufc-gdrive-sess:' + resumeKey : '';
+    let session = '', id = '', from = 0;
+    /* a big upload cut short (the phone slept, the app closed) carries on from where it got to */
+    if(SK){
+      let old = null; try{ old = JSON.parse(localStorage.getItem(SK) || 'null'); }catch(e){}
+      if(old && old.size === blob.size && Date.now() - old.at < 6 * 864e5){
+        try{
+          const r = await fetch(old.url, {method:'PUT', headers:{'Content-Range':'bytes */' + blob.size}});
+          if(r.status === 308){ const rg = r.headers.get('range'); session = old.url; from = rg ? +rg.split('-')[1] + 1 : 0; }
+          else if(r.ok){ id = ((await r.json().catch(function(){ return {}; })) || {}).id || ''; }
+        }catch(e){}
+      }
+    }
+    if(!session && !id){
+      const parent = await driveWebFolder();
+      const start = await driveWebApi('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id', {name:name, parents:[parent], mimeType:mime},
+        {'X-Upload-Content-Type':mime, 'X-Upload-Content-Length':String(blob.size)});
+      if(!start.ok) throw new Error('Google Drive didn’t start the upload (' + start.status + ')');
+      session = start.headers.get('location'); if(!session) throw new Error('Google Drive didn’t start the upload');
+      if(SK) try{ localStorage.setItem(SK, JSON.stringify({url:session, size:blob.size, at:Date.now()})); }catch(e){}
+    }
+    const CH = 8 * 1024 * 1024;
+    for(let pos = id ? blob.size : from; pos < blob.size;){
       const end = Math.min(blob.size, pos + CH);
       const r = await fetch(session, {method:'PUT', headers:{'Content-Range':'bytes ' + pos + '-' + (end - 1) + '/' + blob.size}, body:blob.slice(pos, end)});
       if(r.status === 308){ const rg = r.headers.get('range'); pos = rg ? +rg.split('-')[1] + 1 : end; }
@@ -14786,6 +14801,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(onProg) onProg(Math.min(1, pos / blob.size));
     }
     if(!id) throw new Error('The upload didn’t finish');
+    if(SK) try{ localStorage.removeItem(SK); }catch(e){}
     try{ await driveWebApi('POST', 'https://www.googleapis.com/drive/v3/files/' + id + '/permissions', {role:'reader', type:'anyone'}); }catch(e){}
     return {id:id, url:'https://drive.google.com/file/d/' + id + '/view'};
   }
@@ -14887,19 +14903,22 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function driveMatchesOn(){ try{ return localStorage.getItem(DRIVE_MATCHES_OFF) !== '1'; }catch(e){ return true; } }
   let driveMatchBusy = false, driveMatchFailUntil = 0;
   function driveMatchTodo(){
-    if(!driveDesk() || !driveMatchesOn()) return [];
+    if(!driveMatchesOn() || !(driveDesk() || driveWeb())) return [];
     return mvList().filter(function(x){
       if(!canEdit(x.m) || x.m.drive || driveTried['m' + x.m.id]) return false;
+      if(!driveDesk()) return true;   /* (the app: whether this phone kept a copy is checked when it's its turn) */
       let p = ''; try{ p = localStorage.getItem(AN_PATH_PREFIX + x.m.id) || ''; }catch(e){}
       return !!p;
-    }).map(function(x){ return {key:x.key, m:x.m, path:localStorage.getItem(AN_PATH_PREFIX + x.m.id)}; });
+    }).map(function(x){ let p = ''; try{ p = localStorage.getItem(AN_PATH_PREFIX + x.m.id) || ''; }catch(e){} return {key:x.key, m:x.m, path:p}; });
   }
   function driveMarkMatch(key, drive){
     if(anM && anKey === key){ anM.drive = drive; anSave(); return; }
     try{ const m = JSON.parse(localStorage.getItem(key)); if(!m) return; m.drive = drive; m.savedAt = Date.now(); localStorage.setItem(key, JSON.stringify(m)); clubSyncSoon(); }catch(e){}
   }
   async function driveMatchSweep(){
-    if(driveMatchBusy || !driveDesk() || Date.now() < driveMatchFailUntil) return;
+    if(driveMatchBusy || Date.now() < driveMatchFailUntil) return;
+    if(driveWeb()) return driveMatchSweepWeb();
+    if(!driveDesk()) return;
     const todo = driveMatchTodo(); if(!todo.length) return;
     driveMatchBusy = true;
     try{
@@ -14925,6 +14944,47 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }finally{ driveMatchBusy = false; }
   }
   const driveMatchProgress = {};
+  /* the iPhone / iPad app: a match video opened there (a copy is kept on the device) goes up from there */
+  async function driveMatchSweepWeb(){
+    const todo = [];
+    for(const it of driveMatchTodo()){
+      let f = null; try{ f = await pgMedia.get('mvf-' + it.m.id); }catch(e){}
+      if(f && f.size) todo.push({it:it, f:f});   /* (no copy on this device: nothing to put up from here) */
+    }
+    if(!todo.length) return;
+    if(!driveWebToken()){
+      if(!driveNudged){ driveNudged = true; showToast(todo.length + (todo.length === 1 ? ' match video is' : ' match videos are') + ' waiting to go on Google Drive', function(){ driveConnect(); }, 'Sign in'); }
+      return;
+    }
+    driveMatchBusy = true;
+    try{
+      for(const x of todo){
+        const it = x.it, a = it.m.analysis || {}, label = mvTitle(it.m);
+        if(x.f.size > DRIVE_MATCH_MAX){ driveTried['m' + it.m.id] = 1; continue; }
+        let last = -1, r = null;
+        try{
+          r = await driveWebUpload(x.f, (a.file && a.file.name) || x.f.name || (label + '.mp4'), function(f){ const pc = Math.floor(f * 100); if(pc !== last && pc % 2 === 0){ last = pc; setStatus('Putting match video “' + label + '” on Google Drive… ' + pc + '% (keep the app open)', 'saving'); } }, 'match-' + it.m.id);
+        }catch(e){
+          setStatus('Match video “' + label + '” paused going up to Google Drive · it carries on from where it got to', 'warn');
+          driveMatchFailUntil = Date.now() + 3 * 60 * 1000;
+          if(e && e.code === 'not-connected') driveNudged = false;
+          break;
+        }
+        driveMarkMatch(it.key, {id:r.id, url:r.url, name:(a.file && a.file.name) || '', size:x.f.size});
+        setStatus('Match video “' + label + '” is on Google Drive · it opens on every device now');
+      }
+    }finally{ driveMatchBusy = false; }
+  }
+  /* adding a video without Google Drive connected: say once that connecting lets everyone see it */
+  let driveAsked = false;
+  function driveSuggest(){
+    if(driveAsked || !driveAvailable()) return;
+    driveRefreshState().then(function(st){
+      if(st.connected || driveAsked) return;
+      driveAsked = true;
+      showToast('Connect Google Drive so this video plays on your other devices and for the other coaches', function(){ settingsOpen('drive'); }, 'Connect');
+    });
+  }
   /* a match video's stream from Drive (for a device without the file) */
   function driveStreamUrl(drive){ return DRIVE_API_KEY && drive && drive.id ? 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(drive.id) + '?alt=media&key=' + DRIVE_API_KEY : ''; }
   /* take a Drive copy away later (a deleted match, or a match given a different video) */
