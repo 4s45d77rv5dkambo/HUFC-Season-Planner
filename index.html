@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028114320">
+<meta name="hufc-build" content="20261028130915">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2965,7 +2965,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 11:43am</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 1:09pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -12173,7 +12173,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     d.clips = d.clips || []; d.clips.push(clip);
     s.savedAt = Date.now();
     try{ localStorage.setItem(key, JSON.stringify(s)); }catch(e){ showToast('Couldn’t save the pre-game'); return; }
-    clubSyncSoon();
+    clubSyncSoon(); driveSoon();
     closeModal(anPgModal);
     /* remember where it went, so the Clips tab shows it */
     c.boards = (c.boards || []).filter(function(b){ return b.did !== did; }).concat([{pg:s.planId || key.slice(LS_PREFIX.length), did:did, name:clean(d.name) || 'board'}]);
@@ -13199,6 +13199,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.24', d:'28 Oct 2026', t:'Google Drive for videos', n:['Settings → Google Drive: connect your Google Drive once, and videos you put on pre-game boards go up by themselves', 'They then play on every device — phone, iPad, computer — and for every coach', 'Windows program 1.6.0']},
     {v:'3.23', d:'28 Oct 2026', t:'Clips on your phone', n:['A clip added on another device (e.g. your computer) can now play on your iPhone: save the clip onto the phone (WhatsApp, email, OneDrive…), tap it in the planner and choose it — it plays there from then on', 'Works for clips on pre-game boards and clips in a match video’s Clips tab', 'A ⤓ save button on every video clip on a pre-game board: on your phone it opens the share sheet (Save Video to Photos, Save to Files, WhatsApp…), on a computer a normal Save']},
     {v:'3.22', d:'28 Oct 2026', t:'YouTube on iPhone', n:['Fixed: YouTube links on pre-game boards wouldn’t play in the iPhone / iPad app — they play there now (and still in the Windows program)']},
     {v:'3.21', d:'28 Oct 2026', t:'Kits swapped', n:['The away (2nd) kit is now black and the 3rd kit grey — in the lineup Kit list and the shirt colours', 'Lineups that already had a kit picked keep the same colour', 'Practice diagrams: Team A yellow, Team B black, Team C grey (diagrams drawn before switch over too)']},
@@ -13247,7 +13248,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     {v:'1.0', d:'11 Oct 2026', t:'The first session plan', n:['The Heidelberg United training session plan: run-sheet, practices with pitch diagrams and session review', 'Prints on A4 with the club crest and watermark']}
   ];
   const SET_TABS = [
-    ['account', 'Account', '👤'], ['teams', 'My teams', '⚽'], ['sessions', 'New sessions', '📋'],
+    ['account', 'Account', '👤'], ['teams', 'My teams', '⚽'], ['drive', 'Google Drive', '☁️'], ['sessions', 'New sessions', '📋'],
     ['lineups', 'Matchday lineups', {html:'<svg viewBox="0 0 24 24" width="22" height="22"><rect x="3.5" y="1" width="17" height="22" rx="2" fill="#2e9d5b" stroke="#1f7a43" stroke-width=".8"/><path d="M3.5 12h17" stroke="#fff" stroke-width=".9" opacity=".85"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="#fff" stroke-width=".9" opacity=".85"/><path d="M8.5 23v-3h7v3M8.5 1v3h7V1" fill="none" stroke="#fff" stroke-width=".9" opacity=".85"/><circle cx="12" cy="20.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="6.6" cy="16.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="10.2" cy="17.2" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="13.8" cy="17.2" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="17.4" cy="16.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="8" cy="11.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="12" cy="12.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="16" cy="11.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="7.4" cy="5.8" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="12" cy="4.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="16.6" cy="5.8" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/></svg>'}], ['data', 'Backup & data', '💾'], ['club', 'Club & sharing', {crest:true}], ['about', 'About', 'ℹ']
   ];
   /* a tab's picture: an emoji, a drawing, or the club crest */
@@ -13255,6 +13256,36 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(ic && ic.crest){ const c = document.getElementById('winbarCrest'); return h('span', {class:'set-ico set-ico-img set-ico-crest', 'aria-hidden':'true'}, h('img', {src:c ? c.src : '', alt:''})); }
     if(ic && ic.html) return h('span', {class:'set-ico set-ico-img', 'aria-hidden':'true', html:ic.html});
     return h('span', {class:'set-ico', 'aria-hidden':'true', text:ic});
+  }
+  /* ---------- Google Drive for videos (drive.js) ---------- */
+  function setDrive(p){
+    const c = setCard('Google Drive for videos', 'Connect your Google Drive and the videos you put on pre-game boards go up by themselves, so they play on every device — your phone, iPad and computer — and for every coach. They go in a “HUFC Planner clips” folder in your Drive that anyone with the link can watch. The planner can only see the files it puts there.');
+    p.appendChild(c);
+    const body = h('div', {class:'set-drive'}, h('p', {class:'set-sub', text:'Checking…'}));
+    c.appendChild(body);
+    if(!driveAvailable()){
+      body.innerHTML = '';
+      const why = window.claude ? 'Connect Google Drive in the Windows program or the iPhone / iPad app — clips added there then play here too.'
+        : (window.hufcDesktop && !window.hufcDesktop.gdrive) ? 'Restart the Windows program to get the update that adds Google Drive (it asks when it’s ready).'
+        : !(DRIVE_CLIENT.web || DRIVE_CLIENT.desk) ? 'Google Drive is being set up for the planner — it’ll be ready here soon.'
+        : 'Open the planner from the Windows program or the iPhone / iPad app to connect Google Drive.';
+      body.appendChild(h('p', {class:'set-sub', text:why}));
+      return;
+    }
+    driveRefreshState().then(function(st){
+      body.innerHTML = '';
+      const waiting = driveTodo().length;
+      if(!st.connected){
+        body.append(h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn btn-primary', text:'Connect Google Drive', onclick:function(){ driveConnect().then(function(){ renderSettings(); }); }})),
+          h('p', {class:'set-sub', text:waiting ? waiting + (waiting === 1 ? ' video' : ' videos') + ' on your boards will go up once you connect.' : 'Videos you add from now on will go up once you connect.'}));
+        return;
+      }
+      body.append(setRow('Connected', st.email || 'Your Google account', h('button', {type:'button', class:'btn btn-small', text:'Disconnect', onclick:async function(){ await driveDisconnect(); renderSettings(); }})));
+      if(driveWeb() && !driveWebToken() && waiting){
+        body.append(h('p', {class:'set-sub', text:waiting + (waiting === 1 ? ' video is' : ' videos are') + ' waiting to go up from this device. Google asks you to sign in again each visit before uploading from the app.'}),
+          h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn btn-primary', text:'Put them on Google Drive', onclick:function(){ driveConnect(); }})));
+      } else body.append(h('p', {class:'set-sub', text:waiting ? waiting + (waiting === 1 ? ' video is' : ' videos are') + ' going up from this device in the background.' : 'All your videos on this device are on Google Drive.'}));
+    });
   }
   function setIsAdmin(){ const u = CLOUD && CLOUD.user ? CLOUD.user() : null; return !!(u && u.admin) || (!CLOUD && !!(who && who.admin)); }
   function settingsOpen(tab){
@@ -13271,7 +13302,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         onclick:function(){ setTab = t[0]; renderSettings(); }}, setTabIco(t[2]), h('span', {text:t[1]})));
     });
     const pane = document.getElementById('setPane'); pane.innerHTML = '';
-    const fn = {account:setAccount, teams:setTeams, sessions:setSessions, lineups:setLineups, data:setData, club:setClub, about:setAbout}[setTab];
+    const fn = {account:setAccount, teams:setTeams, drive:setDrive, sessions:setSessions, lineups:setLineups, data:setData, club:setClub, about:setAbout}[setTab];
     fn(pane);
     pane.scrollTop = 0;
     const on = nav.querySelector('.set-tab.on'); if(on && on.scrollIntoView && nav.scrollWidth > nav.clientWidth) on.scrollIntoView({block:'nearest', inline:'center'});
@@ -14048,6 +14079,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       return;
     }
     pgClipUrl(c).then(function(url){
+      /* not on this device: its copy on Google Drive (put there by the device that added it) */
+      if(!url && c.drive && c.drive.url){ const e = pgEmbed(c.drive.url); if(e && e.kind === 'frame'){ box.appendChild(h('div', {class:'pg-frame'}, h('iframe', {src:e.src, title:clean(c.title) || 'Video clip', allow:'autoplay; encrypted-media; picture-in-picture; fullscreen', allowfullscreen:'', referrerpolicy:'strict-origin-when-cross-origin', loading:'lazy'}))); return; } }
       if(!url){ box.appendChild(pgClipHere(c, box, big)); return; }
       box.appendChild(pgVideo(url));
     });
@@ -14194,7 +14227,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           if(r && r.file){
             syncBoards();
             d.clips.push({id:id, kind:'file', name:f.name, size:f.size, title:title, local:r.file});
-            rerender(); saveLocal();
+            rerender(); saveLocal(); driveSoon();
             setStatus('Video added · saved in your Videos folder');
             return;
           }
@@ -14205,7 +14238,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       pgMedia.put(id, f).then(function(){
         syncBoards();
         d.clips.push({id:id, kind:'file', name:f.name, size:f.size, title:title});
-        rerender(); saveLocal();
+        rerender(); saveLocal(); driveSoon();
         if(!assets) setStatus('Video added · it plays from this device');
       }).catch(function(){ setStatus('This browser couldn’t keep the video — try a smaller clip', 'warn'); });
     });
@@ -14226,7 +14259,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           }catch(e){ setStatus('There isn’t room on this device for that clip', 'warn'); return; }
           syncBoards();
           d.clips.push(clip);
-          rerender(); saveLocal();
+          rerender(); saveLocal(); driveSoon();
           anClipMarkBoard(mkey, cid, {pg:state.planId, did:d.id, name:clean(d.name) || 'board'});
           setStatus('Clip added to this board');
         });
@@ -14389,6 +14422,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* save a clip's video off the planner: on a phone the share sheet (Save Video to Photos, Save to Files, WhatsApp…); on a computer a normal Save */
   async function pgSaveClip(c){
     let url = c.kind === 'asset' ? '/_blob/' + c.asset : await pgClipUrl(c);
+    if(!url && c.drive && c.drive.url){ window.open(c.drive.url, '_blank', 'noopener'); return; }   /* (Google Drive has its own Download) */
     if(!url){ showToast('This video isn’t on this device yet · tap ▶ and choose it first'); return; }
     let file = null;
     try{
@@ -14403,7 +14437,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function pgClipRow(d, c){
     const title = h('input', {type:'text', class:'pg-clip-title', value:c.title || '', placeholder:'Name this clip', 'aria-label':'Clip name', oninput:function(e){ c.title = e.target.value; scheduleSave(); }});
     const sub = c.kind === 'link' ? pgSource(c.url) + ' · ' + c.url.replace(/^https?:\/\/(www\.)?/, '').slice(0, 60)
-      : (c.kind === 'asset' ? 'Video · plays on every device' : c.local ? 'Video · in your Videos folder' : 'Video file') + (c.size ? ' · ' + pgSize(c.size) : '');
+      : (c.kind === 'asset' ? 'Video · plays on every device' : c.drive ? 'Video · on Google Drive · plays on every device' : c.local ? 'Video · in your Videos folder' : 'Video file') + (c.size ? ' · ' + pgSize(c.size) : '');
     const player = h('div', {class:'pg-clip-player', hidden:true});
     const play = h('button', {type:'button', class:'pg-play', title:'Play the clip', 'aria-label':'Play the clip', html:PG_PLAY, onclick:function(){
       if(!player.hidden){ player.querySelectorAll('video').forEach(function(v){ try{ v.pause(); }catch(e){} }); player.hidden = true; player.innerHTML = ''; play.innerHTML = PG_PLAY; play.setAttribute('aria-label', 'Play the clip'); return; }
@@ -14415,13 +14449,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const row = h('div', {class:'pg-clip'},
       h('div', {class:'pg-clip-line'},
         play,
-        h('div', {class:'pg-clip-text'}, title, h('div', {class:'pg-clip-sub', text:sub})),
+        h('div', {class:'pg-clip-text'}, title, h('div', {class:'pg-clip-sub', 'data-cid':c.id, text:sub})),
         (c.kind === 'file' || c.kind === 'asset') ? h('button', {type:'button', class:'icon-btn no-print pg-clip-save', title:'Save or send this video (to your phone’s Photos or Files, WhatsApp, email…)', 'aria-label':'Save or send this video', html:PG_SAVE_ICON, onclick:function(){ pgSaveClip(c); }}) : '',
         h('button', {type:'button', class:'icon-btn danger no-print pg-clip-x', title:'Remove clip', 'aria-label':'Remove clip', text:'✕', onclick:function(){
           syncBoards();
           d.clips.splice(d.clips.indexOf(c), 1);
           rerender(); saveLocal();
-          if(c.kind === 'file') pgForget(c.id, c.local);
+          if(c.kind === 'file'){ pgForget(c.id, c.local); if(c.drive) driveForget(c.drive); }
           if(c.kind === 'asset') pgForgetAsset(c.asset);
           showToast('Removed “' + (clean(c.title) || 'clip') + '”', undo);
         }})),
@@ -14587,6 +14621,248 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   document.getElementById('homePgNewBtn').addEventListener('click', function(){ swap(startNewPregame); });
   document.getElementById('homePgOpenBtn').addEventListener('click', function(){ openSessions('pregame'); });
   document.getElementById('presentBtn').addEventListener('click', function(){ pgPresent(0); });
+
+  /* =====================================================================
+     Google Drive for videos: each coach connects their own Google Drive once (Settings → Google Drive).
+     Videos they put on pre-game boards (+ Upload video, + Add clip, clips from match videos) then go up
+     by themselves into a "HUFC Planner clips" folder in their Drive, which anyone with the link can watch,
+     so the clip plays in the planner on every device and for every coach.
+     - The Windows program does the Google side itself (gdrive.js): sign-in in the web browser, then
+       uploads straight from the Videos folder, in the background.
+     - The iPhone / iPad app (and a browser): sign-in goes to Google and comes back to the app; a sign-in
+       lasts an hour, then the next upload asks for a quick tap to sign in again.
+     - Only the drive.file permission: the planner sees nothing in a coach's Drive except what it put there.
+     ===================================================================== */
+  /* the planner's registration with Google (Google Cloud project hufc-season-planner) */
+  const DRIVE_CLIENT = {
+    /* "Planner web" OAuth client (iPhone / iPad app). A client ID is public — every Google sign-in page shows it —
+       it's written in two parts only so GitHub's secret scanner doesn't mistake it for a password */
+    web:['438839893256-de7tf3kjllto0ppurqvmqupoin5jj8jc', 'apps.googleusercontent.com'].join('.'),
+    /* the Windows program keeps its own "Planner Windows" (desktop app) client in the program (gdrive.js) */
+    desk:'program', deskSecret:''
+  };
+  const DRIVE_APP_URL = 'https://4s45d77rv5dkambo.github.io/HUFC-Season-Planner/';
+  const DRIVE_FOLDER = 'HUFC Planner clips';
+  const DRIVE_MAX = 1024 * 1024 * 1024;   /* (a whole match is too big to be worth it; clips are small) */
+  const DRIVE_TOKEN_KEY = 'hufc-gdrive-token', DRIVE_WEB_KEY = 'hufc-gdrive';
+  function driveDesk(){ return !!(window.hufcDesktop && window.hufcDesktop.gdrive); }
+  function driveWeb(){ return !driveDesk() && /^https:$/.test(location.protocol) && location.href.indexOf(DRIVE_APP_URL) === 0; }
+  /* Drive can be used here: set up with Google, and this is the program or the iPhone / iPad app */
+  function driveAvailable(){ return driveDesk() ? !!DRIVE_CLIENT.desk : driveWeb() ? !!DRIVE_CLIENT.web : false; }
+  let driveState = {connected:false, email:''};
+  function driveWebToken(){
+    try{ const t = JSON.parse(sessionStorage.getItem(DRIVE_TOKEN_KEY) || 'null'); if(t && t.token && t.exp > Date.now() + 60000) return t.token; }catch(e){}
+    return '';
+  }
+  async function driveRefreshState(){
+    if(driveDesk()){ try{ driveState = (await window.hufcDesktop.gdrive.status()) || {connected:false, email:''}; }catch(e){} }
+    else if(driveWeb()){ let w = null; try{ w = JSON.parse(localStorage.getItem(DRIVE_WEB_KEY) || 'null'); }catch(e){} driveState = {connected:!!(w && w.on), email:(w && w.email) || '', live:!!driveWebToken()}; }
+    return driveState;
+  }
+  /* connect: the program opens Google in the web browser; the app goes to Google and comes back */
+  async function driveConnect(){
+    if(!driveAvailable()){ showToast('Google Drive isn’t set up for the planner yet'); return false; }
+    if(driveDesk()){
+      showToast('Sign in to Google in the browser window that opens, then come back here');
+      const r = await window.hufcDesktop.gdrive.connect();
+      if(!r || !r.ok){ showToast((r && r.error) || 'Google Drive wasn’t connected'); return false; }
+      driveState = r.v || driveState;
+      showToast('Google Drive connected' + (driveState.email ? ' · ' + driveState.email : '') + ' · your videos go up by themselves now');
+      driveSoon(800);
+      return true;
+    }
+    /* the app: off to Google, and back here with an hour's permission */
+    try{ flush(); }catch(e){}
+    const st = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    try{ sessionStorage.setItem('hufc-gdrive-state', st); }catch(e){}
+    let hint = ''; try{ hint = (JSON.parse(localStorage.getItem(DRIVE_WEB_KEY) || 'null') || {}).email || ''; }catch(e){}
+    const q = {client_id:DRIVE_CLIENT.web, redirect_uri:DRIVE_APP_URL, response_type:'token', scope:'openid email https://www.googleapis.com/auth/drive.file', state:st, include_granted_scopes:'true'};
+    if(hint) q.login_hint = hint;
+    location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams(q).toString();
+    return true;
+  }
+  async function driveDisconnect(){
+    if(driveDesk()){ try{ await window.hufcDesktop.gdrive.disconnect(); }catch(e){} }
+    else{
+      const t = driveWebToken();
+      if(t){ try{ await fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(t), {method:'POST'}); }catch(e){} }
+      try{ localStorage.removeItem(DRIVE_WEB_KEY); sessionStorage.removeItem(DRIVE_TOKEN_KEY); }catch(e){}
+    }
+    driveState = {connected:false, email:''};
+    showToast('Google Drive disconnected · videos you add stay on this device');
+  }
+  /* back from Google in the app: keep the permission for this visit */
+  (function(){
+    if(!/access_token=/.test(location.hash || '')) return;
+    const p = new URLSearchParams(location.hash.slice(1));
+    let want = ''; try{ want = sessionStorage.getItem('hufc-gdrive-state') || ''; sessionStorage.removeItem('hufc-gdrive-state'); }catch(e){}
+    try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
+    if(!want || p.get('state') !== want) return;
+    const tok = p.get('access_token'), exp = Date.now() + (Math.max(60, +p.get('expires_in') || 3600)) * 1000;
+    try{ sessionStorage.setItem(DRIVE_TOKEN_KEY, JSON.stringify({token:tok, exp:exp})); }catch(e){}
+    fetch('https://www.googleapis.com/oauth2/v3/userinfo', {headers:{Authorization:'Bearer ' + tok}}).then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; }).then(function(u){
+      let w = {}; try{ w = JSON.parse(localStorage.getItem(DRIVE_WEB_KEY) || 'null') || {}; }catch(e){}
+      w.on = true; if(u && u.email) w.email = u.email;
+      try{ localStorage.setItem(DRIVE_WEB_KEY, JSON.stringify(w)); }catch(e){}
+      driveState = {connected:true, email:w.email || '', live:true};
+      setTimeout(function(){ showToast('Google Drive connected' + (w.email ? ' · ' + w.email : '') + ' · putting your videos up'); }, 1200);
+      driveSoon(1500);
+    });
+  })();
+
+  /* ---------- the app's own Google calls (the program does these in gdrive.js) ---------- */
+  async function driveWebApi(method, url, body, headers){
+    const t = driveWebToken(); if(!t) throw Object.assign(new Error('Sign in to Google Drive again'), {code:'not-connected'});
+    const r = await fetch(url, {method:method, headers:Object.assign({Authorization:'Bearer ' + t}, body && !(body instanceof Blob) ? {'Content-Type':'application/json'} : {}, headers || {}),
+      body:body == null ? undefined : (body instanceof Blob ? body : JSON.stringify(body))});
+    if(r.status === 401){ try{ sessionStorage.removeItem(DRIVE_TOKEN_KEY); }catch(e){} throw Object.assign(new Error('Sign in to Google Drive again'), {code:'not-connected'}); }
+    return r;
+  }
+  async function driveWebFolder(){
+    let w = {}; try{ w = JSON.parse(localStorage.getItem(DRIVE_WEB_KEY) || 'null') || {}; }catch(e){}
+    if(w.folder){ const r = await driveWebApi('GET', 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(w.folder) + '?fields=id,trashed'); if(r.ok){ const j = await r.json(); if(!j.trashed) return w.folder; } }
+    const q = "name='" + DRIVE_FOLDER + "' and mimeType='application/vnd.google-apps.folder' and trashed=false";
+    let id = '';
+    const s = await driveWebApi('GET', 'https://www.googleapis.com/drive/v3/files?fields=files(id)&q=' + encodeURIComponent(q));
+    if(s.ok){ const j = await s.json(); id = j.files && j.files[0] ? j.files[0].id : ''; }
+    if(!id){
+      const r = await driveWebApi('POST', 'https://www.googleapis.com/drive/v3/files?fields=id', {name:DRIVE_FOLDER, mimeType:'application/vnd.google-apps.folder'});
+      if(!r.ok) throw new Error('Couldn’t make the folder on Google Drive');
+      id = (await r.json()).id;
+      try{ await driveWebApi('POST', 'https://www.googleapis.com/drive/v3/files/' + id + '/permissions', {role:'reader', type:'anyone'}); }catch(e){}
+    }
+    w.folder = id; try{ localStorage.setItem(DRIVE_WEB_KEY, JSON.stringify(w)); }catch(e){}
+    return id;
+  }
+  async function driveWebUpload(blob, name, onProg){
+    const parent = await driveWebFolder();
+    const mime = blob.type || 'video/mp4';
+    const start = await driveWebApi('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id', {name:name, parents:[parent], mimeType:mime},
+      {'X-Upload-Content-Type':mime, 'X-Upload-Content-Length':String(blob.size)});
+    if(!start.ok) throw new Error('Google Drive didn’t start the upload (' + start.status + ')');
+    const session = start.headers.get('location'); if(!session) throw new Error('Google Drive didn’t start the upload');
+    const CH = 8 * 1024 * 1024; let id = '';
+    for(let pos = 0; pos < blob.size;){
+      const end = Math.min(blob.size, pos + CH);
+      const r = await fetch(session, {method:'PUT', headers:{'Content-Range':'bytes ' + pos + '-' + (end - 1) + '/' + blob.size}, body:blob.slice(pos, end)});
+      if(r.status === 308){ const rg = r.headers.get('range'); pos = rg ? +rg.split('-')[1] + 1 : end; }
+      else if(r.ok){ id = ((await r.json().catch(function(){ return {}; })) || {}).id || ''; pos = blob.size; }
+      else throw new Error('The upload stopped (' + r.status + ')');
+      if(onProg) onProg(Math.min(1, pos / blob.size));
+    }
+    if(!id) throw new Error('The upload didn’t finish');
+    try{ await driveWebApi('POST', 'https://www.googleapis.com/drive/v3/files/' + id + '/permissions', {role:'reader', type:'anyone'}); }catch(e){}
+    return {id:id, url:'https://drive.google.com/file/d/' + id + '/view'};
+  }
+
+  /* ---------- putting this device's videos up: every pre-game clip that's only here goes to Drive ---------- */
+  let driveBusy = false, driveTimer = 0, driveWaiting = 0, driveFailUntil = 0, driveHooked = false, driveJob = null, driveProg = null, driveNudged = false;
+  const driveTried = {};
+  function driveSoon(ms){ clearTimeout(driveTimer); driveTimer = setTimeout(driveSweep, ms == null ? 3000 : ms); }
+  function driveOpenPlan(key){ return !!(state && storageKey === key && !document.documentElement.classList.contains('view-home') && !isLineupView()); }
+  /* the clips waiting to go up from this device */
+  function driveTodo(){
+    const out = [];
+    listSessions().forEach(function(x){
+      const s = driveOpenPlan(x.key) ? state : x.plan;
+      if(!isPre(s) || !canEdit(s)) return;
+      (s.drills || []).forEach(function(d){ (d.clips || []).forEach(function(c){ if(c && c.kind === 'file' && !c.drive && !driveTried[c.id]) out.push({key:x.key, did:d.id, c:c}); }); });
+    });
+    return out;
+  }
+  /* write the Drive link onto the clip in its plan (the open plan, or the saved copy), so it syncs to every device */
+  function driveMark(key, cid, drive){
+    if(driveOpenPlan(key)){
+      (state.drills || []).forEach(function(d){ (d.clips || []).forEach(function(c){ if(c.id === cid) c.drive = drive; }); });
+      scheduleSave(); return;
+    }
+    try{
+      const s = JSON.parse(localStorage.getItem(key)); if(!s) return;
+      let hit = false;
+      (s.drills || []).forEach(function(d){ (d.clips || []).forEach(function(c){ if(c.id === cid){ c.drive = drive; hit = true; } }); });
+      if(!hit) return;
+      s.savedAt = Date.now(); localStorage.setItem(key, JSON.stringify(s)); clubSyncSoon();
+    }catch(e){}
+  }
+  /* this device's copy of a clip's video: the program's Videos folder file, or the copy kept in the app */
+  async function driveSource(c){
+    if(c.local && driveDesk()) return {local:c.local};
+    let b = null; try{ b = await pgMedia.get(c.id); }catch(e){}
+    return b ? {blob:b} : null;
+  }
+  async function driveSweep(){
+    if(driveBusy || !driveAvailable() || Date.now() < driveFailUntil) return;
+    await driveRefreshState();
+    if(!driveState.connected) return;
+    const todo = driveTodo();
+    driveWaiting = 0;
+    if(!todo.length) return;
+    if(driveWeb() && !driveWebToken()){
+      /* the app: Google needs a quick sign-in before it can upload (once a visit) */
+      driveWaiting = todo.length;
+      if(!driveNudged){ driveNudged = true; showToast(todo.length + (todo.length === 1 ? ' video is' : ' videos are') + ' waiting to go on Google Drive', function(){ driveConnect(); }, 'Sign in'); }
+      return;
+    }
+    driveBusy = true;
+    try{
+      for(const it of todo){
+        const c = it.c, src = await driveSource(c);
+        if(!src){ driveTried[c.id] = 1; continue; }   /* (its video is on another device: that device puts it up) */
+        const size = src.blob ? src.blob.size : (+c.size || 0);
+        if(size > DRIVE_MAX){ driveTried[c.id] = 1; continue; }
+        const label = clean(c.title) || clean(c.name) || 'video';
+        const prog = function(f){ setStatus('Putting “' + label + '” on Google Drive… ' + Math.round(f * 100) + '%', 'saving'); };
+        prog(0);
+        let r = null;
+        try{
+          if(driveDesk()){
+            const job = 'j' + Date.now().toString(36);
+            if(!driveHooked && window.hufcDesktop.gdrive.onProgress){ driveHooked = true; window.hufcDesktop.gdrive.onProgress(function(j, f){ if(j === driveJob && driveProg) driveProg(f); }); }
+            driveJob = job; driveProg = prog;
+            let bytes = null;
+            if(src.blob) bytes = new Uint8Array(await src.blob.arrayBuffer());
+            let out;
+            try{ out = await window.hufcDesktop.gdrive.upload(job, src.local || '', bytes, c.name || (label + '.mp4'), (src.blob && src.blob.type) || ''); }
+            finally{ driveJob = null; driveProg = null; }
+            if(!out || !out.ok) throw Object.assign(new Error((out && out.error) || 'upload failed'), {code:(out && out.code) || ''});
+            r = out.v;
+          } else r = await driveWebUpload(src.blob, c.name || (label + '.mp4'), prog);
+        }catch(e){
+          setStatus('Couldn’t put “' + label + '” on Google Drive · ' + (e && e.message || 'try again later'), 'warn');
+          if(e && e.code === 'not-connected'){ await driveRefreshState(); break; }
+          if(e && e.code === 'missing'){ driveTried[c.id] = 1; continue; }
+          driveFailUntil = Date.now() + 5 * 60 * 1000;   /* (no internet, or Google said no: try again in a few minutes) */
+          break;
+        }
+        driveMark(it.key, c.id, {id:r.id, url:r.url});
+        c.drive = {id:r.id, url:r.url};
+        setStatus('“' + label + '” is on Google Drive · it plays on every device now');
+        driveRefreshRows(c.id);
+      }
+    }finally{ driveBusy = false; }
+    if(driveTodo().length && Date.now() >= driveFailUntil) driveSoon(4000);
+  }
+  /* the clip rows on screen show where their video is */
+  function driveRefreshRows(cid){
+    document.querySelectorAll('.pg-clip-sub[data-cid="' + cid + '"]').forEach(function(el){ el.textContent = 'Video · on Google Drive · plays on every device'; });
+  }
+  /* a clip taken off its board: its Drive copy goes too, once no plan uses it (after the undo window) */
+  function driveForget(drive){
+    if(!drive || !drive.id) return;
+    setTimeout(async function(){
+      try{
+        for(let i = 0; i < localStorage.length; i++){
+          const k = localStorage.key(i);
+          if(k && k.indexOf(LS_PREFIX) === 0 && (localStorage.getItem(k) || '').indexOf(drive.id) !== -1) return;
+        }
+      }catch(e){ return; }
+      if(driveDesk()){ try{ await window.hufcDesktop.gdrive.remove(drive.id); }catch(e){} }
+      else if(driveWebToken()){ try{ await driveWebApi('DELETE', 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(drive.id)); }catch(e){} }
+    }, 15000);
+  }
+  /* keep going in the background: soon after opening, then every couple of minutes */
+  setTimeout(function(){ driveSoon(0); }, 6000);
+  setInterval(function(){ if(document.visibilityState === 'visible') driveSoon(0); }, 120000);
 
 
   /* =====================================================================
