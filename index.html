@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028183219">
+<meta name="hufc-build" content="20261028183854">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1785,7 +1785,7 @@ a.btn{text-decoration:none;}
   html.pill-scroll, html.pill-scroll *{scrollbar-width:none;}
   html.pill-scroll::-webkit-scrollbar, html.pill-scroll *::-webkit-scrollbar{display:none; width:0; height:0;}
 }
-.touch-pill{position:fixed; z-index:3500; width:5px; border-radius:999px; background:#ffd400; box-shadow:0 0 0 1.5px rgba(13,14,15,.55); opacity:0; transition:opacity .35s ease; pointer-events:none;}
+.touch-pill{position:fixed; top:0; left:0; will-change:transform, opacity; transform:translate3d(-20px,0,0); z-index:3500; width:5px; border-radius:999px; background:#ffd400; box-shadow:0 0 0 1.5px rgba(13,14,15,.55); opacity:0; transition:opacity .35s ease; pointer-events:none;}
 .touch-pill.on{opacity:1; transition:opacity .08s ease;}
 
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
@@ -3004,7 +3004,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:32pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:38pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -9132,6 +9132,18 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
             ['well','What went well','What worked — shape, pressing, moments to keep',4], ['improve','What to improve','What let us down, and why',4], ['next','Focus for training','What we work on this week',4]]
   };
   const LU_FIELD_BOX = {review:'luReview'}, LU_FIELD_OBJ = {review:'review'};
+  /* goals, assists and cards only for players in the game: on the pitch in some half, or coming on as a sub (returns whether any went) */
+  function luDropEvents(s){
+    const inGame = {};
+    (s.periods || []).forEach(function(pr){ (pr.slots || []).forEach(function(sl){ if(sl.pid) inGame[sl.pid] = 1; }); (pr.subs || []).forEach(function(x){ if(x.on) inGame[x.on] = 1; if(x.off) inGame[x.off] = 1; }); });
+    let gone = false;
+    (s.squad || []).forEach(function(p){
+      if(inGame[p.id] || !p.ev) return;
+      if(Object.keys(p.ev).some(function(k){ return +p.ev[k] > 0; })) gone = true;
+      delete p.ev;
+    });
+    return gone;
+  }
   function luNormalize(s){
     const base = luDefault(s && LU_FORMATS[s.format] ? s.format : '11');
     if(!s || typeof s !== 'object') return base;
@@ -9163,6 +9175,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       p.slots.forEach(function(sl, i){ if(was[i] && LU_WIDE[was[i].pos] && sl.x === was[i].x && sl.y === was[i].y){ sl.x = now[i].x; } });
     }); }
     s.v = 3;
+    if(!s.periods.some(function(p){ return p.slots.some(function(sl){ return sl.pid; }); })) s.squad.forEach(function(p){ delete p.ev; });
     /* kit names now with capital colours */
     s.meta.kit = String(s.meta.kit || '').replace(/^(Home kit|Away kit|3rd kit) – (yellow|grey|black)$/, function(m, a, b){ return a + ' – ' + b.charAt(0).toUpperCase() + b.slice(1); });
     /* the away kit is now black and the 3rd kit grey: a lineup saved with the old names keeps the same colour */
@@ -9583,12 +9596,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
               const before = luJSON();
               period.slots.forEach(function(sl){ sl.pid = null; });
               period.subs = [];
-              /* the whole lineup now empty: this game's goals, assists and cards go too, so no one is counted for a game that's been cleared */
+              /* goals, assists and cards go with the players taken off: anyone no longer on the pitch in any half (or coming on) loses them,
+                 and a lineup left empty has none at all — so no one is counted for what's been cleared */
               const empty = !lu.periods.some(function(pr){ return pr.slots.some(function(sl){ return sl.pid; }); });
-              let hadEv = false;
-              if(empty) lu.squad.forEach(function(p){ if(p.ev && Object.keys(p.ev).some(function(k){ return +p.ev[k] > 0; })) hadEv = true; delete p.ev; });
+              const hadEv = luDropEvents(lu);
               luRender(); luSchedule();
-              showToast('Cleared “' + (period.name || 'the pitch') + '” — back to the positions' + (empty ? ' · this game no longer counts in the stats' + (hadEv ? ' (its goals, assists and cards are cleared too)' : '') : ''), function(){ luApply(before); luCommit(); });
+              showToast('Cleared “' + (period.name || 'the pitch') + '” — back to the positions' + (empty ? ' · this game no longer counts in the stats' : '') + (hadEv ? ' · their goals, assists and cards are cleared too' : ''), function(){ luApply(before); luCommit(); });
             }}),
           idx > 0 ? h('button', {type:'button', class:'icon-btn', title:'Same team as finished the half before (subs included)', 'aria-label':'Copy the lineup from the half before', text:'⧉', onclick:function(){
             const prev = lu.periods[idx - 1], end = luTimeline(prev, idx - 1).slot;   /* the team as it finished that half, subs included */
@@ -13371,6 +13384,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.33', d:'28 Oct 2026', t:'Goals & assists go when cleared', n:['Clearing a half now takes away the goal, assist and card icons of every player no longer in the game — they no longer count in the stats', 'Lineups that were cleared before this update lose their leftover goals, assists and cards too', 'Undo puts them back']},
     {v:'3.32', d:'28 Oct 2026', t:'Cleared lineups leave the stats', n:['A lineup with nobody on the pitch (cleared, or not filled in yet) no longer counts in Game time & player stats', 'Clearing the last half of a lineup also clears that game’s goals, assists and cards (Undo puts them back)']},
     {v:'3.31', d:'28 Oct 2026', t:'Watch another coach’s animations', n:['A coach viewing another coach’s session can now play its animations and step through them (and play its video clips) — nothing can be changed', 'iPad and iPhone: the age-group buttons on the home page sit centred, with a shorter last row in the middle']},
     {v:'3.30', d:'28 Oct 2026', t:'3D pitch fix', n:['Fixed: green squares showing over the stands in the 3D stadium view with chequered grass (iPad and everywhere)', 'Clearer message on a match with no download link yet', 'Put on Drive only shows on the computer that has the video', 'iPhone and iPad: a yellow scroll pill while you scroll, like on the computer']},
@@ -13704,25 +13718,47 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     document.documentElement.classList.add('pill-scroll');
     const pill = document.createElement('div'); pill.className = 'touch-pill'; pill.setAttribute('aria-hidden', 'true');
     document.body.appendChild(pill);
-    let hideT = 0, raf = 0, last = null;
-    function draw(el){
-      const doc = el === document || el === document.documentElement || el === document.body || el === document.scrollingElement;
+    /* smooth: measure once when a scroll starts, then follow the scroll position every frame (not just on each
+       scroll event, which iPhone/iPad send unevenly), moving the pill with a GPU transform rather than top/left */
+    let hideT = 0, raf = 0, cur = null, g = null, lastTop = -1, still = 0;
+    function isDoc(el){ return el === document || el === document.documentElement || el === document.body || el === document.scrollingElement; }
+    function measure(el){
+      const doc = isDoc(el);
       const sh = doc ? document.documentElement.scrollHeight : el.scrollHeight;
       const ch = doc ? window.innerHeight : el.clientHeight;
-      const top = doc ? (window.scrollY || document.documentElement.scrollTop) : el.scrollTop;
-      if(sh <= ch + 2){ pill.classList.remove('on'); return; }
+      if(sh <= ch + 2) return null;
       const r = doc ? {top:0, right:window.innerWidth, height:window.innerHeight} : el.getBoundingClientRect();
       const box = doc ? window.innerHeight : r.height;
-      const th = Math.max(36, box * ch / sh), y = (box - th - 6) * Math.min(1, Math.max(0, top / (sh - ch))) + 3;
-      pill.style.height = th + 'px'; pill.style.top = (r.top + y) + 'px'; pill.style.left = (r.right - 8) + 'px';
-      pill.classList.add('on');
-      clearTimeout(hideT); hideT = setTimeout(function(){ pill.classList.remove('on'); }, 900);
+      const th = Math.max(36, box * ch / sh);
+      pill.style.height = Math.round(th) + 'px';
+      return {doc:doc, el:el, range:sh - ch, travel:box - th - 6, x:r.right - 8, y0:r.top + 3};
+    }
+    function topOf(){ return g.doc ? (window.scrollY || document.documentElement.scrollTop) : g.el.scrollTop; }
+    function frame(){
+      raf = 0;
+      if(!g) return;
+      const top = topOf();
+      if(top !== lastTop){
+        lastTop = top; still = 0;
+        const y = g.y0 + g.travel * Math.min(1, Math.max(0, top / g.range));
+        pill.style.transform = 'translate3d(' + g.x + 'px,' + y.toFixed(1) + 'px,0)';
+        pill.classList.add('on');
+        clearTimeout(hideT); hideT = setTimeout(function(){ pill.classList.remove('on'); }, 900);
+      } else still++;
+      if(still < 12) raf = requestAnimationFrame(frame); else g = null;   /* stopped moving: rest until the next scroll */
     }
     document.addEventListener('scroll', function(e){
-      last = e.target;
-      if(raf) return;
-      raf = requestAnimationFrame(function(){ raf = 0; try{ draw(last); }catch(x){} });
-    }, true);
+      const el = e.target;
+      if(!g || cur !== el){
+        cur = el;
+        try{ g = measure(el); }catch(x){ g = null; }
+        lastTop = -1;
+        if(!g){ pill.classList.remove('on'); return; }
+      }
+      still = 0;
+      if(!raf) raf = requestAnimationFrame(frame);
+    }, {capture:true, passive:true});
+    window.addEventListener('resize', function(){ g = null; });
   })();
 
   /* =====================================================================
