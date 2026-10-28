@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028181643">
+<meta name="hufc-build" content="20261028182219">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2022,16 +2022,18 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 .folder-chips .folder-sep{display:none;}
 .folder-chip{flex:1 1 0; min-width:0; display:flex; align-items:center; justify-content:center; gap:8px; padding:13px 10px; border-radius:12px; font-size:18px; letter-spacing:.06em; white-space:nowrap; border-width:1.5px;}
 .folder-chip:nth-child(1), .folder-chip:nth-child(2){flex:2 0 auto; padding-left:18px; padding-right:18px;}
-.folder-chip > span{display:inline-flex; align-items:center; gap:8px; min-width:0;}
+.folder-chip > span{display:inline-flex; align-items:center; justify-content:center; gap:8px; min-width:0; padding-left:.06em;}
+.folder-chip{-webkit-appearance:none; appearance:none; text-align:center;}
 .folder-chip .fc-sub{font-size:13px; padding:1px 8px;}
 .folder-chip.is-mine:not(.on){box-shadow:inset 0 0 0 1.5px var(--yellow);}
 .folder-side{justify-content:flex-end;}
 .folder-chip:hover, .folder-chip:focus-visible{background:var(--black); border-color:var(--black); color:var(--yellow) !important; box-shadow:none !important;}
 .folder-chip{transition:background .12s, color .12s, border-color .12s;}
 @media (max-width:760px){
-  .folder-chips{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px;}
-  .folder-chip:nth-child(1), .folder-chip:nth-child(2){grid-column:span 2;}
-  .folder-chip{font-size:16px; padding:12px 6px;}
+  /* two big buttons, then the age groups four to a row — a shorter last row sits in the middle */
+  .folder-chips{display:flex; flex-wrap:wrap; justify-content:center; gap:6px;}
+  .folder-chip{flex:0 0 calc(25% - 4.5px); font-size:16px; padding:12px 6px;}
+  .folder-chip:nth-child(1), .folder-chip:nth-child(2){flex:0 0 calc(50% - 3px);}
   .folder-side{justify-content:flex-start;}
 }
 .folder-note{margin:2px 0 18px; font-size:14px; color:var(--grey);}
@@ -2053,6 +2055,10 @@ body.read-only #delBtn{display:none !important;}
 .btn-del:hover, .btn-del:focus-visible{color:#c62828; border-color:#c62828;}
 body.read-only .sheet .board-tools, body.read-only .sheet .add-link, body.read-only .sheet .sheet-actions, body.read-only .sheet .hint,
 body.read-only .sheet .drill-actions, body.read-only .sheet .icon-btn, body.read-only .lu-sheet .no-print{display:none !important;}
+/* view only: typing boxes and drop-downs can't be opened; the animation can be played and stepped through, but not changed */
+body.read-only .sheet:not(.lu-sheet) :is(input, textarea, select, [contenteditable="true"]){pointer-events:none;}
+body.read-only .sheet .anim-bar :is(.anim-add, .text-btn, .anim-loop, .anim-speed){display:none !important;}
+body.read-only .sheet .anim-hint{display:none;}
 .group-box h3{margin:0 0 8px; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:22px; letter-spacing:.03em; text-transform:uppercase;}
 .group-box p{margin:0 0 16px; font-size:15px; line-height:1.45;}
 .group-choices{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px;}
@@ -2998,7 +3004,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:16pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:22pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -12502,11 +12508,27 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* ---------- view-only for other age groups' work ---------- */
   let readOnly = false;
   const roBar = document.getElementById('roBar');
+  /* what a coach who's only viewing may still press: play an animation and step through it, play a video clip */
+  const RO_OK = '.anim-play, .anim-chip:not(.anim-add), .pg-play, .pg-clip-player, .pg-vid, .pg-frame, .ro-ok';
+  function roGuard(el){
+    if(!el || el._roGuard) return; el._roGuard = true;
+    const block = function(e){
+      if(!readOnly || isLineupView()) return;
+      const t = e.target;
+      if(t && t.closest && t.closest(RO_OK)) return;
+      if(e.type === 'keydown' && (e.key === 'Tab' || e.key === 'Escape') ) return;
+      if(e.type === 'keydown' && !(t && t.closest && t.closest('input, textarea, select, [contenteditable]'))) return;   /* (scrolling with the keys) */
+      e.preventDefault(); e.stopPropagation();
+    };
+    ['pointerdown', 'mousedown', 'click', 'dblclick', 'keydown', 'beforeinput', 'input', 'paste', 'drop', 'dragstart', 'change', 'contextmenu'].forEach(function(ev){ el.addEventListener(ev, block, true); });
+  }
   function setReadOnly(ro, what, g){
     readOnly = !!ro;
     document.body.classList.toggle('read-only', readOnly);
     const sess = document.querySelector('.sheet:not(.lu-sheet)');
-    sess.inert = readOnly && !isLineupView();
+    /* view only: nothing on the session can be changed, but its animations and video clips still play (roGuard) */
+    sess.inert = false;
+    roGuard(sess);
     luSheet.inert = readOnly && isLineupView();
     roBar.hidden = !readOnly;
     if(readOnly){
@@ -13343,6 +13365,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.31', d:'28 Oct 2026', t:'Watch another coach’s animations', n:['A coach viewing another coach’s session can now play its animations and step through them (and play its video clips) — nothing can be changed', 'iPad and iPhone: the age-group buttons on the home page sit centred, with a shorter last row in the middle']},
     {v:'3.30', d:'28 Oct 2026', t:'3D pitch fix', n:['Fixed: green squares showing over the stands in the 3D stadium view with chequered grass (iPad and everywhere)', 'Clearer message on a match with no download link yet', 'Put on Drive only shows on the computer that has the video', 'iPhone and iPad: a yellow scroll pill while you scroll, like on the computer']},
     {v:'3.29', d:'28 Oct 2026', t:'Open video link', n:['A match video downloaded on the computer remembers the link it was downloaded from, by itself (Windows program 1.6.3)', 'On your phone, iPad — and for other coaches — the match shows a clear “🔗 Open video link” button that opens that exact file to download', 'You can still paste or change the link with 🔗 Video link on the computer', 'Open match videos looks like Open sessions and Open lineups (cards, search)', 'Fixed: “Delete this match video?” appeared behind the window']},
     {v:'3.28', d:'28 Oct 2026', t:'Match videos without using Drive space', n:['Full match videos no longer go to Google Drive unless you ask (Settings → Google Drive, or a match’s ☁ button) — clips on boards still do', 'Each match can say where to get its video (a Veo, OneDrive or Drive link): on a device without it, the match shows “Get the video” and the file name to open', 'A match that’s on Google Drive shows “⤓ Get the video” by itself — no link needed']},
