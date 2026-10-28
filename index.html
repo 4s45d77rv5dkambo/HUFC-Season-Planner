@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028184848">
+<meta name="hufc-build" content="20261028185939">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1662,6 +1662,19 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-dl-bar{height:100%; width:0; border-radius:999px; background:#ffd400; transition:width .4s linear;}
 .an-dl-txt{margin:8px 0 0; font-size:13.5px; line-height:1.4; text-align:center;}
 
+/* game start, half-time, 2nd half start, full time: tags for the match itself */
+.an-phase-row{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px; margin:0 0 10px;}
+.an-phase-btn{background:#0d0e0f !important; color:#fff !important; border-color:#0d0e0f !important; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:2px; line-height:1.15;}
+.an-phase-btn:hover{color:var(--yellow) !important;}
+.an-phase-btn.set{background:var(--yellow) !important; color:var(--black) !important; border-color:var(--yellow) !important;}
+.an-phase-at{font-size:12px; font-weight:600; opacity:.75; font-variant-numeric:tabular-nums;}
+@media (max-width:560px){ .an-phase-row{grid-template-columns:repeat(2, minmax(0,1fr));} }
+.an-row.an-row-phase{background:#0d0e0f; color:#fff; border-color:#0d0e0f;}
+.an-row.an-row-phase .an-row-main{color:#fff;}
+.an-row.an-row-phase .an-row-type{color:var(--yellow); font-family:'Barlow Condensed', sans-serif; font-weight:700; letter-spacing:.05em; text-transform:uppercase;}
+.an-row.an-row-phase .an-row-time{color:#c3c5c8;}
+.an-row.an-row-phase .icon-btn{color:#fff;}
+
 /* ---------- Settings ---------- */
 .home-hero{position:relative;}
 .home-set-btn{position:absolute; top:12px; right:12px; display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #3a3b3e; border-radius:999px;
@@ -1791,6 +1804,45 @@ a.btn{text-decoration:none;}
 }
 .touch-pill{position:fixed; top:0; left:0; will-change:transform, opacity; transform:translate3d(-20px,0,0); z-index:3500; width:5px; border-radius:999px; background:#ffd400; box-shadow:0 0 0 1.5px rgba(13,14,15,.55); opacity:0; transition:opacity .35s ease; pointer-events:none;}
 .touch-pill.on{opacity:1; transition:opacity .08s ease;}
+
+/* ---------- the sign-in page (first open, and after signing out) ---------- */
+html.wl-open, html.wl-open body{overflow:hidden;}
+.wl{position:fixed; inset:0; z-index:5000; overflow:auto; -webkit-overflow-scrolling:touch; display:flex; align-items:flex-start; justify-content:center;
+  padding:max(28px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+  background:radial-gradient(1200px 600px at 50% -10%, rgba(255,212,0,.18), transparent 60%), #0d0e0f; color:#fff; animation:wlIn .35s ease-out both;}
+.wl[hidden]{display:none;}
+.wl.wl-leaving{opacity:0; transition:opacity .25s ease-in;}
+@keyframes wlIn{from{opacity:0;} to{opacity:1;}}
+.wl-card{width:100%; max-width:420px; margin:auto 0; display:flex; flex-direction:column; align-items:center; text-align:center; padding:8px 0 4px;}
+.wl-crest{width:96px; height:auto; margin-bottom:12px; filter:drop-shadow(0 6px 18px rgba(0,0,0,.5));}
+.wl-club{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:15px; letter-spacing:.16em; text-transform:uppercase; color:var(--yellow);}
+.wl-title{margin:2px 0 8px; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:40px; line-height:1.05; letter-spacing:.02em; text-transform:uppercase;}
+.wl-sub{margin:0 0 20px; color:#c3c5c8; font-size:15.5px; line-height:1.45; max-width:380px;}
+.wl-tabs{display:flex; width:100%; padding:4px; gap:4px; border-radius:999px; background:rgba(255,255,255,.08); margin-bottom:18px;}
+.wl-tab{flex:1; border:none; border-radius:999px; padding:11px 10px; background:transparent; color:#c3c5c8; cursor:pointer;
+  font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:16px; letter-spacing:.06em; text-transform:uppercase;}
+.wl-tab.on{background:var(--yellow); color:var(--black);}
+.wl-form{width:100%; display:flex; flex-direction:column; gap:12px; text-align:left;}
+.wl-field{display:flex; flex-direction:column; gap:6px;}
+.wl-field[hidden]{display:none;}
+.wl-lbl{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:#9a9da1;}
+.wl-inbox{position:relative; display:flex;}
+.wl-field input{flex:1; min-width:0; box-sizing:border-box; font:inherit; font-size:17px; color:#fff; background:rgba(255,255,255,.07); border:1.5px solid rgba(255,255,255,.18); border-radius:12px; padding:13px 14px; outline:none;}
+.wl-field input::placeholder{color:#6f7377;}
+.wl-field input:focus{border-color:var(--yellow); background:rgba(255,255,255,.1);}
+.wl-field[data-f="pw"] input{padding-right:70px;}
+.wl-eye{position:absolute; right:6px; top:50%; transform:translateY(-50%); border:none; background:transparent; color:var(--yellow); cursor:pointer; padding:8px 10px;
+  font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px; letter-spacing:.06em; text-transform:uppercase;}
+.wl-msg{margin:0; min-height:1.3em; font-size:14.5px; color:#c3c5c8;}
+.wl-msg.warn{color:#ff8a80;}
+.wl-msg:empty{min-height:0;}
+.wl-go{width:100%; padding:14px 18px; font-size:18px; border-radius:12px; margin-top:2px;}
+.wl-link{border:none; background:transparent; color:#c3c5c8; cursor:pointer; font:inherit; font-size:14.5px; padding:10px; text-decoration:underline; text-underline-offset:3px;}
+.wl-link[hidden]{display:none;}
+.wl-forgot{align-self:center;}
+.wl-skip{margin-top:18px; color:#9a9da1;}
+.wl-link:hover{color:#fff;}
+@media (max-height:700px){ .wl-crest{width:70px; margin-bottom:8px;} .wl-title{font-size:32px;} .wl-sub{margin-bottom:14px;} }
 
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
@@ -1963,6 +2015,26 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 .pg-vid-seek:hover .pg-vid-knob, .pg-vid-seek.dragging .pg-vid-knob, .pg-vid-seek:focus-visible .pg-vid-knob{transform:scale(1.2);}
 .pg-vid-time{flex:none; font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:14px; letter-spacing:.03em; color:#fff; font-variant-numeric:tabular-nums;}
 .pg-clip-player .pg-vid{border-radius:8px;}
+/* the big view: the clip fills the screen, controls along the bottom, pinch to zoom */
+html.pg-vid-open, html.pg-vid-open body{overflow:hidden;}
+.pg-vid.pg-vid-max{position:fixed; inset:0; z-index:4000; border-radius:0 !important; display:flex; align-items:center; justify-content:center; background:#000;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
+.pg-vid.pg-vid-max video{width:100%; height:100%; max-height:none !important; object-fit:contain; touch-action:none; transform-origin:50% 50%; cursor:default; will-change:transform;}
+.pg-vid.pg-vid-max.zoomed video{cursor:grab;}
+.pg-vid.pg-vid-max .pg-vid-bar{padding:34px calc(16px + env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left)); gap:12px;}
+.pg-vid.pg-vid-max .pg-vid-btn{width:44px; height:44px;}
+.pg-vid.pg-vid-max .pg-vid-time{font-size:16px;}
+.pg-vid-x, .pg-vid-cap, .pg-vid-zchip{display:none;}
+.pg-vid-max .pg-vid-x{display:flex; align-items:center; justify-content:center; position:absolute; z-index:2; top:calc(12px + env(safe-area-inset-top)); right:calc(12px + env(safe-area-inset-right));
+  width:44px; height:44px; border:none; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; font-size:20px; line-height:1; cursor:pointer; box-shadow:0 0 0 1.5px rgba(255,255,255,.25);}
+.pg-vid-max .pg-vid-cap:not([hidden]){display:block; position:absolute; z-index:1; top:calc(12px + env(safe-area-inset-top)); left:calc(14px + env(safe-area-inset-left)); right:76px; line-height:1.2;
+  font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:21px; letter-spacing:.03em; text-transform:uppercase; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,.8);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none; opacity:0; transition:opacity .25s ease;}
+.pg-vid-max.paused .pg-vid-cap, .pg-vid-max.awake .pg-vid-cap{opacity:1;}
+.pg-vid-max .pg-vid-zchip:not([hidden]){display:block; position:absolute; z-index:2; top:calc(66px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); padding:7px 14px; border:none; border-radius:999px;
+  background:var(--yellow); color:var(--black); font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:15px; letter-spacing:.04em; line-height:1; cursor:pointer;}
+/* small clips: a pinch on them doesn't zoom the whole page */
+.pg-vid video{touch-action:pan-x pan-y;}
 .pg-clip-player .pg-vid video{max-height:380px;}
 
 /* a matchday lineup on a pre-game board (in place of the drawing) */
@@ -3008,7 +3080,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:48pm</p>
+  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 6:59pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -10991,7 +11063,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function anGetVideo(){
     if(!anM) return;
     const link = anGetLink(); if(!link) return;
-    if(anDl){ if(anDl.id === anM.id) showToast('Downloading ' + anDlPct() + ' · it opens here by itself when it’s done'); else showToast('Another match video is downloading · wait for it to finish'); return; }
+    if(anDl){ if(anDl.id === anM.id) showToast('Downloading ' + anDlPct() + ' · it opens here by itself when it’s done', anDlCancel, 'Cancel download'); else showToast('Another match video is downloading · wait for it to finish, or cancel it there', anDlCancel, 'Cancel it'); return; }
     const url = anFileLink(link);
     if(anDesk() || !url){ anOpenLinkOut(link); return; }
     if(anNoDl[url]){ anStreamLink(anKey, url, link); return; }
@@ -11058,7 +11130,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }catch(e){
       if(flush && d.got){ try{ await flush(false); }catch(x){} }   /* (what came so far stays, so it carries on from there) */
       anDl = null;
-      if(e && e.name === 'AbortError'){ anDlPart = d.got ? d : null; }
+      if(d.cancel){ anDlPart = null; try{ await anDlDrop(id); }catch(x){} if(anKey === key) showToast('Download cancelled'); }
+      else if(e && e.name === 'AbortError'){ anDlPart = d.got ? d : null; }
       else if(d.got > 0){ anDlPart = d; if(anKey === key) showToast('The download stopped at ' + anDlPct(d) + ' · tap Continue download to carry on', function(){ anGetVideo(); }, 'Continue'); }
       else{ anNoDl[url] = 1; if(anKey === key){ if(!(anVideo.dataset.for === key && anVideo.getAttribute('src') === url)) anStreamLink(key, url, link); showToast('Playing this match straight from its link (this site doesn’t let the planner keep a copy)'); } }   /* the site won't let the planner download it: play it straight from the link */
     }
@@ -11079,6 +11152,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     anRenderVideoState();
   }
   function anDlPause(){ if(anDl){ try{ anDl.stop.abort(); }catch(e){} } }
+  /* cancel: stop it and throw away what came so far */
+  function anDlCancel(){
+    if(anDl){ anDl.cancel = true; try{ anDl.stop.abort(); }catch(e){} return; }
+    const p = anDlPart; if(!p) return;
+    anDlPart = null;
+    anDlDrop(p.id).catch(function(){});
+    anRenderVideoState(); showToast('Download cancelled');
+  }
   /* play the match straight from its link (while it downloads, or when it can't be downloaded) */
   function anStreamLink(key, url, link){
     if(anKey !== key) return;
@@ -11363,10 +11444,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         acts.appendChild(h('div', {class:'an-dl'}, h('div', {class:'an-dl-track'}, h('div', {class:'an-dl-bar', id:'anDlBar'})), h('p', {class:'an-dl-txt', id:'anDlTxt'})));
         acts.appendChild(h('button', {type:'button', class:'btn btn-primary', text:'▶ Watch while it downloads', onclick:function(){ anStreamLink(anKey, anDl.url, anGetLink()); }}));
         acts.appendChild(h('button', {type:'button', class:'btn', text:'Pause download', onclick:anDlPause}));
+        acts.appendChild(h('button', {type:'button', class:'btn', text:'Cancel download', onclick:anDlCancel}));
         setTimeout(anDlPaint, 0);
       } else if(anM && anGetLink() && !has){
         const part = anDlPart && anDlPart.id === anM.id;
         acts.appendChild(h('button', {type:'button', class:'btn btn-primary an-get-go', text:part ? '⤓ Continue download (' + anDlPct(anDlPart) + ')' : '🔗 Open video link', onclick:anGetVideo}));
+        if(part) acts.appendChild(h('button', {type:'button', class:'btn', text:'Cancel download', onclick:anDlCancel}));
         if(anM.getPage && anM.getPage !== anGetLink()) acts.appendChild(h('a', {class:'btn an-get-go', href:anM.getPage, target:'_blank', rel:'noopener', text:'Open the page it came from'}));
       }
       if(anReopen) acts.appendChild(h('button', {type:'button', class:'btn btn-primary', text:'▶ Open ' + ((a.file && a.file.name) || 'the video'), onclick:anReopenFile}));
@@ -11393,14 +11476,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   document.getElementById('anFwd').addEventListener('click', function(){ anVideo.currentTime = anVideo.currentTime + 5; });
   document.getElementById('anSpeed').addEventListener('change', function(){ anVideo.playbackRate = parseFloat(this.value) || 1; });
   /* the halves: mark when each half starts and ends (tap a mark to jump there, ✕ to clear it) */
-  const AN_HALVES = [['ko', 'Kick-off', '1st half starts'], ['h1e', 'Half-time', '1st half ends'], ['h2', '2nd half', '2nd half starts'], ['h2e', 'Full time', '2nd half ends']];
+  const AN_HALVES = [['ko', 'Game start', '1st half starts'], ['h1e', 'Half-time', '1st half ends'], ['h2', '2nd half start', '2nd half starts'], ['h2e', 'Full time', '2nd half ends']];
   function anRenderHalves(){
     const box = document.getElementById('anHalves'); if(!box) return; box.innerHTML = '';
     const a = anData(), ed = anCanEdit();
     AN_HALVES.forEach(function(x){
       const k = x[0], v = a[k];
       if(v == null){
-        if(!ed) return;
+        if(!ed || document.querySelector('#anBtns .an-phase-row')) return;   /* (set from the match tags above) */
         box.appendChild(h('button', {type:'button', class:'btn btn-small an-half-set', title:'Mark where the ' + x[2].replace(/s$/, '') + ' — at the video’s time now', text:'＋ ' + x[1], onclick:function(){
           if(!anVideo.currentSrc){ showToast('Open the match video first'); return; }
           a[k] = Math.round(anVideo.currentTime); anSave(); anRenderAll();
@@ -11426,6 +11509,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const sideSeg = h('div', {class:'seg an-side'},
       h('button', {type:'button', class:anSide === 'us' ? 'active' : '', text:'Us', onclick:function(){ anSide = 'us'; anRenderButtons(); }}),
       h('button', {type:'button', class:anSide === 'them' ? 'active' : '', text:anOppShort(), onclick:function(){ anSide = 'them'; anRenderButtons(); }}));
+    /* the match itself: game start, half-time, 2nd half and full time are tags too (and set the match clock) */
+    const a0 = anData();
+    box.appendChild(h('div', {class:'an-phase-row'}, AN_PHASES.map(function(x){
+      const v = a0[x[0]];
+      return h('button', {type:'button', class:'an-tag-btn an-phase-btn' + (v != null ? ' set' : ''), title:v != null ? x[1] + ' is at ' + anClock(v) + ' — tap to move it to now' : 'Tag ' + x[1].toLowerCase() + ' at the video’s time now',
+        onclick:function(){ anSetPhase(x[0]); }}, x[1], v != null ? h('span', {class:'an-phase-at', text:anClock(v)}) : '');
+    })));
     box.appendChild(sideSeg);
     const grid = h('div', {class:'an-grid'});
     anTypes().forEach(function(t, i){
@@ -11434,6 +11524,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     });
     grid.appendChild(h('button', {type:'button', class:'an-tag-btn an-add', text:'+ New tag', onclick:anNewType}));
     box.appendChild(grid);
+  }
+  const AN_PHASES = [['ko', 'Game start'], ['h1e', 'Half-time'], ['h2', '2nd half start'], ['h2e', 'Full time']];
+  function anPhaseName(k){ const x = AN_PHASES.find(function(p){ return p[0] === k; }); return x ? x[1] : ''; }
+  function anSetPhase(k){
+    if(!anCanEdit()) return;
+    if(!anVideo.currentSrc){ showToast('Open the match video first, then tag as it plays'); return; }
+    const a = anData(), was = a[k];
+    a[k] = Math.round(anVideo.currentTime); anSave(); anRenderAll();
+    const b = document.getElementById('anFlash'); b.textContent = anPhaseName(k) + ' · ' + anClock(a[k]); b.classList.remove('on'); void b.offsetWidth; b.classList.add('on');
+    showToast(anPhaseName(k) + ' tagged at ' + anClock(a[k]) + (k === 'ko' && was == null ? ' · tags now show the match minute' : ''), function(){ a[k] = was == null ? null : was; anSave(); anRenderAll(); });
   }
   function anNewType(){
     const box = document.getElementById('anBtns');
@@ -11510,13 +11610,34 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function anRenderList(){
     anRenderFilters();
     const box = document.getElementById('anList'); box.innerHTML = '';
-    const list = anFiltered(), ed = anCanEdit();
+    const list = anFiltered(), ed = anCanEdit(), a = anData();
     document.getElementById('anCount').textContent = anData().tags.length ? list.length + ' of ' + anData().tags.length : '';
+    /* game start, half-time, 2nd half and full time sit in the list at their time (when not filtering by tag or player) */
+    const phases = (!anFilter.type && !anFilter.pid) ? AN_PHASES.filter(function(x){ return a[x[0]] != null; }).map(function(x){ return {phase:x[0], t:a[x[0]], type:x[1]}; }) : [];
+    if(phases.length){
+      const all = list.concat(phases).sort(function(x, y){ return x.t - y.t || (x.phase ? -1 : 1); });
+      all.forEach(function(t){ if(t.phase) box.appendChild(anPhaseRow(t, ed)); else box.appendChild(anTagRow(t, ed)); });
+      return;
+    }
     if(!list.length){
       box.appendChild(h('p', {class:'an-empty-list', text:anData().tags.length ? 'Nothing matches these filters.' : ed ? 'No tags yet. Play the video and tap a button whenever something happens — Goal, Chance, Turnover… Tap a tag here later to watch it again.' : 'No tags in this match yet.'}));
       return;
     }
-    list.forEach(function(t){
+    list.forEach(function(t){ box.appendChild(anTagRow(t, ed)); });
+  }
+  function anPhaseRow(p, ed){
+    const a = anData();
+    return h('div', {class:'an-row an-row-phase'},
+      h('button', {type:'button', class:'an-row-main', title:'Go to ' + p.type.toLowerCase(), onclick:function(){ anQueue = null; anSeek(p.t, false); }},
+        h('span', {class:'an-row-time', text:anClock(p.t)}),
+        h('span', {class:'an-row-type', text:p.type})),
+      ed ? h('button', {type:'button', class:'icon-btn danger', title:'Clear this tag', 'aria-label':'Clear ' + p.type, text:'✕', onclick:function(){
+        const v = a[p.phase]; a[p.phase] = null; anSave(); anRenderAll();
+        showToast(p.type + ' cleared', function(){ a[p.phase] = v; anSave(); anRenderAll(); });
+      }}) : '');
+  }
+  function anTagRow(t, ed){
+    {
       const row = h('div', {class:'an-row' + (t.side === 'them' ? ' them' : ''), 'data-id':t.id},
         h('button', {type:'button', class:'an-row-main', title:'Watch this moment', onclick:function(){ anQueue = null; anSeek(t.t - AN_LEAD, true); anMark(t.id); }},
           h('span', {class:'an-row-time', text:anMinute(t.t)}),
@@ -11529,8 +11650,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           a.tags.splice(i, 1); anSave(); anRenderList(); anRenderStats();
           showToast('Deleted “' + t.type + '” at ' + anMinute(t.t), function(){ a.tags.push(t); a.tags.sort(function(x, y){ return x.t - y.t; }); anSave(); anRenderList(); anRenderStats(); });
         }}) : '');
-      box.appendChild(row);
-    });
+      return row;
+    }
   }
   function anWhoSelect(t){
     const s = h('select', {class:'an-row-pid', 'aria-label':'Player', onchange:function(){ t.pid = this.value; anSave(); anRenderStats(); anRenderFilters(); }},
@@ -12746,6 +12867,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const groupModal = document.getElementById('groupModal');
   let groupPick = [];
   function askGroup(){
+    if(welcomeShown()){ welcomeAfter.push(askGroup); return; }   /* (after signing in — an account may already know the age groups) */
     groupPick = localGroups().slice();
     const box = document.getElementById('groupChoices'); box.innerHTML = '';
     const done = document.getElementById('groupDone');
@@ -13078,7 +13200,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const cloudModal = document.getElementById('cloudModal');
   function cloudMsg(t, warn){ const m = document.getElementById('cloudMsg'); m.textContent = t || ''; m.classList.toggle('warn', !!warn); }
   function cloudOpen(){
-    if(!CLOUD || !cloudModal) return;
+    if(!CLOUD) return;
+    if(welcomeOpen('in', true)) return;
+    if(!cloudModal) return;
     cloudMsg('');
     openModal(cloudModal);
     setTimeout(function(){ try{ document.getElementById('cloudEmail').focus(); }catch(e){} }, 60);
@@ -13109,6 +13233,121 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(!em){ cloudMsg('Type your email first, then tap Forgot password', true); return; }
       const e = await CLOUD.reset(em);
       cloudMsg(e || 'Check your email for a link to set a new password', !!e);
+    });
+  }
+
+  /* ---------- the sign-in page: the first time the planner opens (and after signing out), sign in or make an account ----------
+     The planner remembers who signed in on this device (until they sign out), so it only asks once.
+     "Use without an account" keeps everything on this device; Sign in to sync is still on the home page. */
+  const WELCOME_SKIP = 'hufc-welcome-skip', LAST_EMAIL = 'hufc-last-email';
+  let welcomeEl = null, welcomeMode = 'in', welcomeAfter = [], welcomeManual = false;
+  function welcomeShown(){ return !!(welcomeEl && !welcomeEl.hidden); }
+  function welcomeLS(k, v){ try{ if(v === undefined) return localStorage.getItem(k); if(v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){} return null; }
+  function welcomeBuild(){
+    const crest = (document.querySelector('img.crest') || {}).src || '';
+    const f = function(id, label, type, ac, extra){
+      return h('label', {class:'wl-field', 'data-f':id}, h('span', {class:'wl-lbl', text:label}),
+        h('span', {class:'wl-inbox'}, h('input', Object.assign({type:type, id:'wl-' + id, autocomplete:ac, spellcheck:'false', autocapitalize:type === 'email' || type === 'password' ? 'off' : 'words'}, extra || {}))));
+    };
+    const eye = h('button', {type:'button', class:'wl-eye', 'aria-label':'Show password', title:'Show password', text:'Show', onclick:function(){
+      const p = document.getElementById('wl-pw'), on = p.type === 'password'; p.type = on ? 'text' : 'password'; eye.textContent = on ? 'Hide' : 'Show'; eye.setAttribute('aria-label', on ? 'Hide password' : 'Show password');
+    }});
+    const form = h('form', {class:'wl-form', novalidate:true},
+      f('name', 'Your name', 'text', 'name', {maxlength:'60', placeholder:'e.g. David Ambelidis'}),
+      f('email', 'Email', 'email', 'username', {inputmode:'email', placeholder:'you@email.com'}),
+      f('pw', 'Password', 'password', 'current-password', {placeholder:'At least 6 characters'}),
+      h('p', {class:'wl-msg', id:'wl-msg', role:'status'}),
+      h('button', {type:'submit', class:'btn btn-primary wl-go', id:'wl-go'}),
+      h('button', {type:'button', class:'wl-link wl-forgot', id:'wl-forgot', text:'Forgot your password?', onclick:welcomeForgot}));
+    form.querySelector('[data-f="pw"] .wl-inbox').appendChild(eye);
+    form.addEventListener('submit', function(e){ e.preventDefault(); welcomeGo(); });
+    const tab = function(m, t){ return h('button', {type:'button', class:'wl-tab', 'data-m':m, role:'tab', text:t, onclick:function(){ welcomeSet(m); }}); };
+    welcomeEl = h('div', {class:'wl', id:'welcome', role:'dialog', 'aria-modal':'true', 'aria-labelledby':'wl-title', hidden:true},
+      h('div', {class:'wl-card'},
+        crest ? h('img', {class:'wl-crest', alt:'Heidelberg United', src:crest}) : '',
+        h('div', {class:'wl-club', text:'Heidelberg United FC'}),
+        h('h1', {class:'wl-title', id:'wl-title', text:'Session Planner'}),
+        h('p', {class:'wl-sub', id:'wl-sub'}),
+        h('div', {class:'wl-tabs', role:'tablist'}, tab('in', 'Sign in'), tab('up', 'Create account')),
+        form,
+        h('button', {type:'button', class:'wl-link wl-skip', id:'wl-skip', onclick:welcomeSkip})));
+    document.body.appendChild(welcomeEl);
+    welcomeEl.addEventListener('keydown', function(e){ e.stopPropagation(); if(e.key === 'Escape' && welcomeManual){ e.preventDefault(); welcomeClose(); } });
+  }
+  function welcomeSet(m){
+    welcomeMode = m;
+    welcomeEl.querySelectorAll('.wl-tab').forEach(function(t){ const on = t.dataset.m === m; t.classList.toggle('on', on); t.setAttribute('aria-selected', String(on)); });
+    welcomeEl.querySelector('[data-f="name"]').hidden = m !== 'up';
+    document.getElementById('wl-pw').setAttribute('autocomplete', m === 'up' ? 'new-password' : 'current-password');
+    document.getElementById('wl-go').textContent = m === 'up' ? 'Create my account' : 'Sign in';
+    document.getElementById('wl-forgot').hidden = m === 'up';
+    const back = welcomeLS(LAST_EMAIL);
+    document.getElementById('wl-sub').textContent = m === 'up'
+      ? 'New here? Make your account — then your sessions, lineups, pre-games and match videos are on your computer, iPhone and iPad, and the club admin can add you to your teams.'
+      : back ? 'Welcome back. Sign in to carry on with your sessions, lineups, pre-games and match videos — on any device.' : 'Sign in with your HUFC account to see your sessions, lineups, pre-games and match videos on every device.';
+    welcomeMsg('');
+  }
+  function welcomeMsg(t, warn){ const m = document.getElementById('wl-msg'); if(!m) return; m.textContent = t || ''; m.classList.toggle('warn', !!warn); }
+  /* opens the page (manual: from "Sign in to sync" — it can be closed again) · false if there's nothing to sign in to */
+  function welcomeOpen(mode, manual){
+    if(!CLOUD) return false;
+    if(!welcomeEl) welcomeBuild();
+    welcomeManual = !!manual;
+    const back = welcomeLS(LAST_EMAIL) || '';
+    welcomeSet(mode || (back ? 'in' : 'up'));
+    const em = document.getElementById('wl-email'); if(!em.value) em.value = back;
+    document.getElementById('wl-skip').textContent = manual ? 'Not now' : 'Use without an account (only on this device)';
+    welcomeEl.hidden = false; welcomeEl.classList.remove('wl-leaving');
+    document.documentElement.classList.add('wl-open');
+    if(!pgTouchish()) setTimeout(function(){ try{ (em.value ? document.getElementById('wl-pw') : (welcomeMode === 'up' ? document.getElementById('wl-name') : em)).focus(); }catch(e){} }, 80);
+    return true;
+  }
+  function pgTouchish(){ return !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches); }
+  function welcomeClose(){
+    if(!welcomeShown()) return;
+    welcomeEl.classList.add('wl-leaving');
+    document.documentElement.classList.remove('wl-open');
+    setTimeout(function(){ welcomeEl.hidden = true; welcomeEl.classList.remove('wl-leaving'); document.getElementById('wl-pw').value = ''; }, 260);
+    const fns = welcomeAfter; welcomeAfter = [];
+    setTimeout(function(){ fns.forEach(function(fn){ try{ fn(); }catch(e){} }); }, 700);
+  }
+  function welcomeSkip(){
+    if(!welcomeManual) welcomeLS(WELCOME_SKIP, '1');
+    welcomeClose();
+    if(!welcomeManual) showToast('Your work is kept on this device · tap Sign in to sync on the home page any time to use your other devices');
+  }
+  async function welcomeGo(){
+    const up = welcomeMode === 'up';
+    const nm = (document.getElementById('wl-name').value || '').trim(), em = (document.getElementById('wl-email').value || '').trim(), pw = document.getElementById('wl-pw').value;
+    if(up && !nm){ welcomeMsg('Type your name so the club admin knows who you are', true); document.getElementById('wl-name').focus(); return; }
+    if(!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){ welcomeMsg('Type your email address', true); document.getElementById('wl-email').focus(); return; }
+    if(!pw){ welcomeMsg('Type your password', true); document.getElementById('wl-pw').focus(); return; }
+    if(up && pw.length < 6){ welcomeMsg('Use a password of at least 6 characters', true); document.getElementById('wl-pw').focus(); return; }
+    const btns = welcomeEl.querySelectorAll('button'); btns.forEach(function(b){ b.disabled = true; });
+    welcomeMsg(up ? 'Making your account…' : 'Signing in…');
+    const e = up ? await CLOUD.signUp(em, pw, nm) : await CLOUD.signIn(em, pw);
+    btns.forEach(function(b){ b.disabled = false; });
+    if(e){ welcomeMsg(e, true); return; }
+    welcomeLS(LAST_EMAIL, em); welcomeLS(WELCOME_SKIP, null);
+    if(!up && nm){ setTimeout(function(){ if(!CLOUD.name()) CLOUD.setName(nm).catch(function(){}); }, 1500); }
+    welcomeClose();
+    setTimeout(function(){
+      const who = (CLOUD.name && CLOUD.name()) || nm || em;
+      showToast(up ? 'Welcome, ' + who + ' · your account is made and the planner will remember you on this device' : 'Signed in as ' + who + ' · the planner will remember you on this device');
+    }, 300);
+  }
+  async function welcomeForgot(){
+    const em = (document.getElementById('wl-email').value || '').trim();
+    if(!em){ welcomeMsg('Type your email first, then tap Forgot your password', true); document.getElementById('wl-email').focus(); return; }
+    const e = await CLOUD.reset(em);
+    welcomeMsg(e || 'Check your email for a link to set a new password', !!e);
+  }
+  /* the first time (or after signing out): no one signed in on this device → the sign-in page */
+  if(CLOUD){
+    CLOUD.onAuth(function(u){
+      if(u){ if(u.email) welcomeLS(LAST_EMAIL, u.email); if(welcomeShown()) welcomeClose(); return; }
+      if(!storageOK || welcomeLS(WELCOME_SKIP)) return;
+      welcomeOpen();
     });
   }
   /* the admin's list of coaches: approve new ones, or take a coach out of the club library */
@@ -13256,6 +13495,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   async function cloudSignOut(){
     try{ await clubSyncNow(); }catch(e){}
+    try{ localStorage.removeItem(WELCOME_SKIP); }catch(e){}   /* signed out: the sign-in page greets the next person who opens the planner */
     await CLOUD.signOut();
     showToast('Signed out · your plans stay on this device');
   }
@@ -13546,6 +13786,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.35', d:'28 Oct 2026', t:'Sign-in page, clip viewer, match tags', n:['A proper sign-in page the first time the planner opens (sign in or create an account) — it remembers who signed in on that device until they sign out', 'Pre-game clips on iPhone and iPad: the full-screen button opens the clip filling the screen (any way up), pinch or double-tap to zoom in, drag to look around', 'Cancel a match video download (and throw away what came so far) on any device', 'Game start, Half-time, 2nd half start and Full time are now tag buttons in a match video, and show in the list of tags at their time']},
     {v:'3.34', d:'28 Oct 2026', t:'Match videos download into the app', n:['On iPhone, iPad and in the browser, Open video link downloads the match video into the planner itself, with a progress bar — and it opens by itself the moment it’s finished, with every tag and clip', 'Watch while it downloads, pause it, and carry on later from where it stopped', 'It’s kept on the device, so it just opens next time', 'A site that won’t let the planner keep a copy plays straight from the link instead; a link to a web page opens in the browser, and coming back offers to open the file', 'The yellow scroll pill on iPhone and iPad now glides smoothly']},
     {v:'3.33', d:'28 Oct 2026', t:'Goals & assists go when cleared', n:['Clearing a half now takes away the goal, assist and card icons of every player no longer in the game — they no longer count in the stats', 'Lineups that were cleared before this update lose their leftover goals, assists and cards too', 'Undo puts them back']},
     {v:'3.32', d:'28 Oct 2026', t:'Cleared lineups leave the stats', n:['A lineup with nobody on the pitch (cleared, or not filled in yet) no longer counts in Game time & player stats', 'Clearing the last half of a lineup also clears that game’s goals, assists and cards (Undo puts them back)']},
@@ -14467,7 +14708,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     box.innerHTML = '';
     if(c.kind === 'asset'){
       if(!pgOnline()){ box.appendChild(h('div', {class:'pg-clip-missing', text:'This clip was uploaded to the online planner — it plays there (on your phone or in the online app), or add the video here with + Upload video.'})); return; }
-      box.appendChild(pgVideo('/_blob/' + c.asset));
+      box.appendChild(pgVideo('/_blob/' + c.asset, clean(c.title)));
       return;
     }
     if(c.kind === 'link'){
@@ -14482,7 +14723,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         box.appendChild(h('div', {class:'pg-frame'}, h('iframe', {src:e.src, title:clean(c.title) || 'Video clip', allow:'autoplay; encrypted-media; picture-in-picture; fullscreen', allowfullscreen:'', referrerpolicy:'strict-origin-when-cross-origin', loading:'lazy'})));
         return;
       }
-      if(e && e.kind === 'video'){ box.appendChild(pgVideo(e.src)); return; }
+      if(e && e.kind === 'video'){ box.appendChild(pgVideo(e.src, clean(c.title))); return; }
       const veo = pgSource(c.url) === 'Veo';
       box.appendChild(h('div', {class:'pg-clip-missing'},
         veo ? 'Veo links open on Veo’s own site, so they can’t play inside this app. Download the clip from Veo and add it here with + Upload video, and it plays right here.'
@@ -14494,7 +14735,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       /* not on this device: its copy on Google Drive (put there by the device that added it) */
       if(!url && c.drive && c.drive.url){ const e = pgEmbed(c.drive.url); if(e && e.kind === 'frame'){ box.appendChild(h('div', {class:'pg-frame'}, h('iframe', {src:e.src, title:clean(c.title) || 'Video clip', allow:'autoplay; encrypted-media; picture-in-picture; fullscreen', allowfullscreen:'', referrerpolicy:'strict-origin-when-cross-origin', loading:'lazy'}))); return; } }
       if(!url){ box.appendChild(pgClipHere(c, box, big)); return; }
-      box.appendChild(pgVideo(url));
+      box.appendChild(pgVideo(url, clean(c.title)));
     });
   }
   /* a clip whose video is on another device: pick the same video from this device (e.g. saved to the phone from WhatsApp, email or OneDrive)
@@ -14525,7 +14766,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     mute:'<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
     full:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>'
   };
-  function pgVideo(src){
+  function pgVideo(src, title){
     const v = h('video', {src:src, playsinline:true, preload:'metadata'});
     const fmt = function(t){ t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
     const play = h('button', {type:'button', class:'pg-vid-btn pg-vid-play', 'aria-label':'Play', html:PG_VID_ICON.play});
@@ -14550,12 +14791,18 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     ['play', 'playing'].forEach(function(ev){ v.addEventListener(ev, run); });
     ['play', 'pause', 'ended'].forEach(function(ev){ v.addEventListener(ev, function(){ state(); wake(); }); });
     v.addEventListener('volumechange', function(){ snd.innerHTML = v.muted ? PG_VID_ICON.mute : PG_VID_ICON.sound; snd.setAttribute('aria-label', v.muted ? 'Sound on' : 'Sound off'); });
-    v.addEventListener('click', toggle);
+    v.addEventListener('click', function(){ if(wrap._noClick){ wrap._noClick = false; return; } if(wrap.classList.contains('pg-vid-max')) return; toggle(); });
     play.addEventListener('click', toggle);
     snd.addEventListener('click', function(){ v.muted = !v.muted; });
     full.addEventListener('click', function(){
-      try{ if(document.fullscreenElement === wrap) document.exitFullscreen(); else if(wrap.requestFullscreen) wrap.requestFullscreen().catch(function(){}); }catch(e){}
+      if(wrap.classList.contains('pg-vid-max')){ pgVidViewer(wrap, false); return; }
+      if(pgTouch() || !wrap.requestFullscreen){ pgVidViewer(wrap, true); wake(); return; }
+      try{ if(document.fullscreenElement === wrap) document.exitFullscreen(); else wrap.requestFullscreen().catch(function(){ pgVidViewer(wrap, true); }); }catch(e){ pgVidViewer(wrap, true); }
     });
+    wrap._title = title || '';
+    wrap._wake = wake;
+    wrap._toggle = toggle;
+    pgVidZoomable(wrap, v);
     wrap.addEventListener('pointermove', wake);
     /* drag along the bar, or tap it, to move through the clip */
     const at = function(e){ const r = seek.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); };
@@ -14572,6 +14819,135 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       e.preventDefault(); e.stopPropagation(); if(v.duration) v.currentTime = Math.max(0, Math.min(v.duration, v.currentTime + (e.key === 'ArrowRight' ? 5 : -5)));
     });
     return wrap;
+  }
+  function pgTouch(){ return !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches) && !window.hufcDesktop; }
+  /* ---------- watching a clip big: the clip fills the screen (any way up), pinch or double-tap to zoom in, drag to look around ----------
+     (iPhones only let their own player go full screen, so on iPhone and iPad the planner does it itself, keeping its own controls) */
+  let pgVidOpen = null;
+  function pgVidViewer(wrap, on){
+    const v = wrap.querySelector('video');
+    if(on){
+      if(pgVidOpen && pgVidOpen !== wrap) pgVidViewer(pgVidOpen, false);
+      if(wrap.classList.contains('pg-vid-max')) return;
+      const ph = document.createElement('div'); ph.className = 'pg-vid-ph'; ph.style.height = wrap.offsetHeight + 'px';
+      wrap.parentNode.replaceChild(ph, wrap); wrap._ph = ph;
+      document.body.appendChild(wrap);
+      wrap.classList.add('pg-vid-max'); document.documentElement.classList.add('pg-vid-open');
+      if(!wrap._x){
+        wrap._x = h('button', {type:'button', class:'pg-vid-x', 'aria-label':'Close', title:'Close (Esc)', text:'✕', onclick:function(e){ e.stopPropagation(); pgVidViewer(wrap, false); }});
+        wrap._cap = h('div', {class:'pg-vid-cap'});
+        wrap._zchip = h('button', {type:'button', class:'pg-vid-zchip', hidden:true, onclick:function(e){ e.stopPropagation(); wrap._zoomReset(true); }});
+        wrap.appendChild(wrap._cap); wrap.appendChild(wrap._x); wrap.appendChild(wrap._zchip);
+      }
+      wrap._cap.textContent = wrap._title || ''; wrap._cap.hidden = !wrap._title;
+      wrap._fit();
+      pgVidOpen = wrap;
+      if(v && v.paused){ const p = v.play(); if(p && p.catch) p.catch(function(){}); }
+    } else {
+      if(!wrap.classList.contains('pg-vid-max')) return;
+      wrap._zoomReset(false);
+      wrap.classList.remove('pg-vid-max'); document.documentElement.classList.remove('pg-vid-open'); wrap._fit();
+      const ph = wrap._ph; wrap._ph = null;
+      if(ph && ph.parentNode) ph.parentNode.replaceChild(wrap, ph); else { try{ v.pause(); }catch(e){} wrap.remove(); }
+      if(pgVidOpen === wrap) pgVidOpen = null;
+    }
+  }
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && pgVidOpen){ e.preventDefault(); e.stopPropagation(); pgVidViewer(pgVidOpen, false); } }, true);
+  /* pinch / double-tap zoom and drag-around, on the big view (two fingers on a small clip open the big view) */
+  function pgVidZoomable(wrap, v){
+    let z = 1, tx = 0, ty = 0, anim = false;
+    const pts = new Map();
+    let g = null, tapAt = 0, tapT = 0, tapX = 0, tapY = 0;
+    const box = function(){ return v.getBoundingClientRect(); };
+    const clamp = function(){
+      const W = v.clientWidth, H = v.clientHeight, mx = (z - 1) * W / 2, my = (z - 1) * H / 2;
+      tx = Math.max(-mx, Math.min(mx, tx)); ty = Math.max(-my, Math.min(my, ty));
+    };
+    const paint = function(){
+      v.style.transition = anim ? 'transform .22s ease' : 'none';
+      v.style.transform = z > 1.001 ? 'translate(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px) scale(' + z.toFixed(3) + ')' : '';
+      if(wrap._zchip){ wrap._zchip.hidden = !(z > 1.02); wrap._zchip.textContent = (Math.round(z * 10) / 10) + '× · Reset'; }
+      wrap.classList.toggle('zoomed', z > 1.02);
+    };
+    /* zoom to k keeping the point (px, py) — relative to the video's centre — where it is */
+    const zoomAt = function(k, px, py){
+      k = Math.max(1, Math.min(5, k));
+      const cx = (px - tx) / z, cy = (py - ty) / z;
+      z = k; tx = px - cx * z; ty = py - cy * z; clamp(); paint();
+    };
+    /* the video sized to the picture itself (not the whole screen), so zooming and dragging stay on the picture */
+    const fit = function(){
+      if(!wrap.classList.contains('pg-vid-max')){ v.style.width = ''; v.style.height = ''; return; }
+      const W = wrap.clientWidth, H = wrap.clientHeight, vw = v.videoWidth || 16, vh = v.videoHeight || 9, k = Math.min(W / vw, H / vh);
+      v.style.width = Math.floor(vw * k) + 'px'; v.style.height = Math.floor(vh * k) + 'px';
+    };
+    wrap._fit = fit;
+    v.addEventListener('loadedmetadata', fit);
+    wrap._zoomReset = function(smooth){ anim = !!smooth; z = 1; tx = 0; ty = 0; paint(); anim = false; };
+    const rel = function(x, y){ const r = box(); return [x - (r.left + r.width / 2) + 0 , y - (r.top + r.height / 2)]; };
+    v.addEventListener('pointerdown', function(e){
+      if(!wrap.classList.contains('pg-vid-max')) return;
+      e.preventDefault();
+      try{ v.setPointerCapture(e.pointerId); }catch(x){}
+      pts.set(e.pointerId, [e.clientX, e.clientY]);
+      anim = false;
+      if(pts.size === 2){
+        const a = [...pts.values()], d = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) || 1;
+        g = {pinch:true, d0:d, z0:z, m0:[(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2], tx0:tx, ty0:ty, moved:true};
+      } else if(pts.size === 1){
+        g = {pinch:false, x0:e.clientX, y0:e.clientY, tx0:tx, ty0:ty, moved:false};
+      }
+    });
+    v.addEventListener('pointermove', function(e){
+      if(!pts.has(e.pointerId) || !g) return;
+      pts.set(e.pointerId, [e.clientX, e.clientY]);
+      if(g.pinch && pts.size >= 2){
+        const a = [...pts.values()], d = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) || 1, m = [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2];
+        /* zoom about where the fingers started, and follow the fingers as they move */
+        z = g.z0; tx = g.tx0; ty = g.ty0;
+        const p0 = rel(g.m0[0], g.m0[1]);
+        zoomAt(g.z0 * d / g.d0, p0[0], p0[1]);
+        tx += m[0] - g.m0[0]; ty += m[1] - g.m0[1]; clamp(); paint();
+      } else if(!g.pinch){
+        const dx = e.clientX - g.x0, dy = e.clientY - g.y0;
+        if(Math.abs(dx) + Math.abs(dy) > 8) g.moved = true;
+        if(g.moved && z > 1){ tx = g.tx0 + dx; ty = g.ty0 + dy; clamp(); paint(); }
+      }
+      wrap._wake && wrap._wake();
+    });
+    const end = function(e){
+      if(!pts.has(e.pointerId)) return;
+      pts.delete(e.pointerId);
+      if(pts.size === 1 && g && g.pinch){ const a = [...pts.values()][0]; g = {pinch:false, x0:a[0], y0:a[1], tx0:tx, ty0:ty, moved:true}; return; }
+      if(pts.size) return;
+      const was = g; g = null;
+      if(z < 1.05){ anim = true; z = 1; tx = 0; ty = 0; paint(); anim = false; }
+      if(!was || was.moved || e.type === 'pointercancel') return;
+      /* a tap: play / pause — or two quick taps: zoom in there (or back out) */
+      const now = Date.now();
+      if(now - tapAt < 300 && Math.abs(e.clientX - tapX) < 30 && Math.abs(e.clientY - tapY) < 30){
+        clearTimeout(tapT); tapAt = 0;
+        anim = true;
+        if(z > 1.05){ z = 1; tx = 0; ty = 0; paint(); } else { const p = rel(e.clientX, e.clientY); zoomAt(2.5, p[0], p[1]); }
+        anim = false;
+        return;
+      }
+      tapAt = now; tapX = e.clientX; tapY = e.clientY;
+      clearTimeout(tapT); tapT = setTimeout(function(){ tapAt = 0; wrap._toggle && wrap._toggle(); }, 260);
+    };
+    v.addEventListener('pointerup', end); v.addEventListener('pointercancel', end);
+    /* computer: the mouse wheel zooms the big view */
+    v.addEventListener('wheel', function(e){
+      if(!wrap.classList.contains('pg-vid-max')) return;
+      e.preventDefault();
+      const p = rel(e.clientX, e.clientY); zoomAt(z * Math.exp(-e.deltaY * 0.0022), p[0], p[1]);
+    }, {passive:false});
+    /* a small clip: two fingers on it open the big view (rather than zooming the whole page) */
+    v.addEventListener('touchstart', function(e){
+      if(wrap.classList.contains('pg-vid-max') || e.touches.length < 2) return;
+      e.preventDefault(); pgVidViewer(wrap, true);
+    }, {passive:false});
+    window.addEventListener('resize', function(){ if(!wrap.classList.contains('pg-vid-max')) return; fit(); if(z > 1){ clamp(); paint(); } });
   }
   /* a shared clip is deleted from the planner's store once no plan uses it (after the undo window) */
   function pgForgetAsset(aid){
