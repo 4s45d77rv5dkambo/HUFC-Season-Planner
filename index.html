@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261029162856">
+<meta name="hufc-build" content="20261029163911">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3132,7 +3132,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 29 Oct 2026, 4:28pm</p>
+  <p class="home-version">HUFC Session Planner · updated 29 Oct 2026, 4:39pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11061,6 +11061,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(document.documentElement.classList.contains('view-home')) renderHome();
     else if(typeof isPre === 'function' && isPre()) { try{ pgRenderMatchCell(); }catch(e){} }
   }
+  /* a match video worth showing: it has a video, tags, clips, a name, teams, a link, or is attached to a lineup or pre-game (an empty one opened and left isn't) */
+  function mvIsReal(m){ return !!(m && (mvHasWork(m) || m.luId || m.pgId || clean(m.title) || clean(m.them) || clean(m.getLink))); }
   function mvHasWork(m){ const a = m.analysis || {}; return !!((a.file && a.file.name) || (a.tags && a.tags.length) || (a.clips && a.clips.length)); }
   /* the top of the window: its name, and the lineup it's attached to */
   function anRenderHead(){
@@ -11898,7 +11900,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* the Open match videos window: every match video, searchable — like Open sessions and Open lineups */
   function anPickRender(){
     const grid = document.getElementById('anPickList'); grid.innerHTML = '';
-    const all = mvList().filter(function(x){ return mvHasWork(x.m) || x.m.luId || x.m.pgId || clean(x.m.title); })
+    const all = mvList().filter(function(x){ return mvIsReal(x.m); })
       .sort(function(a, b){ return (b.m.savedAt || 0) - (a.m.savedAt || 0); });
     const q = clean(document.getElementById('anPickSearch').value).toLowerCase();
     const list = all.filter(function(x){ return !q || (mvTitle(x.m) + ' ' + ((x.m.analysis || {}).file || {}).name + ' ' + groupOf(x.m)).toLowerCase().indexOf(q) !== -1; });
@@ -11941,7 +11943,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function renderMatchCards(){
     const box = document.getElementById('homeMatches'); if(!box) return;
-    const all = mvList().filter(function(x){ return inView(x.m) && (mvHasWork(x.m) || x.m.luId || x.m.pgId || clean(x.m.title)); });
+    const all = mvList().filter(function(x){ return inView(x.m) && mvIsReal(x.m); });
     document.getElementById('matchesCount').textContent = all.length ? all.length + (all.length === 1 ? ' match' : ' matches') : '';
     const q = clean(document.getElementById('matchSearch').value).toLowerCase();
     const match = function(x, qq){ return (mvTitle(x.m) + ' ' + ((x.m.analysis || {}).file || {}).name).toLowerCase().indexOf(qq) !== -1; };
@@ -13963,6 +13965,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.40', d:'29 Oct 2026', t:'Smoother Windows program, right counts', n:['Windows program 1.6.5: the program no longer rewrites its settings file every few seconds (the sign-in system’s own notes stay in memory), so the window and mouse stay smooth', 'Whole match videos are no longer copied into Backups (they doubled the space they take); clips and pictures still are', 'Settings → On this device counts the same match videos and lineups the home page shows (empty ones aren’t counted)']},
     {v:'3.39', d:'29 Oct 2026', t:'Teams on their own row', n:['In a match video the two teams have a row of their own (the title, lineup and pre-game sit above), so the full names show — on a phone, one team above the other']},
     {v:'3.38', d:'28 Oct 2026', t:'Team list and crest', n:['Choosing a team (in a match video, and Opponent and the other pick-lists in a lineup): the list scrolls with your finger on iPhone and iPad, always fits on the screen (opening upward when there’s more room), and stays open while you scroll', 'Match videos pick the teams from the clubs list, or type any team', 'The Heidelberg crest beside the teams is the sharp one, on a small black badge']},
     {v:'3.37', d:'28 Oct 2026', t:'Teams and logos in match videos', n:['Type our team and the team we’re playing at the top of a match video (e.g. Heidelberg United FC vs Northcote City) — both clubs’ logos show beside them', 'The Us / Them buttons, tags, filters and stats use each club’s initials and logo (HUFC · NC)', 'A club without a logo: tap + beside its name to add one', 'A video link that looks temporary (like Hudl’s) warns that it may stop working, and suggests ☁ Put on Drive', 'Match tags tagged out of order (e.g. Half-time after 2nd half start) are pointed out', 'Present on a phone: the board’s message and video clips come first, then the pitch', 'A new coach is told the club admin needs to approve them', 'Windows program 1.6.4: Google Drive uploads never skip a piece']},
@@ -14212,8 +14215,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         const key = localStorage.key(k); if(!key || key.indexOf('hufc-') !== 0) continue;
         const v = localStorage.getItem(key) || ''; n.bytes += (key.length + v.length) * 2;
         if(key.indexOf(LS_PREFIX) === 0 && key !== LS_PREFIX + 'draft'){ let d = null; try{ d = JSON.parse(v); }catch(e){} if(d && d.doc === 'pregame') n.p++; else if(d) n.s++; }
-        else if(key.indexOf(LU_PREFIX) === 0) n.l++;
-        else if(key.indexOf(MV_PREFIX) === 0) n.m++;
+        else if(key.indexOf(LU_PREFIX) === 0){ let d = null; try{ d = JSON.parse(v); }catch(e){} if(d && (typeof luHasContent !== 'function' || luHasContent(d))) n.l++; }
+        else if(key.indexOf(MV_PREFIX) === 0){ let d = null; try{ d = JSON.parse(v); }catch(e){} if(d && d.kind === 'match' && (typeof mvIsReal !== 'function' || mvIsReal(d))) n.m++; }   /* (the same ones the home page shows) */
       }
     }catch(e){}
     const mb = n.bytes / 1048576;
