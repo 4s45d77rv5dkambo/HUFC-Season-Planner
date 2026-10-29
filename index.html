@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261029215953">
+<meta name="hufc-build" content="20261029230738">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3323,7 +3323,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 29 Oct 2026, 9:59pm</p>
+  <p class="home-version">HUFC Session Planner · updated 29 Oct 2026, 11:07pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -14241,7 +14241,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'3.43', d:'29 Oct 2026', t:'Season plan', n:['New Season plan (home page): the season week by week for each team — training nights and match days, each showing its session, lineup, pre-game and match video', 'Anything with a date turns up on its day by itself; + Session, + Lineup, + Pre-game and + Match video start one already dated (a lineup also gets the opponent)', 'Plan themes in blocks (e.g. 4 weeks of pressing) — new sessions in those weeks start with that theme — and add a focus for each week', 'Call a day off, switch it, or add an extra training or game from the ⋯ menu', 'The home page shows This week for your team; the club sees each team’s plan, view-only']},
+    {v:'3.43', d:'29 Oct 2026', t:'Season plan', n:['New Season plan (home page): the season week by week for each team — training nights and match days, each showing its session, lineup, pre-game and match video', 'Anything with a date turns up on its day by itself; + Session, + Lineup, + Pre-game and + Match video start one already dated (a lineup also gets the opponent)', 'Plan themes in blocks (e.g. 4 weeks of pressing) — new sessions in those weeks start with that theme — and add a focus for each week', 'Call a day off, switch it, or add an extra training or game from the ⋯ menu', 'The home page shows This week for your team; the club sees each team’s plan, view-only', 'Theme blocks start with your six principles — Possession, Progression, Penetration, Pressure, Prevention, Protection — each with its own colour and aim']},
     {v:'3.42', d:'29 Oct 2026', t:'Cleaner home page', n:['The home page keeps just your folders — the teams you coach are in Settings → My teams, and signing in and syncing are in Settings → Account', 'The Settings button shows a small badge when a coach is waiting for your approval or syncing needs a look', 'Esc closes Settings']},
     {v:'3.41', d:'29 Oct 2026', t:'Far more room on iPhone and iPad', n:['The iPhone/iPad app (and the planner in a browser) now keeps your sessions, lineups, pre-games and match videos in the device’s own database — hundreds of megabytes or more, instead of about 5 MB — so it won’t run out of room as the club library grows', 'What was already there is moved across by itself the first time it opens', 'Pick-lists open upward only when there’s no room below, so they don’t cover the boxes above', 'Windows program 1.6.6: the extra backup copies of whole match videos are tidied away (the videos themselves stay in your Videos folder)']},
     {v:'3.40', d:'29 Oct 2026', t:'Smoother Windows program, right counts', n:['Windows program 1.6.5: the program no longer rewrites its settings file every few seconds (the sign-in system’s own notes stay in memory), so the window and mouse stay smooth', 'Whole match videos are no longer copied into Backups (they doubled the space they take); clips and pictures still are', 'Settings → On this device counts the same match videos and lineups the home page shows (empty ones aren’t counted)']},
@@ -16310,8 +16310,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const SE_DOW_LONG = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const SE_MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const SE_COLOURS = ['#ffd400', '#2e9d5b', '#2f6fd6', '#e0662f', '#8a4fd1', '#14a0a0', '#c93a6e', '#7a7d82'];
-  const SE_THEMES = ['Pre-season fitness', 'Pressing', 'Building out from the back', 'Playing through the thirds', 'Possession', 'Counter-attacking',
-    'Transition', 'Finishing', 'Crossing and finishing', 'Defending as a unit', '1v1 defending', 'Defending crosses', 'Set pieces', 'Recovery and taper'];
+  /* the six principles (the same as the pre-game boards) come first, each with its own colour: in possession cool, out of possession warm */
+  const SE_PRINCIPLE_COLOURS = {ip1:'#2e9d5b', ip2:'#14a0a0', ip3:'#2f6fd6', press:'#e0662f', mid:'#c93a6e', low:'#8a4fd1'};
+  const SE_PRINCIPLES = PG_BOARDS.map(function(b){ return {id:b[0], name:b[1], aim:b[2], color:SE_PRINCIPLE_COLOURS[b[0]] || SE_COLOURS[0]}; });
+  const SE_THEMES = SE_PRINCIPLES.map(function(p){ return p.name; }).concat(['Transition (IP > OP)', 'Transition (OP > IP)', 'Pre-season fitness', 'Counter-attacking',
+    'Finishing', 'Crossing and finishing', '1v1 defending', 'Defending crosses', 'Set pieces', 'Recovery and taper']);
   const SE_KIND_LBL = {session:'Session', lineup:'Lineup', pregame:'Pre-game', video:'Match video'};
   let seCur = null, seGroupPick = null, seReturn = false, seScrollTo = null;
 
@@ -16841,15 +16844,21 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const weeks = seWeeks(s), isNew = !b;
     const thisMon = seMonday(seToday());
     const from0 = b ? seMonday(b.from) : (weeks.indexOf(thisMon) !== -1 ? thisMon : weeks[0]);
-    const nameBox = luCombo({value:b ? b.name : '', ph:'e.g. Pressing', label:'Theme', options:SE_THEMES, onChange:function(){}});
+    /* picking one of the six principles fills in its colour and aim (unless you've chosen your own) */
+    let autoAim = '', ownColour = !isNew;
+    const nameBox = luCombo({value:b ? b.name : '', ph:'Pick a principle or type a theme', label:'Theme', options:SE_THEMES, onChange:function(v){
+      const pr = SE_PRINCIPLES.find(function(x){ return x.name === clean(v); }); if(!pr) return;
+      if(!ownColour){ colour = pr.color; sw.querySelectorAll('.se-sw').forEach(function(x){ const on = x.dataset.c === colour; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); }); }
+      if(!clean(notes.value) || notes.value === autoAim){ notes.value = autoAim = pr.aim; }
+    }});
     const fromSel = h('select', {class:'set-input', 'aria-label':'From week'});
     weeks.forEach(function(m, i){ const o = h('option', {value:m, text:'Week ' + (i + 1) + ' · ' + seRange(m)}); if(m === from0) o.selected = true; fromSel.appendChild(o); });
     const len = h('input', {type:'number', class:'set-input set-num', min:'1', max:String(weeks.length), value:String(b ? +b.weeks || 1 : 4), 'aria-label':'Number of weeks'});
     let colour = b ? b.color : SE_COLOURS[s.blocks.length % SE_COLOURS.length];
     const sw = h('div', {class:'se-swatches', role:'group', 'aria-label':'Colour'});
     SE_COLOURS.forEach(function(c){
-      const btn = h('button', {type:'button', class:'se-sw' + (c === colour ? ' on' : ''), style:'--c:' + c, 'aria-label':'Colour ' + c, 'aria-pressed':String(c === colour)});
-      btn.addEventListener('click', function(){ colour = c; sw.querySelectorAll('.se-sw').forEach(function(x){ x.classList.toggle('on', x === btn); x.setAttribute('aria-pressed', String(x === btn)); }); });
+      const btn = h('button', {type:'button', class:'se-sw' + (c === colour ? ' on' : ''), style:'--c:' + c, 'data-c':c, 'aria-label':'Colour ' + c, 'aria-pressed':String(c === colour)});
+      btn.addEventListener('click', function(){ colour = c; ownColour = true; sw.querySelectorAll('.se-sw').forEach(function(x){ x.classList.toggle('on', x === btn); x.setAttribute('aria-pressed', String(x === btn)); }); });
       sw.appendChild(btn);
     });
     const notes = h('textarea', {class:'set-input se-blk-notes', rows:'3', placeholder:'What the players should be able to do by the end of it', 'aria-label':'Aims'});
