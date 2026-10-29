@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261029193554">
+<meta name="hufc-build" content="20261029215953">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1889,6 +1889,183 @@ html.wl-open, html.wl-open body{overflow:hidden;}
 .home-set-btn .set-badge{display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; margin-left:2px; border-radius:999px; background:var(--yellow); color:var(--black); font-size:11px; font-weight:800; line-height:1;}
 .home-set-btn .set-badge.warn{background:#f0a020;}
 
+/* ---------- Season plan ---------- */
+.home-actions .home-season-btn, .home-actions .home-gt-btn{grid-row:auto; border-color:var(--yellow); color:var(--yellow);}
+.home-season-btn svg{flex:none; margin-right:6px; vertical-align:-3px;}
+.btn-dark-ink{background:var(--black); color:var(--yellow); border-color:var(--black);}
+.btn-dark-ink:hover, .btn-dark-ink:focus-visible{background:var(--charcoal); color:var(--yellow); border-color:var(--charcoal);}
+
+.modal.se-modal{z-index:85; padding:3vh 16px;}   /* (under other windows: a match video or "are you sure?" opens on top of it) */
+.modal-box.se-box{width:min(1180px, 100%); height:94vh; max-height:none; overflow:hidden;}
+.se-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 16px; background:var(--black); color:var(--white); border-radius:12px 12px 0 0; border-bottom:3px solid var(--yellow);}
+.se-head h3{margin:0; font-family:'Barlow Condensed', sans-serif; font-size:22px; letter-spacing:.04em; text-transform:uppercase; margin-right:6px;}
+.se-head-ctl{flex:1; display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0;}
+.se-sel{font:inherit; font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:16px; letter-spacing:.03em; padding:5px 28px 5px 10px; border-radius:8px; border:1px solid #5b5d61;
+  background:#1c1d1f url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffd400' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 9px center;
+  color:var(--white); -webkit-appearance:none; appearance:none; cursor:pointer; max-width:100%;}
+.se-sel:focus{outline:none; border-color:var(--yellow);}
+.se-sel option{color:#000; background:#fff;}
+.se-head .btn-dark{color:var(--white);}
+.se-head .btn-dark:hover{color:var(--yellow); border-color:var(--yellow);}
+.se-scroll{flex:1; min-height:0; overflow:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:14px 16px 40px;}
+
+.se-top{background:var(--white); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:12px;}
+.se-top-row{display:flex; align-items:flex-start; gap:10px;}
+.se-name{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+.se-name-t{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:22px; letter-spacing:.02em; text-transform:uppercase; line-height:1.1;}
+.se-name-sub{color:var(--grey); font-size:14px;}
+.se-ro{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:2px 8px; border-radius:10px; background:var(--paper); border:1px solid var(--line); color:var(--grey);}
+.se-hint{margin:0 0 12px; padding:10px 12px; border-radius:8px; background:#fff6d6; font-size:14px;}
+
+/* the season at a glance */
+.se-tl-wrap{margin-top:10px;}
+.se-tl-bar{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.se-tl-lbl{flex:1; color:var(--grey); font-size:13px;}
+.se-tl{display:flex; flex-direction:column; gap:4px;}
+.se-tl-ticks, .se-tl-lane{display:grid; grid-template-columns:repeat(var(--n), minmax(0, 1fr)); gap:2px;}
+.se-tl-tick{position:relative; height:16px; padding:0; border:0; border-radius:3px; background:var(--line-soft); cursor:pointer;}
+.se-tl-tick:hover{background:var(--line);}
+.se-tl-tick.now{background:var(--black); box-shadow:0 0 0 2px var(--yellow);}
+.se-tl-mon{position:absolute; z-index:1; left:2px; top:-1px; font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:11px; line-height:18px; color:var(--grey); pointer-events:none; white-space:nowrap;}
+.se-tl-tick.now .se-tl-mon{color:var(--yellow);}
+.se-tl-blk{min-width:0; height:26px; padding:0 8px; border:0; border-radius:6px; background:var(--c); color:#0d0e0f; cursor:pointer; text-align:left; overflow:hidden;
+  font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px; letter-spacing:.03em; text-transform:uppercase; box-shadow:inset 0 -2px 0 rgba(0,0,0,.15);}
+.se-tl-blk span{display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.se-tl-blk:hover, .se-tl-blk:focus-visible{outline:2px solid var(--black); outline-offset:1px;}
+
+/* the weeks */
+.se-weeks{display:flex; flex-direction:column; gap:10px;}
+.se-week{--blk:var(--line); display:grid; grid-template-columns:168px minmax(0, 1fr); gap:12px; padding:12px 14px; background:var(--white); border:1px solid var(--line);
+  border-left:5px solid var(--blk); border-radius:10px; scroll-margin-top:8px;}
+.se-week.is-past{background:#fafaf8;}
+.se-week.is-past .se-days{opacity:.8;}
+.se-week.is-now{border-color:var(--black); border-left-color:var(--blk); box-shadow:0 0 0 2px var(--yellow);}
+.se-wk-side{display:flex; flex-direction:column; gap:4px; min-width:0;}
+.se-wk-num{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:19px; letter-spacing:.03em; text-transform:uppercase;}
+.se-now{font-size:11px; letter-spacing:.08em; padding:1px 7px; border-radius:9px; background:var(--black); color:var(--yellow);}
+.se-wk-dates{color:var(--grey); font-size:14px;}
+.se-wk-blk{display:flex; flex-direction:column; align-items:flex-start; gap:0; margin-top:4px; padding:5px 8px 5px 10px; border:1px solid var(--line); border-left:4px solid var(--c); border-radius:6px;
+  background:var(--white); text-align:left; cursor:pointer; color:var(--ink); font:inherit; min-width:0; max-width:100%;}
+.se-wk-blk:hover{border-color:var(--black); border-left-color:var(--c);}
+.se-wk-blk-t{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:15px; letter-spacing:.02em; text-transform:uppercase; line-height:1.15; overflow-wrap:anywhere;}
+.se-wk-blk-n{font-size:12px; color:var(--grey);}
+.se-wk-main{min-width:0; display:flex; flex-direction:column; gap:8px;}
+.se-days{display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:8px; align-items:start;}
+.se-day-none{color:var(--muted); font-size:14px; padding:6px 2px;}
+
+.se-day{display:flex; flex-direction:column; gap:6px; min-width:0; padding:9px 10px 10px; border:1px solid var(--line); border-radius:8px; background:var(--paper); border-top:3px solid #9ec8ae;}
+.se-day.is-match{border-top-color:var(--yellow); background:#fffbe8;}
+.se-day.is-today{box-shadow:0 0 0 2px var(--black);}
+.se-day.is-off{background:var(--paper); border-top-color:var(--line); opacity:.75;}
+.se-day.is-off .se-day-type{text-decoration:line-through; text-decoration-thickness:1.5px;}
+.se-day-head{display:flex; align-items:center; gap:6px; min-height:24px;}
+.se-day-date{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:16px; letter-spacing:.02em; text-transform:uppercase;}
+.se-day-type{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:1px 7px; border-radius:9px; background:#e3f0e7; color:#22663f;}
+.se-day.is-match .se-day-type{background:var(--black); color:var(--yellow);}
+.se-day.is-off .se-day-type{background:var(--line-soft); color:var(--grey);}
+.se-day-today{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--black); background:var(--yellow); padding:1px 6px; border-radius:9px;}
+.se-sp{flex:1;}
+.se-day-more{flex:none; width:30px; height:28px; margin:-4px -6px -4px 0; border:0; border-radius:6px; background:transparent; color:var(--grey); cursor:pointer; display:grid; place-items:center;}
+.se-day-more:hover, .se-day-more:focus-visible{background:var(--line-soft); color:var(--black);}
+.se-fix{display:flex; align-items:center; gap:7px; min-width:0; font-weight:600; font-size:15px;}
+.se-fix.empty{color:var(--muted); font-weight:400; font-style:italic;}
+.se-fix-logo{width:22px; height:22px; object-fit:contain; flex:none;}
+.se-fix-t{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.se-fix-sub{color:var(--grey); font-weight:400; font-size:13px; white-space:nowrap;}
+.se-fix-edit .lu-combo{flex:1; min-width:0;}
+.se-ha{display:flex; flex:none; border:1px solid var(--line); border-radius:7px; overflow:hidden;}
+.se-ha button{width:30px; height:30px; border:0; background:var(--white); font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px; cursor:pointer; color:var(--grey);}
+.se-ha button + button{border-left:1px solid var(--line);}
+.se-ha button.on{background:var(--black); color:var(--yellow);}
+.se-row{display:grid; grid-template-columns:78px minmax(0, 1fr); gap:6px; align-items:start;}
+.se-row-lbl{padding-top:5px; font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:12px; letter-spacing:.07em; text-transform:uppercase; color:var(--grey);}
+.se-row-items{display:flex; flex-wrap:wrap; gap:5px; min-width:0;}
+.se-item{max-width:100%; min-width:0; padding:4px 9px; border:1px solid var(--line); border-radius:7px; background:var(--white); color:var(--ink); font:inherit; font-size:14px; font-weight:600; cursor:pointer; text-align:left;}
+.se-item-t{display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.se-item:hover, .se-item:focus-visible{background:var(--black); color:var(--yellow); border-color:var(--black);}
+.se-add{padding:4px 9px; border:1px dashed #b9bbb6; border-radius:7px; background:transparent; color:var(--ink); font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px; letter-spacing:.03em; text-transform:uppercase; cursor:pointer;}
+.se-add:hover, .se-add:focus-visible{border-style:solid; border-color:var(--black); background:var(--yellow);}
+.se-link{width:30px; height:29px; padding:0; border:1px solid transparent; border-radius:7px; background:transparent; color:var(--grey); cursor:pointer; display:inline-grid; place-items:center;}
+.se-link:hover, .se-link:focus-visible{color:var(--black); border-color:var(--line); background:var(--white);}
+.se-none{color:var(--muted); padding-top:3px;}
+.se-wk-foot{display:flex; align-items:flex-start; gap:8px;}
+.se-note{flex:1; min-width:0; resize:none; font:inherit; font-size:14px; line-height:1.35; padding:6px 9px; border:1px solid transparent; border-radius:7px; background:var(--paper); color:var(--ink); min-height:32px;}
+.se-note:hover{border-color:var(--line);}
+.se-note:focus{outline:none; border-color:var(--ink); background:var(--white); box-shadow:0 0 0 3px rgba(255,212,0,.45);}
+.se-note-ro{font-size:14px; line-height:1.35; padding:6px 9px; border-radius:7px; background:var(--paper); white-space:pre-wrap;}
+.se-addday{flex:none; padding:6px 8px; border:0; background:transparent; color:var(--grey); font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:14px; letter-spacing:.03em; text-transform:uppercase; cursor:pointer; border-radius:7px;}
+.se-addday:hover, .se-addday:focus-visible{background:var(--line-soft); color:var(--black);}
+
+.se-empty{max-width:520px; margin:8vh auto 0; text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px; padding:0 8px;}
+.se-empty-ico{width:76px; height:76px; border-radius:50%; background:var(--black); color:var(--yellow); display:grid; place-items:center;}
+.se-empty h4{margin:6px 0 0; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:24px; letter-spacing:.03em; text-transform:uppercase;}
+.se-empty p{margin:0 0 6px; color:var(--grey); font-size:15px; line-height:1.45;}
+
+/* small menu (⋯) */
+.se-menu{position:fixed; z-index:120; min-width:220px; max-width:min(320px, calc(100vw - 16px)); max-height:min(70vh, 460px); overflow:auto; padding:6px; background:var(--white); border:1px solid var(--line); border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,.22);}
+.se-menu button{display:block; width:100%; padding:9px 10px; border:0; border-radius:7px; background:transparent; font:inherit; font-size:15px; text-align:left; color:var(--ink); cursor:pointer;}
+.se-menu button:hover, .se-menu button:focus-visible{background:var(--paper); outline:none;}
+.se-menu button.danger{color:var(--danger);}
+.se-menu-h{padding:6px 10px 4px; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:13px; letter-spacing:.07em; text-transform:uppercase; color:var(--grey);}
+
+/* forms: season settings, theme block, add existing */
+.confirm-box.se-form-box, .confirm-box.se-pick-box{width:min(520px, 100%); max-height:90vh; overflow:auto;}
+.se-form-h, .se-pick-h{margin:0 0 12px; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:22px; letter-spacing:.03em; text-transform:uppercase;}
+.se-form-body{display:flex; flex-direction:column; gap:12px;}
+.se-field{display:flex; flex-direction:column; gap:5px; min-width:0;}
+.se-field-l{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:13px; letter-spacing:.07em; text-transform:uppercase; color:var(--grey);}
+.se-field-help{font-size:13px; color:var(--muted);}
+.se-field-pair{display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:10px;}
+.se-field .set-num{width:100%;}
+.se-field .lu-combo{width:100%;}
+.se-dow{display:flex; flex-wrap:wrap; gap:6px;}
+.se-dow button{min-width:46px; padding:8px 6px; border:1px solid var(--line); border-radius:8px; background:var(--white); font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:15px; letter-spacing:.03em; text-transform:uppercase; cursor:pointer; color:var(--ink);}
+.se-dow button.on{background:var(--black); color:var(--yellow); border-color:var(--black);}
+.se-swatches{display:flex; flex-wrap:wrap; gap:8px;}
+.se-sw{width:32px; height:32px; border-radius:50%; border:2px solid var(--white); background:var(--c); box-shadow:0 0 0 1px var(--line); cursor:pointer;}
+.se-sw.on{box-shadow:0 0 0 2px var(--black);}
+.se-blk-notes{resize:vertical;}
+.se-form-msg{margin:0; min-height:0; color:var(--danger); font-size:14px;}
+.se-form-msg:empty{display:none;}
+.se-form-act{align-items:center;}
+.se-form-del{margin-right:auto;}
+.se-blk-when{margin:0; color:var(--grey);}
+.se-blk-aims{margin:0; white-space:pre-wrap; line-height:1.45;}
+.se-pick-sub{margin:-6px 0 10px; color:var(--grey); font-size:14px;}
+.se-pick-q{width:100%; margin-bottom:8px;}
+.se-pick-list{display:flex; flex-direction:column; gap:6px; max-height:46vh; overflow:auto;}
+.se-pick-row{display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:9px 11px; border:1px solid var(--line); border-radius:8px; background:var(--white); font:inherit; text-align:left; cursor:pointer; color:var(--ink);}
+.se-pick-row:hover, .se-pick-row:focus-visible{border-color:var(--black); background:var(--paper);}
+.se-pick-t{font-weight:600;}
+.se-pick-d{font-size:13px; color:var(--grey);}
+
+/* Home: this week */
+.home-week .hw-head{flex-wrap:wrap; row-gap:6px;}
+.hw-blk{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:13px; letter-spacing:.04em; text-transform:uppercase; padding:2px 9px; border-radius:10px; background:var(--c); color:#0d0e0f;}
+.hw-note{margin:0 0 10px; font-size:15px; line-height:1.4; color:var(--ink); white-space:pre-wrap;}
+.hw-days{grid-template-columns:repeat(auto-fill, minmax(250px, 1fr));}
+.hw-days .se-day{background:var(--white);}
+.hw-days .se-day.is-match{background:#fffbe8;}
+.hw-prompt{display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 14px; border:1px dashed #c9cbc6; border-radius:10px; background:var(--white);}
+.hw-prompt-t{flex:1; min-width:200px; font-size:15px;}
+
+@media screen and (max-width:640px){:where(html:not(.print-sim)) .modal.se-modal{padding:0;}
+:where(html:not(.print-sim)) .modal-box.se-box{height:100vh; height:100dvh; border-radius:0;}
+:where(html:not(.print-sim)) .se-head{border-radius:0; padding:10px 12px; padding-top:max(10px, env(safe-area-inset-top));}
+:where(html:not(.print-sim)) .se-head h3{font-size:19px;}
+:where(html:not(.print-sim)) .se-head-ctl{order:3; flex-basis:100%;}
+:where(html:not(.print-sim)) .se-head #seClose{margin-left:auto;}
+:where(html:not(.print-sim)) .se-scroll{padding:10px 10px 40px; padding-bottom:max(40px, env(safe-area-inset-bottom));}
+:where(html:not(.print-sim)) .se-week{grid-template-columns:minmax(0, 1fr); gap:8px; padding:10px;}
+:where(html:not(.print-sim)) .se-wk-side{flex-direction:row; flex-wrap:wrap; align-items:baseline; column-gap:10px;}
+:where(html:not(.print-sim)) .se-wk-blk{flex-basis:100%; flex-direction:row; align-items:baseline; gap:8px; margin-top:2px;}
+:where(html:not(.print-sim)) .se-days,:where(html:not(.print-sim)) .hw-days{grid-template-columns:minmax(0, 1fr);}
+:where(html:not(.print-sim)) .se-tl-blk{font-size:12px; padding:0 4px;}
+:where(html:not(.print-sim)) .se-tl-mon{font-size:10px;}
+:where(html:not(.print-sim)) .se-field-pair{grid-template-columns:minmax(0, 1fr);}
+:where(html:not(.print-sim)) .home-actions .home-season-btn,:where(html:not(.print-sim)) .home-actions .home-gt-btn{grid-column:1 / span 2;}}
+@media print{ .se-modal, .home-week, .se-menu{display:none !important;} }
+
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
 body.view-lineup .pregame-only{display:none !important;}
@@ -2227,7 +2404,7 @@ body.view-lineup .session-only{display:none !important;}
 .home-actions{width:100%; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); grid-auto-columns:minmax(0,1fr); grid-template-rows:auto auto; grid-auto-flow:column; gap:8px 10px;}
 .home-actions .btn{justify-content:center; text-align:center; min-width:0; white-space:normal; line-height:1.15;}
 .home-actions .nowrap{white-space:nowrap;}
-.home-actions .home-gt-btn{grid-row:span 2; border-color:var(--yellow); color:var(--yellow);}
+.home-actions .home-gt-btn, .home-actions .home-season-btn{grid-row:auto; border-color:var(--yellow); color:var(--yellow);}
 .btn-big{font-size:16px; padding:11px 18px;}
 .btn-dark{background:transparent; color:var(--white); border-color:#5b5d61;}
 .btn-dark:hover{border-color:var(--white);}
@@ -2433,71 +2610,76 @@ html.has-selbar .home{padding-bottom:70px;}
 
 /* ---------- Phone ---------- */
 @keyframes sheetUp{from{transform:translateY(16px); opacity:0;} to{transform:none; opacity:1;}}
-@media screen and (max-width:640px){:where(html:not(.print-sim)) .appbar-inner{flex-wrap:nowrap; padding:8px 10px; gap:6px;}
-:where(html:not(.print-sim)) .status{margin-right:0; flex:0 0 auto; order:-1;}
-:where(html:not(.print-sim)) .status .status-text{display:none;}
-:where(html:not(.print-sim)) .appbar #newBtn,:where(html:not(.print-sim)) .appbar #openBtn{display:none;}
-:where(html:not(.print-sim)) html.view-home .appbar{display:none;}
-:where(html:not(.print-sim)) .appbar .btn{flex:1; padding:8px 6px; min-width:0;}
-:where(html:not(.print-sim)) .appbar .btn-hist,:where(html:not(.print-sim)) .appbar .btn-home,:where(html:not(.print-sim)) .appbar .btn-del{flex:0 0 38px; justify-content:center;}
-:where(html:not(.print-sim)) .inspector{position:fixed; left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom, 0px)); top:auto; z-index:75;
+@media screen and (max-width:640px){
+  /* one row on a phone: home, undo, redo, then print / export / save; New and Open live on the Home page */
+  .appbar-inner{flex-wrap:nowrap; padding:8px 10px; gap:6px;}
+  .status{margin-right:0; flex:0 0 auto; order:-1;}
+  .status .status-text{display:none;}
+  .appbar #newBtn, .appbar #openBtn{display:none;}
+  html.view-home .appbar{display:none;}
+  .appbar .btn{flex:1; padding:8px 6px; min-width:0;}
+  .appbar .btn-hist, .appbar .btn-home, .appbar .btn-del{flex:0 0 38px; justify-content:center;}
+  /* the editing panel for a tapped item slides up from the bottom of the screen */
+  .inspector{position:fixed; left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom, 0px)); top:auto; z-index:75;
     max-height:46vh; overflow:auto; padding:10px 12px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.28);
     animation:sheetUp .16s ease-out;}
-:where(html:not(.print-sim)) .inspector .swatch{width:26px; height:26px;}
-:where(html:not(.print-sim)) .tool-btn{min-width:38px; min-height:38px;}
-:where(html:not(.print-sim)) .appbar .menu-wrap{flex:1;}
-:where(html:not(.print-sim)) .appbar .menu{left:0; right:auto; min-width:0; width:min(300px, calc(100vw - 24px));}
-:where(html:not(.print-sim)) .appbar .menu-wrap .btn{flex:1;}
-:where(html:not(.print-sim)) .home-app{font-size:24px;}
-:where(html:not(.print-sim)) .home-club{font-size:11px;}
-:where(html:not(.print-sim)) .home-crest{width:84px; height:84px;}
-:where(html:not(.print-sim)) .home-doc{font-size:24px;}
-:where(html:not(.print-sim)) .home-actions{width:100%;}
-:where(html:not(.print-sim)) .home-actions .btn{padding:10px 8px; font-size:15px;}
-:where(html:not(.print-sim)) .home-actions{grid-template-columns:repeat(2, minmax(0,1fr)); grid-template-rows:none; grid-auto-flow:row;}
-:where(html:not(.print-sim)) .home-actions .home-gt-btn{grid-row:auto; grid-column:1 / span 2;}
-:where(html:not(.print-sim)) .home-head .lib-search{min-width:0; flex:1 1 100%; order:5;}
-:where(html:not(.print-sim)) .home-head #libImportBtn{flex:1 1 100%; order:6;}
-:where(html:not(.print-sim)) .home-head #backupBtn,:where(html:not(.print-sim)) .home-head #restoreBtn{flex:1 1 45%; order:7;}
-:where(html:not(.print-sim)) .home-head-spacer{display:none;}
-:where(html:not(.print-sim)) .modal{padding:12px;}
-:where(html:not(.print-sim)) .modal-head .lib-search{flex:1 1 100%; order:3;}
-:where(html:not(.print-sim)) .lib-grid,:where(html:not(.print-sim)) .session-list{grid-template-columns:minmax(0,1fr);}
-:where(html:not(.print-sim)) .btn-label{display:none;}
-:where(html:not(.print-sim)) .btn-label-long{display:none;}
-:where(html:not(.print-sim)) .btn-label-short{display:inline;}
-:where(html:not(.print-sim)) .bar-sep{display:none;}
-:where(html:not(.print-sim)) .header{padding:14px 16px; gap:12px;}
-:where(html:not(.print-sim)) .crest{width:54px; height:54px;}
-:where(html:not(.print-sim)) .club-name{font-size:24px; white-space:normal;}
-:where(html:not(.print-sim)) .club-sub{font-size:11px; letter-spacing:.14em;}
-:where(html:not(.print-sim)) .doc-title{display:none;}
-:where(html:not(.print-sim)) .info{grid-template-columns:1fr 1fr;}
-:where(html:not(.print-sim)) .title-bar{flex-direction:column; align-items:stretch; gap:0; padding:10px 14px 8px;}
-:where(html:not(.print-sim)) .title-bar .txt{font-size:22px; --rule:30px;}
-:where(html:not(.print-sim)) .info .cell{border-right:1px solid var(--line); border-bottom:1px solid var(--line);}
-:where(html:not(.print-sim)) .info .cell:nth-child(3n){border-right:1px solid var(--line);}
-:where(html:not(.print-sim)) .info .cell:nth-child(2n){border-right:none;}
-:where(html:not(.print-sim)) .info .cell:nth-last-child(-n+2){border-bottom:none;}
-:where(html:not(.print-sim)) .focus{grid-template-columns:1fr;}
-:where(html:not(.print-sim)) .focus .cell{border-right:none; border-bottom:1px solid rgba(255,255,255,.12);}
-:where(html:not(.print-sim)) .focus .cell:last-child{border-bottom:none;}
-:where(html:not(.print-sim)) .section{padding:20px 16px;}
-:where(html:not(.print-sim)) .fgrid,:where(html:not(.print-sim)) .drill-body.no-diagram .notes{grid-template-columns:minmax(0,1fr);}
-:where(html:not(.print-sim)) .sec-note{display:none;}
-:where(html:not(.print-sim)) .drill{padding:14px;}
-:where(html:not(.print-sim)) .drill-head{gap:8px;}
-:where(html:not(.print-sim)) .drill-name{flex:1 1 calc(100% - 40px);}
-:where(html:not(.print-sim)) .drill-actions{margin-left:auto;}
-:where(html:not(.print-sim)) .drill-actions .icon-btn{width:26px;}
-:where(html:not(.print-sim)) .cfg-spacer{display:none;}
-:where(html:not(.print-sim)) .drill-sub{flex-direction:column; align-items:stretch; gap:10px;}
-:where(html:not(.print-sim)) .toggle{align-self:flex-start;}
-:where(html:not(.print-sim)) .drill-body{grid-template-columns:minmax(0,1fr);}
-:where(html:not(.print-sim)) .pitch-svg{width:100% !important;}
-:where(html:not(.print-sim)) .tool-name{display:none;}
-:where(html:not(.print-sim)) .sheet-actions{padding:18px 16px; flex-direction:column;}
-:where(html:not(.print-sim)) .footer{padding:12px 16px;}}
+  .inspector .swatch{width:26px; height:26px;}
+  .tool-btn{min-width:38px; min-height:38px;}
+  .appbar .menu-wrap{flex:1;}
+  .appbar .menu{left:0; right:auto; min-width:0; width:min(300px, calc(100vw - 24px));}
+  .appbar .menu-wrap .btn{flex:1;}
+  .home-app{font-size:24px;}
+  .home-club{font-size:11px;}
+  .home-crest{width:84px; height:84px;}
+  .home-doc{font-size:24px;}
+  .home-actions{width:100%;}
+  .home-actions .btn{padding:10px 8px; font-size:15px;}
+  /* phones: each kind on its own row — + New on the left, Open on the right */
+  .home-actions{grid-template-columns:repeat(2, minmax(0,1fr)); grid-template-rows:none; grid-auto-flow:row;}
+  .home-actions .home-gt-btn, .home-actions .home-season-btn{grid-row:auto; grid-column:1 / span 2;}
+  .home-head .lib-search{min-width:0; flex:1 1 100%; order:5;}
+  .home-head #libImportBtn{flex:1 1 100%; order:6;}
+  .home-head #backupBtn, .home-head #restoreBtn{flex:1 1 45%; order:7;}
+  .home-head-spacer{display:none;}
+  .modal{padding:12px;}
+  .modal-head .lib-search{flex:1 1 100%; order:3;}
+  .lib-grid, .session-list{grid-template-columns:minmax(0,1fr);}
+  .btn-label{display:none;}
+  .btn-label-long{display:none;}
+  .btn-label-short{display:inline;}
+  .bar-sep{display:none;}
+  .header{padding:14px 16px; gap:12px;}
+  .crest{width:54px; height:54px;}
+  .club-name{font-size:24px; white-space:normal;}
+  .club-sub{font-size:11px; letter-spacing:.14em;}
+  .doc-title{display:none;}
+  .info{grid-template-columns:1fr 1fr;}
+  .title-bar{flex-direction:column; align-items:stretch; gap:0; padding:10px 14px 8px;}
+  .title-bar .txt{font-size:22px; --rule:30px;}
+  .info .cell{border-right:1px solid var(--line); border-bottom:1px solid var(--line);}
+  .info .cell:nth-child(3n){border-right:1px solid var(--line);}
+  .info .cell:nth-child(2n){border-right:none;}
+  .info .cell:nth-last-child(-n+2){border-bottom:none;}
+  .focus{grid-template-columns:1fr;}
+  .focus .cell{border-right:none; border-bottom:1px solid rgba(255,255,255,.12);}
+  .focus .cell:last-child{border-bottom:none;}
+  .section{padding:20px 16px;}
+  .fgrid, .drill-body.no-diagram .notes{grid-template-columns:minmax(0,1fr);}
+  .sec-note{display:none;}
+  .drill{padding:14px;}
+  .drill-head{gap:8px;}
+  .drill-name{flex:1 1 calc(100% - 40px);}
+  .drill-actions{margin-left:auto;}
+  .drill-actions .icon-btn{width:26px;}
+  .cfg-spacer{display:none;}
+  .drill-sub{flex-direction:column; align-items:stretch; gap:10px;}
+  .toggle{align-self:flex-start;}
+  .drill-body{grid-template-columns:minmax(0,1fr);}
+  .pitch-svg{width:100% !important;}
+  .tool-name{display:none;}
+  .sheet-actions{padding:18px 16px; flex-direction:column;}
+  .footer{padding:12px 16px;}
+}
 
 /* ---------- Print: A4, two pages for a standard session ---------- */
 /* Zero page margin leaves the browser no room for its own date / title / address / page
@@ -3070,12 +3252,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       <button type="button" class="btn btn-big btn-dark" id="homePgOpenBtn" title="See all your pre-game plans">Open <span class="nowrap">pre-games</span></button>
       <button type="button" class="btn btn-primary btn-big" id="homeMvNewBtn" title="Open a match video (e.g. from Veo) to tag it, cut clips and see stats">+ Match video</button>
       <button type="button" class="btn btn-big btn-dark" id="homeMvOpenBtn" title="The matches you've analysed: tags, clips and stats">Open <span class="nowrap">match videos</span></button>
+      <button type="button" class="btn btn-big btn-dark home-season-btn" id="homeSeasonBtn" title="The season week by week: training nights, match days and themes"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Season plan</button>
       <button type="button" class="btn btn-big btn-dark home-gt-btn" id="homeGtBigBtn" title="Every player's minutes, goals, assists and cards across all your lineups">Game time <span class="nowrap">&amp; player stats</span></button>
     </div>
   </section>
 
   <nav class="folder-bar" id="folderBar" aria-label="Folders"></nav>
   <p class="folder-note" id="folderNote"></p>
+
+  <section class="home-block home-week" id="homeWeek" hidden></section>
 
   <section class="home-block home-shared" id="homeShared" hidden>
     <div class="home-head">
@@ -3138,7 +3323,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 29 Oct 2026, 7:35pm</p>
+  <p class="home-version">HUFC Session Planner · updated 29 Oct 2026, 9:59pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -8032,6 +8217,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       'No pre-game plans yet. Start one with + New pre-game.');
     renderLineupCards();
     try{ renderMatchCards(); }catch(e){ console.warn(e); }
+    try{ seRenderHomeWeek(); seRefreshIfOpen(); }catch(e){ console.warn(e); }
     renderLibraryGrid();
   }
   document.getElementById('sessionSearch').addEventListener('input', renderHome);
@@ -8198,6 +8384,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     document.documentElement.classList.add('view-home');
     renderHome();
     window.scrollTo(0, 0);
+    try{ seAfterHome(); }catch(e){}
     setStatus(storageOK ? (window.hufcDesktop ? 'Everything is saved in your HUFC Planner folder' : 'Your sessions and practices are kept in this browser') : 'This browser won’t autosave — use Export → Session file to keep a copy', storageOK ? '' : 'warn');
   }
   function focusTitle(){ const t = document.querySelector('#titleBar textarea'); if(t) setTimeout(function(){ t.focus(); }, 0); }
@@ -13806,6 +13993,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     lineups:{prefix:LU_PREFIX, stamp:'savedAt'},
     squads:{prefix:'hufc-squad:', stamp:'savedAt'},     /* each team's saved players */
     matches:{prefix:'hufc-match:', stamp:'savedAt'},    /* match videos: tags and clip details (the videos stay on each device) */
+    seasons:{prefix:'hufc-season:', stamp:'savedAt'},   /* season plans: weeks, days and theme blocks */
     practices:{stamp:'updatedAt'}
   };
   function localGet(kind, id, lib){
@@ -13825,6 +14013,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(kind === 'lineups') return luList().map(function(x){ return {id:x.key.slice(LU_PREFIX.length), obj:x.lu}; });
     if(kind === 'squads') return sqList().map(function(x){ return {id:x.key.slice(SQ_PREFIX.length), obj:x.sq}; });
     if(kind === 'matches') return mvList().map(function(x){ return {id:x.key.slice(MV_PREFIX.length), obj:x.m}; });
+    if(kind === 'seasons') return seList().map(function(x){ return {id:x.key.slice(SE_PREFIX.length), obj:x.s}; });
     return Object.keys(lib.items).map(function(id){ return {id:id, obj:lib.items[id]}; });
   }
   function openNow(kind, id){
@@ -14052,6 +14241,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.43', d:'29 Oct 2026', t:'Season plan', n:['New Season plan (home page): the season week by week for each team — training nights and match days, each showing its session, lineup, pre-game and match video', 'Anything with a date turns up on its day by itself; + Session, + Lineup, + Pre-game and + Match video start one already dated (a lineup also gets the opponent)', 'Plan themes in blocks (e.g. 4 weeks of pressing) — new sessions in those weeks start with that theme — and add a focus for each week', 'Call a day off, switch it, or add an extra training or game from the ⋯ menu', 'The home page shows This week for your team; the club sees each team’s plan, view-only']},
     {v:'3.42', d:'29 Oct 2026', t:'Cleaner home page', n:['The home page keeps just your folders — the teams you coach are in Settings → My teams, and signing in and syncing are in Settings → Account', 'The Settings button shows a small badge when a coach is waiting for your approval or syncing needs a look', 'Esc closes Settings']},
     {v:'3.41', d:'29 Oct 2026', t:'Far more room on iPhone and iPad', n:['The iPhone/iPad app (and the planner in a browser) now keeps your sessions, lineups, pre-games and match videos in the device’s own database — hundreds of megabytes or more, instead of about 5 MB — so it won’t run out of room as the club library grows', 'What was already there is moved across by itself the first time it opens', 'Pick-lists open upward only when there’s no room below, so they don’t cover the boxes above', 'Windows program 1.6.6: the extra backup copies of whole match videos are tidied away (the videos themselves stay in your Videos folder)']},
     {v:'3.40', d:'29 Oct 2026', t:'Smoother Windows program, right counts', n:['Windows program 1.6.5: the program no longer rewrites its settings file every few seconds (the sign-in system’s own notes stay in memory), so the window and mouse stay smooth', 'Whole match videos are no longer copied into Backups (they doubled the space they take); clips and pictures still are', 'Settings → On this device counts the same match videos and lineups the home page shows (empty ones aren’t counted)']},
@@ -16105,6 +16295,645 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* keep going in the background: soon after opening, then every couple of minutes */
   setTimeout(function(){ driveSoon(0); }, 6000);
   setInterval(function(){ if(document.visibilityState === 'visible') driveSoon(0); }, 120000);
+
+  /* =====================================================================
+     Season plan — one team's season, week by week.
+     - Training nights and match days come from the season's set days (e.g. Tue + Thu, Sat),
+       and any day can be called off, switched, or added.
+     - Each day shows the session, lineup, pre-game and match video with that date (linked by date,
+       so anything already dated turns up by itself); "+ Session" etc. start one already dated.
+     - Themes are planned in blocks ("4 weeks of pressing"); each week has its own note.
+     One item per season (hufc-season:<id>), synced like lineups: the club sees it, its coach changes it.
+     ===================================================================== */
+  const SE_PREFIX = 'hufc-season:';
+  const SE_DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const SE_DOW_LONG = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const SE_MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const SE_COLOURS = ['#ffd400', '#2e9d5b', '#2f6fd6', '#e0662f', '#8a4fd1', '#14a0a0', '#c93a6e', '#7a7d82'];
+  const SE_THEMES = ['Pre-season fitness', 'Pressing', 'Building out from the back', 'Playing through the thirds', 'Possession', 'Counter-attacking',
+    'Transition', 'Finishing', 'Crossing and finishing', 'Defending as a unit', '1v1 defending', 'Defending crosses', 'Set pieces', 'Recovery and taper'];
+  const SE_KIND_LBL = {session:'Session', lineup:'Lineup', pregame:'Pre-game', video:'Match video'};
+  let seCur = null, seGroupPick = null, seReturn = false, seScrollTo = null;
+
+  /* ---------- dates (kept as yyyy-mm-dd here; sessions and lineups keep dd/mm/yy) ---------- */
+  function seIso(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function seDate(iso){ const p = String(iso || '').split('-'); if(p.length !== 3) return null; const d = new Date(+p[0], +p[1] - 1, +p[2], 12); return isNaN(d) ? null : d; }
+  function seAdd(iso, n){ const d = seDate(iso); d.setDate(d.getDate() + n); return seIso(d); }
+  function seMonday(iso){ const d = seDate(iso); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return seIso(d); }
+  function seToday(){ return seIso(new Date()); }
+  function seDd(iso){ const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0].slice(2); }
+  function seShort(iso){ const d = seDate(iso); return d.getDate() + ' ' + SE_MON[d.getMonth()]; }
+  function seDayName(iso){ const d = seDate(iso); return SE_DOW[d.getDay()] + ' ' + d.getDate() + ' ' + SE_MON[d.getMonth()]; }
+  function seRange(mon){ const a = seDate(mon), b = seDate(seAdd(mon, 6)); return a.getMonth() === b.getMonth() ? a.getDate() + ' – ' + b.getDate() + ' ' + SE_MON[b.getMonth()] : seShort(mon) + ' – ' + seShort(seAdd(mon, 6)); }
+
+  /* ---------- the saved seasons ---------- */
+  function seList(){
+    const out = [];
+    try{
+      for(let i = 0; i < hufcStore.length; i++){
+        const k = hufcStore.key(i);
+        if(!k || k.indexOf(SE_PREFIX) !== 0) continue;
+        let s = null; try{ s = JSON.parse(hufcStore.getItem(k)); }catch(e){ continue; }
+        if(s && s.kind === 'season' && s.start && s.end) out.push({key:k, s:seNorm(s)});
+      }
+    }catch(e){}
+    return out.sort(function(a, b){ return a.s.start < b.s.start ? -1 : a.s.start > b.s.start ? 1 : 0; });
+  }
+  function seNorm(s){
+    s.train = Array.isArray(s.train) ? s.train : []; s.match = Array.isArray(s.match) ? s.match : [];
+    s.blocks = Array.isArray(s.blocks) ? s.blocks : []; s.days = s.days && typeof s.days === 'object' ? s.days : {};
+    s.notes = s.notes && typeof s.notes === 'object' ? s.notes : {};
+    return s;
+  }
+  function seSave(s){
+    s.savedAt = Date.now();
+    try{ hufcStore.setItem(SE_PREFIX + s.id, JSON.stringify(s)); }catch(e){ showToast('This device is out of space'); return; }
+    clubSyncSoon();
+  }
+  /* a team's seasons, and the one to show: running now, else the next one, else the latest */
+  function seSeasons(g){ return seList().filter(function(x){ return x.s.group === g; }); }
+  function sePick(g){
+    const all = seSeasons(g), t = seToday();
+    return all.find(function(x){ return x.s.start <= t && t <= x.s.end; }) || all.find(function(x){ return x.s.start > t; }) || all[all.length - 1] || null;
+  }
+  function seCanMake(g){ return !!(who && who.admin) || isMine(g) || !myGroups().length; }
+  function seWeeks(s){
+    const out = [], last = seMonday(s.end);
+    for(let m = seMonday(s.start); m <= last && out.length < 80; m = seAdd(m, 7)) out.push(m);
+    return out;
+  }
+  function seBlocksAt(s, mon){ return s.blocks.filter(function(b){ return b.from <= mon && mon < seAdd(b.from, 7 * Math.max(1, +b.weeks || 1)); }); }
+  function seWeekOf(s, mon){ return seWeeks(s).indexOf(mon) + 1; }
+
+  /* ---------- what's on each date: this team's sessions, pre-games, lineups and match videos ---------- */
+  function seIndex(g){
+    const ix = {}, luDate = {}, pgDate = {};
+    const slot = function(iso){ return ix[iso] || (ix[iso] = {session:[], pregame:[], lineup:[], video:[]}); };
+    listSessions().forEach(function(x){
+      if(groupOf(x.plan) !== g) return;
+      const iso = luDateToIso(x.plan.meta && x.plan.meta.date);
+      if(isPre(x.plan) && iso) pgDate[anPgId(x)] = iso;
+      if(iso) slot(iso)[isPre(x.plan) ? 'pregame' : 'session'].push(x);
+    });
+    luList().forEach(function(x){
+      if(groupOf(x.lu) !== g) return;
+      const iso = luDateToIso(x.lu.meta && x.lu.meta.date);
+      if(iso){ luDate[x.lu.id] = iso; slot(iso).lineup.push(x); }
+    });
+    mvList().forEach(function(x){
+      const m = x.m;
+      if(groupOf(m) !== g) return;
+      const iso = (m.luId && luDate[m.luId]) || (m.pgId && pgDate[m.pgId]) || luDateToIso(m.date);
+      if(iso && mvIsReal(m)) slot(iso).video.push(x);
+    });
+    return ix;
+  }
+  const SE_EMPTY = {session:[], pregame:[], lineup:[], video:[]};
+  function seDayInfo(s, iso, ix){
+    const dow = seDate(iso).getDay(), o = s.days[iso] || {}, it = ix[iso] || SE_EMPTY;
+    const regular = s.match.indexOf(dow) !== -1 ? 'match' : s.train.indexOf(dow) !== -1 ? 'train' : '';
+    let type = o.type || regular;
+    if(!type && ix[iso]) type = (it.lineup.length || it.pregame.length || it.video.length) ? 'match' : 'train';
+    return {iso:iso, type:type, regular:regular, off:!!o.off, o:o, it:it};
+  }
+  function seItemTitle(kind, x){
+    if(kind === 'lineup') return luName(x.lu) || 'Untitled lineup';
+    if(kind === 'video') return mvTitle(x.m) || 'Match video';
+    return sessionName(x.plan) || (kind === 'pregame' ? 'Untitled pre-game' : 'Untitled session');
+  }
+  /* the game on a match day: from its lineup, else what was typed on the season plan */
+  function seFixture(info){
+    const L = info.it.lineup[0];
+    if(L) return {opp:clean(L.lu.meta.opponent), ha:clean(L.lu.meta.homeAway), time:clean(L.lu.meta.kickoff), fromLineup:true};
+    const P = info.it.pregame[0];
+    return {opp:clean(info.o.opp) || (P ? clean(P.plan.meta.opponent) : ''), ha:clean(info.o.ha), time:'', fromLineup:false};
+  }
+
+  /* ---------- open / start the things on a day ---------- */
+  function seOpenItem(kind, x){
+    if(kind === 'video'){ anOpenMatch(x.key); return; }   /* (opens on top; closing it comes back here) */
+    seLeave();
+    if(kind === 'lineup') swap(function(){ luOpen(x.key); });
+    else swap(function(){ openSession(x.key); });
+  }
+  function seLeave(){ if(!seModal.hidden){ seReturn = true; seRememberScroll(); closeModal(seModal, true); } }
+  function seNewItem(kind, s, info){
+    const g = s.group, dd = seDd(info.iso), fx = seFixture(info), blk = seBlocksAt(s, seMonday(info.iso))[0];
+    if(kind === 'video'){
+      const L = info.it.lineup[0], P = info.it.pregame[0];
+      if(L){
+        let x = mvForLineup(L.lu.id);
+        if(!x){ const m = mvNew(L.lu.id); m.group = g; x = {key:MV_PREFIX + m.id, m:m}; try{ hufcStore.setItem(x.key, JSON.stringify(m)); }catch(e){ showToast('This device is out of space'); return; } }
+        anOpenMatch(x.key); return;
+      }
+      const m = mvNew(''); m.group = g; m.date = dd;
+      if(P) m.pgId = anPgId(P);
+      if(fx.opp) m.them = fx.opp;
+      try{ hufcStore.setItem(MV_PREFIX + m.id, JSON.stringify(m)); }catch(e){ showToast('This device is out of space'); return; }
+      anOpenMatch(MV_PREFIX + m.id); return;
+    }
+    seLeave();
+    swap(function(){
+      if(kind === 'lineup'){
+        luNew(); lu.group = g; lu.meta.date = dd;
+        if(fx.opp) lu.meta.opponent = fx.opp;
+        if(fx.ha) lu.meta.homeAway = fx.ha;
+        luRender(); luSaveNow();
+      } else {
+        if(kind === 'pregame'){ startNewPregame(); if(fx.opp) state.meta.opponent = fx.opp; }
+        else { startNewSession(); if(blk && !clean(state.focus.theme)) state.focus.theme = blk.name; }
+        state.group = g; state.meta.date = dd;
+        renderAll(); resetHistory(); saveLocal();
+      }
+      try{ renderOwnerLines(); renderFolderPick(); }catch(e){}
+      setStatus('New ' + SE_KIND_LBL[kind].toLowerCase() + ' for ' + seDayName(info.iso) + ' · ' + g);
+    });
+  }
+  /* put something you already made on this day (it takes this date) */
+  function seLinkPick(kind, s, info){
+    const g = s.group;
+    let all = kind === 'lineup' ? luList().map(function(x){ return {x:x, o:x.lu, date:x.lu.meta.date}; })
+      : listSessions().filter(function(x){ return isPre(x.plan) === (kind === 'pregame'); }).map(function(x){ return {x:x, o:x.plan, date:x.plan.meta.date}; });
+    all = all.filter(function(r){ return groupOf(r.o) === g && canEdit(r.o) && luDateToIso(r.date) !== info.iso; });
+    all.sort(function(a, b){ return (luDateToIso(a.date) ? 1 : 0) - (luDateToIso(b.date) ? 1 : 0) || (b.o.savedAt || 0) - (a.o.savedAt || 0); });
+    const box = h('div', {class:'modal-box confirm-box se-pick-box', role:'dialog', 'aria-modal':'true', 'aria-label':'Add to this day'});
+    const wrap = h('div', {class:'modal confirm-modal se-pick'}, box);
+    const close = function(){ closeModal(wrap); setTimeout(function(){ wrap.remove(); }, 200); document.removeEventListener('keydown', esc, true); };
+    const esc = function(e){ if(e.key === 'Escape'){ e.stopPropagation(); close(); } };
+    const q = h('input', {type:'search', class:'lib-search se-pick-q', placeholder:'Search', 'aria-label':'Search'});
+    const list = h('div', {class:'se-pick-list'});
+    const fill = function(){
+      list.innerHTML = '';
+      const qq = clean(q.value).toLowerCase();
+      const rows = all.filter(function(r){ return !qq || (seItemTitle(kind, r.x) + ' ' + clean(r.date)).toLowerCase().indexOf(qq) !== -1; });
+      if(!rows.length) list.appendChild(h('div', {class:'home-empty', text:all.length ? 'Nothing matches.' : 'No other ' + (kind === 'lineup' ? 'lineups' : kind === 'pregame' ? 'pre-games' : 'sessions') + ' in your ' + g + ' folder.'}));
+      rows.slice(0, 60).forEach(function(r){
+        const iso = luDateToIso(r.date);
+        list.appendChild(h('button', {type:'button', class:'se-pick-row', onclick:function(){
+          const raw = hufcStore.getItem(r.x.key);
+          try{
+            const o = JSON.parse(raw); o.meta = o.meta || {}; o.meta.date = seDd(info.iso); o.savedAt = Date.now();
+            hufcStore.setItem(r.x.key, JSON.stringify(o));
+          }catch(e){ return; }
+          clubSyncSoon(); close(); seRefresh();
+          showToast('“' + seItemTitle(kind, r.x) + '” is now on ' + seDayName(info.iso), function(){ try{ const o = JSON.parse(raw); o.savedAt = Date.now(); hufcStore.setItem(r.x.key, JSON.stringify(o)); }catch(e){} clubSyncSoon(); seRefresh(); });
+        }}, h('span', {class:'se-pick-t', text:seItemTitle(kind, r.x)}), h('span', {class:'se-pick-d', text:iso ? 'Now on ' + seDayName(iso) : 'No date yet'})));
+      });
+    };
+    q.addEventListener('input', fill);
+    box.append(h('h3', {class:'se-pick-h', text:'Add a ' + SE_KIND_LBL[kind].toLowerCase() + ' to ' + seDayName(info.iso)}),
+      h('p', {class:'se-pick-sub', text:'It takes this date (you can change it back inside it).'}), q, list,
+      h('div', {class:'confirm-actions'}, h('button', {type:'button', class:'btn', text:'Cancel', onclick:close})));
+    wrap.addEventListener('click', function(e){ if(e.target === wrap) close(); });
+    document.addEventListener('keydown', esc, true);
+    document.body.appendChild(wrap); fill(); openModal(wrap);
+    setTimeout(function(){ q.focus(); }, 0);
+  }
+
+  /* ---------- a small menu (⋯) ---------- */
+  let seMenuEl = null;
+  function seMenuClose(){ if(seMenuEl){ seMenuEl.remove(); seMenuEl = null; } }
+  function seMenu(anchor, items){
+    seMenuClose();
+    const m = h('div', {class:'se-menu', role:'menu'});
+    items.filter(Boolean).forEach(function(it){
+      m.appendChild(it.head ? h('div', {class:'se-menu-h', text:it.head})
+        : h('button', {type:'button', role:'menuitem', class:it.cls || '', text:it.label, onclick:function(e){ e.stopPropagation(); seMenuClose(); it.fn(); }}));
+    });
+    document.body.appendChild(m); seMenuEl = m;
+    const r = anchor.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
+    let x = Math.min(r.right - mw, window.innerWidth - mw - 8), y = r.bottom + 4;
+    if(y + mh > window.innerHeight - 8) y = Math.max(8, r.top - mh - 4);
+    m.style.left = Math.max(8, x) + 'px'; m.style.top = y + 'px';
+    const first = m.querySelector('button'); if(first) first.focus();
+  }
+  document.addEventListener('mousedown', function(e){ if(seMenuEl && !seMenuEl.contains(e.target)) seMenuClose(); }, true);
+  document.addEventListener('touchstart', function(e){ if(seMenuEl && !seMenuEl.contains(e.target)) seMenuClose(); }, {capture:true, passive:true});
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && seMenuEl){ e.stopPropagation(); e.preventDefault(); seMenuClose(); } }, true);
+  window.addEventListener('resize', seMenuClose);
+
+  /* ---------- one day: Training or Match, and what's on it ---------- */
+  function seDayCard(s, info, ro, compact){
+    const t = info.type, match = t === 'match', today = info.iso === seToday();
+    const setDay = function(ch){ const o = Object.assign({}, s.days[info.iso] || {}, ch); Object.keys(o).forEach(function(k){ if(o[k] === null || o[k] === '') delete o[k]; }); if(Object.keys(o).length) s.days[info.iso] = o; else delete s.days[info.iso]; seSave(s); seRefresh(); };
+    const card = h('div', {class:'se-day ' + (match ? 'is-match' : 'is-train') + (info.off ? ' is-off' : '') + (today ? ' is-today' : '') + (info.iso < seToday() ? ' is-past' : ''), 'data-date':info.iso});
+    const menuBtn = ro ? null : h('button', {type:'button', class:'se-day-more', title:'Change this day', 'aria-label':'Change ' + seDayName(info.iso), html:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="5" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="19" cy="12" r="2" fill="currentColor"/></svg>'});
+    if(menuBtn) menuBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      const extra = !info.regular || (info.o.type && info.o.type !== info.regular);
+      seMenu(menuBtn, [
+        {head:seDayName(info.iso)},
+        info.off ? {label:match ? 'The game is back on' : 'Training is back on', fn:function(){ setDay({off:null}); }}
+          : {label:match ? 'No game this day (bye, washed out)' : 'No training this day', fn:function(){ setDay({off:true}); }},
+        {label:match ? 'Make it a training day' : 'Make it a match day', fn:function(){ const nt = match ? 'train' : 'match'; setDay({type:nt === info.regular ? null : nt}); }},
+        extra && !info.it.session.length && !info.it.lineup.length && !info.it.pregame.length && !info.it.video.length ? {label:'Take this day off the plan', cls:'danger', fn:function(){ if(info.regular) s.days[info.iso] = {off:true}; else delete s.days[info.iso]; seSave(s); seRefresh(); }} : null
+      ]);
+    });
+    const fx = match ? seFixture(info) : null;
+    card.append(h('div', {class:'se-day-head'},
+      h('span', {class:'se-day-date', text:seDayName(info.iso)}),
+      h('span', {class:'se-day-type', text:info.off ? (match ? 'No game' : 'No training') : match ? 'Match' : 'Training'}),
+      today ? h('span', {class:'se-day-today', text:'Today'}) : null,
+      h('span', {class:'se-sp'}), menuBtn));
+    /* the opponent (from the lineup once there is one; typed here before that) */
+    if(match && !info.off){
+      if(fx.fromLineup || ro) card.appendChild(h('div', {class:'se-fix' + (fx.opp ? '' : ' empty')},
+        fx.opp ? seFixLogo(fx.opp) : null, h('span', {class:'se-fix-t', text:fx.opp ? 'vs ' + fx.opp : 'Opponent not set'}),
+        fx.ha || fx.time ? h('span', {class:'se-fix-sub', text:[fx.ha, fx.time].filter(Boolean).join(' · ')}) : null));
+      else {
+        const combo = luCombo({value:fx.opp, ph:'Opponent', label:'Opponent on ' + seDayName(info.iso), options:LU_OPPONENTS, onChange:function(v){
+          /* (saved as you type; no redraw, so the box keeps its place) */
+          const o = Object.assign({}, s.days[info.iso] || {}); if(clean(v)) o.opp = clean(v); else delete o.opp;
+          if(Object.keys(o).length) s.days[info.iso] = o; else delete s.days[info.iso];
+          clearTimeout(card._t); card._t = setTimeout(function(){ seSave(s); }, 400);
+        }});
+        const ha = h('div', {class:'se-ha', role:'group', 'aria-label':'Home or away'}, ['Home', 'Away'].map(function(x){
+          return h('button', {type:'button', class:fx.ha === x ? 'on' : '', 'aria-pressed':String(fx.ha === x), text:x.charAt(0), title:x, onclick:function(){ setDay({ha:fx.ha === x ? null : x}); }});
+        }));
+        card.appendChild(h('div', {class:'se-fix se-fix-edit'}, combo, ha));
+      }
+    }
+    if(!info.off || info.it.session.length || info.it.lineup.length || info.it.pregame.length || info.it.video.length){
+      const kinds = match ? ['lineup', 'pregame', 'video'] : ['session'];
+      ['session', 'lineup', 'pregame', 'video'].forEach(function(k){ if(kinds.indexOf(k) === -1 && info.it[k].length) kinds.push(k); });
+      kinds.forEach(function(k){
+        const items = info.it[k];
+        if(info.off && !items.length) return;
+        const row = h('div', {class:'se-row se-row-' + k}, h('span', {class:'se-row-lbl', text:SE_KIND_LBL[k]}));
+        const list = h('div', {class:'se-row-items'});
+        items.forEach(function(x){
+          const tt = seItemTitle(k, x);
+          list.appendChild(h('button', {type:'button', class:'se-item', title:'Open “' + tt + '”', onclick:function(){ seOpenItem(k, x); }}, h('span', {class:'se-item-t', text:tt})));
+        });
+        if(!items.length && !ro && !info.off){
+          list.appendChild(h('button', {type:'button', class:'se-add', title:'Start a ' + SE_KIND_LBL[k].toLowerCase() + ' for ' + seDayName(info.iso), text:'+ ' + SE_KIND_LBL[k], onclick:function(){ seNewItem(k, s, info); }}));
+          if(k !== 'video' && !compact) list.appendChild(h('button', {type:'button', class:'se-link', title:'Add a ' + SE_KIND_LBL[k].toLowerCase() + ' you already made', 'aria-label':'Add a ' + SE_KIND_LBL[k].toLowerCase() + ' you already made to ' + seDayName(info.iso), onclick:function(){ seLinkPick(k, s, info); },
+            html:'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>'}));
+        }
+        if(!items.length && ro) list.appendChild(h('span', {class:'se-none', text:'—'}));
+        row.appendChild(list); card.appendChild(row);
+      });
+    }
+    return card;
+  }
+  function seFixLogo(name){ const src = luLogoFor(name); return src ? h('img', {class:'se-fix-logo', src:src, alt:''}) : null; }
+
+  /* ---------- the window ---------- */
+  const seModal = h('div', {class:'modal se-modal', id:'seModal', hidden:true});
+  const seBox = h('div', {class:'modal-box se-box', role:'dialog', 'aria-modal':'true', 'aria-labelledby':'seTitle'});
+  seModal.appendChild(seBox); document.body.appendChild(seModal);
+  seModal.addEventListener('click', function(e){ if(e.target === seModal) seClose(); });
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape' || seModal.hidden || e.defaultPrevented) return;
+    const onTop = Array.prototype.some.call(document.querySelectorAll('.modal'), function(m){ return m !== seModal && !m.hidden && !m.classList.contains('closing'); });
+    if(onTop || seMenuEl) return;
+    const t = e.target; if(t && t.closest && t.closest('.lu-combo.open')) return;
+    seClose();
+  }, true);
+  function seClose(){ seMenuClose(); seReturn = false; closeModal(seModal); if(document.documentElement.classList.contains('view-home')) renderHome(); }
+  function seRememberScroll(){ const sc = seBox.querySelector('.se-scroll'); seScrollTo = sc ? sc.scrollTop : null; }
+  /* which team: the folder you're looking at, else your first team */
+  function seDefaultGroup(){ const v = folderView(); return AGE_GROUPS.indexOf(v) !== -1 ? v : (primaryGroup() || 'U18'); }
+  function seasonOpen(g, id){
+    seGroupPick = g || seDefaultGroup();
+    const x = id ? seList().find(function(y){ return y.s.id === id; }) : sePick(seGroupPick);
+    seCur = x ? x.s.id : null; seScrollTo = null;
+    openModal(seModal); seRender(true);
+  }
+  /* back from a session / lineup opened here: the season plan opens again where you were */
+  function seAfterHome(){
+    if(!seReturn) return;
+    seReturn = false;
+    openModal(seModal); seRender(false);
+  }
+  function seRefresh(){
+    if(!seModal.hidden){ seRememberScroll(); seRender(false); }
+    if(document.documentElement.classList.contains('view-home')) seRenderHomeWeek();
+  }
+  /* changes from other devices: redraw, unless you're typing in it */
+  function seRefreshIfOpen(){
+    if(seModal.hidden) return;
+    const a = document.activeElement;
+    if(a && seModal.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+    seRememberScroll(); seRender(false);
+  }
+  /* a match video closed on top of the plan: show what changed */
+  new MutationObserver(function(){ if(anModal.hidden) seRefreshIfOpen(); }).observe(anModal, {attributes:true, attributeFilter:['hidden']});
+
+  function seRender(jump){
+    seMenuClose();
+    const g = seGroupPick, x = seCur ? seList().find(function(y){ return y.s.id === seCur; }) : null, s = x ? x.s : null;
+    const ro = s ? !canEdit(s) : !seCanMake(g);
+    seBox.innerHTML = '';
+    /* head: team, season, settings, Done */
+    const gSel = h('select', {class:'se-sel', 'aria-label':'Team'});
+    const groups = AGE_GROUPS.filter(function(a){ return isMine(a) || seSeasons(a).length || a === g; });
+    AGE_GROUPS.forEach(function(a){ if(groups.indexOf(a) === -1) groups.push(a); });
+    groups.forEach(function(a){ const o = h('option', {value:a, text:a + (isMine(a) ? ' ★' : '')}); if(a === g) o.selected = true; gSel.appendChild(o); });
+    gSel.addEventListener('change', function(){ seGroupPick = gSel.value; const p = sePick(seGroupPick); seCur = p ? p.s.id : null; seScrollTo = null; seRender(true); });
+    const seasons = seSeasons(g);
+    let sSel = null;
+    if(seasons.length > 1 || (s && !ro)){
+      sSel = h('select', {class:'se-sel se-sel-season', 'aria-label':'Season'});
+      seasons.forEach(function(y){ const o = h('option', {value:y.s.id, text:y.s.name || 'Season'}); if(s && y.s.id === s.id) o.selected = true; sSel.appendChild(o); });
+      if(seCanMake(g)) sSel.appendChild(h('option', {value:'__new', text:'+ New season…'}));
+      sSel.addEventListener('change', function(){ if(sSel.value === '__new'){ seSetup(null); sSel.value = s ? s.id : ''; return; } seCur = sSel.value; seScrollTo = null; seRender(true); });
+      if(seasons.length < 2 && !seCanMake(g)) sSel = null;
+    }
+    const head = h('div', {class:'se-head'},
+      h('h3', {id:'seTitle', text:'Season plan'}),
+      h('div', {class:'se-head-ctl'}, gSel, sSel,
+        s ? h('button', {type:'button', class:'btn btn-small btn-dark se-today-btn', text:'This week', onclick:function(){ seJump(s, true); }}) : null,
+        s && !ro ? h('button', {type:'button', class:'btn btn-small btn-dark', text:'Season settings', onclick:function(){ seSetup(s); }}) : null),
+      h('button', {type:'button', class:'btn btn-small btn-primary', id:'seClose', text:'Done', onclick:seClose}));
+    seBox.appendChild(head);
+    const scroll = h('div', {class:'se-scroll'});
+    seBox.appendChild(scroll);
+    if(!s){ scroll.appendChild(seEmpty(g)); return; }
+
+    const weeks = seWeeks(s), ix = seIndex(g), today = seToday(), thisMon = seMonday(today);
+    /* the season at a glance: the dates, whose it is, and the theme blocks across the weeks */
+    const owner = coachOf(s);
+    const nTrain = Object.keys(ix).length;
+    scroll.appendChild(h('div', {class:'se-top'},
+      h('div', {class:'se-top-row'},
+        h('div', {class:'se-name'}, h('span', {class:'se-name-t', text:s.name || 'Season'}),
+          h('span', {class:'se-name-sub', text:[g, seShort(s.start) + ' – ' + seShort(s.end) + ' ' + seDate(s.end).getFullYear(), weeks.length + ' weeks', owner].filter(Boolean).join(' · ')})),
+        ro ? h('span', {class:'se-ro', text:'View only'}) : null),
+      seTimeline(s, weeks, ro)));
+    if(!nTrain && !ro && !s.train.length && !s.match.length) scroll.appendChild(h('p', {class:'se-hint', text:'Set your training nights and match day in Season settings to fill the weeks.'}));
+
+    const list = h('div', {class:'se-weeks'});
+    weeks.forEach(function(mon, wi){
+      const bl = seBlocksAt(s, mon), isNow = mon === thisMon, past = seAdd(mon, 6) < today;
+      const days = [];
+      for(let i = 0; i < 7; i++){
+        const iso = seAdd(mon, i);
+        if(iso < s.start && !ix[iso]) continue;
+        if(iso > s.end && !ix[iso]) continue;
+        const info = seDayInfo(s, iso, ix);
+        if(info.type) days.push(info);
+      }
+      const w = h('section', {class:'se-week' + (isNow ? ' is-now' : '') + (past ? ' is-past' : ''), id:'se-wk-' + mon, 'data-week':mon});
+      if(bl[0]) w.style.setProperty('--blk', bl[0].color || SE_COLOURS[0]);
+      const side = h('div', {class:'se-wk-side'},
+        h('div', {class:'se-wk-num'}, 'Week ' + (wi + 1), isNow ? h('span', {class:'se-now', text:'This week'}) : null),
+        h('div', {class:'se-wk-dates', text:seRange(mon)}),
+        bl.map(function(b){
+          const n = Math.round((seDate(mon) - seDate(b.from)) / 6048e5) + 1;
+          return h('button', {type:'button', class:'se-wk-blk', style:'--c:' + (b.color || SE_COLOURS[0]), title:ro ? b.name : 'Change this block', onclick:function(){ if(ro) seBlockView(b); else seBlockEdit(s, b); }},
+            h('span', {class:'se-wk-blk-t', text:b.name || 'Theme'}), h('span', {class:'se-wk-blk-n', text:'Week ' + n + ' of ' + (+b.weeks || 1)}));
+        }));
+      const main = h('div', {class:'se-wk-main'});
+      const dl = h('div', {class:'se-days'});
+      days.forEach(function(info){ dl.appendChild(seDayCard(s, info, ro)); });
+      if(!days.length) dl.appendChild(h('div', {class:'se-day-none', text:'Nothing planned this week'}));
+      main.appendChild(dl);
+      const note = clean(s.notes[mon]);
+      const foot = h('div', {class:'se-wk-foot'});
+      if(!ro){
+        const ta = h('textarea', {class:'se-note', rows:'1', placeholder:'Focus for this week…', 'aria-label':'Focus for week ' + (wi + 1)});
+        ta.value = s.notes[mon] || '';
+        const grow = function(){ ta.style.height = 'auto'; ta.style.height = Math.min(160, ta.scrollHeight + 2) + 'px'; };
+        let tm = 0;
+        ta.addEventListener('input', function(){ grow(); clearTimeout(tm); tm = setTimeout(function(){ if(clean(ta.value)) s.notes[mon] = ta.value; else delete s.notes[mon]; seSave(s); }, 500); });
+        ta.addEventListener('blur', function(){ clearTimeout(tm); const v = clean(ta.value) ? ta.value : ''; if((s.notes[mon] || '') !== v){ if(v) s.notes[mon] = v; else delete s.notes[mon]; seSave(s); } });
+        requestAnimationFrame(grow);
+        const add = h('button', {type:'button', class:'se-addday', text:'+ Add a day', title:'Add an extra training or a game this week'});
+        add.addEventListener('click', function(e){
+          e.stopPropagation();
+          const items = [{head:'Add to ' + seRange(mon)}];
+          for(let i = 0; i < 7; i++){
+            const iso = seAdd(mon, i), info = seDayInfo(s, iso, ix);
+            if(info.type && !info.off) continue;
+            items.push({label:seDayName(iso) + ' · Training', fn:function(){ s.days[iso] = Object.assign({}, s.days[iso] || {}, {type:'train'}); delete s.days[iso].off; seSave(s); seRefresh(); }});
+            items.push({label:seDayName(iso) + ' · Match', fn:function(){ s.days[iso] = Object.assign({}, s.days[iso] || {}, {type:'match'}); delete s.days[iso].off; seSave(s); seRefresh(); }});
+          }
+          if(items.length === 1) items.push({head:'Every day this week is already planned'});
+          seMenu(add, items);
+        });
+        foot.append(ta, add);
+      } else if(note) foot.appendChild(h('div', {class:'se-note-ro', text:note}));
+      if(foot.childNodes.length) main.appendChild(foot);
+      w.append(side, main);
+      list.appendChild(w);
+    });
+    scroll.appendChild(list);
+    if(seScrollTo != null && !jump){ scroll.scrollTop = seScrollTo; seScrollTo = null; }
+    else if(jump) requestAnimationFrame(function(){ seJump(s, false); });
+  }
+  function seJump(s, smooth){
+    const sc = seBox.querySelector('.se-scroll'); if(!sc) return;
+    const ws = seWeeks(s), t = seMonday(seToday());
+    const mon = t < ws[0] ? ws[0] : t > ws[ws.length - 1] ? ws[ws.length - 1] : t;
+    const el = document.getElementById('se-wk-' + mon); if(!el) return;
+    const top = el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - 8;
+    if(mon === ws[0]){ sc.scrollTo({top:0, behavior:smooth ? 'smooth' : 'auto'}); return; }
+    sc.scrollTo({top:top, behavior:smooth && !reduceMotion.matches ? 'smooth' : 'auto'});
+  }
+  /* the theme blocks across the season: one lane each (they can overlap), today marked */
+  function seTimeline(s, weeks, ro){
+    const n = weeks.length, wrap = h('div', {class:'se-tl-wrap'});
+    const tl = h('div', {class:'se-tl', style:'--n:' + n});
+    const ticks = h('div', {class:'se-tl-ticks'});
+    weeks.forEach(function(mon, i){
+      const d = seDate(mon), newMonth = i === 0 || seDate(weeks[i - 1]).getMonth() !== d.getMonth();
+      ticks.appendChild(h('button', {type:'button', class:'se-tl-tick' + (mon === seMonday(seToday()) ? ' now' : ''), title:'Week ' + (i + 1) + ' · ' + seRange(mon), 'aria-label':'Go to week ' + (i + 1),
+        onclick:function(){ const el = document.getElementById('se-wk-' + mon), sc = seBox.querySelector('.se-scroll'); if(el && sc) sc.scrollTo({top:el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - 8, behavior:reduceMotion.matches ? 'auto' : 'smooth'}); }},
+        newMonth ? h('span', {class:'se-tl-mon', text:SE_MON[d.getMonth()]}) : null));
+    });
+    tl.appendChild(ticks);
+    /* lanes: a block goes in the first lane it fits */
+    const lanes = [];
+    s.blocks.slice().sort(function(a, b){ return a.from < b.from ? -1 : 1; }).forEach(function(b){
+      let a = weeks.indexOf(seMonday(b.from)); if(a === -1) a = b.from < weeks[0] ? 0 : -1;
+      if(a === -1) return;
+      const len = Math.max(1, Math.min(+b.weeks || 1, n - a));
+      let lane = lanes.findIndex(function(l){ return l.every(function(x){ return a >= x[0] + x[1] || a + len <= x[0]; }); });
+      if(lane === -1){ lanes.push([]); lane = lanes.length - 1; }
+      lanes[lane].push([a, len, b]);
+    });
+    lanes.forEach(function(l){
+      const row = h('div', {class:'se-tl-lane'});
+      l.forEach(function(x){
+        const b = x[2];
+        row.appendChild(h('button', {type:'button', class:'se-tl-blk', style:'grid-column:' + (x[0] + 1) + ' / span ' + x[1] + ';--c:' + (b.color || SE_COLOURS[0]),
+          title:b.name + ' · ' + (+b.weeks || 1) + ' weeks from ' + seShort(b.from), onclick:function(){ if(ro) seBlockView(b); else seBlockEdit(s, b); }}, h('span', {text:b.name || 'Theme'})));
+      });
+      tl.appendChild(row);
+    });
+    wrap.appendChild(tl);
+    const bar = h('div', {class:'se-tl-bar'},
+      h('span', {class:'se-tl-lbl', text:s.blocks.length ? 'Theme blocks' : (ro ? 'No theme blocks yet' : 'Plan your themes in blocks, e.g. 4 weeks of pressing')}),
+      ro ? null : h('button', {type:'button', class:'btn btn-small', text:'+ Theme block', onclick:function(){ seBlockEdit(s, null); }}));
+    wrap.insertBefore(bar, tl);
+    return wrap;
+  }
+
+  /* ---------- a small form window (season settings, theme blocks) ---------- */
+  function seForm(title, body, actions, noFocus){
+    const box = h('div', {class:'modal-box confirm-box se-form-box', role:'dialog', 'aria-modal':'true', 'aria-label':title});
+    const wrap = h('div', {class:'modal confirm-modal se-form'}, box);
+    const close = function(){ closeModal(wrap); setTimeout(function(){ wrap.remove(); }, 200); document.removeEventListener('keydown', esc, true); };
+    const esc = function(e){ if(e.key === 'Escape'){ if(document.activeElement && document.activeElement.closest && document.activeElement.closest('.lu-combo.open')) return; e.stopPropagation(); close(); } };
+    box.append(h('h3', {class:'se-form-h', text:title}), body, h('div', {class:'confirm-actions se-form-act'}, actions(close)));
+    wrap.addEventListener('click', function(e){ if(e.target === wrap) close(); });
+    document.addEventListener('keydown', esc, true);
+    document.body.appendChild(wrap); openModal(wrap);
+    setTimeout(function(){ const f = noFocus ? box.querySelector('.confirm-actions .btn-primary') : box.querySelector('input, select, textarea'); if(f) f.focus(); }, 0);
+    return close;
+  }
+  function seField(label, ctl, help){ return h('label', {class:'se-field'}, h('span', {class:'se-field-l', text:label}), ctl, help ? h('span', {class:'se-field-help', text:help}) : null); }
+  function seDays(sel){
+    const box = h('div', {class:'se-dow', role:'group'});
+    [1, 2, 3, 4, 5, 6, 0].forEach(function(d){
+      const b = h('button', {type:'button', class:sel.indexOf(d) !== -1 ? 'on' : '', 'aria-pressed':String(sel.indexOf(d) !== -1), title:SE_DOW_LONG[d], text:SE_DOW[d]});
+      b.addEventListener('click', function(){ const i = sel.indexOf(d); if(i === -1) sel.push(d); else sel.splice(i, 1); b.classList.toggle('on', i === -1); b.setAttribute('aria-pressed', String(i === -1)); });
+      box.appendChild(b);
+    });
+    return box;
+  }
+  /* season settings (or a new season) */
+  function seSetup(s){
+    const g = seGroupPick, isNew = !s;
+    const start0 = s ? s.start : seMonday(seToday());
+    const end0 = s ? s.end : seAdd(start0, 7 * 30 - 1);
+    const year = seDate(seAdd(start0, 7 * 15)).getFullYear();
+    const name = h('input', {type:'text', class:'set-input', value:s ? s.name || '' : g + ' ' + year + ' season', 'aria-label':'Season name'});
+    const st = h('input', {type:'date', class:'set-input', value:start0, 'aria-label':'First week'});
+    const en = h('input', {type:'date', class:'set-input', value:end0, 'aria-label':'Last day'});
+    const train = s ? s.train.slice() : [2, 4], match = s ? s.match.slice() : [6];
+    const msg = h('p', {class:'se-form-msg'});
+    const body = h('div', {class:'se-form-body'},
+      seField('Season name', name),
+      h('div', {class:'se-field-pair'}, seField('Starts', st), seField('Ends', en)),
+      seField('Training nights', seDays(train)),
+      seField('Match day', seDays(match), 'Days you can add, switch or call off one at a time on the plan.'),
+      msg);
+    seForm(isNew ? 'New season plan · ' + g : 'Season settings', body, function(close){
+      return [
+        isNew ? null : h('button', {type:'button', class:'btn btn-danger-ghost se-form-del', text:'Delete season', onclick:async function(){
+          if(!(await askDelete('season plan', s.name || 'Season', 'Your sessions, lineups and pre-games stay — only the plan goes.'))) return;
+          const key = SE_PREFIX + s.id, raw = hufcStore.getItem(key);
+          try{ hufcStore.removeItem(key); noteDeleted(key); }catch(e){}
+          close(); clubSyncSoon();
+          const p = sePick(g); seCur = p ? p.s.id : null; seRender(true);
+          showToast('Deleted “' + (s.name || 'Season') + '”', function(){ undoDeleted(key, raw); clubSyncSoon(); seCur = s.id; seRender(true); });
+        }}),
+        h('span', {class:'se-sp'}),
+        h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}),
+        h('button', {type:'button', class:'btn btn-primary', text:isNew ? 'Create season plan' : 'Save', onclick:function(){
+          const a = st.value, b = en.value;
+          if(!seDate(a) || !seDate(b)){ msg.textContent = 'Pick the dates the season starts and ends.'; return; }
+          if(b < a){ msg.textContent = 'The season has to end after it starts.'; return; }
+          if((seDate(b) - seDate(a)) / 6048e5 > 78){ msg.textContent = 'A season can be up to 78 weeks.'; return; }
+          const o = s || {kind:'season', v:1, id:newId(), group:g, blocks:[], days:{}, notes:{}};
+          o.name = clean(name.value) || g + ' season'; o.start = a; o.end = b; o.train = train; o.match = match;
+          seSave(o); close();
+          seCur = o.id; seScrollTo = null; seRender(true);
+          if(isNew) showToast('Season plan ready · tap + Session on a training night to plan it');
+        }})
+      ];
+    });
+  }
+  /* a theme block: "Pressing", 4 weeks from week 3 */
+  function seBlockEdit(s, b){
+    const weeks = seWeeks(s), isNew = !b;
+    const thisMon = seMonday(seToday());
+    const from0 = b ? seMonday(b.from) : (weeks.indexOf(thisMon) !== -1 ? thisMon : weeks[0]);
+    const nameBox = luCombo({value:b ? b.name : '', ph:'e.g. Pressing', label:'Theme', options:SE_THEMES, onChange:function(){}});
+    const fromSel = h('select', {class:'set-input', 'aria-label':'From week'});
+    weeks.forEach(function(m, i){ const o = h('option', {value:m, text:'Week ' + (i + 1) + ' · ' + seRange(m)}); if(m === from0) o.selected = true; fromSel.appendChild(o); });
+    const len = h('input', {type:'number', class:'set-input set-num', min:'1', max:String(weeks.length), value:String(b ? +b.weeks || 1 : 4), 'aria-label':'Number of weeks'});
+    let colour = b ? b.color : SE_COLOURS[s.blocks.length % SE_COLOURS.length];
+    const sw = h('div', {class:'se-swatches', role:'group', 'aria-label':'Colour'});
+    SE_COLOURS.forEach(function(c){
+      const btn = h('button', {type:'button', class:'se-sw' + (c === colour ? ' on' : ''), style:'--c:' + c, 'aria-label':'Colour ' + c, 'aria-pressed':String(c === colour)});
+      btn.addEventListener('click', function(){ colour = c; sw.querySelectorAll('.se-sw').forEach(function(x){ x.classList.toggle('on', x === btn); x.setAttribute('aria-pressed', String(x === btn)); }); });
+      sw.appendChild(btn);
+    });
+    const notes = h('textarea', {class:'set-input se-blk-notes', rows:'3', placeholder:'What the players should be able to do by the end of it', 'aria-label':'Aims'});
+    notes.value = b ? b.notes || '' : '';
+    const msg = h('p', {class:'se-form-msg'});
+    const body = h('div', {class:'se-form-body'},
+      seField('Theme', nameBox),
+      h('div', {class:'se-field-pair'}, seField('From', fromSel), seField('Weeks', len)),
+      seField('Colour', sw),
+      seField('Aims', notes, 'New sessions in these weeks start with this theme.'),
+      msg);
+    seForm(isNew ? 'New theme block' : 'Theme block', body, function(close){
+      return [
+        isNew ? null : h('button', {type:'button', class:'btn btn-danger-ghost se-form-del', text:'Remove', onclick:function(){
+          const i = s.blocks.indexOf(b); if(i !== -1) s.blocks.splice(i, 1);
+          seSave(s); close(); seRefresh();
+          showToast('Removed “' + (b.name || 'Theme') + '”', function(){ s.blocks.push(b); seSave(s); seRefresh(); });
+        }}),
+        h('span', {class:'se-sp'}),
+        h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}),
+        h('button', {type:'button', class:'btn btn-primary', text:isNew ? 'Add block' : 'Save', onclick:function(){
+          const nm = clean(nameBox.querySelector('input').value);
+          if(!nm){ msg.textContent = 'Give the block a theme.'; return; }
+          const n = Math.max(1, Math.min(weeks.length, Math.round(+len.value || 1)));
+          const o = b || {id:newId()};
+          o.name = nm; o.from = fromSel.value; o.weeks = n; o.color = colour; o.notes = notes.value;
+          if(isNew) s.blocks.push(o);
+          seSave(s); close(); seRefresh();
+        }})
+      ];
+    }, !isNew);
+  }
+  /* view only: what a block is about */
+  function seBlockView(b){
+    seForm(b.name || 'Theme', h('div', {class:'se-form-body'},
+      h('p', {class:'se-blk-when', text:(+b.weeks || 1) + ' weeks from ' + seDayName(b.from)}),
+      clean(b.notes) ? h('p', {class:'se-blk-aims', text:b.notes}) : null), function(close){ return [h('button', {type:'button', class:'btn btn-primary', text:'Close', onclick:close})]; });
+  }
+  /* no season for this team yet */
+  function seEmpty(g){
+    const can = seCanMake(g);
+    return h('div', {class:'se-empty'},
+      h('div', {class:'se-empty-ico', html:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7 13.5h3M14 13.5h3M7 17h3"/></svg>'}),
+      h('h4', {text:can ? 'Plan the ' + g + ' season week by week' : 'No ' + g + ' season plan yet'}),
+      h('p', {text:can ? 'Set the season’s dates, training nights and match day. Every week then shows its sessions, lineups, pre-games and match videos, and you can plan themes in blocks.'
+        : 'When the ' + g + ' coach plans their season, it shows here.'}),
+      can ? h('button', {type:'button', class:'btn btn-primary btn-big', text:'Set up the ' + g + ' season', onclick:function(){ seSetup(null); }}) : null);
+  }
+
+  /* ---------- Home: this week, at the top ---------- */
+  function seRenderHomeWeek(){
+    const box = document.getElementById('homeWeek'); if(!box) return;
+    box.innerHTML = '';
+    const v = folderView(), g = AGE_GROUPS.indexOf(v) !== -1 ? v : primaryGroup();
+    const x = g ? sePick(g) : null;
+    if(!x){
+      box.hidden = !(g && v === 'mine' && seCanMake(g));
+      if(!box.hidden) box.appendChild(h('div', {class:'hw-prompt'},
+        h('span', {class:'hw-prompt-t', text:'Plan the ' + g + ' season week by week — training nights, match days and themes.'}),
+        h('button', {type:'button', class:'btn btn-small btn-primary', text:'Set up season plan', onclick:function(){ seasonOpen(g); }})));
+      return;
+    }
+    const s = x.s, today = seToday(), weeks = seWeeks(s);
+    let mon = seMonday(today), lead = 'This week';
+    if(mon < weeks[0]){ mon = weeks[0]; lead = 'Season starts ' + seDayName(s.start); }
+    else if(mon > weeks[weeks.length - 1]){ box.hidden = true; return; }
+    const ix = seIndex(g), ro = !canEdit(s), bl = seBlocksAt(s, mon);
+    const days = [];
+    for(let i = 0; i < 7; i++){ const iso = seAdd(mon, i); if((iso < s.start || iso > s.end) && !ix[iso]) continue; const info = seDayInfo(s, iso, ix); if(info.type) days.push(info); }
+    box.hidden = false;
+    const wn = weeks.indexOf(mon) + 1;
+    box.append(h('div', {class:'home-head hw-head'},
+      h('h2', {text:lead}),
+      h('span', {class:'home-count', text:[g, 'Week ' + wn + ' of ' + weeks.length, seRange(mon)].join(' · ')}),
+      bl.map(function(b){ const n = Math.round((seDate(mon) - seDate(b.from)) / 6048e5) + 1; return h('span', {class:'hw-blk', style:'--c:' + (b.color || SE_COLOURS[0]), text:b.name + ' · week ' + n + ' of ' + (+b.weeks || 1)}); }),
+      h('span', {class:'home-head-spacer'}),
+      h('button', {type:'button', class:'btn btn-small btn-dark-ink', text:'Open season plan', onclick:function(){ seasonOpen(g, s.id); }})));
+    if(clean(s.notes[mon])) box.appendChild(h('p', {class:'hw-note', text:clean(s.notes[mon])}));
+    const dl = h('div', {class:'se-days hw-days'});
+    days.forEach(function(info){ dl.appendChild(seDayCard(s, info, ro, true)); });
+    if(!days.length) dl.appendChild(h('div', {class:'se-day-none', text:'Nothing planned this week'}));
+    box.appendChild(dl);
+  }
+  document.getElementById('homeSeasonBtn').addEventListener('click', function(){ seasonOpen(); });
 
 
   /* =====================================================================
