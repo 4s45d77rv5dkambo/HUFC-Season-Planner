@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261029163911">
+<meta name="hufc-build" content="20261029170711">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3000,7 +3000,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   var libs = null;
   window.__HUFC_LIBS = function(){ return libs || (libs = load('lib-pdf.js').then(function(){ return load('lib-pdffonts.js'); }).then(function(){ return load('lib-pptx.js'); }).catch(function(e){ libs = null; throw e; })); };
   window.addEventListener('load', function(){
-    setTimeout(function(){ fetch('logos.json').then(function(r){ return r.json(); }).then(function(m){ if(window.__HUFC_ADD_LOGOS) window.__HUFC_ADD_LOGOS(m); }).catch(function(){}); }, 300);
+    setTimeout(function(){ fetch('logos.json').then(function(r){ return r.json(); }).then(function(m){
+      var n = 0; (function give(){ if(window.__HUFC_ADD_LOGOS) window.__HUFC_ADD_LOGOS(m); else if(n++ < 100) setTimeout(give, 200); })();   /* (the planner may still be opening its storage) */
+    }).catch(function(){}); }, 300);
   });
 })();
 </script>
@@ -3132,7 +3134,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 29 Oct 2026, 4:39pm</p>
+  <p class="home-version">HUFC Session Planner · updated 29 Oct 2026, 5:07pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3695,9 +3697,80 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
 
 
-<script>
+<script>/* The iPhone / iPad app (and the planner in a browser): plans are kept in the device's database, which holds hundreds of
+   megabytes or more, instead of the browser's own storage (only about 5 MB). The planner reads them all into memory as it
+   opens, works from that copy (instantly, as before), and every change is written straight back to the database.
+   The first time, everything already in the browser's storage is moved across, then cleared from there. */
+(function(){
+  var real = null; try{ real = window.localStorage; }catch(e){}
+  var started = false;
+  function start(){
+    if(started) return; started = true;
+    var list = [].slice.call(document.querySelectorAll('script[type="text/hufc-later"]'));
+    list.forEach(function(old){ var s = document.createElement('script'); s.text = old.text; old.parentNode.replaceChild(s, old); });
+  }
+  /* the planner's own keys live in the database; anything else (the sign-in system's notes, the copy/paste clipboard that
+     other open windows listen for) stays in the browser's storage */
+  function mine(k){ k = String(k); return k.indexOf('hufc-') === 0 && k !== 'hufc-pitch-clip' && k !== 'hufc-welcome-skip'; }
+  if(!window.indexedDB){ start(); return; }
+  var req;
+  try{ req = indexedDB.open('hufc-plans', 1); }catch(e){ start(); return; }
+  req.onupgradeneeded = function(){ try{ req.result.createObjectStore('kv'); }catch(e){} };
+  req.onerror = function(){ start(); };
+  req.onblocked = function(){ setTimeout(function(){ if(!started) start(); }, 4000); };
+  req.onsuccess = function(){
+    var db = req.result, mem = Object.create(null), keys = [];
+    db.onversionchange = function(){ try{ db.close(); }catch(e){} };
+    var pending = {}, queued = false, warned = false;
+    function flush(){
+      queued = false; var p = pending; pending = {};
+      try{
+        var tx = db.transaction('kv', 'readwrite'), st = tx.objectStore('kv');
+        Object.keys(p).forEach(function(k){ if(p[k] === null) st.delete(k); else st.put(p[k], k); });
+        tx.onerror = tx.onabort = function(){
+          if(warned) return; warned = true;
+          window.dispatchEvent(new CustomEvent('hufc-status', {detail:'This device is out of room for the planner · free some space, then reopen the app'}));
+        };
+      }catch(e){}
+    }
+    function queue(k, v){ pending[k] = v; if(!queued){ queued = true; Promise.resolve().then(flush); } }
+    var store = {
+      getItem:function(k){ k = String(k); if(!mine(k)) return real ? real.getItem(k) : null; return Object.prototype.hasOwnProperty.call(mem, k) ? mem[k] : null; },
+      setItem:function(k, v){ k = String(k); v = String(v); if(!mine(k)){ if(!real) throw new Error('no storage'); real.setItem(k, v); return; } if(!Object.prototype.hasOwnProperty.call(mem, k)) keys.push(k); if(mem[k] === v) return; mem[k] = v; queue(k, v); },
+      removeItem:function(k){ k = String(k); if(!mine(k)){ if(real) real.removeItem(k); return; } if(!Object.prototype.hasOwnProperty.call(mem, k)) return; delete mem[k]; keys.splice(keys.indexOf(k), 1); queue(k, null); },
+      key:function(i){ return i >= 0 && i < keys.length ? keys[i] : null; },
+      get length(){ return keys.length; },
+      clear:function(){ keys.slice().forEach(function(k){ store.removeItem(k); }); }
+    };
+    function ready(){ window.__hufcStore = store; try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){} start(); }
+    /* read everything that's there */
+    var ks = [], vs = [];
+    try{
+      var tx = db.transaction('kv', 'readonly'), st = tx.objectStore('kv');
+      var c = st.openCursor();
+      c.onsuccess = function(){ var cur = c.result; if(cur){ ks.push(String(cur.key)); vs.push(cur.value); cur.continue(); } };
+      tx.oncomplete = function(){
+        ks.forEach(function(k, i){ if(!Object.prototype.hasOwnProperty.call(mem, k)) keys.push(k); mem[k] = String(vs[i]); });
+        /* the first time: move what's in the browser's storage across (the database's copy wins if both have it) */
+        var move = [];
+        if(real){ try{ for(var i = 0; i < real.length; i++){ var k = real.key(i); if(k && mine(k)) move.push(k); } }catch(e){} }
+        if(!move.length){ ready(); return; }
+        var wx = db.transaction('kv', 'readwrite'), ws = wx.objectStore('kv');
+        move.forEach(function(k){ if(Object.prototype.hasOwnProperty.call(mem, k)) return; var v = real.getItem(k); if(v == null) return; mem[k] = v; keys.push(k); ws.put(v, k); });
+        wx.oncomplete = function(){ move.forEach(function(k){ try{ real.removeItem(k); }catch(e){} }); ready(); };
+        wx.onerror = wx.onabort = function(){ ready(); };   /* (couldn't move them: they stay where they are, and the planner still opens) */
+      };
+      tx.onerror = function(){ start(); };
+    }catch(e){ start(); }
+  };
+})();
+</script>
+<script type="text/hufc-later">
 (function(){
   'use strict';
+  /* where the planner keeps its plans on this device: the iPhone/iPad app (and the planner in a browser) keep them in the
+     device's database, which holds far more (see the loader in the app); the Windows program keeps them as files; otherwise the browser's storage */
+  const hufcStore = window.__hufcStore || (function(){ try{ return window.localStorage; }catch(e){ return null; } })();
 
   /* Captured before anything is rendered, so "Save plan" can write a clean copy of this file. */
   const PRISTINE = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
@@ -5802,14 +5875,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function clock(){ return new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
   function readLocal(key){
-    try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; }
+    try{ const raw = hufcStore.getItem(key); return raw ? JSON.parse(raw) : null; }
     catch(e){ storageOK = false; return null; }
   }
   function syncBoards(){ boards.forEach(function(b){ b.d.items = b.api.serialize(); }); }
   /* ---------- copy and paste on the pitch: an icon, a group, or a whole diagram, onto any board (any session or pre-game) ---------- */
   const CLIP_KEY = 'hufc-pitch-clip';
   let activeBoardId = null;
-  function clipGet(){ try{ const v = JSON.parse(localStorage.getItem(CLIP_KEY) || 'null'); return v && Array.isArray(v.items) && v.items.length ? v : null; }catch(e){ return null; } }
+  function clipGet(){ try{ const v = JSON.parse(hufcStore.getItem(CLIP_KEY) || 'null'); return v && Array.isArray(v.items) && v.items.length ? v : null; }catch(e){ return null; } }
   function clipButtons(){ const has = !!clipGet(); document.querySelectorAll('.js-paste').forEach(function(b){ b.disabled = !has; }); }
   window.addEventListener('storage', function(e){ if(e.key === CLIP_KEY) clipButtons(); });
   function copyFromBoard(b, whole){
@@ -5822,7 +5895,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       v.set = {layout:b.d.layout, lineColor:b.d.lineColor, grass:b.d.grass, watermark:b.d.watermark, zoom:b.d.zoom || null, view:b.d.view || null, around:b.d.around || null, zoom3:b.d.zoom3 || null};
       if(b.d.anim) v.anim = JSON.parse(JSON.stringify(b.d.anim));
     }
-    try{ localStorage.setItem(CLIP_KEY, JSON.stringify(v)); }catch(e){}
+    try{ hufcStore.setItem(CLIP_KEY, JSON.stringify(v)); }catch(e){}
     clipButtons();
     showToast(whole ? 'Copied the diagram · open any board and press Paste' : 'Copied ' + (items.length === 1 ? (TOOL_NAMES[items[0].type] || 'it').split(' — ')[0].toLowerCase() : items.length + ' items') + ' · click any pitch and press Ctrl+V (or Paste)');
   }
@@ -5883,7 +5956,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!suppressCommit) commitHistory();
     state.savedAt = Date.now();
     try{
-      localStorage.setItem(storageKey, JSON.stringify(state));
+      hufcStore.setItem(storageKey, JSON.stringify(state));
       storageOK = true;
       setStatus((window.hufcDesktop ? 'Saved · ' : 'Saved in the app · ') + clock());
       clubSyncSoon();
@@ -5953,7 +6026,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const blob = f.blob, fileName = f.fileName;
     saveFile(blob, fileName).then(function(ok){ if(ok) setStatus('Saved “' + fileName + '” · ' + clock()); });
     const draftKey = LS_PREFIX + 'draft';
-    if(storageKey === draftKey){ try{ localStorage.removeItem(draftKey); }catch(e){} }
+    if(storageKey === draftKey){ try{ hufcStore.removeItem(draftKey); }catch(e){} }
     storageKey = LS_PREFIX + state.planId;
     saveLocal();
   }
@@ -7212,12 +7285,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const LIB_KEY = 'hufc-practice-library';
   function readLibrary(){
     try{
-      const l = JSON.parse(localStorage.getItem(LIB_KEY) || 'null');
+      const l = JSON.parse(hufcStore.getItem(LIB_KEY) || 'null');
       if(l && l.items){ l.removed = l.removed || {}; Object.keys(l.items).forEach(function(k){ const p = l.items[k] && l.items[k].practice; if(p && p.tv !== 2){ teamKitSwap(p.items); p.tv = 2; } }); return l; }
     }catch(e){}
     return {v:1, items:{}, removed:{}};
   }
-  function writeLibrary(l, quiet){ try{ localStorage.setItem(LIB_KEY, JSON.stringify(l)); if(!quiet) clubSyncSoon(); return true; }catch(e){ return false; } }
+  function writeLibrary(l, quiet){ try{ hufcStore.setItem(LIB_KEY, JSON.stringify(l)); if(!quiet) clubSyncSoon(); return true; }catch(e){ return false; } }
   function practiceHasContent(d){
     return !!((d.items && d.items.length) || clean(d.focus) || (d.notes || []).some(function(f){ return clean(f.value); }));
   }
@@ -7865,11 +7938,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function listSessions(){
     const out = [];
     try{
-      for(let i = 0; i < localStorage.length; i++){
-        const k = localStorage.key(i);
+      for(let i = 0; i < hufcStore.length; i++){
+        const k = hufcStore.key(i);
         if(!k || k.indexOf(LS_PREFIX) !== 0) continue;
         let s = null;
-        try{ s = JSON.parse(localStorage.getItem(k)); }catch(e){ continue; }
+        try{ s = JSON.parse(hufcStore.getItem(k)); }catch(e){ continue; }
         if(!s || !s.meta || !Array.isArray(s.drills)) continue;
         const hasContent = sessionName(s) || clean(s.meta.date) || clean(s.meta.venue) ||
           (isPre(s) ? s.drills.some(function(d){ return (d.clips || []).length || (d.pics || []).length || (d.notes || []).some(function(f){ return clean(f.value); }); }) : s.drills.some(practiceHasContent));
@@ -7903,8 +7976,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         (isOpen || !canEdit(s)) ? null : h('button', {type:'button', class:'icon-btn danger', title:'Delete this session', 'aria-label':'Remove session', text:'✕', onclick:async function(ev){
           ev.stopPropagation();
           if(!(await askDelete(pre ? 'pre-game' : 'session', sessionName(s) || (pre ? 'Untitled pre-game' : 'Untitled session'), pre ? '' : 'Its practices stay in Saved practices.'))) return;
-          const raw = localStorage.getItem(x.key);
-          try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){}
+          const raw = hufcStore.getItem(x.key);
+          try{ hufcStore.removeItem(x.key); noteDeleted(x.key); }catch(e){}
           redraw(); clubSyncSoon();
           showToast('Removed “' + (sessionName(s) || 'Untitled session') + '”', function(){ undoDeleted(x.key, raw); redraw(); clubSyncSoon(); });
         }})
@@ -8157,8 +8230,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const name = luName(lu) || 'Untitled lineup';
       if(!(await askDelete('lineup', name))) return;
       luFlush();
-      const key = luKey, raw = localStorage.getItem(key);
-      try{ localStorage.removeItem(key); noteDeleted(key); }catch(e){}
+      const key = luKey, raw = hufcStore.getItem(key);
+      try{ hufcStore.removeItem(key); noteDeleted(key); }catch(e){}
       delDone(name, key, raw);
       return;
     }
@@ -8166,8 +8239,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const pre = isPre(), what = pre ? 'pre-game' : 'session', name = sessionName(state) || (pre ? 'Untitled pre-game' : 'Untitled session');
     if(!(await askDelete(what, name, pre ? '' : 'Its practices stay in Saved practices.'))) return;
     flush();
-    const key = storageKey, raw = localStorage.getItem(key);
-    try{ localStorage.removeItem(key); noteDeleted(key); }catch(e){}
+    const key = storageKey, raw = hufcStore.getItem(key);
+    try{ hufcStore.removeItem(key); noteDeleted(key); }catch(e){}
     delDone(name, key, raw);
   });
   function delDone(name, key, raw){
@@ -8186,7 +8259,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   document.getElementById('backupBtn').addEventListener('click', function(){
     try{ flush(); }catch(e){}
     const items = {};
-    for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if(k && k.indexOf('hufc-') === 0 && !BACKUP_SKIP[k] && !/:draft$/.test(k)) items[k] = localStorage.getItem(k); }
+    for(let i = 0; i < hufcStore.length; i++){ const k = hufcStore.key(i); if(k && k.indexOf('hufc-') === 0 && !BACKUP_SKIP[k] && !/:draft$/.test(k)) items[k] = hufcStore.getItem(k); }
     const d = new Date(), name = 'HUFC planner backup – ' + d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()] + ' ' + d.getFullYear() + '.hufcbackup';
     saveFile(new Blob([JSON.stringify({kind:'hufc-backup', v:1, made:Date.now(), items:items})], {type:'application/json'}), name)
       .then(function(ok){ if(ok) setStatus('Saved “' + name + '” · on your other device, press Bring in a backup… and pick it'); });
@@ -8203,17 +8276,17 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       let n = 0;
       Object.keys(b.items).forEach(function(k){
         if(k.indexOf('hufc-') !== 0 || BACKUP_SKIP[k] || /:draft$/.test(k)) return;
-        const v = b.items[k], cur = localStorage.getItem(k);
+        const v = b.items[k], cur = hufcStore.getItem(k);
         try{
           if(k === LIB_KEY){      /* saved practices: each one, the newer copy wins */
             const a = bkParse(cur) || {v:1, items:{}, removed:{}}, o = bkParse(v) || {};
             a.items = a.items || {}; a.removed = a.removed || {};
             Object.keys(o.items || {}).forEach(function(id){ const x = o.items[id], y = a.items[id]; if(!y || (x.savedAt || 0) > (y.savedAt || 0)){ a.items[id] = x; delete a.removed[id]; n++; } });
-            localStorage.setItem(k, JSON.stringify(a)); return;
+            hufcStore.setItem(k, JSON.stringify(a)); return;
           }
           const o = bkParse(v), c = bkParse(cur);
-          if(o && typeof o === 'object' && 'savedAt' in o){ if(!c || (o.savedAt || 0) > (c.savedAt || 0)){ localStorage.setItem(k, v); n++; } return; }   /* plans: the newer copy wins */
-          if(cur == null){ localStorage.setItem(k, v); n++; }
+          if(o && typeof o === 'object' && 'savedAt' in o){ if(!c || (o.savedAt || 0) > (c.savedAt || 0)){ hufcStore.setItem(k, v); n++; } return; }   /* plans: the newer copy wins */
+          if(cur == null){ hufcStore.setItem(k, v); n++; }
         }catch(e){}
       });
       try{ renderHome(); }catch(e){}
@@ -8544,7 +8617,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(isLineupView()){ luSaveNow(); kind = 'lineup'; obj = lu; id = luKey.slice(LU_PREFIX.length); }
       else {
         syncBoards();
-        if(storageKey === LS_PREFIX + 'draft'){ if(!state.planId) state.planId = newId(); try{ localStorage.removeItem(storageKey); }catch(e){} storageKey = LS_PREFIX + state.planId; }
+        if(storageKey === LS_PREFIX + 'draft'){ if(!state.planId) state.planId = newId(); try{ hufcStore.removeItem(storageKey); }catch(e){} storageKey = LS_PREFIX + state.planId; }
         state.savedAt = Date.now(); saveLocal();
         kind = isPre() ? 'pregame' : 'session'; obj = state; id = storageKey.slice(LS_PREFIX.length);
       }
@@ -9353,7 +9426,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!lu || !luKey || readOnly) return;
     luCommit();
     lu.savedAt = Date.now();
-    try{ localStorage.setItem(luKey, JSON.stringify(lu)); storageOK = true; setStatus((window.hufcDesktop ? 'Saved · ' : 'Saved in the app · ') + clock()); clubSyncSoon(); gtDesktopExport(); }
+    try{ hufcStore.setItem(luKey, JSON.stringify(lu)); storageOK = true; setStatus((window.hufcDesktop ? 'Saved · ' : 'Saved in the app · ') + clock()); clubSyncSoon(); gtDesktopExport(); }
     catch(e){ storageOK = false; setStatus('This browser can’t keep lineups — print or export a copy', 'warn'); }
     luUpdateButtons();
   }
@@ -9371,7 +9444,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     lu = luNormalize(JSON.parse(j)); luKey = keep;
     const y = window.scrollY; luRender(); window.scrollTo(0, y);
     lu.savedAt = Date.now();
-    try{ localStorage.setItem(luKey, JSON.stringify(lu)); }catch(e){}
+    try{ hufcStore.setItem(luKey, JSON.stringify(lu)); }catch(e){}
     luUpdateButtons();
   }
   function luUndo(){ hideToast(); luFlush(); if(luUndoStack.length < 2) return; luRedoStack.push(luUndoStack.pop()); luApply(luUndoStack[luUndoStack.length - 1]); setStatus('Undone · ' + clock()); }
@@ -9439,8 +9512,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       list.classList.remove('up'); list.style.maxHeight = '';
       const r = inp.getBoundingClientRect(), vh = window.innerHeight || document.documentElement.clientHeight;
       const below = vh - r.bottom - 12, above = r.top - 12;
-      if(below < 180 && above > below){ list.classList.add('up'); list.style.maxHeight = Math.max(120, Math.min(300, above)) + 'px'; }
-      else list.style.maxHeight = Math.max(120, Math.min(300, below)) + 'px';
+      if(below < 110 && above > below){ list.classList.add('up'); list.style.maxHeight = Math.max(110, Math.min(300, above)) + 'px'; }   /* (upward only when there's really no room below — it covers the boxes above) */
+      else list.style.maxHeight = Math.max(110, Math.min(300, below)) + 'px';
       const target = list.children[hi >= 0 ? hi : 0]; if(target) list.scrollTop = Math.max(0, target.offsetTop - list.clientHeight / 2 + target.offsetHeight / 2);
     }
     function pick(t){ inp.value = t; paint(); o.onChange(t); filtering = false; close(); }
@@ -9637,7 +9710,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const CLUB_LOGOS = 'hufc-club-logos';
   const LU_LOGO_ALIAS = {'gv suns':'goulburn valley suns', 'gvsuns':'goulburn valley suns', 'gippsland united':'gippsland', 'monash city':'monash city villarreal', 'monash':'monash city villarreal', 'monash villarreal':'monash city villarreal', 'port melbourne':'port melbourne sharks', 'caroline springs george cross':'cs george cross', 'manningham united blues':'manningham united'};
   function luLogoKey(name){ const k = clean(name).toLowerCase().replace(/\b(football|soccer)\s+club\b/g, '').replace(/\b(fc|sc)\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); return LU_LOGO_ALIAS[k] || k; }
-  function luLogos(){ try{ return JSON.parse(localStorage.getItem(CLUB_LOGOS) || '{}') || {}; }catch(e){ return {}; } }
+  function luLogos(){ try{ return JSON.parse(hufcStore.getItem(CLUB_LOGOS) || '{}') || {}; }catch(e){ return {}; } }
   /* the logos built in for the clubs in the opponents list (a logo saved earlier by hand only fills in for a club without one) */
   const LU_BUILTIN_LOGOS = {};
   const LU_CREST = 'data:image/png;base64,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';   /* Heidelberg's crest for the score box and match videos */
@@ -9679,7 +9752,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         g.drawImage(src, 0, 0, tw, th);
         URL.revokeObjectURL(url);
         const all = luLogos(); all[luLogoKey(lu.meta.opponent)] = c.toDataURL('image/png');
-        try{ localStorage.setItem(CLUB_LOGOS, JSON.stringify(all)); showToast('Saved ' + clean(lu.meta.opponent) + '’s logo · it shows for every game against them'); }
+        try{ hufcStore.setItem(CLUB_LOGOS, JSON.stringify(all)); showToast('Saved ' + clean(lu.meta.opponent) + '’s logo · it shows for every game against them'); }
         catch(e){ showToast('Couldn’t keep that logo — try a smaller picture'); }
         luOppLogoRefresh();
       };
@@ -10311,12 +10384,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     lu.periods.forEach(function(p){ p.slots.forEach(function(sl){ sl.pid = null; }); });      /* ...and an empty pitch: just the positions, you put the players on */
     luRender(); luShow();
     lu.savedAt = Date.now();
-    try{ localStorage.setItem(luKey, JSON.stringify(lu)); }catch(e){}
+    try{ hufcStore.setItem(luKey, JSON.stringify(lu)); }catch(e){}
     const t = document.querySelector('#luInfo textarea'); if(t) setTimeout(function(){ t.focus(); }, 0);
     setStatus('New matchday lineup · start with the opponent and round');
   }
   function luOpen(key){
-    let s = null; try{ s = JSON.parse(localStorage.getItem(key)); }catch(e){}
+    let s = null; try{ s = JSON.parse(hufcStore.getItem(key)); }catch(e){}
     if(!s) return;
     lu = luNormalize(s); luKey = key;
     luRender(); luShow();
@@ -10333,10 +10406,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function luList(){
     const out = [];
     try{
-      for(let i = 0; i < localStorage.length; i++){
-        const k = localStorage.key(i);
+      for(let i = 0; i < hufcStore.length; i++){
+        const k = hufcStore.key(i);
         if(!k || k.indexOf(LU_PREFIX) !== 0) continue;
-        let s = null; try{ s = JSON.parse(localStorage.getItem(k)); }catch(e){ continue; }
+        let s = null; try{ s = JSON.parse(hufcStore.getItem(k)); }catch(e){ continue; }
         if(s && s.kind === 'lineup' && luHasContent(s)) out.push({key:k, lu:luNormalize(s)});
       }
     }catch(e){}
@@ -10368,8 +10441,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           !canEdit(s) ? null : h('button', {type:'button', class:'icon-btn danger', title:'Delete this lineup', 'aria-label':'Remove lineup', text:'✕', onclick:async function(ev){
             ev.stopPropagation();
             if(!(await askDelete('lineup', name || 'Untitled lineup'))) return;
-            const raw = localStorage.getItem(x.key);
-            try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){}
+            const raw = hufcStore.getItem(x.key);
+            try{ hufcStore.removeItem(x.key); noteDeleted(x.key); }catch(e){}
             refresh(); clubSyncSoon();
             showToast('Removed “' + (name || 'Untitled lineup') + '”', function(){ undoDeleted(x.key, raw); refresh(); clubSyncSoon(); });
           }})));
@@ -10620,10 +10693,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function sqList(){
     const out = [];
     try{
-      for(let i = 0; i < localStorage.length; i++){
-        const k = localStorage.key(i);
+      for(let i = 0; i < hufcStore.length; i++){
+        const k = hufcStore.key(i);
         if(!k || k.indexOf(SQ_PREFIX) !== 0) continue;
-        let s = null; try{ s = JSON.parse(localStorage.getItem(k)); }catch(e){ continue; }
+        let s = null; try{ s = JSON.parse(hufcStore.getItem(k)); }catch(e){ continue; }
         if(s && s.kind === 'squad' && Array.isArray(s.players)) out.push({key:k, sq:s});
       }
     }catch(e){}
@@ -10637,7 +10710,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const sq = all[0].sq, u = sqUnique(sq.players);
     if(u.length !== sq.players.length){
       sq.players = u;
-      if(canEdit(sq)){ try{ localStorage.setItem(all[0].key, JSON.stringify(sq)); }catch(e){} }
+      if(canEdit(sq)){ try{ hufcStore.setItem(all[0].key, JSON.stringify(sq)); }catch(e){} }
     }
     return sq;
   }
@@ -10653,7 +10726,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!sq || !canEdit(sq)) sq = {kind:'squad', id:newId(), group:team || undefined, players:[]};
     sq.players = sqUnique(players);
     sq.savedAt = Date.now(); sq.seeded = true;
-    try{ localStorage.setItem(SQ_PREFIX + sq.id, JSON.stringify(sq)); }catch(e){}
+    try{ hufcStore.setItem(SQ_PREFIX + sq.id, JSON.stringify(sq)); }catch(e){}
     try{ clubSyncSoon(); }catch(e){}
     sqNames();
     return sq;
@@ -10866,11 +10939,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   window.hufcOpenItem = function(kind, id){
     try{
       if(kind === 'session' || kind === 'pregame'){
-        const key = LS_PREFIX + id; if(localStorage.getItem(key) == null) return false;
+        const key = LS_PREFIX + id; if(hufcStore.getItem(key) == null) return false;
         swap(function(){ closeSessions(true); closeLineups(true); openSession(key); }); return true;
       }
       if(kind === 'lineup'){
-        const key = LU_PREFIX + id; if(localStorage.getItem(key) == null) return false;
+        const key = LU_PREFIX + id; if(hufcStore.getItem(key) == null) return false;
         swap(function(){ closeSessions(true); closeLineups(true); luOpen(key); }); return true;
       }
       if(kind === 'practice'){
@@ -10911,10 +10984,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function mvList(){
     const out = [];
     try{
-      for(let i = 0; i < localStorage.length; i++){
-        const k = localStorage.key(i);
+      for(let i = 0; i < hufcStore.length; i++){
+        const k = hufcStore.key(i);
         if(!k || k.indexOf(MV_PREFIX) !== 0) continue;
-        let m = null; try{ m = JSON.parse(localStorage.getItem(k)); }catch(e){ continue; }
+        let m = null; try{ m = JSON.parse(hufcStore.getItem(k)); }catch(e){ continue; }
         if(m && m.kind === 'match') out.push({key:k, m:m});
       }
     }catch(e){}
@@ -10934,7 +11007,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function anLoadLu(id){
     if(!id) return null;
     if(lu && lu.id === id) return lu;
-    try{ const j = localStorage.getItem(LU_PREFIX + id); return j ? luNormalize(JSON.parse(j)) : null; }catch(e){ return null; }
+    try{ const j = hufcStore.getItem(LU_PREFIX + id); return j ? luNormalize(JSON.parse(j)) : null; }catch(e){ return null; }
   }
   /* the lineup this video is attached to (its players and opponent), if any */
   function anL(){ return anM ? anLoadLu(anM.luId) : null; }
@@ -10972,7 +11045,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, c.width, c.height);
         URL.revokeObjectURL(url);
         const all = luLogos(); all[luLogoKey(name)] = c.toDataURL('image/png');
-        try{ localStorage.setItem(CLUB_LOGOS, JSON.stringify(all)); }catch(e){ showToast('Couldn’t keep that logo on this device'); return; }
+        try{ hufcStore.setItem(CLUB_LOGOS, JSON.stringify(all)); }catch(e){ showToast('Couldn’t keep that logo on this device'); return; }
         anRenderTeamLogos(); anRenderButtons();
         showToast(name + '’s logo added · it shows for every match and lineup against them');
       };
@@ -10998,7 +11071,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function anSave(){
     if(!anM || !anCanEdit()) return;
     anM.savedAt = Date.now();
-    try{ localStorage.setItem(anKey, JSON.stringify(anM)); }catch(e){ showToast('This device is out of space · remove some old plans'); }
+    try{ hufcStore.setItem(anKey, JSON.stringify(anM)); }catch(e){ showToast('This device is out of space · remove some old plans'); }
     clearTimeout(anSaveT); anSaveT = setTimeout(function(){ clubSyncSoon(); }, 800);
     renderAnButton();
   }
@@ -11032,12 +11105,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!x){
       if(!canEdit(lu)){ showToast('No match video for this game yet'); return; }
       const m = mvNew(lu.id); x = {key:MV_PREFIX + m.id, m:m};
-      try{ localStorage.setItem(x.key, JSON.stringify(m)); }catch(e){}
+      try{ hufcStore.setItem(x.key, JSON.stringify(m)); }catch(e){}
     }
     anOpenMatch(x.key);
   }
   function anOpenMatch(key){
-    let m = null; try{ m = JSON.parse(localStorage.getItem(key)); }catch(e){}
+    let m = null; try{ m = JSON.parse(hufcStore.getItem(key)); }catch(e){}
     if(!m){ showToast('That match video isn’t on this device'); return; }
     anM = m; anKey = key;
     anData(); anFilter = {type:'', side:'', pid:''}; anTab = 'tags'; anCut = null;
@@ -11056,7 +11129,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     try{ document.getElementById('anClipClose').click(); }catch(e){}
     closeModal(anModal);
     /* a new match video with nothing in it isn't kept */
-    if(anM && anCanEdit() && !anM.luId && !anM.pgId && !clean(anM.title) && !mvHasWork(anM)){ try{ localStorage.removeItem(anKey); }catch(e){} }
+    if(anM && anCanEdit() && !anM.luId && !anM.pgId && !clean(anM.title) && !mvHasWork(anM)){ try{ hufcStore.removeItem(anKey); }catch(e){} }
     renderAnButton();
     if(document.documentElement.classList.contains('view-home')) renderHome();
     else if(typeof isPre === 'function' && isPre()) { try{ pgRenderMatchCell(); }catch(e){} }
@@ -11385,13 +11458,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     anSetVideo(url, key);
     const a = anData();
     if(anCanEdit() && (!a.file || a.file.name !== f.name || a.file.size !== f.size)){
-      if(a.file && anM.drive){ const old = anM.drive, mk = anKey; delete anM.drive; driveRemoveLater(old, function(){ const m = JSON.parse(localStorage.getItem(mk) || 'null'); return !!(m && m.drive && m.drive.id === old.id); }); }
+      if(a.file && anM.drive){ const old = anM.drive, mk = anKey; delete anM.drive; driveRemoveLater(old, function(){ const m = JSON.parse(hufcStore.getItem(mk) || 'null'); return !!(m && m.drive && m.drive.id === old.id); }); }
       a.file = {name:f.name, size:f.size}; anSave();
       setTimeout(function(){ driveSoon(0); driveSuggest(); }, 1500);
     }
     if(anDesk()){
       const fp = window.hufcDesktop.pathOf(f);
-      if(fp){ try{ localStorage.setItem(AN_PATH_PREFIX + id, fp); }catch(e){} anAutoSource(fp); return; }
+      if(fp){ try{ hufcStore.setItem(AN_PATH_PREFIX + id, fp); }catch(e){} anAutoSource(fp); return; }
     }
     /* everywhere else: keep a copy on the device so the video is just there next time */
     anKeepCopy(id, f, how === 'handle');
@@ -11435,7 +11508,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(anVideo.dataset.for === key && anVideo.currentSrc){ anRenderVideoState(); return; }
     if(anFiles[key]){ anSetVideo(anFiles[key].url, key); return; }
     if(anDesk()){
-      let fp = null; try{ fp = localStorage.getItem(AN_PATH_PREFIX + id); }catch(e){}
+      let fp = null; try{ fp = hufcStore.getItem(AN_PATH_PREFIX + id); }catch(e){}
       if(fp){
         const url = anFileUrl(fp);
         anVideo.addEventListener('loadeddata', function(){ anVideo.onerror = null; }, {once:true});
@@ -11930,9 +12003,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           canEdit(m) ? h('button', {type:'button', class:'icon-btn danger', title:'Delete this match video', 'aria-label':'Delete match video', text:'✕', onclick:async function(ev){
             ev.stopPropagation();
             if(!(await askDelete('match video', title, 'Its tags and clips go too. The video file on your device isn’t touched.'))) return;
-            const raw = localStorage.getItem(x.key);
-            try{ localStorage.removeItem(x.key); noteDeleted(x.key); }catch(e){} if(m.drive) driveRemoveLater(m.drive, function(){ return !!localStorage.getItem(x.key); });
-            setTimeout(function(){ if(!localStorage.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); if(anDl && anDl.id === m.id){ anDl.cancel = true; try{ anDl.stop.abort(); }catch(e){} } anDlDrop(m.id).catch(function(){}); try{ localStorage.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
+            const raw = hufcStore.getItem(x.key);
+            try{ hufcStore.removeItem(x.key); noteDeleted(x.key); }catch(e){} if(m.drive) driveRemoveLater(m.drive, function(){ return !!hufcStore.getItem(x.key); });
+            setTimeout(function(){ if(!hufcStore.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); if(anDl && anDl.id === m.id){ anDl.cancel = true; try{ anDl.stop.abort(); }catch(e){} } anDlDrop(m.id).catch(function(){}); try{ hufcStore.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
             clubSyncSoon(); renderHome(); if(after) after();
             showToast('Deleted “' + title + '”', function(){ undoDeleted(x.key, raw); clubSyncSoon(); renderHome(); if(after) after(); });
           }}) : null));
@@ -11955,12 +12028,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function anNewForPregame(pgId, group){
     const m = mvNew(''); m.pgId = pgId; if(group) m.group = group;
     const key = MV_PREFIX + m.id;
-    try{ localStorage.setItem(key, JSON.stringify(m)); }catch(e){ showToast('This device is out of space'); return; }
+    try{ hufcStore.setItem(key, JSON.stringify(m)); }catch(e){ showToast('This device is out of space'); return; }
     anOpenMatch(key);
   }
   function anNewFromHome(){
     const m = mvNew(''), key = MV_PREFIX + m.id;
-    try{ localStorage.setItem(key, JSON.stringify(m)); }catch(e){ showToast('This device is out of space'); return; }
+    try{ hufcStore.setItem(key, JSON.stringify(m)); }catch(e){ showToast('This device is out of space'); return; }
     anOpenMatch(key);
   }
   document.getElementById('homeMvNewBtn').addEventListener('click', anNewFromHome);
@@ -11977,8 +12050,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(mvForLineup(x.lu.id)) return;
         const m = {kind:'match', v:1, id:newId(), title:'', luId:x.lu.id, group:x.lu.group || 'U18', savedAt:Date.now(), analysis:a};
         if(x.lu.owner) m.owner = x.lu.owner; if(x.lu.madeBy) m.madeBy = x.lu.madeBy;
-        localStorage.setItem(MV_PREFIX + m.id, JSON.stringify(m));
-        const raw = JSON.parse(localStorage.getItem(x.key)); delete raw.analysis; localStorage.setItem(x.key, JSON.stringify(raw));
+        hufcStore.setItem(MV_PREFIX + m.id, JSON.stringify(m));
+        const raw = JSON.parse(hufcStore.getItem(x.key)); delete raw.analysis; hufcStore.setItem(x.key, JSON.stringify(raw));
         if(lu && lu.id === x.lu.id) delete lu.analysis;
       });
     }catch(e){ console.warn('match video move', e); }
@@ -11992,7 +12065,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
      ===================================================================== */
   let anCut = null, anRec = null;
   let anClipLen = 15;   /* seconds — the length you pick for clips (1 to 60) */
-  try{ const L = +JSON.parse(localStorage.getItem('hufc-settings') || '{}').clipLen; if(L >= 1 && L <= 60) anClipLen = L; }catch(e){}
+  try{ const L = +JSON.parse(hufcStore.getItem('hufc-settings') || '{}').clipLen; if(L >= 1 && L <= 60) anClipLen = L; }catch(e){}
   function anClips(){ const a = anData(); if(!Array.isArray(a.clips)) a.clips = []; return a.clips; }
   function anRecMime(){
     const MR = window.MediaRecorder; if(!MR || !MR.isTypeSupported) return '';
@@ -12776,7 +12849,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     closeModal(anPgModal, true);
     const blob = await anClipBlobDrawn(c);
     if(!blob){ if(!(anVideo.currentSrc && anVideo.dataset.for === anKey)) showToast('Open the match video first, then add the clip'); return; }
-    let s; try{ s = JSON.parse(localStorage.getItem(key)); }catch(e){ s = null; }
+    let s; try{ s = JSON.parse(hufcStore.getItem(key)); }catch(e){ s = null; }
     const d = s && (s.drills || []).find(function(x){ return x.id === did; });
     if(!d){ showToast('That pre-game has changed · try again'); return; }
     const id = newId(), players = c.pids.map(anPlayerLabel).filter(Boolean);
@@ -12789,7 +12862,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }catch(e){ showToast('There isn’t room on this device for that clip'); return; }
     d.clips = d.clips || []; d.clips.push(clip);
     s.savedAt = Date.now();
-    try{ localStorage.setItem(key, JSON.stringify(s)); }catch(e){ showToast('Couldn’t save the pre-game'); return; }
+    try{ hufcStore.setItem(key, JSON.stringify(s)); }catch(e){ showToast('Couldn’t save the pre-game'); return; }
     clubSyncSoon(); driveSoon();
     closeModal(anPgModal);
     /* remember where it went, so the Clips tab shows it */
@@ -12821,7 +12894,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   anCpkModal.addEventListener('click', function(e){ if(e.target === anCpkModal){ anCpkDone = null; closeModal(anCpkModal); } });
   /* the clip as a video (with its drawings), from a match video that isn't open */
   async function anClipForBoard(mkey, cid){
-    let m = null; try{ m = JSON.parse(localStorage.getItem(mkey)); }catch(e){}
+    let m = null; try{ m = JSON.parse(hufcStore.getItem(mkey)); }catch(e){}
     if(!m) return null;
     let keepM = anM, keepK = anKey, open = !anModal.hidden && anKey === mkey, opened = false;
     if(!anModal.hidden && anKey !== mkey) closeAnalysis();   /* another match is open: this one's clip comes from its own match */
@@ -12849,10 +12922,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* remember on the clip which board it went onto */
   function anClipMarkBoard(mkey, cid, b){
     try{
-      const m = JSON.parse(localStorage.getItem(mkey)); const c = m && ((m.analysis || {}).clips || []).find(function(x){ return x.id === cid; });
+      const m = JSON.parse(hufcStore.getItem(mkey)); const c = m && ((m.analysis || {}).clips || []).find(function(x){ return x.id === cid; });
       if(!c) return;
       c.boards = (c.boards || []).filter(function(x){ return x.did !== b.did; }).concat([b]);
-      m.savedAt = Date.now(); localStorage.setItem(mkey, JSON.stringify(m)); clubSyncSoon();
+      m.savedAt = Date.now(); hufcStore.setItem(mkey, JSON.stringify(m)); clubSyncSoon();
       if(anM && anKey === mkey){ anM = m; }
     }catch(e){}
   }
@@ -12870,12 +12943,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* things a coach deleted on purpose (pressed Delete): only these are taken out of the club library for everyone.
      Anything else that's missing here is never deleted from the club — a coach's saved work stays until they (or the admin) delete it. */
   const DEL_KEY = 'hufc-deleted';
-  function deletedLog(){ try{ return JSON.parse(localStorage.getItem(DEL_KEY) || '{}') || {}; }catch(e){ return {}; } }
+  function deletedLog(){ try{ return JSON.parse(hufcStore.getItem(DEL_KEY) || '{}') || {}; }catch(e){ return {}; } }
   function noteDeleted(key){
     try{
       const d = deletedLog(), now = Date.now(); d[key] = now;
       Object.keys(d).forEach(function(k){ if(now - d[k] > 90 * 864e5) delete d[k]; });
-      localStorage.setItem(DEL_KEY, JSON.stringify(d));
+      hufcStore.setItem(DEL_KEY, JSON.stringify(d));
     }catch(e){}
   }
   function wasDeleted(key){ return !!deletedLog()[key]; }
@@ -12883,8 +12956,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function undoDeleted(key, raw){
     if(!raw) return;
     try{ const o = JSON.parse(raw); if(o && typeof o === 'object'){ o.savedAt = Date.now(); raw = JSON.stringify(o); } }catch(e){}
-    try{ localStorage.setItem(key, raw); }catch(e){}
-    try{ const d = deletedLog(); if(d[key]){ delete d[key]; localStorage.setItem(DEL_KEY, JSON.stringify(d)); } }catch(e){}
+    try{ hufcStore.setItem(key, raw); }catch(e){}
+    try{ const d = deletedLog(); if(d[key]){ delete d[key]; hufcStore.setItem(DEL_KEY, JSON.stringify(d)); } }catch(e){}
   }
   /* made by you (on this device, or under your account) */
   function isMineObj(o){
@@ -12895,8 +12968,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   const CLOUD = window.__HUFC_CLOUD || null;   /* your HUFC account (Firebase) — see cloud.js */
   let cloudLast = 0, cloudErr = '';
-  function getSettings(){ try{ return JSON.parse(localStorage.getItem(SET_KEY) || '{}') || {}; }catch(e){ return {}; } }
-  function setSettings(ch){ const s = Object.assign(getSettings(), ch); try{ localStorage.setItem(SET_KEY, JSON.stringify(s)); }catch(e){} return s; }
+  function getSettings(){ try{ return JSON.parse(hufcStore.getItem(SET_KEY) || '{}') || {}; }catch(e){ return {}; } }
+  function setSettings(ch){ const s = Object.assign(getSettings(), ch); try{ hufcStore.setItem(SET_KEY, JSON.stringify(s)); }catch(e){} return s; }
   /* the age groups this coach looks after, in the order they picked them (older settings kept just one) */
   function myGroups(){
     /* signed in and approved: the teams the club admin confirmed */
@@ -13084,11 +13157,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* work made before folders existed goes in the coach's own folder */
   function tagUntagged(g){
     try{
-      for(let i = 0; i < localStorage.length; i++){
-        const k = localStorage.key(i);
+      for(let i = 0; i < hufcStore.length; i++){
+        const k = hufcStore.key(i);
         if(!k || (k.indexOf(LS_PREFIX) !== 0 && k.indexOf(LU_PREFIX) !== 0)) continue;
-        const s = JSON.parse(localStorage.getItem(k));
-        if(s && typeof s === 'object' && !s.group){ s.group = g; localStorage.setItem(k, JSON.stringify(s)); }
+        const s = JSON.parse(hufcStore.getItem(k));
+        if(s && typeof s === 'object' && !s.group){ s.group = g; hufcStore.setItem(k, JSON.stringify(s)); }
       }
     }catch(e){}
     const lib = readLibrary(); let n = 0;
@@ -13245,7 +13318,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const hd = await window.showDirectoryPicker({id:'hufc-club', mode:'readwrite'});
       clubDir = hd; clubState = 'on';
       await idbSet('clubDir', hd);
-      try{ localStorage.removeItem(SYNC_KEY); }catch(e){}
+      try{ hufcStore.removeItem(SYNC_KEY); }catch(e){}
       renderClubStatus();
       await clubSync();
       showToast('Linked to “' + hd.name + '” · your ' + (groupList(myGroups()) || '') + ' work now saves there too');
@@ -13304,8 +13377,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     };
     return {dir:CLOUD.dir, online:true, canEdit:canEditCloud,
       byName:function(){ return CLOUD.name(); }, isOther:function(o){ const u = CLOUD.user(); return !!(u && o !== u.uid && CLOUD.knows(o)); },
-      readIndex:function(){ try{ return JSON.parse(localStorage.getItem(cloudKey()) || '{}') || {}; }catch(e){ return {}; } },
-      writeIndex:function(ix){ try{ localStorage.setItem(cloudKey(), JSON.stringify(ix)); }catch(e){} }};
+      readIndex:function(){ try{ return JSON.parse(hufcStore.getItem(cloudKey()) || '{}') || {}; }catch(e){ return {}; } },
+      writeIndex:function(ix){ try{ hufcStore.setItem(cloudKey(), JSON.stringify(ix)); }catch(e){} }};
   }
   /* your account: one small button beside "I coach" — its menu holds who you are, Coaches, Sync now and Sign out */
   let acctOpen = false;
@@ -13407,7 +13480,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const WELCOME_SKIP = 'hufc-welcome-skip', LAST_EMAIL = 'hufc-last-email';
   let welcomeEl = null, welcomeMode = 'in', welcomeAfter = [], welcomeManual = false;
   function welcomeShown(){ return !!(welcomeEl && !welcomeEl.hidden); }
-  function welcomeLS(k, v){ try{ if(v === undefined) return localStorage.getItem(k); if(v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){} return null; }
+  function welcomeLS(k, v){ try{ if(v === undefined) return hufcStore.getItem(k); if(v === null) hufcStore.removeItem(k); else hufcStore.setItem(k, v); }catch(e){} return null; }
   function welcomeBuild(){
     const crest = (document.querySelector('img.crest') || {}).src || '';
     const f = function(id, label, type, ac, extra){
@@ -13674,7 +13747,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   async function cloudSignOut(){
     try{ await clubSyncNow(); }catch(e){}
-    try{ localStorage.removeItem(WELCOME_SKIP); }catch(e){}   /* signed out: the sign-in page greets the next person who opens the planner */
+    try{ hufcStore.removeItem(WELCOME_SKIP); }catch(e){}   /* signed out: the sign-in page greets the next person who opens the planner */
     await CLOUD.signOut();
     showToast('Signed out · your plans stay on this device');
   }
@@ -13698,8 +13771,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     window.addEventListener('online', function(){ cloudErr = ''; clubSyncSoon(); });
   }
   function syncKey(){ return clubDir && clubDir.__bridge ? SYNC_KEY + ':online' : SYNC_KEY; }
-  function readIndex(){ try{ return JSON.parse(localStorage.getItem(syncKey()) || '{}') || {}; }catch(e){ return {}; } }
-  function writeIndex(ix){ try{ localStorage.setItem(syncKey(), JSON.stringify(ix)); }catch(e){} }
+  function readIndex(){ try{ return JSON.parse(hufcStore.getItem(syncKey()) || '{}') || {}; }catch(e){ return {}; } }
+  function writeIndex(ix){ try{ hufcStore.setItem(syncKey(), JSON.stringify(ix)); }catch(e){} }
   async function subdir(dir, name, create){ try{ return await dir.getDirectoryHandle(name, {create:!!create}); }catch(e){ return null; } }
   async function readDirFiles(dir){
     const out = {}, bad = [];
@@ -13723,15 +13796,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   };
   function localGet(kind, id, lib){
     if(kind === 'practices') return lib.removed[id] ? null : (lib.items[id] || null);
-    try{ return JSON.parse(localStorage.getItem(SYNC_KINDS[kind].prefix + id) || 'null'); }catch(e){ return null; }
+    try{ return JSON.parse(hufcStore.getItem(SYNC_KINDS[kind].prefix + id) || 'null'); }catch(e){ return null; }
   }
   function localSet(kind, id, obj, lib){
     if(kind === 'practices'){ lib.items[id] = obj; return; }
-    try{ localStorage.setItem(SYNC_KINDS[kind].prefix + id, JSON.stringify(obj)); }catch(e){}
+    try{ hufcStore.setItem(SYNC_KINDS[kind].prefix + id, JSON.stringify(obj)); }catch(e){}
   }
   function localDel(kind, id, lib){
     if(kind === 'practices'){ delete lib.items[id]; return; }
-    try{ localStorage.removeItem(SYNC_KINDS[kind].prefix + id); }catch(e){}
+    try{ hufcStore.removeItem(SYNC_KINDS[kind].prefix + id); }catch(e){}
   }
   function localItems(kind, lib){
     if(kind === 'sessions') return listSessions().map(function(x){ return {id:x.key.slice(LS_PREFIX.length), obj:x.plan}; }).filter(function(x){ return x.id !== 'draft'; });
@@ -13965,6 +14038,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.41', d:'29 Oct 2026', t:'Far more room on iPhone and iPad', n:['The iPhone/iPad app (and the planner in a browser) now keeps your sessions, lineups, pre-games and match videos in the device’s own database — hundreds of megabytes or more, instead of about 5 MB — so it won’t run out of room as the club library grows', 'What was already there is moved across by itself the first time it opens', 'Pick-lists open upward only when there’s no room below, so they don’t cover the boxes above', 'Windows program 1.6.6: the extra backup copies of whole match videos are tidied away (the videos themselves stay in your Videos folder)']},
     {v:'3.40', d:'29 Oct 2026', t:'Smoother Windows program, right counts', n:['Windows program 1.6.5: the program no longer rewrites its settings file every few seconds (the sign-in system’s own notes stay in memory), so the window and mouse stay smooth', 'Whole match videos are no longer copied into Backups (they doubled the space they take); clips and pictures still are', 'Settings → On this device counts the same match videos and lineups the home page shows (empty ones aren’t counted)']},
     {v:'3.39', d:'29 Oct 2026', t:'Teams on their own row', n:['In a match video the two teams have a row of their own (the title, lineup and pre-game sit above), so the full names show — on a phone, one team above the other']},
     {v:'3.38', d:'28 Oct 2026', t:'Team list and crest', n:['Choosing a team (in a match video, and Opponent and the other pick-lists in a lineup): the list scrolls with your finger on iPhone and iPad, always fits on the screen (opening upward when there’s more room), and stays open while you scroll', 'Match videos pick the teams from the clubs list, or type any team', 'The Heidelberg crest beside the teams is the sharp one, on a small black badge']},
@@ -14064,7 +14138,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       }
       body.append(setRow('Connected', st.email || 'Your Google account', h('button', {type:'button', class:'btn btn-small', text:'Disconnect', onclick:async function(){ await driveDisconnect(); renderSettings(); }})));
       if(driveDesk() || driveWeb()){
-        const box = h('input', {type:'checkbox', checked:driveMatchesOn(), 'aria-label':'Full match videos too', onchange:function(){ try{ if(this.checked) localStorage.setItem(DRIVE_MATCHES_ON, '1'); else localStorage.removeItem(DRIVE_MATCHES_ON); }catch(e){} if(this.checked) driveSoon(0); }});
+        const box = h('input', {type:'checkbox', checked:driveMatchesOn(), 'aria-label':'Full match videos too', onchange:function(){ try{ if(this.checked) hufcStore.setItem(DRIVE_MATCHES_ON, '1'); else hufcStore.removeItem(DRIVE_MATCHES_ON); }catch(e){} if(this.checked) driveSoon(0); }});
         const mw = driveMatchTodo().length;
         body.append(setRow('Full match videos too', 'Off: full matches stay on each device (a match uses a lot of your Drive space) — coaches open their own copy of the same video, and you can still put one match up with its ☁ button. On: every match goes up in the background (an hour or more each).' + (mw ? ' ' + mw + (mw === 1 ? ' match video' : ' match videos') + ' to go up.' : ''), h('label', {class:'set-switch'}, box, h('span', {'aria-hidden':'true'}))));
       }
@@ -14211,9 +14285,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     p.appendChild(i);
     const n = {s:0, p:0, l:0, m:0, bytes:0};
     try{
-      for(let k = 0; k < localStorage.length; k++){
-        const key = localStorage.key(k); if(!key || key.indexOf('hufc-') !== 0) continue;
-        const v = localStorage.getItem(key) || ''; n.bytes += (key.length + v.length) * 2;
+      for(let k = 0; k < hufcStore.length; k++){
+        const key = hufcStore.key(k); if(!key || key.indexOf('hufc-') !== 0) continue;
+        const v = hufcStore.getItem(key) || ''; n.bytes += (key.length + v.length) * 2;
         if(key.indexOf(LS_PREFIX) === 0 && key !== LS_PREFIX + 'draft'){ let d = null; try{ d = JSON.parse(v); }catch(e){} if(d && d.doc === 'pregame') n.p++; else if(d) n.s++; }
         else if(key.indexOf(LU_PREFIX) === 0){ let d = null; try{ d = JSON.parse(v); }catch(e){} if(d && (typeof luHasContent !== 'function' || luHasContent(d))) n.l++; }
         else if(key.indexOf(MV_PREFIX) === 0){ let d = null; try{ d = JSON.parse(v); }catch(e){} if(d && d.kind === 'match' && (typeof mvIsReal !== 'function' || mvIsReal(d))) n.m++; }   /* (the same ones the home page shows) */
@@ -14668,7 +14742,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
      d.lineup = {id, half, snap}: it follows the saved lineup (changes there show here); snap is a copy for devices that don't have it */
   function pgLineupGet(ref){
     let L = null;
-    try{ const raw = localStorage.getItem(LU_PREFIX + ref.id); if(raw) L = JSON.parse(raw); }catch(e){}
+    try{ const raw = hufcStore.getItem(LU_PREFIX + ref.id); if(raw) L = JSON.parse(raw); }catch(e){}
     let live = !!L;
     if(!L && ref.snap){ try{ L = JSON.parse(JSON.stringify(ref.snap)); }catch(e){ L = null; } }
     if(!L) return null;
@@ -14836,9 +14910,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(local){
       setTimeout(function(){
         try{
-          for(let i = 0; i < localStorage.length; i++){
-            const k = localStorage.key(i);
-            if(k && k.indexOf(LS_PREFIX) === 0 && (localStorage.getItem(k) || '').indexOf(local) !== -1) return;
+          for(let i = 0; i < hufcStore.length; i++){
+            const k = hufcStore.key(i);
+            if(k && k.indexOf(LS_PREFIX) === 0 && (hufcStore.getItem(k) || '').indexOf(local) !== -1) return;
           }
         }catch(e){ return; }
         if(window.hufcDesktop && window.hufcDesktop.deleteVideo) window.hufcDesktop.deleteVideo(local);
@@ -14847,9 +14921,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }
     setTimeout(function(){
       try{
-        for(let i = 0; i < localStorage.length; i++){
-          const k = localStorage.key(i);
-          if(k && k.indexOf(LS_PREFIX) === 0 && (localStorage.getItem(k) || '').indexOf(id) !== -1) return;
+        for(let i = 0; i < hufcStore.length; i++){
+          const k = hufcStore.key(i);
+          if(k && k.indexOf(LS_PREFIX) === 0 && (hufcStore.getItem(k) || '').indexOf(id) !== -1) return;
         }
       }catch(e){ return; }
       pgMedia.del(id).catch(function(){});
@@ -15149,9 +15223,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function pgForgetAsset(aid){
     setTimeout(async function(){
       try{
-        for(let i = 0; i < localStorage.length; i++){
-          const k = localStorage.key(i);
-          if(k && k.indexOf(LS_PREFIX) === 0 && (localStorage.getItem(k) || '').indexOf(aid) !== -1) return;
+        for(let i = 0; i < hufcStore.length; i++){
+          const k = hufcStore.key(i);
+          if(k && k.indexOf(LS_PREFIX) === 0 && (hufcStore.getItem(k) || '').indexOf(aid) !== -1) return;
         }
         const assets = window.__HUFC_ASSETS ? await window.__HUFC_ASSETS : null;
         if(assets) await assets.delete(aid);
@@ -15266,9 +15340,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function pgForgetPicture(local){
     setTimeout(function(){
       try{
-        for(let i = 0; i < localStorage.length; i++){
-          const k = localStorage.key(i);
-          if(k && k.indexOf(LS_PREFIX) === 0 && (localStorage.getItem(k) || '').indexOf(local) !== -1) return;
+        for(let i = 0; i < hufcStore.length; i++){
+          const k = hufcStore.key(i);
+          if(k && k.indexOf(LS_PREFIX) === 0 && (hufcStore.getItem(k) || '').indexOf(local) !== -1) return;
         }
       }catch(e){ return; }
       if(window.hufcDesktop && window.hufcDesktop.deletePicture) window.hufcDesktop.deletePicture(local);
@@ -15640,7 +15714,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   async function driveRefreshState(){
     if(driveDesk()){ try{ driveState = (await window.hufcDesktop.gdrive.status()) || {connected:false, email:''}; }catch(e){} }
-    else if(driveWeb()){ let w = null; try{ w = JSON.parse(localStorage.getItem(DRIVE_WEB_KEY) || 'null'); }catch(e){} driveState = {connected:!!(w && w.on), email:(w && w.email) || '', live:!!driveWebToken()}; }
+    else if(driveWeb()){ let w = null; try{ w = JSON.parse(hufcStore.getItem(DRIVE_WEB_KEY) || 'null'); }catch(e){} driveState = {connected:!!(w && w.on), email:(w && w.email) || '', live:!!driveWebToken()}; }
     return driveState;
   }
   /* connect: the program opens Google in the web browser; the app goes to Google and comes back */
@@ -15659,7 +15733,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     try{ flush(); }catch(e){}
     const st = Math.random().toString(36).slice(2) + Date.now().toString(36);
     try{ sessionStorage.setItem('hufc-gdrive-state', st); }catch(e){}
-    let hint = ''; try{ hint = (JSON.parse(localStorage.getItem(DRIVE_WEB_KEY) || 'null') || {}).email || ''; }catch(e){}
+    let hint = ''; try{ hint = (JSON.parse(hufcStore.getItem(DRIVE_WEB_KEY) || 'null') || {}).email || ''; }catch(e){}
     const q = {client_id:DRIVE_CLIENT.web, redirect_uri:DRIVE_APP_URL, response_type:'token', scope:'openid email https://www.googleapis.com/auth/drive.file', state:st, include_granted_scopes:'true'};
     if(hint) q.login_hint = hint;
     location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams(q).toString();
@@ -15670,7 +15744,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     else{
       const t = driveWebToken();
       if(t){ try{ await fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(t), {method:'POST'}); }catch(e){} }
-      try{ localStorage.removeItem(DRIVE_WEB_KEY); sessionStorage.removeItem(DRIVE_TOKEN_KEY); }catch(e){}
+      try{ hufcStore.removeItem(DRIVE_WEB_KEY); sessionStorage.removeItem(DRIVE_TOKEN_KEY); }catch(e){}
     }
     driveState = {connected:false, email:''};
     showToast('Google Drive disconnected · videos you add stay on this device');
@@ -15685,9 +15759,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const tok = p.get('access_token'), exp = Date.now() + (Math.max(60, +p.get('expires_in') || 3600)) * 1000;
     try{ sessionStorage.setItem(DRIVE_TOKEN_KEY, JSON.stringify({token:tok, exp:exp})); }catch(e){}
     fetch('https://www.googleapis.com/oauth2/v3/userinfo', {headers:{Authorization:'Bearer ' + tok}}).then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; }).then(function(u){
-      let w = {}; try{ w = JSON.parse(localStorage.getItem(DRIVE_WEB_KEY) || 'null') || {}; }catch(e){}
+      let w = {}; try{ w = JSON.parse(hufcStore.getItem(DRIVE_WEB_KEY) || 'null') || {}; }catch(e){}
       w.on = true; if(u && u.email) w.email = u.email;
-      try{ localStorage.setItem(DRIVE_WEB_KEY, JSON.stringify(w)); }catch(e){}
+      try{ hufcStore.setItem(DRIVE_WEB_KEY, JSON.stringify(w)); }catch(e){}
       driveState = {connected:true, email:w.email || '', live:true};
       setTimeout(function(){ showToast('Google Drive connected' + (w.email ? ' · ' + w.email : '') + ' · putting your videos up'); }, 1200);
       driveSoon(1500);
@@ -15703,7 +15777,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return r;
   }
   async function driveWebFolder(){
-    let w = {}; try{ w = JSON.parse(localStorage.getItem(DRIVE_WEB_KEY) || 'null') || {}; }catch(e){}
+    let w = {}; try{ w = JSON.parse(hufcStore.getItem(DRIVE_WEB_KEY) || 'null') || {}; }catch(e){}
     if(w.folder){ const r = await driveWebApi('GET', 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(w.folder) + '?fields=id,trashed'); if(r.ok){ const j = await r.json(); if(!j.trashed) return w.folder; } }
     const q = "name='" + DRIVE_FOLDER + "' and mimeType='application/vnd.google-apps.folder' and trashed=false";
     let id = '';
@@ -15715,7 +15789,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       id = (await r.json()).id;
       try{ await driveWebApi('POST', 'https://www.googleapis.com/drive/v3/files/' + id + '/permissions', {role:'reader', type:'anyone'}); }catch(e){}
     }
-    w.folder = id; try{ localStorage.setItem(DRIVE_WEB_KEY, JSON.stringify(w)); }catch(e){}
+    w.folder = id; try{ hufcStore.setItem(DRIVE_WEB_KEY, JSON.stringify(w)); }catch(e){}
     return id;
   }
   async function driveWebUpload(blob, name, onProg, resumeKey){
@@ -15723,7 +15797,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     let session = '', id = '', from = 0;
     /* a big upload cut short (the phone slept, the app closed) carries on from where it got to */
     if(SK){
-      let old = null; try{ old = JSON.parse(localStorage.getItem(SK) || 'null'); }catch(e){}
+      let old = null; try{ old = JSON.parse(hufcStore.getItem(SK) || 'null'); }catch(e){}
       if(old && old.size === blob.size && Date.now() - old.at < 6 * 864e5){
         try{
           const r = await fetch(old.url, {method:'PUT', headers:{'Content-Range':'bytes */' + blob.size}});
@@ -15738,7 +15812,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         {'X-Upload-Content-Type':mime, 'X-Upload-Content-Length':String(blob.size)});
       if(!start.ok) throw new Error('Google Drive didn’t start the upload (' + start.status + ')');
       session = start.headers.get('location'); if(!session) throw new Error('Google Drive didn’t start the upload');
-      if(SK) try{ localStorage.setItem(SK, JSON.stringify({url:session, size:blob.size, at:Date.now()})); }catch(e){}
+      if(SK) try{ hufcStore.setItem(SK, JSON.stringify({url:session, size:blob.size, at:Date.now()})); }catch(e){}
     }
     const CH = 8 * 1024 * 1024;
     let again = 0;
@@ -15756,7 +15830,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(onProg) onProg(Math.min(1, pos / blob.size));
     }
     if(!id) throw new Error('The upload didn’t finish');
-    if(SK) try{ localStorage.removeItem(SK); }catch(e){}
+    if(SK) try{ hufcStore.removeItem(SK); }catch(e){}
     try{ await driveWebApi('POST', 'https://www.googleapis.com/drive/v3/files/' + id + '/permissions', {role:'reader', type:'anyone'}); }catch(e){}
     return {id:id, url:'https://drive.google.com/file/d/' + id + '/view'};
   }
@@ -15785,11 +15859,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       scheduleSave(); return;
     }
     try{
-      const s = JSON.parse(localStorage.getItem(key)); if(!s) return;
+      const s = JSON.parse(hufcStore.getItem(key)); if(!s) return;
       let hit = false;
       (s.drills || []).forEach(function(d){ (d.clips || []).forEach(function(c){ if(c.id === cid){ c.drive = drive; hit = true; } }); });
       if(!hit) return;
-      s.savedAt = Date.now(); localStorage.setItem(key, JSON.stringify(s)); clubSyncSoon();
+      s.savedAt = Date.now(); hufcStore.setItem(key, JSON.stringify(s)); clubSyncSoon();
     }catch(e){}
   }
   /* this device's copy of a clip's video: the program's Videos folder file, or the copy kept in the app */
@@ -15858,7 +15932,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const DRIVE_MATCH_MAX = 12 * 1024 * 1024 * 1024;
   /* full matches only go up when asked (they're big): for every match (Settings), or one match at a time (its ☁ button) */
   const DRIVE_MATCHES_ON = 'hufc-gdrive-matches-on';
-  function driveMatchesOn(){ try{ return localStorage.getItem(DRIVE_MATCHES_ON) === '1'; }catch(e){ return false; } }
+  function driveMatchesOn(){ try{ return hufcStore.getItem(DRIVE_MATCHES_ON) === '1'; }catch(e){ return false; } }
   let driveMatchBusy = false, driveMatchFailUntil = 0;
   /* the same video as another match that's already on Drive (same file name and size): share its copy */
   function driveSameVideo(m){
@@ -15876,13 +15950,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const same = driveSameVideo(x.m);
       if(same){ driveMarkMatch(x.key, Object.assign({}, same)); return false; }
       if(!driveDesk()) return true;   /* (the app: whether this phone kept a copy is checked when it's its turn) */
-      let p = ''; try{ p = localStorage.getItem(AN_PATH_PREFIX + x.m.id) || ''; }catch(e){}
+      let p = ''; try{ p = hufcStore.getItem(AN_PATH_PREFIX + x.m.id) || ''; }catch(e){}
       return !!p;
-    }).map(function(x){ let p = ''; try{ p = localStorage.getItem(AN_PATH_PREFIX + x.m.id) || ''; }catch(e){} return {key:x.key, m:x.m, path:p}; });
+    }).map(function(x){ let p = ''; try{ p = hufcStore.getItem(AN_PATH_PREFIX + x.m.id) || ''; }catch(e){} return {key:x.key, m:x.m, path:p}; });
   }
   function driveMarkMatch(key, drive){
     if(anM && anKey === key){ anM.drive = drive; anSave(); return; }
-    try{ const m = JSON.parse(localStorage.getItem(key)); if(!m) return; m.drive = drive; m.savedAt = Date.now(); localStorage.setItem(key, JSON.stringify(m)); clubSyncSoon(); }catch(e){}
+    try{ const m = JSON.parse(hufcStore.getItem(key)); if(!m) return; m.drive = drive; m.savedAt = Date.now(); hufcStore.setItem(key, JSON.stringify(m)); clubSyncSoon(); }catch(e){}
   }
   async function driveMatchSweep(){
     if(driveMatchBusy || Date.now() < driveMatchFailUntil) return;
@@ -15974,7 +16048,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     setTimeout(async function(){
       try{ if(stillUsed && stillUsed()) return; }catch(e){ return; }
       /* another match or plan still plays from this copy (e.g. a second match with the very same video): it stays */
-      try{ for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if(k && (k.indexOf(MV_PREFIX) === 0 || k.indexOf(LS_PREFIX) === 0) && (localStorage.getItem(k) || '').indexOf(drive.id) !== -1) return; } }catch(e){ return; }
+      try{ for(let i = 0; i < hufcStore.length; i++){ const k = hufcStore.key(i); if(k && (k.indexOf(MV_PREFIX) === 0 || k.indexOf(LS_PREFIX) === 0) && (hufcStore.getItem(k) || '').indexOf(drive.id) !== -1) return; } }catch(e){ return; }
       if(driveDesk()){ try{ await window.hufcDesktop.gdrive.remove(drive.id); }catch(e){} }
       else if(driveWebToken()){ try{ await driveWebApi('DELETE', 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(drive.id)); }catch(e){} }
     }, 15000);
@@ -15988,9 +16062,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!drive || !drive.id) return;
     setTimeout(async function(){
       try{
-        for(let i = 0; i < localStorage.length; i++){
-          const k = localStorage.key(i);
-          if(k && k.indexOf(LS_PREFIX) === 0 && (localStorage.getItem(k) || '').indexOf(drive.id) !== -1) return;
+        for(let i = 0; i < hufcStore.length; i++){
+          const k = hufcStore.key(i);
+          if(k && k.indexOf(LS_PREFIX) === 0 && (hufcStore.getItem(k) || '').indexOf(drive.id) !== -1) return;
         }
       }catch(e){ return; }
       if(driveDesk()){ try{ await window.hufcDesktop.gdrive.remove(drive.id); }catch(e){} }
@@ -16006,7 +16080,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
      Start-up: a saved file opens its own plan; the blank template restores the last draft.
      ===================================================================== */
   /* can this browser keep anything? (sandboxed previews and some private windows can't) */
-  try{ localStorage.setItem('hufc-probe', '1'); localStorage.removeItem('hufc-probe'); }catch(e){ storageOK = false; }
+  try{ hufcStore.setItem('hufc-probe', '1'); hufcStore.removeItem('hufc-probe'); }catch(e){ storageOK = false; }
   /* A saved plan file opens straight into its session; the planner itself opens on the home page. */
   let embedded = null;
   try{ embedded = JSON.parse(document.getElementById('plan-data').textContent); }catch(e){}
