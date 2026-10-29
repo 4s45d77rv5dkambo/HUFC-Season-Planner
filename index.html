@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261028212900">
+<meta name="hufc-build" content="20261029162856">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1703,6 +1703,19 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-side-logo.dark{background:#0d0e0f; border-radius:50%; padding:1.5px; box-sizing:border-box; width:20px; height:20px;}
 @media (max-width:480px){ .an-team-logo.dark img{max-width:21px; max-height:21px;} }
 
+/* the two teams get a row of their own (the title, lineup and pre-game share the row above), so the names aren't cut off */
+.an-meta > .an-name{order:0;}
+.an-meta > .an-link{order:1;}
+.an-meta > .an-teams{order:2; flex:1 1 100%; max-width:820px;}
+.an-team-side{flex:1 1 0; min-width:0; display:flex; align-items:center; gap:8px;}
+.an-team-side .an-team-box{flex:1 1 auto;}
+.an-team.lu-combo .lu-combo-list{max-width:min(320px, 92vw);}
+/* a phone: one team above the other, the full name showing */
+@media (max-width:560px){
+  .an-meta > .an-teams{flex-direction:column; align-items:stretch; gap:4px;}
+  .an-vs{align-self:center; line-height:1;}
+}
+
 /* ---------- Settings ---------- */
 .home-hero{position:relative;}
 .home-set-btn{position:absolute; top:12px; right:12px; display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #3a3b3e; border-radius:999px;
@@ -3119,7 +3132,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 28 Oct 2026, 9:29pm</p>
+  <p class="home-version">HUFC Session Planner · updated 29 Oct 2026, 4:28pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3397,11 +3410,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       <div class="an-meta">
         <input type="text" class="an-name" id="anName" maxlength="120" aria-label="Name of this match video" autocomplete="off">
         <div class="an-teams" title="The two teams — the tag buttons, tags and stats use each club’s initials">
-          <span class="an-team-logo" id="anUsLogo"></span>
-          <span class="an-team-box" id="anUsBox"></span>
+          <span class="an-team-side"><span class="an-team-logo" id="anUsLogo"></span><span class="an-team-box" id="anUsBox"></span></span>
           <span class="an-vs">vs</span>
-          <span class="an-team-logo" id="anThemLogo"></span>
-          <span class="an-team-box" id="anThemBox"></span>
+          <span class="an-team-side"><span class="an-team-logo" id="anThemLogo"></span><span class="an-team-box" id="anThemBox"></span></span>
         </div>
         <label class="an-link" title="Attach this video to a matchday lineup to tag its players — or leave it on its own"><span>Lineup</span><select id="anLink" aria-label="Attach to a lineup"></select></label>
         <label class="an-link" title="Attach this video to a pre-game plan: its clips go straight onto that pre-game, and the pre-game links back here"><span>Pre-game</span><select id="anPgLink" aria-label="Attach to a pre-game"></select></label>
@@ -13952,6 +13963,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.39', d:'29 Oct 2026', t:'Teams on their own row', n:['In a match video the two teams have a row of their own (the title, lineup and pre-game sit above), so the full names show — on a phone, one team above the other']},
     {v:'3.38', d:'28 Oct 2026', t:'Team list and crest', n:['Choosing a team (in a match video, and Opponent and the other pick-lists in a lineup): the list scrolls with your finger on iPhone and iPad, always fits on the screen (opening upward when there’s more room), and stays open while you scroll', 'Match videos pick the teams from the clubs list, or type any team', 'The Heidelberg crest beside the teams is the sharp one, on a small black badge']},
     {v:'3.37', d:'28 Oct 2026', t:'Teams and logos in match videos', n:['Type our team and the team we’re playing at the top of a match video (e.g. Heidelberg United FC vs Northcote City) — both clubs’ logos show beside them', 'The Us / Them buttons, tags, filters and stats use each club’s initials and logo (HUFC · NC)', 'A club without a logo: tap + beside its name to add one', 'A video link that looks temporary (like Hudl’s) warns that it may stop working, and suggests ☁ Put on Drive', 'Match tags tagged out of order (e.g. Half-time after 2nd half start) are pointed out', 'Present on a phone: the board’s message and video clips come first, then the pitch', 'A new coach is told the club admin needs to approve them', 'Windows program 1.6.4: Google Drive uploads never skip a piece']},
     {v:'3.36', d:'28 Oct 2026', t:'Checked and tightened', n:['Match video download: a link that has run out, no internet, or a full device each get a clear message (and no internet no longer stops the app keeping a copy later)', 'Deleting a match while its video downloads stops the download', 'The big clip view: Esc closes just the clip (not Present), and the arrow keys and space work the clip, not the slides behind it', 'Google Drive: a copy another match still plays from is never taken away, and an upload piece Google missed is sent again', 'The sign-in page: keys can’t reach the planner behind it, and in the Windows program the title bar stays so the window can still be moved', 'Messages (Undo, saved…) show over Present and the big clip view']},
