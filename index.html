@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261029170711">
+<meta name="hufc-build" content="20261029193554">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1885,6 +1885,10 @@ html.wl-open, html.wl-open body{overflow:hidden;}
 .wl-link:hover{color:#fff;}
 @media (max-height:700px){ .wl-crest{width:70px; margin-bottom:8px;} .wl-title{font-size:32px;} .wl-sub{margin-bottom:14px;} }
 
+/* the Settings button: a badge when something needs you (coaches waiting, a sync problem) */
+.home-set-btn .set-badge{display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; margin-left:2px; border-radius:999px; background:var(--yellow); color:var(--black); font-size:11px; font-weight:800; line-height:1;}
+.home-set-btn .set-badge.warn{background:#f0a020;}
+
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
 body.view-lineup .pregame-only{display:none !important;}
@@ -3134,7 +3138,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 29 Oct 2026, 5:07pm</p>
+  <p class="home-version">HUFC Session Planner · updated 29 Oct 2026, 7:35pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -8622,7 +8626,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         kind = isPre() ? 'pregame' : 'session'; obj = state; id = storageKey.slice(LS_PREFIX.length);
       }
       const g = groupOf(obj);
-      if(!g){ showShareNote('Choose the age group you coach first (Home page, top right: <b>I coach</b>), then share again.'); return; }
+      if(!g){ showShareNote('Choose the age group you coach first (<b>Settings → My teams</b>), then share again.'); return; }
       await clubSyncNow();
       if(clubErr){ showShareNote(escapeXml(clubErr)); return; }
       const api = await sharesApi();
@@ -13127,6 +13131,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     openModal(groupModal);
   }
   document.getElementById('groupLater').addEventListener('click', function(){ closeModal(groupModal); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !groupModal.hidden && !groupModal.classList.contains('closing')) closeModal(groupModal); });
   document.getElementById('groupDone').addEventListener('click', function(){
     if(!groupPick.length) return;
     closeModal(groupModal); chooseGroups(groupPick.slice());
@@ -13182,17 +13187,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       chip('all', h('span', null, 'Club library')),
       h('span', {class:'folder-sep', 'aria-hidden':'true'}),
       AGE_GROUPS.map(function(g){ return chip(g, h('span', null, g), isMine(g) ? ' is-mine' : ''); }));
-    const asked = localGroups().filter(function(g){ return ms.indexOf(g) === -1; });
-    const confirmLimited = !!(CLOUD && CLOUD.allowedGroups && CLOUD.allowedGroups());
-    const coach = h('button', {type:'button', class:'btn btn-small coach-btn', id:'coachBtn', title:confirmLimited ? 'Ask for different age groups — the club admin confirms them' : 'Choose the age groups you coach — pick as many as you like', onclick:askGroup},
-      ms.length ? ms.join(' · ') : (confirmLimited ? 'None yet' : 'Choose…'),
-      confirmLimited && asked.length ? h('span', {class:'coach-wait', text:'+' + asked.join(' · ') + ' waiting'}) : '',
-      h('span', {class:'coach-edit', 'aria-hidden':'true', text:'✎'}));
-    bar.append(chips, h('div', {class:'folder-side'},
-      h('span', {class:'cfg'}, h('span', {class:'lbl', text:'I coach'}), coach),
-      who && who.admin && !CLOUD ? h('span', {class:'admin-badge', title:'You own this planner: you can change every coach’s work', text:'Admin'}) : null,
-      h('div', {class:'club-status', id:'clubStatus'}),
-      CLOUD ? h('div', {class:'club-status cloud-status', id:'cloudStatus'}) : null));
+    /* (the teams you coach, your account and syncing live in Settings now — the home page keeps just the folders) */
+    bar.append(chips);
     const note = document.getElementById('folderNote');
     if(note){
       /* a few words only where they help */
@@ -13395,7 +13391,25 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') save.click(); });
     return h('div', {class:'acct-name-row'}, inp, save);
   }
+  /* the Settings button says when something needs you: coaches waiting for your approval, or a sync problem */
+  function renderSetBadge(){
+    const b = document.getElementById('homeSetBtn'); if(!b) return;
+    let n = 0, warn = '';
+    try{
+      const u = CLOUD && CLOUD.ready && CLOUD.ready() ? CLOUD.user() : null;
+      if(u && u.admin) n = CLOUD.coaches().filter(function(c){ return !c.approved || (c.asked.length && c.asked.slice().sort().join() !== c.given.slice().sort().join()); }).length;
+      if(u && CLOUD.member() === false) warn = 'Waiting for the club admin to approve you';
+      else if(u && cloudErr && !/No internet/.test(cloudErr)) warn = cloudErr;
+      if(!CLOUD && clubState === 'needs') warn = 'The club folder needs a click to reconnect';
+    }catch(e){}
+    let badge = b.querySelector('.set-badge');
+    if(!n && !warn){ if(badge) badge.remove(); b.title = 'Settings'; return; }
+    if(!badge){ badge = h('span', {class:'set-badge'}); b.appendChild(badge); }
+    badge.textContent = n ? String(n) : '!'; badge.classList.toggle('warn', !n);
+    b.title = n ? n + (n === 1 ? ' coach is' : ' coaches are') + ' waiting for your approval — Settings → Club admin' : warn;
+  }
   function renderCloudStatus(){
+    try{ renderSetBadge(); }catch(e){}
     const box = document.getElementById('cloudStatus'); if(!box || !CLOUD) return;
     box.innerHTML = '';
     const u = CLOUD.user();
@@ -13476,7 +13490,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* ---------- the sign-in page: the first time the planner opens (and after signing out), sign in or make an account ----------
      The planner remembers who signed in on this device (until they sign out), so it only asks once.
-     "Use without an account" keeps everything on this device; Sign in to sync is still on the home page. */
+     "Use without an account" keeps everything on this device; Sign in is in Settings → Account. */
   const WELCOME_SKIP = 'hufc-welcome-skip', LAST_EMAIL = 'hufc-last-email';
   let welcomeEl = null, welcomeMode = 'in', welcomeAfter = [], welcomeManual = false;
   function welcomeShown(){ return !!(welcomeEl && !welcomeEl.hidden); }
@@ -13559,7 +13573,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function welcomeSkip(){
     if(!welcomeManual) welcomeLS(WELCOME_SKIP, '1');
     welcomeClose();
-    if(!welcomeManual) showToast('Your work is kept on this device · tap Sign in to sync on the home page any time to use your other devices');
+    if(!welcomeManual) showToast('Your work is kept on this device · sign in any time in Settings → Account to use your other devices');
   }
   async function welcomeGo(){
     const up = welcomeMode === 'up';
@@ -14038,6 +14052,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.42', d:'29 Oct 2026', t:'Cleaner home page', n:['The home page keeps just your folders — the teams you coach are in Settings → My teams, and signing in and syncing are in Settings → Account', 'The Settings button shows a small badge when a coach is waiting for your approval or syncing needs a look', 'Esc closes Settings']},
     {v:'3.41', d:'29 Oct 2026', t:'Far more room on iPhone and iPad', n:['The iPhone/iPad app (and the planner in a browser) now keeps your sessions, lineups, pre-games and match videos in the device’s own database — hundreds of megabytes or more, instead of about 5 MB — so it won’t run out of room as the club library grows', 'What was already there is moved across by itself the first time it opens', 'Pick-lists open upward only when there’s no room below, so they don’t cover the boxes above', 'Windows program 1.6.6: the extra backup copies of whole match videos are tidied away (the videos themselves stay in your Videos folder)']},
     {v:'3.40', d:'29 Oct 2026', t:'Smoother Windows program, right counts', n:['Windows program 1.6.5: the program no longer rewrites its settings file every few seconds (the sign-in system’s own notes stay in memory), so the window and mouse stay smooth', 'Whole match videos are no longer copied into Backups (they doubled the space they take); clips and pictures still are', 'Settings → On this device counts the same match videos and lineups the home page shows (empty ones aren’t counted)']},
     {v:'3.39', d:'29 Oct 2026', t:'Teams on their own row', n:['In a match video the two teams have a row of their own (the title, lineup and pre-game sit above), so the full names show — on a phone, one team above the other']},
@@ -14188,12 +14203,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const c = setCard('Account');
     if(!CLOUD){
       c.append(h('p', {class:'set-sub', text:'This online planner signs you in through Claude, and your work syncs with the club library automatically.'}));
-      p.appendChild(c); return;
+      p.appendChild(c); setClubLink(p); return;
     }
     if(!u){
       c.append(h('p', {class:'set-sub', text:'Sign in to keep the same plans on your phone, iPad and computer, and to see the club library.'}),
-        h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn btn-primary', text:'Sign in', onclick:function(){ cloudOpen(); }})));
-      p.appendChild(c); return;
+        h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn btn-primary', text:'Sign in', onclick:function(){ closeModal(setModal, true); cloudOpen(); }})));
+      p.appendChild(c); setClubLink(p); return;
     }
     const name = CLOUD.name() || '';
     const waiting = CLOUD.member() === false;
@@ -14219,6 +14234,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('button', {type:'button', class:'btn', text:'Sync now', onclick:async function(){ await clubSync(); renderSettings(); }}),
         h('button', {type:'button', class:'btn btn-danger-ghost', text:'Sign out', onclick:function(){ closeModal(setModal, true); cloudSignOut(); }})));
     p.appendChild(s);
+    setClubLink(p);
+  }
+  /* the club library link (the Windows program's link to the online planner, or a club folder): only when there's something to show */
+  function setClubLink(p){
+    const box = h('div', {class:'club-status', id:'clubStatus'});
+    const c = setCard('Club library link'); c.append(box); p.appendChild(c);
+    try{ renderClubStatus(); }catch(e){}
+    if(box.hidden || !box.childNodes.length) c.remove();
   }
   /* ---------- My teams ---------- */
   function setTeams(p){
@@ -14371,6 +14394,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   });
   document.getElementById('setClose').addEventListener('click', function(){ closeModal(setModal); });
   setModal.addEventListener('click', function(e){ if(e.target === setModal) closeModal(setModal); });
+  /* Esc closes Settings — but only when nothing else (teams, coaches, sign in, a question) is open on top of it */
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape' || setModal.hidden || e.defaultPrevented) return;
+    const onTop = Array.prototype.some.call(document.querySelectorAll('.modal'), function(m){ return m !== setModal && !m.hidden && !m.classList.contains('closing'); });
+    if(onTop) return;
+    const t = e.target; if(t && t.closest && t.closest('input, textarea, select, [contenteditable="true"]') && t.value) return;
+    closeModal(setModal);
+  }, true);   /* capture: checked before any window on top closes itself */
   document.getElementById('homeSetBtn').addEventListener('click', function(){ settingsOpen(); });
 
   /* ---------- iPhone / iPad: a yellow scroll pill while scrolling (Apple's own indicator can't be coloured) ---------- */
