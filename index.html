@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102104058">
+<meta name="hufc-build" content="20261102105856">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2208,6 +2208,7 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 .pg-show-pitch{min-height:0; display:flex; align-items:center; justify-content:center;}
 .pg-show-pitch > svg{height:100%; max-height:100%; width:auto; max-width:100%; border-radius:6px;}
 .pg-show-body.is-3d{grid-template-columns:minmax(0,2fr) minmax(0,1fr);}
+.pg-show-body:has(.pg-show-pitch > svg.th-wide){grid-template-columns:minmax(0,2fr) minmax(0,1fr);}   /* a wide board gets the room it needs */
 .pg-show-side{overflow:auto; min-height:0; display:flex; flex-direction:column; gap:16px; padding-right:4px;}
 .pg-show-msg{margin:0; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:30px; line-height:1.15; color:var(--yellow);}
 .pg-show-lbl{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:14px; letter-spacing:.1em; text-transform:uppercase; color:#9a9da1; margin-bottom:4px;}
@@ -2232,6 +2233,7 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
   .pg-show-body{display:block; padding:12px 14px; overflow:auto;}
   .pg-show-pitch{display:block; margin-bottom:16px;}
   .pg-show-pitch > svg{display:block; margin:0 auto; width:min(100%, calc(52vh * 300 / 460)); height:auto; max-height:none;}
+  .pg-show-pitch > svg.th-wide{width:min(100%, calc(52vh * 460 / 360));}
   .pg-show-side{overflow:visible;}
   .pg-show-msg{font-size:23px;}
   .pg-show-txt{font-size:17px;}
@@ -3432,7 +3434,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 10:40am</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 10:58am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3891,6 +3893,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           <option value="full-thirds">Full pitch + thirds</option>
           <option value="lanes">Full pitch + 5 vertical zones</option>
           <option value="half">Half pitch</option>
+          <option value="half-zoom">Half pitch – zoomed in</option>
+          <option value="half-wide">Half pitch (wide)</option>
           <option value="thirds">Thirds</option>
           <option value="futsal">Futsal pitch</option>
           <option value="blank">Blank area</option>
@@ -4264,23 +4268,24 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return '<pattern id="' + id + '" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="20" fill="#3cb878"/><rect y="20" width="40" height="20" fill="#37ab6e"/></pattern>';
   }
   /* the same grass as drawn shapes (no repeating pattern), so a pitch blown up big in Present mode has no seams between the stripes */
-  function grassShapes(mode){
-    mode = grassMode(mode);
-    if(mode === 'plain') return '<rect width="300" height="460" fill="#3cb878"/>';
-    let out = '<rect width="300" height="460" fill="#3cb878"/>';
+  function grassShapes(mode, D){
+    mode = grassMode(mode); D = D || BOARD_TALL;
+    const W = D.w, H = D.h;
+    if(mode === 'plain') return '<rect width="' + W + '" height="' + H + '" fill="#3cb878"/>';
+    let out = '<rect width="' + W + '" height="' + H + '" fill="#3cb878"/>';
     if(mode === 'checks'){
       const y0 = CHECK_Y0 - Math.ceil(CHECK_Y0 / CHECK + 1) * CHECK;
-      for(let y = y0, r = 0; y < 460; y += CHECK, r++){
-        for(let x = 0, c = 0; x < 300; x += CHECK, c++){
+      for(let y = y0, r = 0; y < H; y += CHECK, r++){
+        for(let x = 0, c = 0; x < W; x += CHECK, c++){
           if(((Math.round((y - CHECK_Y0) / CHECK) % 2) + 2) % 2 !== c % 2) continue;
           /* (cut to the pitch: squares sticking out past the ends showed as green blocks over the stands in 3D) */
-          const yy = Math.max(0, y), hh = Math.min(460, y + CHECK) - yy, ww = Math.min(300, x + CHECK) - x;
+          const yy = Math.max(0, y), hh = Math.min(H, y + CHECK) - yy, ww = Math.min(W, x + CHECK) - x;
           if(hh > 0 && ww > 0) out += '<rect x="' + x + '" y="' + yy + '" width="' + ww + '" height="' + hh + '" fill="#37ab6e" shape-rendering="crispEdges"/>';
         }
       }
       return out;
     }
-    for(let y = 20; y < 460; y += 40) out += '<rect y="' + y + '" width="300" height="20" fill="#37ab6e" shape-rendering="crispEdges"/>';
+    for(let y = 20; y < H; y += 40) out += '<rect y="' + y + '" width="' + W + '" height="20" fill="#37ab6e" shape-rendering="crispEdges"/>';
     return out;
   }
   /* ---- 3D look: light from the top left, a soft shadow on the grass (one set of gradients per drawing) ---- */
@@ -4620,6 +4625,39 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       spot:gl - 11 * s, half:gl - 52.5 * s,
       dX:Math.sqrt(9.15 * 9.15 - 5.5 * 5.5) * s, dA:Math.asin(5.5 / 9.15) * 180 / Math.PI, goal:3.66 * s};
   })();
+  /* the board's shape: tall (300 × 460) for every pitch, or wide (460 × 360) for the wide half pitch */
+  const BOARD_TALL = {w:300, h:460}, BOARD_WIDE = {w:460, h:360};
+  function boardDims(layout){ return layout === 'half-wide' ? BOARD_WIDE : BOARD_TALL; }
+  /* the wide half pitch: 68 m across and 52.5 m deep, exactly to scale on the wide board (halfway at the top, goal at the bottom) */
+  const HALFW = (function(){
+    const s = 440 / 68, cx = 230, gl = 10 + 52.5 * s, r = 9.15 * s;
+    return {s:s, cx:cx, gl:gl, r:r, box:{x:cx - 20.16 * s, y:gl - 16.5 * s, w:40.32 * s, h:16.5 * s},
+      six:{x:cx - 9.16 * s, y:gl - 5.5 * s, w:18.32 * s, h:5.5 * s}, spot:gl - 11 * s,
+      dX:Math.sqrt(9.15 * 9.15 - 5.5 * 5.5) * s, dA:Math.asin(5.5 / 9.15) * 180 / Math.PI, goal:3.66 * s};
+  })();
+  function halfWideMarkings(c){
+    const f = function(n){ return +n.toFixed(2); }, st = ' fill="none" stroke="' + c + '" stroke-width="2"', H = HALFW;
+    return '<rect x="10" y="10" width="440" height="' + f(H.gl - 10) + '"' + st + '/>' +
+      '<line x1="10" y1="10" x2="450" y2="10" stroke="' + c + '" stroke-width="3"/>' +
+      '<path d="M' + f(H.cx - H.r) + ',10 A' + f(H.r) + ',' + f(H.r) + ' 0 0 0 ' + f(H.cx + H.r) + ',10"' + st + '/>' +
+      '<rect x="' + f(H.box.x) + '" y="' + f(H.box.y) + '" width="' + f(H.box.w) + '" height="' + f(H.box.h) + '"' + st + '/>' +
+      '<rect x="' + f(H.six.x) + '" y="' + f(H.six.y) + '" width="' + f(H.six.w) + '" height="' + f(H.six.h) + '"' + st + '/>' +
+      '<path d="M' + f(H.cx - H.dX) + ',' + f(H.box.y) + ' A' + f(H.r) + ',' + f(H.r) + ' 0 0 1 ' + f(H.cx + H.dX) + ',' + f(H.box.y) + '"' + st + '/>' +
+      '<circle cx="' + H.cx + '" cy="' + f(H.spot) + '" r="2" fill="' + c + '"/>' +
+      '<path d="M10,' + f(H.gl - 6) + ' A6,6 0 0 1 16,' + f(H.gl) + '"' + st + '/><path d="M444,' + f(H.gl) + ' A6,6 0 0 1 450,' + f(H.gl - 6) + '"' + st + '/>' +
+      permanentGoalMarkup(H.cx, f(H.gl), f(H.goal), 8, c, false);
+  }
+  /* the original half pitch (the halfway line at the top, the box at the bottom) */
+  function halfPitchClassic(c){
+    return '<rect x="10" y="10" width="280" height="440" fill="none" stroke="' + c + '" stroke-width="2"/>' +
+      '<line x1="10" y1="10" x2="290" y2="10" stroke="' + c + '" stroke-width="3"/>' +
+      '<path d="M115,10 A35,35 0 0 0 185,10" fill="none" stroke="' + c + '" stroke-width="2"/>' +
+      '<rect x="90" y="405" width="120" height="45" fill="none" stroke="' + c + '" stroke-width="2"/>' +
+      '<rect x="125" y="435" width="50" height="15" fill="none" stroke="' + c + '" stroke-width="2"/>' +
+      '<path d="M130,405 A25,25 0 0 1 170,405" fill="none" stroke="' + c + '" stroke-width="2"/>' +
+      '<circle cx="150" cy="420" r="2" fill="' + c + '"/>' +
+      cornerArcsBottom(c) + permanentGoalMarkup(150, 450, 18, 9, c, false);
+  }
   function halfPitchMarkings(c){
     const f = function(n){ return +n.toFixed(2); }, st = ' fill="none" stroke="' + c + '" stroke-width="2"', H = HALF;
     const dot = function(x, y){ return '<circle cx="' + x + '" cy="' + f(y) + '" r="2" fill="' + c + '"/>'; };
@@ -4639,7 +4677,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(layout === 'thirds') return '<rect x="10" y="10" width="280" height="440" fill="none" stroke="' + c + '" stroke-width="2"/>' + thirdsLines(c) + cornerArcsFull(c) + permanentGoalMarkup(150, 10, 18, 9, c, true) + permanentGoalMarkup(150, 450, 18, 9, c, false);
     if(layout === 'lanes') return lanesPitchMarkings(c);
     if(layout === 'full-thirds') return fullPitchMarkings(c) + thirdsLines(c);
-    if(layout === 'half') return halfPitchMarkings(c);
+    if(layout === 'half') return halfPitchClassic(c);
+    if(layout === 'half-zoom') return halfPitchMarkings(c);
+    if(layout === 'half-wide') return halfWideMarkings(c);
     return fullPitchMarkings(c);
   }
 
@@ -4648,27 +4688,28 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* Sets up one practice diagram. `d` is the practice's saved data; it is updated in place. */
   /* ---------- zoom: show part of a 300×460 pitch, stored as {z, cx, cy} (no zoom = null) ---------- */
   const ZOOMS = (function(){ const o = []; for(let p = 100; p <= 400; p += 1) o.push(p / 100); return o; })();   /* 1% steps */
-  function zoomView(z){
-    const k = Math.max(1, Math.min(4, (z && +z.z) || 1)), w = 300 / k, hh = 460 / k;
-    const x = Math.max(0, Math.min(300 - w, ((z && z.cx != null) ? +z.cx : 150) - w / 2));
-    const y = Math.max(0, Math.min(460 - hh, ((z && z.cy != null) ? +z.cy : 230) - hh / 2));
+  function zoomView(z, D){
+    D = D || BOARD_TALL;
+    const k = Math.max(1, Math.min(4, (z && +z.z) || 1)), w = D.w / k, hh = D.h / k;
+    const x = Math.max(0, Math.min(D.w - w, ((z && z.cx != null) ? +z.cx : D.w / 2) - w / 2));
+    const y = Math.max(0, Math.min(D.h - hh, ((z && z.cy != null) ? +z.cy : D.h / 2) - hh / 2));
     return {x:x, y:y, w:w, h:hh, k:k};
   }
-  function zoomViewBox(z){ const v = zoomView(z); return [v.x, v.y, v.w, v.h].map(function(n){ return +n.toFixed(2); }).join(' '); }
+  function zoomViewBox(z, D){ const v = zoomView(z, D); return [v.x, v.y, v.w, v.h].map(function(n){ return +n.toFixed(2); }).join(' '); }
   /* zoom to k keeping the pitch point `at` under the same spot on screen */
-  function zoomTo(z, k, at){
-    const cur = zoomView(z);
+  function zoomTo(z, k, at, D){
+    const cur = zoomView(z, D); D = D || BOARD_TALL;
     k = Math.max(1, Math.min(4, Math.round(k * 100) / 100));   /* always a whole 1% */
     if(k <= 1.001) return null;
     at = at || {x:cur.x + cur.w / 2, y:cur.y + cur.h / 2};
-    const fx = (at.x - cur.x) / cur.w, fy = (at.y - cur.y) / cur.h, w = 300 / k, hh = 460 / k;
-    const v = zoomView({z:k, cx:at.x - fx * w + w / 2, cy:at.y - fy * hh + hh / 2});
+    const fx = (at.x - cur.x) / cur.w, fy = (at.y - cur.y) / cur.h, w = D.w / k, hh = D.h / k;
+    const v = zoomView({z:k, cx:at.x - fx * w + w / 2, cy:at.y - fy * hh + hh / 2}, D);
     return {z:+k.toFixed(3), cx:+(v.x + v.w / 2).toFixed(1), cy:+(v.y + v.h / 2).toFixed(1)};
   }
-  function zoomStep(z, dir){
-    const k = zoomView(z).k;
+  function zoomStep(z, dir, D){
+    const k = zoomView(z, D).k;
     const next = dir > 0 ? (ZOOMS.find(function(q){ return q > k + 0.005; }) || 4) : (ZOOMS.slice().reverse().find(function(q){ return q < k - 0.005; }) || 1);
-    return zoomTo(z, next);
+    return zoomTo(z, next, null, D);
   }
   /* drag the grass to move around a zoomed pitch; Ctrl/⌘ + scroll (or a trackpad pinch) and two-finger pinch zoom.
      isItem(target): pointer is on something draggable (left alone); canPan(): no drawing tool is active */
@@ -4704,6 +4745,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function wireZoom(svg, get, set, isItem, canPan, scrollToZoom){
     const pts = new Map();
+    const SD = function(){ return {w:+svg.dataset.bw || 300, h:+svg.dataset.bh || 460}; };   /* the board's shape */
     let pan = null, pinch = null, acc = 0, accT = 0;
     const toPitch = function(cx, cy, v){ const r = svg.getBoundingClientRect(); return {x:v.x + (cx - r.left) / r.width * v.w, y:v.y + (cy - r.top) / r.height * v.h}; };
     /* Ctrl/⌘ + scroll (or a trackpad pinch) always zooms; plain scrolling zooms once the pitch's grass has been clicked.
@@ -4716,9 +4758,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       acc += e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY;
       if(Math.abs(acc) < 40) return;
       const dir = acc < 0 ? 1 : -1; acc = 0;
-      const z = get(), v = zoomView(z);
+      const z = get(), v = zoomView(z, SD());
       if((dir > 0 && v.k >= 4) || (dir < 0 && v.k <= 1)) return;
-      set(zoomTo(z, v.k + dir * 0.01, toPitch(e.clientX, e.clientY, v)));
+      set(zoomTo(z, v.k + dir * 0.01, toPitch(e.clientX, e.clientY, v), SD()));
     }, {passive:false});
     svg.addEventListener('pointerdown', function(e){
       if(svg._p3d && svg._p3d.active()) return;
@@ -4726,11 +4768,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(isItem(e.target)) return;
       pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
       if(pts.size === 2){
-        const a = Array.from(pts.values()), v = zoomView(get());
+        const a = Array.from(pts.values()), v = zoomView(get(), SD());
         pinch = {d:Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1, z:get(), at:toPitch((a[0].x + a[1].x) / 2, (a[0].y + a[1].y) / 2, v)};
         pan = null;
       } else if(pts.size === 1 && get() && canPan()){
-        pan = {x:e.clientX, y:e.clientY, v:zoomView(get()), id:e.pointerId};
+        pan = {x:e.clientX, y:e.clientY, v:zoomView(get(), SD()), id:e.pointerId};
       }
       if(pinch || pan){ try{ svg.setPointerCapture(e.pointerId); }catch(err){} }
     });
@@ -4739,11 +4781,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
       if(pinch && pts.size >= 2){
         const a = Array.from(pts.values()), dd = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1;
-        set(zoomTo(pinch.z, zoomView(pinch.z).k * dd / pinch.d, pinch.at), true);
+        set(zoomTo(pinch.z, zoomView(pinch.z, SD()).k * dd / pinch.d, pinch.at, SD()), true);
       } else if(pan && e.pointerId === pan.id){
         const r = svg.getBoundingClientRect(), v = pan.v;
         const cx = v.x + v.w / 2 - (e.clientX - pan.x) / r.width * v.w, cy = v.y + v.h / 2 - (e.clientY - pan.y) / r.height * v.h;
-        const nv = zoomView({z:v.k, cx:cx, cy:cy});
+        const nv = zoomView({z:v.k, cx:cx, cy:cy}, SD());
         set({z:v.k, cx:+(nv.x + nv.w / 2).toFixed(1), cy:+(nv.y + nv.h / 2).toFixed(1)}, true);
       }
     });
@@ -4826,9 +4868,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const svg = q('.js-pitch'), board = q('.js-board'), markings = q('.js-markings'), pitchBg = q('.js-pitch-bg');
     const handles = q('.js-handles');
     const guides = q('.js-guides');
+    const bd = function(){ return boardDims(d.layout); };   /* this board's shape: tall, or wide for the wide half pitch */
+    svg.dataset.bw = bd().w; svg.dataset.bh = bd().h;
 
     /* ---- alignment guides: snap to other icons' lines (hold Alt to place freely) ---- */
-    function unitsPerPx(){ const r = svg.getBoundingClientRect(); return r.width ? 300 / r.width : 1; }
+    function unitsPerPx(){ const r = svg.getBoundingClientRect(); return r.width ? bd().w / r.width : 1; }
     function snapTargets(exclude){
       const xs = [], ys = [];
       board.querySelectorAll('.token').forEach(function(g){
@@ -4849,7 +4893,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(g === exclude) return;
         [[+g.dataset.x1, +g.dataset.y1], [+g.dataset.x2, +g.dataset.y2]].forEach(function(e){ xs.push({v:e[0], at:e[1]}); ys.push({v:e[1], at:e[0]}); });
       });
-      xs.push({v:150, at:230, always:true}); ys.push({v:230, at:150, always:true});   /* centre of the pitch */
+      xs.push({v:bd().w / 2, at:bd().h / 2, always:true}); ys.push({v:bd().h / 2, at:bd().w / 2, always:true});   /* centre of the pitch */
       return {xs:xs, ys:ys};
     }
     function snapPoint(p, exclude, extra, ev){
@@ -4897,7 +4941,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       pitchBg.setAttribute('fill', '#3cb878');
       let gs = svg.querySelector('.js-grass-shapes');
       if(!gs){ gs = document.createElementNS('http://www.w3.org/2000/svg', 'g'); gs.setAttribute('class', 'js-grass-shapes'); gs.setAttribute('pointer-events', 'none'); pitchBg.after(gs); }
-      gs.innerHTML = grassShapes(d.grass);
+      pitchBg.setAttribute('width', bd().w); pitchBg.setAttribute('height', bd().h);
+      gs.innerHTML = grassShapes(d.grass, bd());
       grassSel.value = grassMode(d.grass);
     }
     applyGrass();
@@ -4926,8 +4971,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     /* pitch size / layout / line colour — stored on the practice */
     /* the printed pitch keeps the same proportion as on screen (300px on screen = 174px on paper) */
     function applyPitchSize(){
-      svg.style.width = PITCH_SIZES[d.pitchSizeIdx] + 'px';
-      svg.style.setProperty('--print-w', (PITCH_SIZES[d.pitchSizeIdx] * 174 / 300).toFixed(1) + 'px');
+      /* (a wide board is wider for the same size, so players and lines are the same size on every board) */
+      const wf = bd().w / 300;
+      svg.style.width = Math.round(PITCH_SIZES[d.pitchSizeIdx] * wf) + 'px';
+      svg.style.setProperty('--print-w', (PITCH_SIZES[d.pitchSizeIdx] * wf * 174 / 300).toFixed(1) + 'px');
+      svg.classList.toggle('pitch-wide', bd() === BOARD_WIDE);
       if(svg._p3d && svg._p3d.active()) svg._p3d.relayout();
       /* at the smallest / biggest size the button greys out (and doesn't light up) */
       q('.js-pitch-size-down').disabled = d.pitchSizeIdx <= 0;
@@ -4941,8 +4989,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const zoomReset = q('.js-zoom-reset');
     function applyZoom(){
       if(svg._p3d && svg._p3d.active()) return;
-      svg.setAttribute('viewBox', zoomViewBox(d.zoom));
-      const k = zoomView(d.zoom).k;
+      svg.setAttribute('viewBox', zoomViewBox(d.zoom, bd()));
+      const k = zoomView(d.zoom, bd()).k;
       showZoomPct(k);
       q('.js-zoom-out').disabled = k <= 1; q('.js-zoom-in').disabled = k >= 4;
       svg.classList.toggle('zoomed', k > 1);
@@ -4950,9 +4998,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     function setZoom(z, live){ d.zoom = z || null; applyZoom(); if(!live) onChange(); }
     const zoomBy = function(pct, live){
       if(svg._p3d && svg._p3d.active()) return svg._p3d.zoomStep(pct, live);     /* 3D / stadium: zoom the view */
-      const k = zoomView(d.zoom).k;
+      const k = zoomView(d.zoom, bd()).k;
       if(pct && ((pct > 0 && k >= 4) || (pct < 0 && k <= 1))) return false;
-      setZoom(pct ? zoomTo(d.zoom, k + pct / 100) : d.zoom, live);
+      setZoom(pct ? zoomTo(d.zoom, k + pct / 100, null, bd()) : d.zoom, live);
     };
     holdZoomButton(q('.js-zoom-in'), 1, zoomBy);
     holdZoomButton(q('.js-zoom-out'), -1, zoomBy);
@@ -4964,7 +5012,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(!isFinite(v) || v <= 0){ showZoomPct(+zoomReset.dataset.k || 1); return; }
       const k = Math.max(1, Math.min(4, Math.round(v) / 100));
       if(svg._p3d && svg._p3d.active()){ if(k <= 1) svg._p3d.zoomReset(); else svg._p3d.zoomStep((k - svg._p3d.zoom()) * 100); }
-      else setZoom(k <= 1 ? null : zoomTo(d.zoom, k));
+      else setZoom(k <= 1 ? null : zoomTo(d.zoom, k, null, bd()));
       zoomTyping = false;
       zoomReset.value = Math.round(k * 100) + '%';
     }
@@ -4991,9 +5039,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       onZoom:function(z){ showZoomPct(z); q('.js-zoom-out').disabled = z <= 1.001; q('.js-zoom-in').disabled = z >= 3.999; }});
     const viewSeg = q('.js-view'), aroundSeg = q('.js-around'), zoomCfg = q('.zoom-cfg');
     function applyView(){
-      viewSeg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v === (d.view === '3d' ? '3d' : '2d')); });
-      aroundSeg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v === (d.around === 'stadium' ? 'stadium' : 'grass')); });
-      p3.set(d.view, d.around);
+      const wide = bd() === BOARD_WIDE;   /* (the 3D view and the stadium are for the tall boards) */
+      viewSeg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v === (d.view === '3d' && !wide ? '3d' : '2d')); b.disabled = wide && b.dataset.v !== '2d'; b.title = wide && b.dataset.v !== '2d' ? 'The 3D view isn’t available on the wide half pitch' : ''; });
+      aroundSeg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v === (d.around === 'stadium' && !wide ? 'stadium' : 'grass')); b.disabled = wide && b.dataset.v !== 'grass'; });
+      p3.set(wide ? null : d.view, wide ? null : d.around);
     }
     viewSeg.addEventListener('click', function(e){ const b = e.target.closest('button'); if(!b) return; if(b.dataset.v === '3d') d.view = '3d'; else delete d.view; applyView(); onChange(); });
     aroundSeg.addEventListener('click', function(e){ const b = e.target.closest('button'); if(!b) return; if(b.dataset.v === 'stadium') d.around = 'stadium'; else delete d.around; applyView(); onChange(); });
@@ -5003,12 +5052,23 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
     /* club crest watermark, switchable per practice */
     const wmImg = q('.js-watermark-img'), wmToggle = q('.js-watermark');
-    function applyWatermark(){ wmImg.style.display = d.watermark ? '' : 'none'; }
+    function applyWatermark(){ wmImg.style.display = d.watermark ? '' : 'none'; wmImg.setAttribute('x', bd().w / 2 - 95); wmImg.setAttribute('y', bd().h / 2 - 95); }
     wmToggle.checked = !!d.watermark;
     wmToggle.addEventListener('change', function(){ d.watermark = wmToggle.checked; applyWatermark(); onChange(); });
     applyWatermark();
     layoutSelect.value = d.layout;
     layoutSelect.addEventListener('change', function(){
+      const from = bd(), to = boardDims(layoutSelect.value);
+      if(from !== to){
+        /* to or from the wide board: everything already drawn moves with it (same place on the pitch, roughly), then the board is drawn again */
+        syncBoards();
+        rescaleDrill(d, from, to);
+        d.layout = layoutSelect.value; delete d.zoom;
+        if(to === BOARD_WIDE){ delete d.view; delete d.around; }
+        const y = window.scrollY; renderAll(); window.scrollTo(0, y);
+        scheduleSave();
+        return;
+      }
       d.layout = layoutSelect.value;
       renderMarkings(); onChange();
     });
@@ -5807,7 +5867,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       } else {
         const bb = board.getBBox(); cx = bb.x + bb.width / 2; cy = bb.y + bb.height / 2;
       }
-      const dx = Math.round((150 - cx) * 10) / 10, dy = Math.round((230 - cy) * 10) / 10;
+      const dx = Math.round((bd().w / 2 - cx) * 10) / 10, dy = Math.round((bd().h / 2 - cy) * 10) / 10;
       if(Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5){ showToast('The drill is already in the middle of the pitch'); return; }
       items.forEach(function(g){ moveItem(g, dx, dy); });
       onStep();
@@ -6188,6 +6248,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function readLocal(key){
     try{ const raw = hufcStore.getItem(key); return raw ? JSON.parse(raw) : null; }
     catch(e){ storageOK = false; return null; }
+  }
+  /* a practice moved between a tall and a wide board: every position scales with the board (sizes stay the same) */
+  function rescaleDrill(d, from, to){
+    const fx = to.w / from.w, fy = to.h / from.h, r = function(n){ return +(+n).toFixed(1); };
+    (d.items || []).forEach(function(it){
+      ['x', 'x1', 'x2', 'cx'].forEach(function(k){ if(it[k] != null && it[k] !== '' && !isNaN(+it[k])) it[k] = r(+it[k] * fx); });
+      ['y', 'y1', 'y2', 'cy'].forEach(function(k){ if(it[k] != null && it[k] !== '' && !isNaN(+it[k])) it[k] = r(+it[k] * fy); });
+    });
+    if(d.anim && Array.isArray(d.anim.steps)) d.anim.steps.forEach(function(st){ Object.keys(st || {}).forEach(function(u){ const p = st[u]; if(Array.isArray(p)){ p[0] = r(p[0] * fx); p[1] = r(p[1] * fy); } }); });
   }
   function syncBoards(){ boards.forEach(function(b){ b.d.items = b.api.serialize(); }); }
   /* ---------- copy and paste on the pitch: an icon, a group, or a whole diagram, onto any board (any session or pre-game) ---------- */
@@ -6595,7 +6664,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* ---------- a practice diagram, from PowerPoint shapes ---------- */
   function drawDiagram(pres, slide, d, X, Y, W, gid){
-    const S = pres.shapes, k = W / 300;                       /* inches per diagram unit */
+    const BD = boardDims(d.layout), S = pres.shapes, k = W / BD.w;   /* inches per diagram unit (a wide board is wider for the same space) */
     const ux = function(v){ return X + v * k; }, uy = function(v){ return Y + v * k; };
     const pt = function(units){ return Math.max(0.25, units * k * 72); };
     let n = 0;
@@ -6632,14 +6701,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       slide.addShape(S.ARC, {x:ux(cx - r), y:uy(cy - r), w:2 * r * k, h:2 * r * k, angleRange:[a0, a1], line:{color:lc, width:lw}, objectName:nm('arc')});
     }
     /* grass */
-    slide.addShape(S.RECTANGLE, {x:X, y:Y, w:300 * k, h:460 * k, fill:{color:'3CB878'}, line:{type:'none'}, objectName:nm('grass')});
+    slide.addShape(S.RECTANGLE, {x:X, y:Y, w:BD.w * k, h:BD.h * k, fill:{color:'3CB878'}, line:{type:'none'}, objectName:nm('grass')});
     const gm = grassMode(d.grass);
-    if(gm === 'stripes') for(let sy = 20; sy < 460; sy += 40) slide.addShape(S.RECTANGLE, {x:X, y:uy(sy), w:300 * k, h:20 * k, fill:{color:'37AB6E'}, line:{type:'none'}, objectName:nm('stripe')});
-    if(gm === 'checks') for(let r = -1; CHECK_Y0 + r * CHECK < 460; r++){
-      const y0 = Math.max(0, CHECK_Y0 + r * CHECK), y1 = Math.min(460, CHECK_Y0 + (r + 1) * CHECK);
+    if(gm === 'stripes') for(let sy = 20; sy < BD.h; sy += 40) slide.addShape(S.RECTANGLE, {x:X, y:uy(sy), w:BD.w * k, h:20 * k, fill:{color:'37AB6E'}, line:{type:'none'}, objectName:nm('stripe')});
+    if(gm === 'checks') for(let r = -1; CHECK_Y0 + r * CHECK < BD.h; r++){
+      const y0 = Math.max(0, CHECK_Y0 + r * CHECK), y1 = Math.min(BD.h, CHECK_Y0 + (r + 1) * CHECK);
       if(y1 <= y0) continue;
-      for(let sx = (r % 2 === 0) ? 0 : CHECK; sx < 300; sx += CHECK * 2){
-        slide.addShape(S.RECTANGLE, {x:ux(sx), y:uy(y0), w:Math.min(CHECK, 300 - sx) * k, h:(y1 - y0) * k, fill:{color:'37AB6E'}, line:{type:'none'}, objectName:nm('check')});
+      for(let sx = (r % 2 === 0) ? 0 : CHECK; sx < BD.w; sx += CHECK * 2){
+        slide.addShape(S.RECTANGLE, {x:ux(sx), y:uy(y0), w:Math.min(CHECK, BD.w - sx) * k, h:(y1 - y0) * k, fill:{color:'37AB6E'}, line:{type:'none'}, objectName:nm('check')});
       }
     }
     if(d.watermark){
@@ -6694,12 +6763,26 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     else if(L === 'futsal') futsal();
     else if(L === 'thirds'){ rect(10, 10, 280, 440); thirds(); corners(true); goalFixed(150, 10, true); goalFixed(150, 450, false); }
     else if(L === 'half'){
+      rect(10, 10, 280, 440); line(10, 10, 290, 10, {width:pt(3)}); arc(150, 10, 35, 0, 180);
+      rect(90, 405, 120, 45); rect(125, 435, 50, 15); arc(150, 420, 25, 216.87, 323.13); circ(150, 420, 2, {fill:{color:lc}, line:{type:'none'}});
+      corners(false); goalFixed(150, 450, false);
+    }
+    else if(L === 'half-zoom'){
       /* the full pitch zoomed in on one end, as on the board */
       const H = HALF, dot = function(x, y){ circ(x, y, 2, {fill:{color:lc}, line:{type:'none'}}); };
       line(0, H.gl, 300, H.gl); line(0, H.half, 300, H.half); circ(H.cx, H.half, H.r); dot(H.cx, H.half);
       rect(H.box.x, H.box.y, H.box.w, H.box.h); rect(H.six.x, H.six.y, H.six.w, H.six.h);
       arc(H.cx, H.spot, H.r, 180 + H.dA, 360 - H.dA); dot(H.cx, H.spot);
       goalFixed(150, 450, false, H.goal);
+    }
+    else if(L === 'half-wide'){
+      /* the wide half pitch, to scale, as on the board */
+      const H = HALFW;
+      rect(10, 10, 440, H.gl - 10); line(10, 10, 450, 10, {width:pt(3)}); arc(H.cx, 10, H.r, 0, 180);
+      rect(H.box.x, H.box.y, H.box.w, H.box.h); rect(H.six.x, H.six.y, H.six.w, H.six.h);
+      arc(H.cx, H.spot, H.r, 180 + H.dA, 360 - H.dA); circ(H.cx, H.spot, 2, {fill:{color:lc}, line:{type:'none'}});
+      arc(10, H.gl, 6, 270, 360); arc(450, H.gl, 6, 180, 270);
+      goalFixed(H.cx, H.gl, false, H.goal);
     }
 
     /* items, in the order they sit on the pitch */
@@ -8180,9 +8263,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     });
     /* Present mode: drawn big, so the grass is drawn shape by shape and the crest shows as it does on the board */
     const big = opts && opts.big;
-    const wm = big && p.watermark ? '<image href="' + document.getElementById('boardTpl').content.querySelector('.js-watermark-img').getAttribute('href') + '" x="55" y="135" width="190" height="190" opacity="0.2" preserveAspectRatio="xMidYMid meet"/>' : '';
-    return '<svg viewBox="' + zoomViewBox(p.zoom) + '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>' + defs + '</defs>' +
-      (big ? grassShapes(p.grass) : '<rect width="300" height="460" fill="url(#g' + u + ')"/>') + wm + markingsFor(p.layout, lc) + body + '</svg>';
+    const D = boardDims(p.layout);
+    const wm = big && p.watermark ? '<image href="' + document.getElementById('boardTpl').content.querySelector('.js-watermark-img').getAttribute('href') + '" x="' + (D.w / 2 - 95) + '" y="' + (D.h / 2 - 95) + '" width="190" height="190" opacity="0.2" preserveAspectRatio="xMidYMid meet"/>' : '';
+    return '<svg viewBox="' + zoomViewBox(p.zoom, D) + '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"' + (D === BOARD_WIDE ? ' class="th-wide"' : '') + '><defs>' + defs + '</defs>' +
+      (big ? grassShapes(p.grass, D) : '<rect width="' + D.w + '" height="' + D.h + '" fill="url(#g' + u + ')"/>') + wm + markingsFor(p.layout, lc) + body + '</svg>';
   }
 
   /* play a practice's animation steps on a drawn copy of its pitch (Present mode). Returns {play, stop}. */
@@ -13448,9 +13532,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     roBar.hidden = !readOnly;
     if(readOnly){
       document.getElementById('roText').innerHTML = '';
-      document.getElementById('roText').append(h('strong', {text:g + ' ' + what}), who
-        ? ' · view only — another coach made this. Export it as it is, or copy it to your own folder to change it.'
-        : ' · view only — it belongs to the ' + g + ' folder. Print or export it as it is, or copy it to your own folder to change it.');
+      /* say exactly why (so a coach who expected to be a collaborator can see what's wrong) */
+      const x = isLineupView() ? lu : state, maker = coachOf(x), me = CLOUD && CLOUD.user ? CLOUD.user() : null;
+      const cn = x && !isLineupView() && Array.isArray(x.collab) && x.collab.length ? collabNames(x) : [];
+      const why = who
+        ? ' · view only — ' + (maker || 'another coach') + ' made this' + (cn.length ? ' and only ' + groupList(cn) + (cn.length === 1 ? ' is' : ' are') + ' on it as collaborator' + (cn.length === 1 ? '' : 's') + (me && me.email ? ' (you’re signed in as ' + me.email + ')' : '') : '') + '. Export it as it is, or copy it to your own folder to change it.'
+        : ' · view only — it belongs to the ' + g + ' folder. Print or export it as it is, or copy it to your own folder to change it.';
+      document.getElementById('roText').append(h('strong', {text:g + ' ' + what}), why);
       undoBtn.disabled = true; redoBtn.disabled = true;
     }
     renderFolderPick();
@@ -14429,6 +14517,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.51', d:'2 Nov 2026', t:'Wide half pitch', n:['New pitch: Half pitch (wide) — a wide board with the half pitch exactly to scale (68 × 52.5 m): the whole width, a big box and round circles, with the goal at the bottom', 'Half pitch is back to the original drawing; the zoomed-in one is still there as Half pitch – zoomed in', 'Changing a practice to or from the wide board moves everything already drawn with it', 'The wide board works in Present, PDF, PowerPoint and the library pictures (the 3D view is for the tall boards)', 'A view-only session now says why — who made it and who its collaborators are']},
     {v:'3.50', d:'2 Nov 2026', t:'Half pitch to scale', n:['The half pitch (sessions and pre-games) is the full pitch zoomed in on one end: the same real shapes, just bigger — the box is much wider and deeper, the 6-yard box, D and spot are in proportion, and the halfway line and centre circle sit near the top', 'PowerPoint and PDF exports draw it the same way']},
     {v:'3.49', d:'2 Nov 2026', t:'Times every 5 minutes', n:['Start time, arrival time and kick-off lists go up in 5 minutes (was 15) — 3:05pm, 3:10pm, …']},
     {v:'3.48', d:'2 Nov 2026', t:'Collaborators fix', n:['A coach added as a collaborator while they have the session open can change it straight away (it unlocks on their screen, with the latest version) — no need to go back to Home first', 'Collaborators are for sessions only (not pre-games)']},
