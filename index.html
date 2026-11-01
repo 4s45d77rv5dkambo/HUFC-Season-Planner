@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261029230738">
+<meta name="hufc-build" content="20261102091203">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1895,19 +1895,32 @@ html.wl-open, html.wl-open body{overflow:hidden;}
 .btn-dark-ink{background:var(--black); color:var(--yellow); border-color:var(--black);}
 .btn-dark-ink:hover, .btn-dark-ink:focus-visible{background:var(--charcoal); color:var(--yellow); border-color:var(--charcoal);}
 
-.modal.se-modal{z-index:85; padding:3vh 16px;}   /* (under other windows: a match video or "are you sure?" opens on top of it) */
-.modal-box.se-box{width:min(1180px, 100%); height:94vh; max-height:none; overflow:hidden;}
-.se-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 16px; background:var(--black); color:var(--white); border-radius:12px 12px 0 0; border-bottom:3px solid var(--yellow);}
-.se-head h3{margin:0; font-family:'Barlow Condensed', sans-serif; font-size:22px; letter-spacing:.04em; text-transform:uppercase; margin-right:6px;}
-.se-head-ctl{flex:1; display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0;}
-.se-sel{font:inherit; font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:16px; letter-spacing:.03em; padding:5px 28px 5px 10px; border-radius:8px; border:1px solid #5b5d61;
-  background:#1c1d1f url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffd400' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 9px center;
-  color:var(--white); -webkit-appearance:none; appearance:none; cursor:pointer; max-width:100%;}
-.se-sel:focus{outline:none; border-color:var(--yellow);}
-.se-sel option{color:#000; background:#fff;}
-.se-head .btn-dark{color:var(--white);}
-.se-head .btn-dark:hover{color:var(--yellow); border-color:var(--yellow);}
-.se-scroll{flex:1; min-height:0; overflow:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:14px 16px 40px;}
+.se-page{position:fixed; inset:0; z-index:85; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; background:var(--paper);}   /* (its own page; windows like a match video or "are you sure?" open on top of it) */
+.se-page[hidden]{display:none;}
+html.se-open, html.se-open body{overflow:hidden;}
+html.app-frame .se-page{top:40px;}
+html.app-frame .se-page .appbar{top:0;}
+html.app-frame.view-home .se-page .appbar{display:block;}
+html.app-frame .se-page .appbar .status > *{display:revert;}
+/* its scroll bar: the same slim yellow pill as the rest of the planner */
+.se-page::-webkit-scrollbar{width:14px;}
+.se-page::-webkit-scrollbar-track{background:transparent;}
+.se-page::-webkit-scrollbar-thumb{background:#ffd400; border-radius:999px; border:3px solid #f3f3f0; min-height:40px;}
+.se-page::-webkit-scrollbar-thumb:hover{background:#f2c700;}
+.se-page{scrollbar-color:#ffd400 transparent;}
+@supports (-webkit-touch-callout:none){ .se-page{scrollbar-color:auto;} }
+.se-appbar{position:sticky; top:0;}
+.se-appbar .appbar-inner{max-width:1180px; flex-wrap:wrap;}
+.se-status{flex:1 1 160px;}
+.se-ctl{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.se-sheet{max-width:1180px; margin:16px auto 48px; background:var(--white); box-shadow:0 0 0 1px var(--line), 0 6px 24px rgba(0,0,0,.05);}   /* (like a session's sheet; the home page hides .sheet) */
+html.view-home .se-page .se-appbar{display:block;}
+.se-body{padding:16px 20px 28px;}
+.se-sel{font:inherit; font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:16px; letter-spacing:.03em; padding:6px 28px 6px 10px; border-radius:8px; border:1px solid var(--line);
+  background:var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%230d0e0f' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 9px center;
+  color:var(--ink); -webkit-appearance:none; appearance:none; cursor:pointer; max-width:100%;}
+.se-sel:hover{border-color:var(--black);}
+.se-sel:focus{outline:none; border-color:var(--ink); box-shadow:0 0 0 3px rgba(255,212,0,.45);}
 
 .se-top{background:var(--white); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:12px;}
 .se-top-row{display:flex; align-items:flex-start; gap:10px;}
@@ -2049,13 +2062,18 @@ html.wl-open, html.wl-open body{overflow:hidden;}
 .hw-prompt{display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 14px; border:1px dashed #c9cbc6; border-radius:10px; background:var(--white);}
 .hw-prompt-t{flex:1; min-width:200px; font-size:15px;}
 
-@media screen and (max-width:640px){:where(html:not(.print-sim)) .modal.se-modal{padding:0;}
-:where(html:not(.print-sim)) .modal-box.se-box{height:100vh; height:100dvh; border-radius:0;}
-:where(html:not(.print-sim)) .se-head{border-radius:0; padding:10px 12px; padding-top:max(10px, env(safe-area-inset-top));}
-:where(html:not(.print-sim)) .se-head h3{font-size:19px;}
-:where(html:not(.print-sim)) .se-head-ctl{order:3; flex-basis:100%;}
-:where(html:not(.print-sim)) .se-head #seClose{margin-left:auto;}
-:where(html:not(.print-sim)) .se-scroll{padding:10px 10px 40px; padding-bottom:max(40px, env(safe-area-inset-bottom));}
+@media screen and (max-width:640px){:where(html:not(.print-sim)) .se-sheet{margin:0 0 40px; box-shadow:none;}
+:where(html:not(.print-sim)) .se-body{padding:12px 10px 40px; padding-bottom:max(40px, env(safe-area-inset-bottom));}
+:where(html:not(.print-sim)) .se-status{display:none;}
+:where(html:not(.print-sim)) .se-appbar .appbar-inner{row-gap:6px; padding:6px 10px;}
+:where(html:not(.print-sim)) .se-appbar .appbar-inner{gap:6px;}
+:where(html:not(.print-sim)) .se-ctl{display:contents;}
+:where(html:not(.print-sim)) .se-ctl .se-sel{flex:none; font-size:15px; padding:5px 24px 5px 8px; background-position:right 7px center;}
+:where(html:not(.print-sim)) .se-ctl .se-sel-season{flex:1 1 150px; min-width:0;}
+:where(html:not(.print-sim)) .se-appbar .se-ctl .btn{flex:1 1 auto; min-width:auto; white-space:nowrap; padding:6px 10px; font-size:13px; justify-content:center;}
+:where(html:not(.print-sim)) .se-ctl .se-long{display:none;}
+:where(html:not(.print-sim)) .se-week{position:relative;}
+:where(html:not(.print-sim)) .se-wk-num .se-wk-more{position:absolute; top:6px; right:6px; margin:0;}
 :where(html:not(.print-sim)) .se-week{grid-template-columns:minmax(0, 1fr); gap:8px; padding:10px;}
 :where(html:not(.print-sim)) .se-wk-side{flex-direction:row; flex-wrap:wrap; align-items:baseline; column-gap:10px;}
 :where(html:not(.print-sim)) .se-wk-blk{flex-basis:100%; flex-direction:row; align-items:baseline; gap:8px; margin-top:2px;}
@@ -2064,7 +2082,22 @@ html.wl-open, html.wl-open body{overflow:hidden;}
 :where(html:not(.print-sim)) .se-tl-mon{font-size:10px;}
 :where(html:not(.print-sim)) .se-field-pair{grid-template-columns:minmax(0, 1fr);}
 :where(html:not(.print-sim)) .home-actions .home-season-btn,:where(html:not(.print-sim)) .home-actions .home-gt-btn{grid-column:1 / span 2;}}
-@media print{ .se-modal, .home-week, .se-menu{display:none !important;} }
+@media print{ .se-page, .home-week, .se-menu{display:none !important;} }
+
+/* weeks off (breaks, holidays) and removed days */
+.se-wk-more{margin:-2px -6px 0 0;}
+.se-week.is-break{background:repeating-linear-gradient(135deg, #fafaf8 0 10px, #f3f3f0 10px 20px); border-left-color:var(--line);}
+.se-break{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 14px; border:1px dashed #c9cbc6; border-radius:8px; background:var(--white);}
+.se-break-t{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:19px; letter-spacing:.03em; text-transform:uppercase;}
+.se-break-sub{color:var(--grey); font-size:14px;}
+.se-tl-tick.brk{background:repeating-linear-gradient(135deg, #d6d7d2 0 3px, #ecece8 3px 6px);}
+.se-day.is-off{padding:7px 10px; gap:4px;}
+.se-day.is-off .se-day-date, .se-day.is-off .se-day-type{color:var(--muted);}
+.se-backon{margin-left:auto; padding:3px 9px; border:1px solid var(--line); border-radius:7px; background:var(--white); color:var(--ink); cursor:pointer;
+  font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:13px; letter-spacing:.04em; text-transform:uppercase;}
+.se-backon:hover, .se-backon:focus-visible{border-color:var(--black); background:var(--yellow);}
+.se-backon + .se-sp{display:none;}
+.home-week .se-break{margin-bottom:10px;}
 
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
@@ -2565,6 +2598,16 @@ html.has-selbar .home{padding-bottom:70px;}
   .modal.closing{animation:fade-out .13s ease-in forwards;}
   .modal.closing .modal-box{animation:pop-out .13s ease-in forwards;}
   .sel-bar:not([hidden]){animation:rise-in .22s cubic-bezier(.2,.7,.2,1);}
+  .appbar.se-appbar{view-transition-name:none;}   /* (one named top bar at a time, or the browser skips the page animation) */
+  /* everything else that opens over the page fades in too: menus, pickers, pictures, videos, clips */
+  .menu:not([hidden]), .tool-dd-pop:not([hidden]), .lu-pick:not([hidden]), .se-menu{animation:pop-in .16s cubic-bezier(.2,.7,.2,1);}
+  .pop-closing, .se-menu.pop-closing{animation:pop-out .12s ease-in forwards !important; pointer-events:none;}
+  .an-rec:not([hidden]){animation:fade-in .18s ease-out;}
+  .set-pane.tab-in > *{animation:vt-in .22s cubic-bezier(.2,.7,.2,1) both;}
+  .pg-pic-view, .pg-vid.pg-vid-max, .an-full, #anClipPlayer:not([hidden]){animation:fade-in .2s ease-out;}
+  .pg-pic-view.closing{animation:fade-out .15s ease-in forwards;}
+  /* browsers without page animations (older iPhones/iPads): the new page fades in instead of snapping */
+  html.vt-fallback body{animation:fade-in .22s ease-out;}
 }
 
 /* ---------- Undo bar ---------- */
@@ -3323,7 +3366,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 29 Oct 2026, 11:07pm</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 9:12am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -4928,7 +4971,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     function closeToolGroups(except){
       toolbar.querySelectorAll('.tool-dd').forEach(function(dd){
         if(dd === except) return;
-        dd.querySelector('.tool-dd-pop').hidden = true; dd.classList.remove('open');
+        popHide(dd.querySelector('.tool-dd-pop')); dd.classList.remove('open');
         dd.querySelector('.tool-dd-btn').setAttribute('aria-expanded', 'false');
       });
     }
@@ -4946,11 +4989,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const btn = dd.querySelector('.tool-dd-btn'), pop = dd.querySelector('.tool-dd-pop');
       btn.addEventListener('click', function(e){
         e.stopPropagation();
-        const open = pop.hidden;
+        const open = pop.hidden || pop.classList.contains('pop-closing');
         closeToolGroups(dd);
-        if(!open){ pop.hidden = true; dd.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); return; }
+        if(!open){ popHide(pop); dd.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); return; }
         const r = btn.getBoundingClientRect();
-        pop.hidden = false; dd.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
+        popShow(pop); dd.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
         const w = pop.offsetWidth;
         pop.style.left = Math.max(8, Math.min(r.left - 6, window.innerWidth - w - 8)) + 'px';
         pop.style.top = (r.bottom + 6) + 'px';
@@ -8338,7 +8381,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* page changes slide and fade (View Transitions); anything that can't, just switches */
   const reduceMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : {matches:false};
   function swap(fn){
-    if(!document.startViewTransition || reduceMotion.matches || document.documentElement.classList.contains('print-sim')){ fn(); return; }
+    if(reduceMotion.matches || document.documentElement.classList.contains('print-sim')){ fn(); return; }
+    if(!document.startViewTransition){
+      fn();
+      const r = document.documentElement; r.classList.remove('vt-fallback'); void r.offsetWidth; r.classList.add('vt-fallback');
+      clearTimeout(swap._t); swap._t = setTimeout(function(){ r.classList.remove('vt-fallback'); }, 260);
+      return;
+    }
     try{ document.startViewTransition(fn); }catch(e){ fn(); }
   }
   /* windows fade out instead of vanishing */
@@ -8350,6 +8399,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     el._closeT = setTimeout(function(){ el.classList.remove('closing'); el.hidden = true; }, 130);
   }
   function openModal(el){ clearTimeout(el._closeT); el.classList.remove('closing'); el.hidden = false; }
+  /* small pop-ups (menus, pickers, overlays): fade in when shown (CSS), and fade away when closed */
+  function popShow(el){ clearTimeout(el._popT); el.classList.remove('pop-closing'); el.hidden = false; }
+  function popHide(el){
+    if(el.hidden || el.classList.contains('pop-closing')) return;
+    if(reduceMotion.matches){ el.hidden = true; return; }
+    el.classList.add('pop-closing');
+    el._popT = setTimeout(function(){ el.classList.remove('pop-closing'); el.hidden = true; }, 120);
+  }
   /* "Are you sure?" before anything is deleted from the Home page (Cancel is the safe default) */
   const confirmBox = document.getElementById('confirmModal');
   let confirmDone = null;
@@ -8571,11 +8628,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   document.getElementById('saveBtn').addEventListener('click', saveToApp);
   const exportBtn = document.getElementById('exportBtn'), exportMenu = document.getElementById('exportMenu');
   function setMenu(open){
-    exportMenu.hidden = !open;
+    if(open) popShow(exportMenu); else popHide(exportMenu);
     exportBtn.setAttribute('aria-expanded', String(open));
     if(open){ const f = exportMenu.querySelector('button'); if(f) f.focus(); }
   }
-  exportBtn.addEventListener('click', function(ev){ ev.stopPropagation(); setMenu(exportMenu.hidden); });
+  exportBtn.addEventListener('click', function(ev){ ev.stopPropagation(); setMenu(exportMenu.hidden || exportMenu.classList.contains('pop-closing')); });
   document.addEventListener('click', function(ev){ if(!exportMenu.hidden && !ev.target.closest('.menu-wrap')) setMenu(false); });
   /* ---- PDF where there's no print window (the online version): each printed page as a picture ---- */
   function loadScript(src){
@@ -8850,7 +8907,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     shareModal.hidden = false;
     shareModal.querySelector('.share-btn').focus();
   }
-  function closeShare(){ shareModal.hidden = true; }
+  function closeShare(){ closeModal(shareModal); }
   document.getElementById('shareBtn').addEventListener('click', openShare);
   document.getElementById('shareClose').addEventListener('click', closeShare);
   shareModal.addEventListener('click', function(e){ if(e.target === shareModal) closeShare(); });
@@ -10439,7 +10496,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     });
     return best;
   }
-  function luClosePick(){ luPick.classList.remove('finding'); luPick.hidden = true; luSheet.querySelectorAll('.lu-man.picked').forEach(function(g){ g.classList.remove('picked'); }); }
+  function luClosePick(){ luPick.classList.remove('finding'); popHide(luPick); luSheet.querySelectorAll('.lu-man.picked').forEach(function(g){ g.classList.remove('picked'); }); }
   function luOpenPick(g, period, i){
     luClosePick();
     g.classList.add('picked');
@@ -10511,7 +10568,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const r = g.getBoundingClientRect();
     luPick.style.left = Math.max(8, Math.min(window.innerWidth - 236, r.left + window.scrollX - 100)) + 'px';
     luPick.style.top = (r.bottom + window.scrollY + 6) + 'px';
-    luPick.hidden = false;
+    popShow(luPick);
     find.focus();
   }
   document.addEventListener('pointerdown', function(e){ if(!luPick.hidden && !e.target.closest('.lu-pick') && !e.target.closest('.lu-man')) luClosePick(); });
@@ -11835,7 +11892,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!on){
       if(document.fullscreenElement === anLeft){ try{ document.exitFullscreen(); }catch(e){} }
       else if(document.webkitFullscreenElement === anLeft){ try{ document.webkitExitFullscreen(); }catch(e){} }
-      anLeft.classList.remove('an-full'); return;
+      if(anLeft.classList.contains('an-full')) swap(function(){ anLeft.classList.remove('an-full'); });
+      return;
     }
     const req = anLeft.requestFullscreen || anLeft.webkitRequestFullscreen, fake = function(){ anLeft.classList.add('an-full'); };
     if(!req){ fake(); return; }
@@ -12455,7 +12513,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     showToast('Clip saved · “' + c.name + '” (' + Math.round(c.end - c.start) + 's)');
     if(toBoard && toBoard.key) await anAddToBoard(toBoard.key, toBoard.did, c);
   }
-  document.getElementById('anRecCancel').addEventListener('click', function(){ if(anRec) anRec.cancel(); else document.getElementById('anRec').hidden = true; });
+  document.getElementById('anRecCancel').addEventListener('click', function(){ if(anRec) anRec.cancel(); else popHide(document.getElementById('anRec')); });
   /* ---------- editing a clip you've made: name, note and players straight away; a new start or end re-cuts it ---------- */
   function anEditClip(c){
     if(!anCanEdit()) return;
@@ -12555,14 +12613,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     else { v.addEventListener('loadedmetadata', go, {once:true}); v.src = src; }
     anCpPaint();
   }
-  document.getElementById('anClipClose').addEventListener('click', function(){
+  document.getElementById('anClipClose').addEventListener('click', function(){ swap(anClipCloseNow); });
+  function anClipCloseNow(){
     if(anDMode) anDrawDone();
     anCpFull(false);
     clearTimeout(anDFreezeT); anDFreeze = null; anDC = null; anCpOff = 0; anCpLen = 0;
     const v = document.getElementById('anClipVid'); try{ v.pause(); }catch(e){} v.removeAttribute('src'); document.getElementById('anClipPlayer').hidden = true; anModal.classList.remove('clip-open');
     document.getElementById('anLeft').classList.remove('clip-open');
     anShowShapes([]);
-  });
+  }
   /* =====================================================================
      Drawing on a clip: pause it, draw arrows, runs, highlighted areas and rings,
      and when the clip plays it freezes there to show them, then carries on.
@@ -12902,7 +12961,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!on){
       if(document.fullscreenElement === anCpPlayer){ try{ document.exitFullscreen(); }catch(e){} }
       else if(document.webkitFullscreenElement === anCpPlayer){ try{ document.webkitExitFullscreen(); }catch(e){} }
-      anCpPlayer.classList.remove('an-full'); return;
+      if(anCpPlayer.classList.contains('an-full')) swap(function(){ anCpPlayer.classList.remove('an-full'); });
+      return;
     }
     const req = anCpPlayer.requestFullscreen || anCpPlayer.webkitRequestFullscreen;
     const fake = function(){ anCpPlayer.classList.add('an-full'); };
@@ -12960,7 +13020,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       });
       return blob;
     }finally{
-      cancelAnimationFrame(raf); ov.hidden = true; anRec = null;
+      cancelAnimationFrame(raf); popHide(ov); anRec = null;
       try{ v.pause(); }catch(e){} v.remove(); URL.revokeObjectURL(url);
     }
   }
@@ -12989,8 +13049,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const ov = document.getElementById('anRec'); ov.hidden = false; document.getElementById('anRecBar').style.width = '0%';
     let blob;
     try{ blob = await anRecord(c.start, c.end); }
-    catch(e){ ov.hidden = true; anRec = null; if(e && e.message === 'stuck') showToast('The video stopped moving, so the clip was stopped · try again'); else if(e && e.message === 'nocapture') anNeedPick(); else if(e && e.message !== 'cancelled') showToast('Couldn’t make the clip’s video on this device · try again'); return null; }
-    ov.hidden = true; anRec = null;
+    catch(e){ popHide(ov); anRec = null; if(e && e.message === 'stuck') showToast('The video stopped moving, so the clip was stopped · try again'); else if(e && e.message === 'nocapture') anNeedPick(); else if(e && e.message !== 'cancelled') showToast('Couldn’t make the clip’s video on this device · try again'); return null; }
+    popHide(ov); anRec = null;
     c.size = blob.size; c.mime = blob.type;
     try{
       if(window.hufcDesktop && window.hufcDesktop.saveVideo){
@@ -14241,6 +14301,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.44', d:'2 Nov 2026', t:'Season plan page, breaks, smoother', n:['The Season plan is its own page, like a session or lineup — Home at the top, the club header, and the yellow scroll pill', 'Each week’s ⋯ menu: take a week (or several) off for school holidays or a break, or remove the game or the training that week — removed days shrink to one line with Back on', 'Smoother everywhere: the Export menu, drawing-tool menus, the lineup player picker, ⋯ menus and the clip-making overlay fade away instead of vanishing; Settings tabs slide in; older iPhones and iPads fade between pages', 'The home page’s This week strip is just the week (open the plan from Season plan)']},
     {v:'3.43', d:'29 Oct 2026', t:'Season plan', n:['New Season plan (home page): the season week by week for each team — training nights and match days, each showing its session, lineup, pre-game and match video', 'Anything with a date turns up on its day by itself; + Session, + Lineup, + Pre-game and + Match video start one already dated (a lineup also gets the opponent)', 'Plan themes in blocks (e.g. 4 weeks of pressing) — new sessions in those weeks start with that theme — and add a focus for each week', 'Call a day off, switch it, or add an extra training or game from the ⋯ menu', 'The home page shows This week for your team; the club sees each team’s plan, view-only', 'Theme blocks start with your six principles — Possession, Progression, Penetration, Pressure, Prevention, Protection — each with its own colour and aim']},
     {v:'3.42', d:'29 Oct 2026', t:'Cleaner home page', n:['The home page keeps just your folders — the teams you coach are in Settings → My teams, and signing in and syncing are in Settings → Account', 'The Settings button shows a small badge when a coach is waiting for your approval or syncing needs a look', 'Esc closes Settings']},
     {v:'3.41', d:'29 Oct 2026', t:'Far more room on iPhone and iPad', n:['The iPhone/iPad app (and the planner in a browser) now keeps your sessions, lineups, pre-games and match videos in the device’s own database — hundreds of megabytes or more, instead of about 5 MB — so it won’t run out of room as the club library grows', 'What was already there is moved across by itself the first time it opens', 'Pick-lists open upward only when there’s no room below, so they don’t cover the boxes above', 'Windows program 1.6.6: the extra backup copies of whole match videos are tidied away (the videos themselves stay in your Videos folder)']},
@@ -14365,7 +14426,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     SET_TABS.forEach(function(t){
       if(t[0] === 'club' && !setIsAdmin()) return;
       nav.appendChild(h('button', {type:'button', class:'set-tab' + (setTab === t[0] ? ' on' : ''), 'aria-current':setTab === t[0] ? 'page' : 'false',
-        onclick:function(){ setTab = t[0]; renderSettings(); }}, setTabIco(t[2]), h('span', {text:t[1]})));
+        onclick:function(){ if(setTab === t[0]) return; setTab = t[0]; renderSettings(); const pn = document.getElementById('setPane'); pn.classList.remove('tab-in'); void pn.offsetWidth; pn.classList.add('tab-in'); clearTimeout(pn._t); pn._t = setTimeout(function(){ pn.classList.remove('tab-in'); }, 400); }}, setTabIco(t[2]), h('span', {text:t[1]})));
     });
     const pane = document.getElementById('setPane'); pane.innerHTML = '';
     const fn = {account:setAccount, teams:setTeams, drive:setDrive, sessions:setSessions, lineups:setLineups, data:setData, club:setClub, about:setAbout}[setTab];
@@ -15324,6 +15385,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(v && v.paused){ const p = v.play(); if(p && p.catch) p.catch(function(){}); }
     } else {
       if(!wrap.classList.contains('pg-vid-max')) return;
+      if(pgVidOpen === wrap) pgVidOpen = null;
+      swap(function(){ pgVidClose(wrap, v); });
+    }
+  }
+  /* back from big: (smoothly, from the caller) the clip returns to its place on the board */
+  function pgVidClose(wrap, v){
+    {
+      if(!wrap.classList.contains('pg-vid-max')) return;
       wrap._zoomReset(false);
       wrap.classList.remove('pg-vid-max'); document.documentElement.classList.remove('pg-vid-open'); wrap._fit();
       const ph = wrap._ph; wrap._ph = null;
@@ -15613,7 +15682,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   /* a big view of one picture: click, Esc or ✕ to close */
   function pgPicView(p){
-    const close = function(){ v.remove(); document.removeEventListener('keydown', key, true); };
+    const close = function(){ document.removeEventListener('keydown', key, true); if(v.classList.contains('closing')) return; v.classList.add('closing'); setTimeout(function(){ v.remove(); }, reduceMotion.matches ? 0 : 150); };
     const key = function(e){ if(e.key === 'Escape'){ e.stopPropagation(); close(); } };
     const v = h('div', {class:'pg-pic-view', role:'dialog', 'aria-label':clean(p.title) || 'Picture', onclick:close},
       h('img', {src:pgPicSrc(p), alt:clean(p.title) || 'Picture'}),
@@ -16346,6 +16415,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     s.train = Array.isArray(s.train) ? s.train : []; s.match = Array.isArray(s.match) ? s.match : [];
     s.blocks = Array.isArray(s.blocks) ? s.blocks : []; s.days = s.days && typeof s.days === 'object' ? s.days : {};
     s.notes = s.notes && typeof s.notes === 'object' ? s.notes : {};
+    s.breaks = s.breaks && typeof s.breaks === 'object' ? s.breaks : {};   /* weeks off: {monday: 'School holidays'} */
     return s;
   }
   function seSave(s){
@@ -16399,6 +16469,54 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!type && ix[iso]) type = (it.lineup.length || it.pregame.length || it.video.length) ? 'match' : 'train';
     return {iso:iso, type:type, regular:regular, off:!!o.off, o:o, it:it};
   }
+  function seWeekDays(s, mon, ix){
+    const brk = s.breaks[mon] || '', days = [];
+    for(let i = 0; i < 7; i++){
+      const iso = seAdd(mon, i);
+      if((iso < s.start || iso > s.end) && !ix[iso]) continue;
+      if(brk && !ix[iso]) continue;
+      const info = seDayInfo(s, iso, ix);
+      if(info.type) days.push(info);
+    }
+    return {brk:brk, days:days};
+  }
+  /* a week's ⋯ menu: a break or holidays, or take the games / the training out of it */
+  function seWeekMenu(anchor, s, mon, ix){
+    const brk = s.breaks[mon], all = [];
+    for(let i = 0; i < 7; i++){ const iso = seAdd(mon, i); if(iso < s.start || iso > s.end) continue; const info = seDayInfo(s, iso, ix); if(info.type) all.push(info); }
+    const games = all.filter(function(d){ return d.type === 'match' && !d.off; }), train = all.filter(function(d){ return d.type === 'train' && !d.off; }), offs = all.filter(function(d){ return d.off; });
+    const off = function(list){ list.forEach(function(d){ s.days[d.iso] = Object.assign({}, s.days[d.iso] || {}, {off:true}); }); seSave(s); seRefresh(); };
+    let run = 0; if(brk){ for(let m = mon; s.breaks[m] === brk; m = seAdd(m, 7)) run++; for(let m = seAdd(mon, -7); s.breaks[m] === brk; m = seAdd(m, -7)) run++; }
+    seMenu(anchor, [
+      {head:'Week of ' + seRange(mon)},
+      brk ? {label:'Back on this week (end “' + brk + '” here)', fn:function(){ delete s.breaks[mon]; seSave(s); seRefresh(); }}
+        : {label:'Week off — break or holidays…', fn:function(){ seBreakForm(s, mon); }},
+      brk && run > 1 ? {label:'Back on for the whole “' + brk + '” (' + run + ' weeks)', fn:function(){ Object.keys(s.breaks).forEach(function(k){ if(s.breaks[k] === brk) delete s.breaks[k]; }); seSave(s); seRefresh(); }} : null,
+      !brk && games.length ? {label:games.length > 1 ? 'Remove the games this week' : 'Remove the game this week', fn:function(){ off(games); }} : null,
+      !brk && train.length ? {label:'Remove the training this week', fn:function(){ off(train); }} : null,
+      !brk && offs.length ? {label:'Put everything back on this week', fn:function(){ offs.forEach(function(d){ const o = Object.assign({}, s.days[d.iso] || {}); delete o.off; if(Object.keys(o).length) s.days[d.iso] = o; else delete s.days[d.iso]; }); seSave(s); seRefresh(); }} : null
+    ]);
+  }
+  const SE_BREAKS = ['School holidays', 'Christmas break', 'Easter break', 'Mid-season break', 'Bye week', 'Public holiday', 'Off-season'];
+  function seBreakForm(s, mon){
+    const weeks = seWeeks(s), left = weeks.length - weeks.indexOf(mon);
+    const nameBox = luCombo({value:'', ph:'e.g. School holidays', label:'What it is', options:SE_BREAKS, onChange:function(){}});
+    const len = h('input', {type:'number', class:'set-input set-num', min:'1', max:String(left), value:'1', 'aria-label':'Number of weeks'});
+    const msg = h('p', {class:'se-form-msg'});
+    seForm('Week off', h('div', {class:'se-form-body'},
+      h('p', {class:'se-blk-when', text:'From the week of ' + seRange(mon) + ' — no training or games. Anything already dated in it still shows.'}),
+      seField('What it is', nameBox), seField('Weeks', len), msg), function(close){
+      return [h('span', {class:'se-sp'}),
+        h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}),
+        h('button', {type:'button', class:'btn btn-primary', text:'Take the week off', onclick:function(){
+          const nm = clean(nameBox.querySelector('input').value) || 'Break';
+          const n = Math.max(1, Math.min(left, Math.round(+len.value || 1)));
+          for(let i = 0; i < n; i++) s.breaks[seAdd(mon, 7 * i)] = nm;
+          seSave(s); close(); seRefresh();
+          showToast(nm + ' · ' + n + (n === 1 ? ' week' : ' weeks') + ' off');
+        }})];
+    });
+  }
   function seItemTitle(kind, x){
     if(kind === 'lineup') return luName(x.lu) || 'Untitled lineup';
     if(kind === 'video') return mvTitle(x.m) || 'Match video';
@@ -16416,10 +16534,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function seOpenItem(kind, x){
     if(kind === 'video'){ anOpenMatch(x.key); return; }   /* (opens on top; closing it comes back here) */
     seLeave();
-    if(kind === 'lineup') swap(function(){ luOpen(x.key); });
-    else swap(function(){ openSession(x.key); });
+    if(kind === 'lineup') swap(function(){ seShow(false); luOpen(x.key); });
+    else swap(function(){ seShow(false); openSession(x.key); });
   }
-  function seLeave(){ if(!seModal.hidden){ seReturn = true; seRememberScroll(); closeModal(seModal, true); } }
+  /* leaving for a session / lineup: remember where you were (the page itself goes inside the smooth change) */
+  function seLeave(){ if(!seModal.hidden){ seReturn = true; seRememberScroll(); } }
   function seNewItem(kind, s, info){
     const g = s.group, dd = seDd(info.iso), fx = seFixture(info), blk = seBlocksAt(s, seMonday(info.iso))[0];
     if(kind === 'video'){
@@ -16437,6 +16556,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }
     seLeave();
     swap(function(){
+      seShow(false);
       if(kind === 'lineup'){
         luNew(); lu.group = g; lu.meta.date = dd;
         if(fx.opp) lu.meta.opponent = fx.opp;
@@ -16495,7 +16615,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* ---------- a small menu (⋯) ---------- */
   let seMenuEl = null;
-  function seMenuClose(){ if(seMenuEl){ seMenuEl.remove(); seMenuEl = null; } }
+  function seMenuClose(){ if(seMenuEl){ const m = seMenuEl; seMenuEl = null; if(reduceMotion.matches){ m.remove(); return; } m.classList.add('pop-closing'); setTimeout(function(){ m.remove(); }, 120); } }
   function seMenu(anchor, items){
     seMenuClose();
     const m = h('div', {class:'se-menu', role:'menu'});
@@ -16527,7 +16647,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       seMenu(menuBtn, [
         {head:seDayName(info.iso)},
         info.off ? {label:match ? 'The game is back on' : 'Training is back on', fn:function(){ setDay({off:null}); }}
-          : {label:match ? 'No game this day (bye, washed out)' : 'No training this day', fn:function(){ setDay({off:true}); }},
+          : {label:match ? 'Remove this game (bye, washed out…)' : 'Remove this training', fn:function(){ setDay({off:true}); }},
         {label:match ? 'Make it a training day' : 'Make it a match day', fn:function(){ const nt = match ? 'train' : 'match'; setDay({type:nt === info.regular ? null : nt}); }},
         extra && !info.it.session.length && !info.it.lineup.length && !info.it.pregame.length && !info.it.video.length ? {label:'Take this day off the plan', cls:'danger', fn:function(){ if(info.regular) s.days[info.iso] = {off:true}; else delete s.days[info.iso]; seSave(s); seRefresh(); }} : null
       ]);
@@ -16535,8 +16655,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const fx = match ? seFixture(info) : null;
     card.append(h('div', {class:'se-day-head'},
       h('span', {class:'se-day-date', text:seDayName(info.iso)}),
-      h('span', {class:'se-day-type', text:info.off ? (match ? 'No game' : 'No training') : match ? 'Match' : 'Training'}),
+      h('span', {class:'se-day-type', text:match ? 'Match' : 'Training'}),
       today ? h('span', {class:'se-day-today', text:'Today'}) : null,
+      info.off && !ro ? h('button', {type:'button', class:'se-backon', text:'Back on', title:(match ? 'The game' : 'Training') + ' is back on', onclick:function(){ setDay({off:null}); }}) : null,
       h('span', {class:'se-sp'}), menuBtn));
     /* the opponent (from the lineup once there is one; typed here before that) */
     if(match && !info.off){
@@ -16579,13 +16700,19 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }
     return card;
   }
+  function seBreakBanner(s, mon, brk, ro){
+    return h('div', {class:'se-break'},
+      h('span', {class:'se-break-t', text:brk}), h('span', {class:'se-break-sub', text:'No training or games this week'}),
+      h('span', {class:'se-sp'}),
+      ro ? null : h('button', {type:'button', class:'btn btn-small', text:'Back on', title:'Training and games back on this week', onclick:function(){ delete s.breaks[mon]; seSave(s); seRefresh(); }}));
+  }
   function seFixLogo(name){ const src = luLogoFor(name); return src ? h('img', {class:'se-fix-logo', src:src, alt:''}) : null; }
 
-  /* ---------- the window ---------- */
-  const seModal = h('div', {class:'modal se-modal', id:'seModal', hidden:true});
-  const seBox = h('div', {class:'modal-box se-box', role:'dialog', 'aria-modal':'true', 'aria-labelledby':'seTitle'});
-  seModal.appendChild(seBox); document.body.appendChild(seModal);
-  seModal.addEventListener('click', function(e){ if(e.target === seModal) seClose(); });
+  /* ---------- the page: its own page like a session or lineup (Home button, club header), scrolling with the yellow pill ---------- */
+  const seModal = h('div', {class:'se-page', id:'seModal', role:'region', 'aria-label':'Season plan'});
+  seModal.hidden = true;
+  document.body.appendChild(seModal);
+  function seShow(on){ seModal.hidden = !on; document.documentElement.classList.toggle('se-open', !!on); }
   document.addEventListener('keydown', function(e){
     if(e.key !== 'Escape' || seModal.hidden || e.defaultPrevented) return;
     const onTop = Array.prototype.some.call(document.querySelectorAll('.modal'), function(m){ return m !== seModal && !m.hidden && !m.classList.contains('closing'); });
@@ -16593,21 +16720,24 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const t = e.target; if(t && t.closest && t.closest('.lu-combo.open')) return;
     seClose();
   }, true);
-  function seClose(){ seMenuClose(); seReturn = false; closeModal(seModal); if(document.documentElement.classList.contains('view-home')) renderHome(); }
-  function seRememberScroll(){ const sc = seBox.querySelector('.se-scroll'); seScrollTo = sc ? sc.scrollTop : null; }
+  function seClose(){
+    seMenuClose(); seReturn = false;
+    swap(function(){ seShow(false); if(document.documentElement.classList.contains('view-home')) renderHome(); });
+  }
+  function seRememberScroll(){ seScrollTo = seModal.hidden ? null : seModal.scrollTop; }
   /* which team: the folder you're looking at, else your first team */
   function seDefaultGroup(){ const v = folderView(); return AGE_GROUPS.indexOf(v) !== -1 ? v : (primaryGroup() || 'U18'); }
   function seasonOpen(g, id){
     seGroupPick = g || seDefaultGroup();
     const x = id ? seList().find(function(y){ return y.s.id === id; }) : sePick(seGroupPick);
     seCur = x ? x.s.id : null; seScrollTo = null;
-    openModal(seModal); seRender(true);
+    swap(function(){ seShow(true); seModal.scrollTop = 0; seRender(true); });
   }
   /* back from a session / lineup opened here: the season plan opens again where you were */
   function seAfterHome(){
     if(!seReturn) return;
     seReturn = false;
-    openModal(seModal); seRender(false);
+    seShow(true); seRender(false);
   }
   function seRefresh(){
     if(!seModal.hidden){ seRememberScroll(); seRender(false); }
@@ -16627,8 +16757,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     seMenuClose();
     const g = seGroupPick, x = seCur ? seList().find(function(y){ return y.s.id === seCur; }) : null, s = x ? x.s : null;
     const ro = s ? !canEdit(s) : !seCanMake(g);
-    seBox.innerHTML = '';
-    /* head: team, season, settings, Done */
+    seModal.innerHTML = '';
+    /* top bar: Home, team, season, This week, settings */
     const gSel = h('select', {class:'se-sel', 'aria-label':'Team'});
     const groups = AGE_GROUPS.filter(function(a){ return isMine(a) || seSeasons(a).length || a === g; });
     AGE_GROUPS.forEach(function(a){ if(groups.indexOf(a) === -1) groups.push(a); });
@@ -16643,15 +16773,22 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       sSel.addEventListener('change', function(){ if(sSel.value === '__new'){ seSetup(null); sSel.value = s ? s.id : ''; return; } seCur = sSel.value; seScrollTo = null; seRender(true); });
       if(seasons.length < 2 && !seCanMake(g)) sSel = null;
     }
-    const head = h('div', {class:'se-head'},
-      h('h3', {id:'seTitle', text:'Season plan'}),
-      h('div', {class:'se-head-ctl'}, gSel, sSel,
-        s ? h('button', {type:'button', class:'btn btn-small btn-dark se-today-btn', text:'This week', onclick:function(){ seJump(s, true); }}) : null,
-        s && !ro ? h('button', {type:'button', class:'btn btn-small btn-dark', text:'Season settings', onclick:function(){ seSetup(s); }}) : null),
-      h('button', {type:'button', class:'btn btn-small btn-primary', id:'seClose', text:'Done', onclick:seClose}));
-    seBox.appendChild(head);
-    const scroll = h('div', {class:'se-scroll'});
-    seBox.appendChild(scroll);
+    const bar = h('div', {class:'appbar se-appbar'}, h('div', {class:'appbar-inner'},
+      h('button', {type:'button', class:'btn btn-home', id:'seClose', title:'Home: your sessions, lineups and saved practices', onclick:seClose},
+        h('span', {'aria-hidden':'true', text:'⌂'}), h('span', {class:'btn-label', text:' Home'})),
+      h('div', {class:'status se-status', role:'status'}, h('span', {class:'dot'}),
+        h('span', {class:'status-text', text:s ? (ro ? 'View only · ' + (coachOf(s) || g + ' coach') + '’s plan' : 'Changes save automatically') : 'Season plan'})),
+      h('div', {class:'se-ctl'}, gSel, sSel,
+        s ? h('button', {type:'button', class:'btn se-today-btn', text:'This week', onclick:function(){ seJump(s, true); }}) : null,
+        s && !ro ? h('button', {type:'button', class:'btn', title:'Season settings', onclick:function(){ seSetup(s); }}, h('span', {class:'se-long', text:'Season '}), 'settings') : null)));
+    const crest = (document.querySelector('.header .crest') || {}).src || '';
+    const scroll = h('div', {class:'se-body'});
+    seModal.append(bar, h('div', {class:'se-sheet'},
+      h('header', {class:'header se-header'},
+        h('img', {class:'crest', alt:'Heidelberg United crest', src:crest}),
+        h('div', {class:'club'}, h('div', {class:'club-name', text:'Heidelberg United'}), h('div', {class:'club-sub', text:'Football Club · Est. 1958'})),
+        h('div', {class:'doc-title'}, h('strong', {id:'seTitle', text:'Season Plan'}))),
+      scroll));
     if(!s){ scroll.appendChild(seEmpty(g)); return; }
 
     const weeks = seWeeks(s), ix = seIndex(g), today = seToday(), thisMon = seMonday(today);
@@ -16669,18 +16806,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const list = h('div', {class:'se-weeks'});
     weeks.forEach(function(mon, wi){
       const bl = seBlocksAt(s, mon), isNow = mon === thisMon, past = seAdd(mon, 6) < today;
-      const days = [];
-      for(let i = 0; i < 7; i++){
-        const iso = seAdd(mon, i);
-        if(iso < s.start && !ix[iso]) continue;
-        if(iso > s.end && !ix[iso]) continue;
-        const info = seDayInfo(s, iso, ix);
-        if(info.type) days.push(info);
-      }
-      const w = h('section', {class:'se-week' + (isNow ? ' is-now' : '') + (past ? ' is-past' : ''), id:'se-wk-' + mon, 'data-week':mon});
+      const wd = seWeekDays(s, mon, ix), days = wd.days, brk = wd.brk;
+      const w = h('section', {class:'se-week' + (isNow ? ' is-now' : '') + (past ? ' is-past' : '') + (brk ? ' is-break' : ''), id:'se-wk-' + mon, 'data-week':mon});
+      const wkMore = ro ? null : h('button', {type:'button', class:'se-day-more se-wk-more', title:'Change this week: a break or holidays, or take the games or training out', 'aria-label':'Change week ' + (wi + 1), html:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="5" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="19" cy="12" r="2" fill="currentColor"/></svg>'});
+      if(wkMore) wkMore.addEventListener('click', function(e){ e.stopPropagation(); seWeekMenu(wkMore, s, mon, ix); });
       if(bl[0]) w.style.setProperty('--blk', bl[0].color || SE_COLOURS[0]);
       const side = h('div', {class:'se-wk-side'},
-        h('div', {class:'se-wk-num'}, 'Week ' + (wi + 1), isNow ? h('span', {class:'se-now', text:'This week'}) : null),
+        h('div', {class:'se-wk-num'}, 'Week ' + (wi + 1), isNow ? h('span', {class:'se-now', text:'This week'}) : null, h('span', {class:'se-sp'}), wkMore),
         h('div', {class:'se-wk-dates', text:seRange(mon)}),
         bl.map(function(b){
           const n = Math.round((seDate(mon) - seDate(b.from)) / 6048e5) + 1;
@@ -16689,9 +16821,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         }));
       const main = h('div', {class:'se-wk-main'});
       const dl = h('div', {class:'se-days'});
+      if(brk) main.appendChild(seBreakBanner(s, mon, brk, ro));
       days.forEach(function(info){ dl.appendChild(seDayCard(s, info, ro)); });
-      if(!days.length) dl.appendChild(h('div', {class:'se-day-none', text:'Nothing planned this week'}));
-      main.appendChild(dl);
+      if(!days.length && !brk) dl.appendChild(h('div', {class:'se-day-none', text:'Nothing planned this week'}));
+      if(days.length) main.appendChild(dl);
       const note = clean(s.notes[mon]);
       const foot = h('div', {class:'se-wk-foot'});
       if(!ro){
@@ -16722,15 +16855,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       list.appendChild(w);
     });
     scroll.appendChild(list);
-    if(seScrollTo != null && !jump){ scroll.scrollTop = seScrollTo; seScrollTo = null; }
+    if(seScrollTo != null && !jump){ seModal.scrollTop = seScrollTo; seScrollTo = null; }
     else if(jump) requestAnimationFrame(function(){ seJump(s, false); });
   }
+  function seBarH(){ const b = seModal.querySelector('.se-appbar'); return b ? b.offsetHeight : 0; }
   function seJump(s, smooth){
-    const sc = seBox.querySelector('.se-scroll'); if(!sc) return;
+    const sc = seModal; if(sc.hidden) return;
     const ws = seWeeks(s), t = seMonday(seToday());
     const mon = t < ws[0] ? ws[0] : t > ws[ws.length - 1] ? ws[ws.length - 1] : t;
     const el = document.getElementById('se-wk-' + mon); if(!el) return;
-    const top = el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - 8;
+    const top = el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - seBarH() - 10;
     if(mon === ws[0]){ sc.scrollTo({top:0, behavior:smooth ? 'smooth' : 'auto'}); return; }
     sc.scrollTo({top:top, behavior:smooth && !reduceMotion.matches ? 'smooth' : 'auto'});
   }
@@ -16741,8 +16875,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const ticks = h('div', {class:'se-tl-ticks'});
     weeks.forEach(function(mon, i){
       const d = seDate(mon), newMonth = i === 0 || seDate(weeks[i - 1]).getMonth() !== d.getMonth();
-      ticks.appendChild(h('button', {type:'button', class:'se-tl-tick' + (mon === seMonday(seToday()) ? ' now' : ''), title:'Week ' + (i + 1) + ' · ' + seRange(mon), 'aria-label':'Go to week ' + (i + 1),
-        onclick:function(){ const el = document.getElementById('se-wk-' + mon), sc = seBox.querySelector('.se-scroll'); if(el && sc) sc.scrollTo({top:el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - 8, behavior:reduceMotion.matches ? 'auto' : 'smooth'}); }},
+      ticks.appendChild(h('button', {type:'button', class:'se-tl-tick' + (mon === seMonday(seToday()) ? ' now' : '') + (s.breaks[mon] ? ' brk' : ''), title:'Week ' + (i + 1) + ' · ' + seRange(mon) + (s.breaks[mon] ? ' · ' + s.breaks[mon] : ''), 'aria-label':'Go to week ' + (i + 1),
+        onclick:function(){ const el = document.getElementById('se-wk-' + mon), sc = seModal; if(el) sc.scrollTo({top:el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop - seBarH() - 10, behavior:reduceMotion.matches ? 'auto' : 'smooth'}); }},
         newMonth ? h('span', {class:'se-tl-mon', text:SE_MON[d.getMonth()]}) : null));
     });
     tl.appendChild(ticks);
@@ -16926,21 +17060,20 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(mon < weeks[0]){ mon = weeks[0]; lead = 'Season starts ' + seDayName(s.start); }
     else if(mon > weeks[weeks.length - 1]){ box.hidden = true; return; }
     const ix = seIndex(g), ro = !canEdit(s), bl = seBlocksAt(s, mon);
-    const days = [];
-    for(let i = 0; i < 7; i++){ const iso = seAdd(mon, i); if((iso < s.start || iso > s.end) && !ix[iso]) continue; const info = seDayInfo(s, iso, ix); if(info.type) days.push(info); }
+    const wd = seWeekDays(s, mon, ix), days = wd.days;
     box.hidden = false;
     const wn = weeks.indexOf(mon) + 1;
     box.append(h('div', {class:'home-head hw-head'},
       h('h2', {text:lead}),
       h('span', {class:'home-count', text:[g, 'Week ' + wn + ' of ' + weeks.length, seRange(mon)].join(' · ')}),
       bl.map(function(b){ const n = Math.round((seDate(mon) - seDate(b.from)) / 6048e5) + 1; return h('span', {class:'hw-blk', style:'--c:' + (b.color || SE_COLOURS[0]), text:b.name + ' · week ' + n + ' of ' + (+b.weeks || 1)}); }),
-      h('span', {class:'home-head-spacer'}),
-      h('button', {type:'button', class:'btn btn-small btn-dark-ink', text:'Open season plan', onclick:function(){ seasonOpen(g, s.id); }})));
+      h('span', {class:'home-head-spacer'})));
     if(clean(s.notes[mon])) box.appendChild(h('p', {class:'hw-note', text:clean(s.notes[mon])}));
+    if(wd.brk) box.appendChild(seBreakBanner(s, mon, wd.brk, ro));
     const dl = h('div', {class:'se-days hw-days'});
     days.forEach(function(info){ dl.appendChild(seDayCard(s, info, ro, true)); });
-    if(!days.length) dl.appendChild(h('div', {class:'se-day-none', text:'Nothing planned this week'}));
-    box.appendChild(dl);
+    if(!days.length && !wd.brk) dl.appendChild(h('div', {class:'se-day-none', text:'Nothing planned this week'}));
+    if(days.length) box.appendChild(dl);
   }
   document.getElementById('homeSeasonBtn').addEventListener('click', function(){ seasonOpen(); });
 
