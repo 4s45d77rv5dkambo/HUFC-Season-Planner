@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102094243">
+<meta name="hufc-build" content="20261102095640">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2113,11 +2113,22 @@ html.view-home .se-page .se-appbar{display:block;}
 .se-tl-tick.brk{background:repeating-linear-gradient(135deg, #d6d7d2 0 3px, #ecece8 3px 6px);}
 .se-day.is-off{padding:7px 10px; gap:4px;}
 .se-day.is-off .se-day-date, .se-day.is-off .se-day-type{color:var(--muted);}
+.se-day-x{flex:none; width:28px; height:28px; margin:-4px -6px -4px 0; border:0; border-radius:6px; background:transparent; color:var(--muted); cursor:pointer; display:grid; place-items:center;}
+.se-day-x:hover, .se-day-x:focus-visible{background:#fbecea; color:var(--danger);}
 .se-backon{margin-left:auto; padding:3px 9px; border:1px solid var(--line); border-radius:7px; background:var(--white); color:var(--ink); cursor:pointer;
   font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:13px; letter-spacing:.04em; text-transform:uppercase;}
 .se-backon:hover, .se-backon:focus-visible{border-color:var(--black); background:var(--yellow);}
 .se-backon + .se-sp{display:none;}
 .home-week .se-break{margin-bottom:10px;}
+
+/* the day ⋯ menu: a colour just for that day */
+.se-menu-sw{display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:4px 10px 8px;}
+.se-menu .se-menu-sw button.se-sw{width:26px; height:26px; padding:0; border-radius:50%; border:2px solid var(--white); background:var(--c); box-shadow:0 0 0 1px var(--line);}
+.se-menu .se-menu-sw button.se-sw:hover{box-shadow:0 0 0 2px var(--grey); background:var(--c);}
+.se-menu .se-menu-sw button.se-sw.on{box-shadow:0 0 0 2px var(--black);}
+.se-menu .se-menu-sw .se-sw-reset{width:auto; padding:3px 8px; font-size:13px; border:1px solid var(--line); border-radius:7px;}
+@keyframes se-flash{0%,60%{background:#fff6d6;} 100%{background:transparent;}}
+.se-flash{animation:se-flash 1.6s ease-out; border-radius:8px;}
 
 /* ---------- Collaborators ---------- */
 .collab-btn{position:relative;}
@@ -3418,7 +3429,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 9:42am</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 9:56am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -14372,6 +14383,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.46', d:'2 Nov 2026', t:'Remove games and training', n:['Season plan: the ✕ on a game or training takes it off the plan completely (Undo straight after) — the week’s ⋯ menu puts back anything removed', 'The ⋯ on a day: give just that day its own colour, or change the colour of every training or match day']},
     {v:'3.45', d:'2 Nov 2026', t:'Collaborators', n:['Collaborators (top bar of a session or pre-game): tick other club coaches and they can change it too, on any device — it shows in their own folder', 'It stays yours: only you (and the club admin) can delete it or change who’s on it; take a coach off and their copy goes back to yours', 'The coach line shows who’s on it, e.g. “Mauricio Novack + Sam Nockles”', 'Season plan: choose the colour of training days and match days in Season settings', 'Every scroll bar is the same rounded yellow bubble (some were flat yellow or grey)']},
     {v:'3.44', d:'2 Nov 2026', t:'Season plan page, breaks, smoother', n:['The Season plan is its own page, like a session or lineup — Home at the top, the club header, and the yellow scroll pill', 'Each week’s ⋯ menu: take a week (or several) off for school holidays or a break, or remove the game or the training that week — removed days shrink to one line with Back on', 'Smoother everywhere: the Export menu, drawing-tool menus, the lineup player picker, ⋯ menus and the clip-making overlay fade away instead of vanishing; Settings tabs slide in; older iPhones and iPads fade between pages', 'The home page’s This week strip is just the week (open the plan from Season plan)']},
     {v:'3.43', d:'29 Oct 2026', t:'Season plan', n:['New Season plan (home page): the season week by week for each team — training nights and match days, each showing its session, lineup, pre-game and match video', 'Anything with a date turns up on its day by itself; + Session, + Lineup, + Pre-game and + Match video start one already dated (a lineup also gets the opponent)', 'Plan themes in blocks (e.g. 4 weeks of pressing) — new sessions in those weeks start with that theme — and add a focus for each week', 'Call a day off, switch it, or add an extra training or game from the ⋯ menu', 'The home page shows This week for your team; the club sees each team’s plan, view-only', 'Theme blocks start with your six principles — Possession, Progression, Penetration, Pressure, Prevention, Protection — each with its own colour and aim']},
@@ -16566,7 +16578,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if((iso < s.start || iso > s.end) && !ix[iso]) continue;
       if(brk && !ix[iso]) continue;
       const info = seDayInfo(s, iso, ix);
-      if(info.type) days.push(info);
+      if(info.type && !info.off) days.push(info);   /* (removed days are off the plan completely) */
     }
     return {brk:brk, days:days};
   }
@@ -16584,7 +16596,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       brk && run > 1 ? {label:'Back on for the whole “' + brk + '” (' + run + ' weeks)', fn:function(){ Object.keys(s.breaks).forEach(function(k){ if(s.breaks[k] === brk) delete s.breaks[k]; }); seSave(s); seRefresh(); }} : null,
       !brk && games.length ? {label:games.length > 1 ? 'Remove the games this week' : 'Remove the game this week', fn:function(){ off(games); }} : null,
       !brk && train.length ? {label:'Remove the training this week', fn:function(){ off(train); }} : null,
-      !brk && offs.length ? {label:'Put everything back on this week', fn:function(){ offs.forEach(function(d){ const o = Object.assign({}, s.days[d.iso] || {}); delete o.off; if(Object.keys(o).length) s.days[d.iso] = o; else delete s.days[d.iso]; }); seSave(s); seRefresh(); }} : null
+      !brk && offs.length ? {label:'Put back what was removed this week (' + offs.length + ')', fn:function(){ offs.forEach(function(d){ const o = Object.assign({}, s.days[d.iso] || {}); delete o.off; if(Object.keys(o).length) s.days[d.iso] = o; else delete s.days[d.iso]; }); seSave(s); seRefresh(); }} : null
     ]);
   }
   const SE_BREAKS = ['School holidays', 'Christmas break', 'Easter break', 'Mid-season break', 'Bye week', 'Public holiday', 'Off-season'];
@@ -16710,7 +16722,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     seMenuClose();
     const m = h('div', {class:'se-menu', role:'menu'});
     items.filter(Boolean).forEach(function(it){
-      m.appendChild(it.head ? h('div', {class:'se-menu-h', text:it.head})
+      m.appendChild(it.node ? it.node : it.head ? h('div', {class:'se-menu-h', text:it.head})
         : h('button', {type:'button', role:'menuitem', class:it.cls || '', text:it.label, onclick:function(e){ e.stopPropagation(); seMenuClose(); it.fn(); }}));
     });
     document.body.appendChild(m); seMenuEl = m;
@@ -16730,6 +16742,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const t = info.type, match = t === 'match', today = info.iso === seToday();
     const setDay = function(ch){ const o = Object.assign({}, s.days[info.iso] || {}, ch); Object.keys(o).forEach(function(k){ if(o[k] === null || o[k] === '') delete o[k]; }); if(Object.keys(o).length) s.days[info.iso] = o; else delete s.days[info.iso]; seSave(s); seRefresh(); };
     const card = h('div', {class:'se-day ' + (match ? 'is-match' : 'is-train') + (info.off ? ' is-off' : '') + (today ? ' is-today' : '') + (info.iso < seToday() ? ' is-past' : ''), 'data-date':info.iso});
+    if(info.o.color){ card.style.setProperty('--se-c', info.o.color); card.style.setProperty('--se-ink', seInk(info.o.color)); }   /* (a colour just for this day) */
     const menuBtn = ro ? null : h('button', {type:'button', class:'se-day-more', title:'Change this day', 'aria-label':'Change ' + seDayName(info.iso), html:'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="5" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="19" cy="12" r="2" fill="currentColor"/></svg>'});
     if(menuBtn) menuBtn.addEventListener('click', function(e){
       e.stopPropagation();
@@ -16737,9 +16750,19 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       seMenu(menuBtn, [
         {head:seDayName(info.iso)},
         info.off ? {label:match ? 'The game is back on' : 'Training is back on', fn:function(){ setDay({off:null}); }}
-          : {label:match ? 'Remove this game (bye, washed out…)' : 'Remove this training', fn:function(){ setDay({off:true}); }},
+          : {label:match ? 'Remove this game (bye, washed out…)' : 'Remove this training', fn:function(){ seRemoveDay(s, info); }},
+        {head:'Colour'},
+        {node:(function(){
+          const cur = info.o.color || '', row = h('div', {class:'se-menu-sw'});
+          SE_DAY_COLOURS.forEach(function(c){
+            row.appendChild(h('button', {type:'button', class:'se-sw' + (c === cur ? ' on' : ''), style:'--c:' + c, title:'This day in this colour', 'aria-label':'Colour ' + c, 'aria-pressed':String(c === cur),
+              onclick:function(e){ e.stopPropagation(); seMenuClose(); setDay({color:c}); }}));
+          });
+          if(cur) row.appendChild(h('button', {type:'button', class:'se-sw-reset', text:'Default', title:'Back to the usual ' + (match ? 'match' : 'training') + ' colour', onclick:function(e){ e.stopPropagation(); seMenuClose(); setDay({color:null}); }}));
+          return row;
+        })()},
+        {label:'Colour of every ' + (match ? 'match' : 'training') + ' day…', fn:function(){ seSetup(s, match ? 'match' : 'train'); }},
         {label:match ? 'Make it a training day' : 'Make it a match day', fn:function(){ const nt = match ? 'train' : 'match'; setDay({type:nt === info.regular ? null : nt}); }},
-        extra && !info.it.session.length && !info.it.lineup.length && !info.it.pregame.length && !info.it.video.length ? {label:'Take this day off the plan', cls:'danger', fn:function(){ if(info.regular) s.days[info.iso] = {off:true}; else delete s.days[info.iso]; seSave(s); seRefresh(); }} : null
       ]);
     });
     const fx = match ? seFixture(info) : null;
@@ -16747,8 +16770,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('span', {class:'se-day-date', text:seDayName(info.iso)}),
       h('span', {class:'se-day-type', text:match ? 'Match' : 'Training'}),
       today ? h('span', {class:'se-day-today', text:'Today'}) : null,
-      info.off && !ro ? h('button', {type:'button', class:'se-backon', text:'Back on', title:(match ? 'The game' : 'Training') + ' is back on', onclick:function(){ setDay({off:null}); }}) : null,
-      h('span', {class:'se-sp'}), menuBtn));
+      h('span', {class:'se-sp'}), menuBtn,
+      ro || info.off ? null : h('button', {type:'button', class:'se-day-x', title:'Remove this ' + (match ? 'game' : 'training') + ' from the plan', 'aria-label':'Remove the ' + (match ? 'game' : 'training') + ' on ' + seDayName(info.iso),
+        html:'<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+        onclick:function(){ seRemoveDay(s, info); }})));
     /* the opponent (from the lineup once there is one; typed here before that) */
     if(match && !info.off){
       if(fx.fromLineup || ro) card.appendChild(h('div', {class:'se-fix' + (fx.opp ? '' : ' empty')},
@@ -16795,6 +16820,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('span', {class:'se-break-t', text:brk}), h('span', {class:'se-break-sub', text:'No training or games this week'}),
       h('span', {class:'se-sp'}),
       ro ? null : h('button', {type:'button', class:'btn btn-small', text:'Back on', title:'Training and games back on this week', onclick:function(){ delete s.breaks[mon]; seSave(s); seRefresh(); }}));
+  }
+  /* take a game or a training off the plan completely (Undo straight after; the week's ⋯ menu puts it back later) */
+  function seRemoveDay(s, info){
+    const was = s.days[info.iso] ? JSON.parse(JSON.stringify(s.days[info.iso])) : null, it = info.it;
+    const has = it.session.length || it.lineup.length || it.pregame.length || it.video.length;
+    if(info.regular || has) s.days[info.iso] = Object.assign({}, s.days[info.iso] || {}, {off:true});
+    else delete s.days[info.iso];
+    seSave(s); seRefresh();
+    showToast('Removed the ' + (info.type === 'match' ? 'game' : 'training') + ' on ' + seDayName(info.iso), function(){ if(was) s.days[info.iso] = was; else delete s.days[info.iso]; seSave(s); seRefresh(); });
   }
   function seFixLogo(name){ const src = luLogoFor(name); return src ? h('img', {class:'se-fix-logo', src:src, alt:''}) : null; }
 
@@ -17022,7 +17056,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return box;
   }
   /* season settings (or a new season) */
-  function seSetup(s){
+  function seSetup(s, focusColour){
     const g = seGroupPick, isNew = !s;
     const start0 = s ? s.start : seMonday(seToday());
     const end0 = s ? s.end : seAdd(start0, 7 * 30 - 1);
@@ -17038,7 +17072,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('div', {class:'se-field-pair'}, seField('Starts', st), seField('Ends', en)),
       seField('Training nights', seDays(train)),
       seField('Match day', seDays(match), 'Days you can add, switch or call off one at a time on the plan.'),
-      h('div', {class:'se-field-pair'},
+      h('div', {class:'se-field-pair se-colours'},
         seField('Training colour', seColourPick(cols.train, function(c){ cols.train = c; })),
         seField('Match colour', seColourPick(cols.match, function(c){ cols.match = c; }))),
       msg);
@@ -17067,6 +17101,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         }})
       ];
     });
+    if(focusColour) setTimeout(function(){ const c = document.querySelector('.se-form .se-colours'); if(c){ c.scrollIntoView({block:'center'}); c.classList.add('se-flash'); } }, 60);
   }
   /* a theme block: "Pressing", 4 weeks from week 3 */
   function seBlockEdit(s, b){
