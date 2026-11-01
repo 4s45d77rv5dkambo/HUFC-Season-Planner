@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102100758">
+<meta name="hufc-build" content="20261102101308">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2133,6 +2133,7 @@ html.view-home .se-page .se-appbar{display:block;}
 
 /* ---------- Collaborators ---------- */
 .collab-btn{position:relative;}
+body.doc-pregame .collab-btn{display:none !important;}   /* collaborators are for sessions only */
 .collab-btn svg{vertical-align:-3px;}
 .collab-btn.on{border-color:var(--black);}
 .collab-n{display:inline-grid; place-items:center; min-width:18px; height:18px; margin-left:5px; padding:0 4px; border-radius:9px; background:var(--yellow); color:var(--black); font-size:11px; font-weight:700; line-height:1;}
@@ -3431,7 +3432,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 10:07am</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 10:13am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -13310,7 +13311,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
      on the desktop app it's by age-group folder */
   let who = null;
   /* a coach the plan's own coach added as a collaborator: they can change it too (not delete it, or change who's on it) */
-  function isCollab(x){ return !!(who && who.uid && x && Array.isArray(x.collab) && x.collab.indexOf(who.uid) !== -1 && x.owner && x.owner !== who.uid); }
+  function isCollab(x){ return !!(who && who.uid && x && x.doc !== 'pregame' && Array.isArray(x.collab) && x.collab.indexOf(who.uid) !== -1 && x.owner && x.owner !== who.uid); }
   function canEdit(x){
     if(who){
       if(who.admin) return true;
@@ -13318,6 +13319,24 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       return true;   /* made on this device and not shared yet */
     }
     const g = groupOf(x); return !g || !myGroups().length || isMine(g);
+  }
+  /* the session you have open was shared with you (or you were taken off it) while it was open: unlock / lock it now */
+  function collabLive(remote){
+    if(!remote || remote.deleted || typeof state === 'undefined' || !state) return;
+    if(JSON.stringify(remote.collab || []) === JSON.stringify(state.collab || [])) return;
+    const could = canEdit(state);
+    ['collab', 'collabNames', 'collabGroups', 'author'].forEach(function(k){ if(remote[k] !== undefined) state[k] = remote[k]; else delete state[k]; });
+    if(remote.owner) state.owner = remote.owner;
+    const can = canEdit(state);
+    renderOwnerLines();
+    if(can !== could){
+      if(can){
+        /* it's the shared version you're now changing: bring in its latest content first */
+        const keep = state; state = normalize(Object.assign({}, remote)); state.planId = keep.planId; renderAll(); resetHistory();
+      }
+      setReadOnly(!can, isPre(state) ? 'pre-game' : 'session', groupOf(state));
+      showToast(can ? (coachOf(state) || 'Its coach') + ' made you a collaborator — you can change this session now' : 'You’re no longer a collaborator on this session — it’s view-only');
+    }
   }
   function canDelete(x){ return canEdit(x) && !isCollab(x); }
   function folderView(){ const v = getSettings().view; return v === 'all' || AGE_GROUPS.indexOf(v) !== -1 ? v : 'mine'; }
@@ -14193,7 +14212,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         /* bring in what's new or changed in the folder */
         for(const name of Object.keys(files)){
           const id = name.replace(/\.json$/, ''), path = base + name, remote = files[name], rs = +remote[st] || 0;
-          if(openNow(kind, id)){ continue; }
+          if(openNow(kind, id)){ if(kind === 'sessions') collabLive(remote); continue; }
           const local = localGet(kind, id, lib), ls = local ? (+local[st] || 0) : 0;
           /* deleted on purpose (by its coach or the admin): a "deleted" marker takes it off every device */
           if(remote && remote.deleted){
@@ -14394,6 +14413,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.48', d:'2 Nov 2026', t:'Collaborators fix', n:['A coach added as a collaborator while they have the session open can change it straight away (it unlocks on their screen, with the latest version) — no need to go back to Home first', 'Collaborators are for sessions only (not pre-games)']},
     {v:'3.47', d:'2 Nov 2026', t:'Collaborators’ teams, red', n:['Collaborators: each coach’s age group shows beside their name when you pick them, and on the plan’s coach line, e.g. “Mauricio Novack + Sam Nockles (U14)”', 'Red is one of the colours for training days, match days, a single day and theme blocks']},
     {v:'3.46', d:'2 Nov 2026', t:'Remove games and training', n:['Season plan: the ✕ on a game or training takes it off the plan completely (Undo straight after) — the week’s ⋯ menu puts back anything removed', 'The ⋯ on a day: give just that day its own colour, or change the colour of every training or match day']},
     {v:'3.45', d:'2 Nov 2026', t:'Collaborators', n:['Collaborators (top bar of a session or pre-game): tick other club coaches and they can change it too, on any device — it shows in their own folder', 'It stays yours: only you (and the club admin) can delete it or change who’s on it; take a coach off and their copy goes back to yours', 'The coach line shows who’s on it, e.g. “Mauricio Novack + Sam Nockles”', 'Season plan: choose the colour of training days and match days in Season settings', 'Every scroll bar is the same rounded yellow bubble (some were flat yellow or grey)']},
@@ -17241,7 +17261,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       : 'Collaborators: let other coaches change this ' + (isPre(x) ? 'pre-game' : 'session') + ' too';
   }
   function collabOpen(){
-    const x = typeof state !== 'undefined' ? state : null; if(!x) return;
+    const x = typeof state !== 'undefined' ? state : null; if(!x || isPre(x)) return;   /* (sessions only) */
     const what = isPre(x) ? 'pre-game' : 'session';
     const signedIn = !!(CLOUD && CLOUD.user && CLOUD.user());
     const member = signedIn && CLOUD.member && CLOUD.member() === true;
