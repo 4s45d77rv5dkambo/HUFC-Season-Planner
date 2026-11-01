@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102095640">
+<meta name="hufc-build" content="20261102100758">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -437,7 +437,8 @@ This typically indicates that your device does not have a healthy Internet conne
     allowedGroups:allowedGroups,
     coaches:coachList, approve:approve, revoke:revoke,
     /* everyone in the club library you could add as a collaborator */
-    clubCoaches:function(){ const out = []; coaches.forEach(function(c, uid){ if(me && uid === me.uid) return; out.push({uid:uid, name:c.name || String(c.email || '').split('@')[0], email:c.email || ''}); }); return out.sort(function(a, b){ return a.name.localeCompare(b.name); }); },
+    clubCoaches:function(){ const out = []; coaches.forEach(function(c, uid){ if(me && uid === me.uid) return; out.push({uid:uid, name:c.name || String(c.email || '').split('@')[0], email:c.email || '', groups:Array.isArray(c.groups) ? c.groups.slice() : []}); }); return out.sort(function(a, b){ return a.name.localeCompare(b.name); }); },
+    coachGroups:function(uid){ const c = coaches.get(uid); return c && Array.isArray(c.groups) ? c.groups.slice() : []; },
     coachName:function(uid){ const c = coaches.get(uid); return c ? (c.name || String(c.email || '').split('@')[0]) : ''; },
     ready:function(){ return authReady; },
     onAuth:function(cb){ authCbs.push(cb); if(authReady){ try{ cb(me); }catch(e){} } },
@@ -2146,7 +2147,8 @@ html.view-home .se-page .se-appbar{display:block;}
 .collab-row:has(input:checked){background:#fffbe8; border-color:var(--yellow);}
 .collab-av{flex:none; width:32px; height:32px; border-radius:50%; background:var(--black); color:var(--yellow); display:grid; place-items:center; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px;}
 .collab-txt{display:flex; flex-direction:column; min-width:0;}
-.collab-name{font-weight:600;}
+.collab-name{font-weight:600; display:flex; align-items:center; flex-wrap:wrap; gap:6px;}
+.collab-grp{font-size:11px;}
 .collab-mail{font-size:13px; color:var(--grey); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .collab-ro{display:flex; flex-wrap:wrap; gap:6px;}
 .collab-chip{padding:3px 10px; border-radius:12px; background:var(--paper); border:1px solid var(--line); font-weight:600; font-size:14px;}
@@ -3429,7 +3431,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 9:56am</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 10:07am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -13344,8 +13346,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function initials(n){ return String(n || '').split(/\s+/).filter(Boolean).map(function(w){ return w.charAt(0).toUpperCase(); }).join('').slice(0, 3); }
   /* home cards: "U18 – David Ambelidis"; the plan's own header: just the coach's name */
   function ownerText(x, short, nameOnly){
-    const g = nameOnly ? '' : groupOf(x), n = coachOf(x), cs = collabNames(x);
-    const withs = cs.length ? ' + ' + (short || cs.length > 1 ? cs.map(initials).join(', ') : cs[0]) : '';
+    const g = nameOnly ? '' : groupOf(x), n = coachOf(x), cs = collabNames(x), cg = collabGroups(x);
+    /* collaborators with their age group: "+ Sam Nockles (U14)", or "+ SN (U14), KP (U20)" when short */
+    const tag = function(nm, i){ return nm + (cg[i] ? ' (' + cg[i] + ')' : ''); };
+    const withs = cs.length ? ' + ' + (short || cs.length > 1 ? cs.map(function(nm, i){ return tag(initials(nm), i); }).join(', ') : tag(cs[0], 0)) : '';
     return [g || '', n ? (short ? initials(n) : n) + withs : ''].filter(Boolean).join(' – ');
   }
   /* the collaborators' names (from the club list, or as saved with the plan) */
@@ -13353,6 +13357,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!x || !Array.isArray(x.collab) || !x.collab.length) return [];
     const saved = x.collabNames || {};
     return x.collab.map(function(uid){ return (CLOUD && CLOUD.coachName ? CLOUD.coachName(uid) : '') || saved[uid] || ''; }).filter(Boolean);
+  }
+  /* each collaborator's age group(s), in the same order ("U14", or "U16 · U13") */
+  function collabGroups(x){
+    if(!x || !Array.isArray(x.collab)) return [];
+    const saved = x.collabGroups || {};
+    return x.collab.filter(function(uid){ return (CLOUD && CLOUD.coachName ? CLOUD.coachName(uid) : '') || (x.collabNames || {})[uid]; })
+      .map(function(uid){ const gs = (CLOUD && CLOUD.coachGroups ? CLOUD.coachGroups(uid) : []); return (gs.length ? gs : (saved[uid] || [])).join(' · '); });
   }
   function fitOwner(el, x, nameOnly){
     const full = ownerText(x, false, nameOnly);
@@ -14383,6 +14394,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.47', d:'2 Nov 2026', t:'Collaborators’ teams, red', n:['Collaborators: each coach’s age group shows beside their name when you pick them, and on the plan’s coach line, e.g. “Mauricio Novack + Sam Nockles (U14)”', 'Red is one of the colours for training days, match days, a single day and theme blocks']},
     {v:'3.46', d:'2 Nov 2026', t:'Remove games and training', n:['Season plan: the ✕ on a game or training takes it off the plan completely (Undo straight after) — the week’s ⋯ menu puts back anything removed', 'The ⋯ on a day: give just that day its own colour, or change the colour of every training or match day']},
     {v:'3.45', d:'2 Nov 2026', t:'Collaborators', n:['Collaborators (top bar of a session or pre-game): tick other club coaches and they can change it too, on any device — it shows in their own folder', 'It stays yours: only you (and the club admin) can delete it or change who’s on it; take a coach off and their copy goes back to yours', 'The coach line shows who’s on it, e.g. “Mauricio Novack + Sam Nockles”', 'Season plan: choose the colour of training days and match days in Season settings', 'Every scroll bar is the same rounded yellow bubble (some were flat yellow or grey)']},
     {v:'3.44', d:'2 Nov 2026', t:'Season plan page, breaks, smoother', n:['The Season plan is its own page, like a session or lineup — Home at the top, the club header, and the yellow scroll pill', 'Each week’s ⋯ menu: take a week (or several) off for school holidays or a break, or remove the game or the training that week — removed days shrink to one line with Back on', 'Smoother everywhere: the Export menu, drawing-tool menus, the lineup player picker, ⋯ menus and the clip-making overlay fade away instead of vanishing; Settings tabs slide in; older iPhones and iPads fade between pages', 'The home page’s This week strip is just the week (open the plan from Season plan)']},
@@ -16462,7 +16474,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const SE_DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const SE_DOW_LONG = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const SE_MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const SE_COLOURS = ['#ffd400', '#2e9d5b', '#2f6fd6', '#e0662f', '#8a4fd1', '#14a0a0', '#c93a6e', '#7a7d82'];
+  const SE_COLOURS = ['#ffd400', '#2e9d5b', '#2f6fd6', '#e0662f', '#8a4fd1', '#14a0a0', '#c93a6e', '#d62828', '#7a7d82'];
   /* the six principles (the same as the pre-game boards) come first, each with its own colour: in possession cool, out of possession warm */
   const SE_PRINCIPLE_COLOURS = {ip1:'#2e9d5b', ip2:'#14a0a0', ip3:'#2f6fd6', press:'#e0662f', mid:'#c93a6e', low:'#8a4fd1'};
   const SE_PRINCIPLES = PG_BOARDS.map(function(b){ return {id:b[0], name:b[1], aim:b[2], color:SE_PRINCIPLE_COLOURS[b[0]] || SE_COLOURS[0]}; });
@@ -16470,7 +16482,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     'Finishing', 'Crossing and finishing', '1v1 defending', 'Defending crosses', 'Set pieces', 'Recovery and taper']);
   /* the colours of training days and match days (each season can choose its own) */
   const SE_DAY_DEFAULT = {train:'#2e9d5b', match:'#ffd400'};
-  const SE_DAY_COLOURS = ['#2e9d5b', '#14a0a0', '#2f6fd6', '#8a4fd1', '#c93a6e', '#e0662f', '#ffd400', '#0d0e0f'];
+  const SE_DAY_COLOURS = ['#2e9d5b', '#14a0a0', '#2f6fd6', '#8a4fd1', '#c93a6e', '#d62828', '#e0662f', '#ffd400', '#0d0e0f'];
   function seInk(hex){ const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if(!m) return '#0d0e0f'; const n = parseInt(m[1], 16), r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255; return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#0d0e0f' : '#ffffff'; }
   function seDayColours(el, s){
     const c = Object.assign({}, SE_DAY_DEFAULT, (s && s.colors) || {});
@@ -17246,7 +17258,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       body.append(h('p', {class:'set-sub', text:'Once the club admin approves you, you can add other coaches as collaborators.'}));
     } else if(!collabCanManage(x)){
       body.append(h('p', {class:'set-sub', text:(owner || 'Its coach') + ' made this ' + what + '. ' + (isCollab(x) ? 'You’re a collaborator, so you can change it — only ' + (owner || 'they') + ' can delete it or change who’s on it.' : 'Only they can change who’s on it.')}),
-        names.length ? h('div', {class:'collab-ro'}, names.map(function(n){ return h('span', {class:'collab-chip', text:n}); })) : h('p', {class:'set-sub', text:'No collaborators yet.'}));
+        names.length ? h('div', {class:'collab-ro'}, names.map(function(n, i){ const g = collabGroups(x)[i]; return h('span', {class:'collab-chip', text:n + (g ? ' · ' + g : '')}); })) : h('p', {class:'set-sub', text:'No collaborators yet.'}));
     } else {
       canSave = true;
       const coaches = (CLOUD.clubCoaches ? CLOUD.clubCoaches() : []).filter(function(c){ return c.uid !== x.owner; });
@@ -17259,9 +17271,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           const cb = h('input', {type:'checkbox', 'aria-label':c.name});
           cb.checked = sel.indexOf(c.uid) !== -1;
           cb.addEventListener('change', function(){ const i = sel.indexOf(c.uid); if(cb.checked && i === -1) sel.push(c.uid); if(!cb.checked && i !== -1) sel.splice(i, 1); });
-          list.appendChild(h('label', {class:'collab-row', 'data-q':(c.name + ' ' + c.email).toLowerCase()}, cb,
+          list.appendChild(h('label', {class:'collab-row', 'data-q':(c.name + ' ' + c.email + ' ' + (c.groups || []).join(' ')).toLowerCase()}, cb,
             h('span', {class:'collab-av', text:initials(c.name) || '?'}),
-            h('span', {class:'collab-txt'}, h('span', {class:'collab-name', text:c.name}), c.email ? h('span', {class:'collab-mail', text:c.email}) : null)));
+            h('span', {class:'collab-txt'}, h('span', {class:'collab-name'}, c.name, (c.groups || []).map(function(g){ return h('span', {class:'grp-badge collab-grp', text:g}); })),
+              c.email ? h('span', {class:'collab-mail', text:c.email}) : null)));
         });
         if(q) q.addEventListener('input', function(){ const v = clean(q.value).toLowerCase(); list.querySelectorAll('.collab-row').forEach(function(r){ r.hidden = !!v && r.dataset.q.indexOf(v) === -1; }); });
         body.append(q, list);
@@ -17276,13 +17289,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           if(sel.length){
             x.author = x.owner || x.author || collabMe();
             x.collab = sel.slice();
-            const nm = {}; sel.forEach(function(uid){ nm[uid] = (CLOUD.coachName && CLOUD.coachName(uid)) || ''; }); x.collabNames = nm;
-          } else { delete x.collab; delete x.collabNames; }
+            const nm = {}, gr = {}; sel.forEach(function(uid){ nm[uid] = (CLOUD.coachName && CLOUD.coachName(uid)) || ''; gr[uid] = (CLOUD.coachGroups && CLOUD.coachGroups(uid)) || []; }); x.collabNames = nm; x.collabGroups = gr;
+          } else { delete x.collab; delete x.collabNames; delete x.collabGroups; }
           close();
           if(JSON.stringify(x.collab || []) === before) return;
           saveLocal(); renderOwnerLines(); renderCollabBtn();
-          const ns = collabNames(x);
-          showToast(!ns.length ? 'Only you can change this ' + what + ' now' : groupList(ns) + (ns.length === 1 ? ' can' : ' can') + ' now change this ' + what);
+          const ns = collabNames(x), gs = collabGroups(x), withG = ns.map(function(n, i){ return n + (gs[i] ? ' (' + gs[i] + ')' : ''); });
+          showToast(!ns.length ? 'Only you can change this ' + what + ' now' : groupList(withG) + ' can now change this ' + what);
         }})] : [h('button', {type:'button', class:'btn btn-primary', text:'Close', onclick:close})];
     }, !canSave);
   }
