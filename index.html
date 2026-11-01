@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102101308">
+<meta name="hufc-build" content="20261102102150">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3432,7 +3432,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 10:13am</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 10:21am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -9783,7 +9783,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const LU_COMPS = ['NPL', 'Cup', 'Friendly', 'Pre-season', 'Tournament', 'Trial'];
   /* lists the session plan uses too, so they are functions (ready before this part of the script has run) */
   function luAges(){ return ['U13', 'U14', 'U15', 'U16', 'U18', 'U20', 'U23', 'Seniors']; }
-  function luTimes(){ const o = []; for(let m = 7 * 60; m <= 21 * 60; m += 15){ const hh = Math.floor(m / 60), mm = m % 60;
+  function luTimes(){ const o = []; for(let m = 7 * 60; m <= 21 * 60; m += 5){   /* every 5 minutes, 7am to 9pm */ const hh = Math.floor(m / 60), mm = m % 60;
     o.push((hh % 12 || 12) + ':' + String(mm).padStart(2, '0') + (hh < 12 ? 'am' : 'pm')); } return o; }
   /* opponents in the dropdown (anything else can still be typed) */
   const LU_OPPONENTS = ['Altona Magic SC', 'Ashburton United SC', 'Avondale FC', 'Ballarat City FC', 'Bendigo City FC', 'Bentleigh Greens SC', 'Berwick City SC', 'Boroondara Eagles FC', 'Box Hill United SC', 'Brimbank Stallions FC', 'Brunswick City SC', 'Brunswick Juventus FC', 'FC Bulleen Lions', 'CS George Cross FC', 'Dandenong City SC', 'Dandenong Thunder FC', 'Doreen United SC', 'Eastern Lions SC', 'Eltham Redbacks FC', 'Essendon Royals SC', 'Geelong SC', 'Gippsland FC', 'Glen Eira FC', 'Goulburn Valley Suns FC', 'Green Gully SC', 'Hume City FC', 'Keilor Park SC', 'Kingston City FC', 'Langwarrin SC', 'Malvern City FC', 'Manningham United FC', 'Melbourne City FC', 'Melbourne Knights FC', 'Melbourne Victory FC', 'Monash City Villarreal FC', 'Moreland City FC', 'Mornington SC', 'Murray United FC', 'North Geelong Warriors FC', 'Northcote City FC', 'Nunawading City FC', 'Oakleigh Cannons FC', 'Pascoe Vale FC', 'Port Melbourne Sharks SC', 'Preston Lions FC', 'Ringwood City FC', 'South Melbourne FC', 'St Albans Dinamo FC', 'Werribee City FC', 'Whittlesea Ranges FC'];   /* the Junior Boys NPL clubs */
@@ -14413,6 +14413,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.49', d:'2 Nov 2026', t:'Times every 5 minutes', n:['Start time, arrival time and kick-off lists go up in 5 minutes (was 15) — 3:05pm, 3:10pm, …']},
     {v:'3.48', d:'2 Nov 2026', t:'Collaborators fix', n:['A coach added as a collaborator while they have the session open can change it straight away (it unlocks on their screen, with the latest version) — no need to go back to Home first', 'Collaborators are for sessions only (not pre-games)']},
     {v:'3.47', d:'2 Nov 2026', t:'Collaborators’ teams, red', n:['Collaborators: each coach’s age group shows beside their name when you pick them, and on the plan’s coach line, e.g. “Mauricio Novack + Sam Nockles (U14)”', 'Red is one of the colours for training days, match days, a single day and theme blocks']},
     {v:'3.46', d:'2 Nov 2026', t:'Remove games and training', n:['Season plan: the ✕ on a game or training takes it off the plan completely (Undo straight after) — the week’s ⋯ menu puts back anything removed', 'The ⋯ on a day: give just that day its own colour, or change the colour of every training or match day']},
