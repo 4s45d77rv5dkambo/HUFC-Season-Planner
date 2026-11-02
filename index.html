@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102145539">
+<meta name="hufc-build" content="20261102160026">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3535,7 +3535,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 2:55pm</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 4:00pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -7447,7 +7447,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return {min:hh*60 + mm, twelve:!!ap};
   }
   function fmtTime(min, twelve){
-    min = ((min % 1440) + 1440) % 1440;
+    min = ((Math.round(min * 60) / 60 % 1440) + 1440) % 1440;   /* (to the second, so 6.9999… can't show as “:60”) */
     /* part minutes (a 7½-minute practice) show their seconds: 4:07:30pm */
     const secs = Math.round((min % 1) * 60), whole = Math.floor(min);
     let hh = Math.floor(whole/60); const mm = String(whole % 60).padStart(2,'0') + (secs ? ':' + String(secs).padStart(2, '0') : '');
@@ -13694,10 +13694,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function initials(n){ return String(n || '').split(/\s+/).filter(Boolean).map(function(w){ return w.charAt(0).toUpperCase(); }).join('').slice(0, 3); }
   /* home cards: "U18 – David Ambelidis"; the plan's own header: just the coach's name */
   function ownerText(x, short, nameOnly){
-    const g = nameOnly ? '' : groupOf(x), n = coachOf(x), cs = collabNames(x), cg = collabGroups(x);
-    /* collaborators with their age group: "+ Sam Nockles (U14)", or "+ SN (U14), KP (U20)" when short */
-    const tag = function(nm, i){ return nm + (cg[i] ? ' (' + cg[i] + ')' : ''); };
-    const withs = cs.length ? ' + ' + (short || cs.length > 1 ? cs.map(function(nm, i){ return tag(initials(nm), i); }).join(', ') : tag(cs[0], 0)) : '';
+    const g = nameOnly ? '' : groupOf(x), n = coachOf(x), cs = collabNames(x);
+    /* collaborators by name only: "+ Kristian Popovic", or "+ SN, KP" when short (their age groups show in the Collaborators window) */
+    const withs = cs.length ? ' + ' + (short || cs.length > 1 ? cs.map(initials).join(', ') : cs[0]) : '';
     return [g || '', n ? (short ? initials(n) : n) + withs : ''].filter(Boolean).join(' – ');
   }
   /* the collaborators' names (from the club list, or as saved with the plan) */
@@ -14763,6 +14762,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.59', d:'2 Nov 2026', t:'Collaborators by name', n:['The coach line on a session shows collaborators by name only, e.g. “David Ambelidis + Kristian Popovic” (no age group) — their teams still show in the Collaborators window', 'Clock times with half-minute practices can no longer show “:60”']},
     {v:'3.58', d:'2 Nov 2026', t:'Pause in Present, Face ball fixed', n:['Present to players: Pause an animation at any moment to explain — tap Pause, tap the pitch or press Space. While paused: Resume, step back or forward a step, or Stop', 'A yellow ring round the pitch shows it’s paused', 'Face ball: players now face the ball (they were facing away from it)', 'Season plan: the ⋯ menu on a day (colours etc.) no longer closes by itself when a sync comes in', 'Phones: Print is an icon in the top bar so everything fits (on the smallest iPhones use Export → Save as PDF)']},
     {v:'3.57', d:'2 Nov 2026', t:'Players face the ball', n:['New “Face ball” tick box under each pitch (next to Crest): every player and keeper turns their body to face the ball', 'They turn live as you drag the ball (or the players) around, and follow the ball when the animation plays — on the board and in Present to players', 'Untick it and they keep the direction they were facing; you can still turn anyone by hand']},
     {v:'3.56', d:'2 Nov 2026', t:'Decline a team request', n:['Coaches window: a coach’s request for more (or other) teams has a Decline button — they keep the teams they have and the request is cleared (no more waiting badge)', 'Their app drops the declined team too, with a note, so it isn’t asked for again', 'Save also works to keep their teams as they are']},
@@ -17720,8 +17720,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           close();
           if(JSON.stringify(x.collab || []) === before) return;
           saveLocal(); renderOwnerLines(); renderCollabBtn();
-          const ns = collabNames(x), gs = collabGroups(x), withG = ns.map(function(n, i){ return n + (gs[i] ? ' (' + gs[i] + ')' : ''); });
-          showToast(!ns.length ? 'Only you can change this ' + what + ' now' : groupList(withG) + ' can now change this ' + what);
+          const ns = collabNames(x);
+          showToast(!ns.length ? 'Only you can change this ' + what + ' now' : groupList(ns) + ' can now change this ' + what);
         }})] : [h('button', {type:'button', class:'btn btn-primary', text:'Close', onclick:close})];
     }, !canSave);
   }
