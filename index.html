@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102123146">
+<meta name="hufc-build" content="20261102123541">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -435,6 +435,7 @@ This typically indicates that your device does not have a healthy Internet conne
     name:function(){ if(!me) return ''; if(me.name != null) return me.name; const c = coaches.get(me.uid); return c && c.name || ''; },
     setName:setName, roster:rosterList, invite:invite, uninvite:uninvite, nameCoach:nameCoach,
     allowedGroups:allowedGroups,
+    decidedAt:function(){ return mine && +mine.at || 0; },   /* when the club admin last decided this coach's teams */
     coaches:coachList, approve:approve, revoke:revoke,
     /* everyone in the club library you could add as a collaborator */
     clubCoaches:function(){ const out = []; coaches.forEach(function(c, uid){ if(me && uid === me.uid) return; out.push({uid:uid, name:c.name || String(c.email || '').split('@')[0], email:c.email || '', groups:Array.isArray(c.groups) ? c.groups.slice() : []}); }); return out.sort(function(a, b){ return a.name.localeCompare(b.name); }); },
@@ -3439,7 +3440,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 12:31pm</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 12:35pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -14166,7 +14167,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const paint = function(){
         Array.prototype.forEach.call(chips.children, function(b){ const on = pick.indexOf(b.dataset.g) !== -1; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
         main.textContent = c.approved ? 'Save' : 'Approve';
-        main.disabled = !pick.length || (c.approved && same(pick, c.given));
+        main.disabled = !pick.length || (c.approved && same(pick, c.given) && !changeAsked);   /* (saving their teams as they are settles a request too) */
         main.title = !pick.length ? 'Pick at least one age group' : '';
       };
       AGE_GROUPS.forEach(function(g){
@@ -14180,6 +14181,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const who_ = c.name || c.email;
       main.onclick = function(){ const gs = pick.slice(); act(main, function(){ return CLOUD.approve(c.uid, gs); }, who_ + (c.approved ? ' now has ' : ' is approved for ') + gs.join(' · ')); };
       const rm = c.approved ? h('button', {type:'button', class:'btn btn-small', text:'Remove access'}) : '';
+      /* a request for more (or other) teams: Decline keeps the teams they have and clears the request */
+      const no = changeAsked ? h('button', {type:'button', class:'btn btn-small btn-danger-ghost', text:'Decline', title:'Keep ' + (c.given.join(' · ') || 'their teams') + ' and clear the request'}) : '';
+      if(no) no.onclick = function(){ act(no, function(){ return CLOUD.approve(c.uid, c.given.slice()); }, 'Declined · ' + (c.name || c.email) + ' stays on ' + (c.given.join(' · ') || 'no teams')); };
       if(rm) rm.onclick = function(){ act(rm, function(){ return CLOUD.revoke(c.uid); }, who_ + ' can no longer see the club library'); };
       if(!isWaiting && !openRows[c.uid]){
         /* approved: one tidy line — Edit opens the teams */
@@ -14194,7 +14198,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         !c.approved && c.roster ? h('span', {class:'coach-match', text:'On your roster: ' + (c.roster.name || c.name) + ' · ' + (c.roster.groups.join(' · ') || 'no teams') + ' — ticked for you'}) : '',
         !c.roster && !c.name && free.length ? whoIsThis(c) : '',
         chips,
-        h('div', {class:'coach-acts'}, c.approved && !isWaiting ? h('button', {type:'button', class:'btn btn-small', text:'Close', onclick:function(){ delete openRows[c.uid]; renderCoaches(); }}) : '', rm, main)));
+        h('div', {class:'coach-acts'}, c.approved && !isWaiting ? h('button', {type:'button', class:'btn btn-small', text:'Close', onclick:function(){ delete openRows[c.uid]; renderCoaches(); }}) : '', rm, no, main)));
       paint();
     });
   }
@@ -14286,7 +14290,21 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       else if(myGroups().length && !cg.length) CLOUD.saveSettings(myGroups());
       clubSyncSoon();
     });
-    window.addEventListener('hufc-settings-changed', function(e){ if(cloudOn() && e.detail) CLOUD.saveSettings(e.detail.groups || []); });
+    window.addEventListener('hufc-settings-changed', function(e){ if(cloudOn() && e.detail){ setSettings({reqAt:Date.now()}); CLOUD.saveSettings(e.detail.groups || []); } });
+    /* the club admin decided on a team request (approved part of it, or declined it): this device stops asking for the rest */
+    window.addEventListener('hufc-cloud-changed', function(){
+      try{
+        if(!CLOUD.user() || CLOUD.member() !== true || (who && who.admin)) return;
+        const ag = CLOUD.allowedGroups() || [], lg = localGroups();
+        if(!ag.length || lg.every(function(g){ return ag.indexOf(g) !== -1; })) return;
+        if(CLOUD.decidedAt() <= (+getSettings().reqAt || 0)) return;   /* (asked again since: still waiting) */
+        const dropped = lg.filter(function(g){ return ag.indexOf(g) === -1; });
+        setSettings({groups:ag.slice(), group:ag[0]});
+        showToast('The club admin kept you on ' + ag.join(' · ') + (dropped.length ? ' (not ' + dropped.join(' · ') + ')' : ''));
+        if(document.documentElement.classList.contains('view-home')) renderHome();
+        try{ if(!document.getElementById('setModal').hidden) renderSettings(); }catch(e){}
+      }catch(e){}
+    });
     window.addEventListener('online', function(){ cloudErr = ''; clubSyncSoon(); });
   }
   function syncKey(){ return clubDir && clubDir.__bridge ? SYNC_KEY + ':online' : SYNC_KEY; }
@@ -14561,6 +14579,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.56', d:'2 Nov 2026', t:'Decline a team request', n:['Coaches window: a coach’s request for more (or other) teams has a Decline button — they keep the teams they have and the request is cleared (no more waiting badge)', 'Their app drops the declined team too, with a note, so it isn’t asked for again', 'Save also works to keep their teams as they are']},
     {v:'3.55', d:'2 Nov 2026', t:'Coach list, even buttons', n:['Head coach/s list: just the club’s coaches, first and last names', 'Two or more coaches show as initials (e.g. DA, KP) on the plan and when printed — tap the box to see or change the full names', 'The home page buttons are all the same size']},
     {v:'3.54', d:'2 Nov 2026', t:'Several groups and coaches', n:['Squad / group and Head coach/s (sessions and pre-games) take several — tap them in the list to add or take one off (picked ones are ticked), or type your own', 'The coach list has you, the club’s coaches and anyone already named on a session; typing fills in the rest of a name']},
     {v:'3.53', d:'2 Nov 2026', t:'Half minutes', n:['A practice can run for half minutes — type 7.5 and it counts as 7½: the run-sheet, total and finish time add it up (clock times show the seconds, e.g. 4:07:30pm)', 'The arrow keys in the minutes box still go up and down in 5s']},
