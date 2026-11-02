@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102113942">
+<meta name="hufc-build" content="20261102122619">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1395,6 +1395,10 @@ html.view-home .lu-sheet{display:none !important;}
   color:rgba(255,255,255,.75); font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:15px; line-height:1;}
 .lu-logo-opp:not(:disabled):hover .lu-logo-add{border-color:var(--yellow); color:var(--yellow);}
 
+/* boxes that take several (squad / group, head coaches): a tick beside each one picked */
+.lu-combo-opt[aria-selected="true"]{font-weight:700;}
+.lu-combo-opt[aria-selected="true"]::before{content:'✓'; display:inline-block; width:1.2em; color:#2e9d5b; font-weight:800;}
+.lu-combo-opt[aria-selected="false"]::before{content:''; display:inline-block; width:1.2em;}
 
 /* ---------- match analysis ---------- */
 .an-box{width:min(1320px, 100%); height:94vh; max-height:94vh; background:var(--white);}
@@ -3434,7 +3438,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 11:39am</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 12:26pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -7249,7 +7253,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const info = document.getElementById('info');
     info.innerHTML = '';
     /* date: calendar; start time, squad and players: pick from a list or start typing (it fills in the rest) */
-    const META_LISTS = {time:luTimes, squad:luAges, players:function(){ const o = ['-']; for(let n = 1; n <= 100; n++) o.push(String(n)); return o; }};   /* "-": not known yet */
+    const META_LISTS = {time:luTimes, squad:luAges, coach:coachNames, players:function(){ const o = ['-']; for(let n = 1; n <= 100; n++) o.push(String(n)); return o; }};   /* "-": not known yet */
     META.forEach(function(m){
       const set = function(v){
         state.meta[m[0]] = v;
@@ -7258,7 +7262,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       };
       let field;
       if(m[0] === 'date') field = luDateBox(state.meta.date, set);
-      else if(META_LISTS[m[0]]) field = luCombo({value:clean(state.meta[m[0]]), ph:m[2], label:m[1], options:META_LISTS[m[0]](), onChange:set});
+      else if(META_LISTS[m[0]]) field = luCombo({value:clean(state.meta[m[0]]), ph:m[0] === 'coach' ? 'Choose or type' : m[2], label:m[1], options:META_LISTS[m[0]](), multi:m[0] === 'squad' || m[0] === 'coach', onChange:set});
       else field = textField({value:state.meta[m[0]], ph:m[2], label:m[1], oneline:true, onInput:set});
       info.appendChild(h('div', {class:'cell'}, h('span', {class:'lbl', text:m[1]}), field));
     });
@@ -9864,6 +9868,18 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return o.concat(['Pre-season', 'Friendly', 'Trial', 'Cup', 'Quarter-final', 'Semi-final', 'Grand final']); })();
   const LU_COMPS = ['NPL', 'Cup', 'Friendly', 'Pre-season', 'Tournament', 'Trial'];
   /* lists the session plan uses too, so they are functions (ready before this part of the script has run) */
+  /* the coaches to pick from: you, the club's coaches, and anyone already named on a session or pre-game */
+  function coachNames(){
+    const out = [], seen = {}, add = function(n){ n = String(n || '').replace(/\s+/g, ' ').trim(); const k = n.toLowerCase(); if(n && n !== '-' && !seen[k]){ seen[k] = 1; out.push(n); } };
+    let me = '';
+    try{ me = (typeof CLOUD !== 'undefined' && CLOUD && CLOUD.name) ? CLOUD.name() : ''; }catch(e){}
+    const rest = [];
+    try{ if(typeof CLOUD !== 'undefined' && CLOUD && CLOUD.clubCoaches) CLOUD.clubCoaches().forEach(function(c){ rest.push(c.name); }); }catch(e){}
+    try{ listSessions().forEach(function(x){ String((x.plan.meta || {}).coach || '').split(/\s*(?:,|&|\/|\band\b)\s*/i).forEach(function(n){ rest.push(n); }); }); }catch(e){}
+    add(me);
+    rest.map(function(n){ return String(n || '').trim(); }).filter(Boolean).sort(function(a, b){ return a.localeCompare(b); }).forEach(add);
+    return out;
+  }
   function luAges(){ return ['U13', 'U14', 'U15', 'U16', 'U18', 'U20', 'U23', 'Seniors']; }
   function luTimes(){ const o = []; for(let m = 7 * 60; m <= 21 * 60; m += 5){   /* every 5 minutes, 7am to 9pm */ const hh = Math.floor(m / 60), mm = m % 60;
     o.push((hh % 12 || 12) + ':' + String(mm).padStart(2, '0') + (hh < 12 ? 'am' : 'pm')); } return o; }
@@ -9881,6 +9897,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const wrap = h('div', {class:'lu-combo'}, inp, txt, btn, list);
     const key = function(t){ return String(t).toLowerCase().replace(/[^a-z0-9]/g, ''); };
     let shown = [], hi = -1, filtering = false, query = '';
+    /* multi: several choices in one box ("U18, U20"): picking adds or takes one away, and typing adds your own */
+    const multi = !!o.multi;
+    const parts = function(){ return inp.value.split(/\s*,\s*/).map(function(t){ return t.trim(); }).filter(Boolean); };
+    const lastSeg = function(){ const v = inp.value, i = v.lastIndexOf(','); return (i === -1 ? v : v.slice(i + 1)).trim(); };
+    const segStart = function(){ const v = inp.value, i = v.lastIndexOf(','); if(i === -1) return 0; let j = i + 1; while(v.charAt(j) === ' ') j++; return j; };
+    const has = function(t){ const k = key(t); return parts().some(function(p){ return key(p) === k; }); };
     const paint = function(){ wrap.classList.toggle('filled', !!inp.value.trim()); txt.textContent = inp.value; inp.title = inp.value; };
     const close = function(){ list.hidden = true; inp.setAttribute('aria-expanded', 'false'); wrap.classList.remove('open'); };
     function render(){
@@ -9900,7 +9922,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(!items.length){ close(); return; }
       if(hi >= items.length) hi = items.length - 1;
       items.forEach(function(t, i){
-        const it = h('div', {class:'lu-combo-opt' + (i === hi ? ' hi' : '') + (t === inp.value ? ' cur' : ''), role:'option', text:t});
+        const it = h('div', {class:'lu-combo-opt' + (i === hi ? ' hi' : '') + ((multi ? has(t) : t === inp.value) ? ' cur' : ''), role:'option', text:t});
+        if(multi) it.setAttribute('aria-selected', String(has(t)));
         it.addEventListener('mousedown', function(e){ e.preventDefault(); pick(t); });
         list.appendChild(it);
       });
@@ -9913,18 +9936,44 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       else list.style.maxHeight = Math.max(110, Math.min(300, below)) + 'px';
       const target = list.children[hi >= 0 ? hi : 0]; if(target) list.scrollTop = Math.max(0, target.offsetTop - list.clientHeight / 2 + target.offsetHeight / 2);
     }
-    function pick(t){ inp.value = t; paint(); o.onChange(t); filtering = false; close(); }
-    function openAll(){ filtering = false; hi = o.options.indexOf(inp.value); render(); }
+    function pick(t){
+      if(multi){
+        let ps = parts();
+        const typed = filtering && lastSeg();
+        if(typed){ ps = ps.slice(0, -1); if(!ps.some(function(p){ return key(p) === key(t); })) ps.push(t); }   /* finishes the one being typed */
+        else if(has(t)) ps = ps.filter(function(p){ return key(p) !== key(t); });                                /* tap again: takes it off */
+        else ps.push(t);
+        inp.value = ps.join(', '); paint(); o.onChange(inp.value);
+        filtering = false; query = ''; hi = -1; render();   /* (the list stays open to pick more) */
+        try{ inp.setSelectionRange(inp.value.length, inp.value.length); }catch(e){}
+        return;
+      }
+      inp.value = t; paint(); o.onChange(t); filtering = false; close();
+    }
+    function openAll(){ filtering = false; hi = multi ? -1 : o.options.indexOf(inp.value); render(); }
     /* typing replaces what's there: select it all on the way in (and keep the click's mouseup from undoing that) */
     let fresh = false;
-    inp.addEventListener('focus', function(){ openAll(); if(inp.value){ try{ inp.select(); }catch(e){} fresh = true; } });
+    inp.addEventListener('focus', function(){ openAll(); if(multi){ return; } if(inp.value){ try{ inp.select(); }catch(e){} fresh = true; } });
     inp.addEventListener('mouseup', function(e){ if(fresh){ e.preventDefault(); fresh = false; } });
     inp.addEventListener('keydown', function(){ fresh = false; });
     inp.addEventListener('click', function(){ if(list.hidden) openAll(); });
     inp.addEventListener('blur', function(){ close(); });
     inp.addEventListener('input', function(e){
       filtering = true; hi = 0;
-      const typed = inp.value, at = inp.selectionStart; query = typed;
+      const typed = inp.value, at = inp.selectionStart;
+      if(multi){
+        /* only the one being typed (after the last comma) is matched and filled in */
+        const st = segStart(), seg = typed.slice(st); query = seg;
+        if(!seg.trim()){ filtering = false; hi = -1; }
+        else if(e.inputType && e.inputType.indexOf('insert') === 0 && at === typed.length){
+          const low = seg.toLowerCase();
+          const m = o.options.find(function(t){ return t.toLowerCase().indexOf(low) === 0 && !has(t); });
+          if(m && m.length > seg.length){ inp.value = typed.slice(0, st) + m; inp.setSelectionRange(typed.length, inp.value.length); }
+        }
+        paint(); o.onChange(inp.value); render();
+        return;
+      }
+      query = typed;
       /* fill in the rest of the first choice that starts with what was typed (the added part stays selected, so typing on replaces it) */
       if(e.inputType && e.inputType.indexOf('insert') === 0 && typed.trim() && at === typed.length){
         const low = typed.toLowerCase();
@@ -14499,6 +14548,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.54', d:'2 Nov 2026', t:'Several groups and coaches', n:['Squad / group and Head coach/s (sessions and pre-games) take several — tap them in the list to add or take one off (picked ones are ticked), or type your own', 'The coach list has you, the club’s coaches and anyone already named on a session; typing fills in the rest of a name']},
     {v:'3.53', d:'2 Nov 2026', t:'Half minutes', n:['A practice can run for half minutes — type 7.5 and it counts as 7½: the run-sheet, total and finish time add it up (clock times show the seconds, e.g. 4:07:30pm)', 'The arrow keys in the minutes box still go up and down in 5s']},
     {v:'3.52', d:'2 Nov 2026', t:'Pitch list tidied', n:['Half pitch – zoomed in is gone: the choices are Half pitch and Half pitch (wide). Any board that used it shows the half pitch']},
     {v:'3.51', d:'2 Nov 2026', t:'Wide half pitch', n:['New pitch: Half pitch (wide) — a wide board with the half pitch exactly to scale (68 × 52.5 m): the whole width, a big box and round circles, with the goal at the bottom', 'Half pitch is back to the original drawing; the zoomed-in one is still there as Half pitch – zoomed in', 'Changing a practice to or from the wide board moves everything already drawn with it', 'The wide board works in Present, PDF, PowerPoint and the library pictures (the 3D view is for the tall boards)', 'A view-only session now says why — who made it and who its collaborators are']},
@@ -15089,8 +15139,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       cell('Date', luDateBox(state.meta.date, set('date'))),
       cell('Kick-off', luCombo({value:clean(state.meta.time), ph:'e.g. 3:00pm', label:'Kick-off', options:luTimes(), onChange:set('time')})),
       cell('Venue', textField({value:state.meta.venue, ph:'e.g. Olympic Village', label:'Venue', oneline:true, onInput:set('venue')})),
-      cell('Squad / group', luCombo({value:clean(state.meta.squad), ph:'e.g. U18', label:'Squad / group', options:luAges(), onChange:set('squad')})),
-      cell('Head coach/s', textField({value:state.meta.coach, ph:'Coach name/s', label:'Head coach/s', oneline:true, onInput:set('coach')}))
+      cell('Squad / group', luCombo({value:clean(state.meta.squad), ph:'e.g. U18', label:'Squad / group', options:luAges(), multi:true, onChange:set('squad')})),
+      cell('Head coach/s', luCombo({value:clean(state.meta.coach), ph:'Choose or type', label:'Head coach/s', options:coachNames(), multi:true, onChange:set('coach')}))
     );
     const focus = document.getElementById('focus');
     focus.innerHTML = '';
