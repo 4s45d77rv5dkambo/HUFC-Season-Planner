@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102122619">
+<meta name="hufc-build" content="20261102123146">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2496,9 +2496,10 @@ body.view-lineup .session-only, body.view-lineup .collab-btn{display:none !impor
 .home-doc{margin-left:auto; text-align:right; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:32px; line-height:1; letter-spacing:.03em; text-transform:uppercase; color:var(--white);}
 .home-club{margin-top:7px; font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:12.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--yellow);}
 .home-app{margin:0; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:32px; line-height:1; letter-spacing:.02em; text-transform:uppercase;}
-.home-actions{width:100%; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); grid-auto-columns:minmax(0,1fr); grid-template-rows:auto auto; grid-auto-flow:column; gap:8px 10px;}
+.home-actions{width:100%; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); grid-auto-columns:minmax(0,1fr); grid-template-rows:1fr 1fr; grid-auto-rows:1fr; grid-auto-flow:column; gap:8px 10px;}   /* every button the same size */
 .home-actions .btn{justify-content:center; text-align:center; min-width:0; white-space:normal; line-height:1.15;}
 .home-actions .nowrap{white-space:nowrap;}
+@media (max-width:640px){ .home-actions .hide-narrow{display:none;} }
 .home-actions .home-gt-btn, .home-actions .home-season-btn{grid-row:auto; border-color:var(--yellow); color:var(--yellow);}
 .btn-big{font-size:16px; padding:11px 18px;}
 .btn-dark{background:transparent; color:var(--white); border-color:#5b5d61;}
@@ -3361,7 +3362,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <div class="home-actions">
       <button type="button" class="btn btn-primary btn-big" id="homeNewBtn">+ New session</button>
       <button type="button" class="btn btn-big btn-dark" id="homeOpenBtn" title="See all your sessions (Ctrl+O)">Open sessions</button>
-      <button type="button" class="btn btn-primary btn-big" id="homeLineupBtn" title="Start a lineup for a match">+ New matchday lineup</button>
+      <button type="button" class="btn btn-primary btn-big" id="homeLineupBtn" title="Start a lineup for a match">+ New <span class="hide-narrow">matchday </span>lineup</button>
       <button type="button" class="btn btn-big btn-dark" id="homeLuOpenBtn" title="See all your matchday lineups">Open lineups</button>
       <button type="button" class="btn btn-primary btn-big" id="homePgNewBtn" title="Shapes and phases to show the players before a game">+ New <span class="nowrap">pre-game</span></button>
       <button type="button" class="btn btn-big btn-dark" id="homePgOpenBtn" title="See all your pre-game plans">Open <span class="nowrap">pre-games</span></button>
@@ -3438,7 +3439,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 12:26pm</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 12:31pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -7262,7 +7263,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       };
       let field;
       if(m[0] === 'date') field = luDateBox(state.meta.date, set);
-      else if(META_LISTS[m[0]]) field = luCombo({value:clean(state.meta[m[0]]), ph:m[0] === 'coach' ? 'Choose or type' : m[2], label:m[1], options:META_LISTS[m[0]](), multi:m[0] === 'squad' || m[0] === 'coach', onChange:set});
+      else if(META_LISTS[m[0]]) field = luCombo({value:clean(state.meta[m[0]]), ph:m[0] === 'coach' ? 'Choose or type' : m[2], label:m[1], options:META_LISTS[m[0]](), multi:m[0] === 'squad' || m[0] === 'coach', show:m[0] === 'coach' ? coachShort : null, onChange:set});
       else field = textField({value:state.meta[m[0]], ph:m[2], label:m[1], oneline:true, onInput:set});
       info.appendChild(h('div', {class:'cell'}, h('span', {class:'lbl', text:m[1]}), field));
     });
@@ -7380,7 +7381,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       ));
     }
     const fi = document.getElementById('footerInfo');
-    if(fi) fi.textContent = [state.meta.coach && 'Coach: ' + state.meta.coach, state.meta.date].filter(Boolean).join(' · ');
+    if(fi) fi.textContent = [state.meta.coach && 'Coach: ' + coachShort(state.meta.coach), state.meta.date].filter(Boolean).join(' · ');
     const pf = document.getElementById('printFooterInfo');
     if(pf) pf.textContent = [sessionName(state), clean(state.meta.date)].filter(Boolean).join(' · ');
     document.querySelectorAll('.drill-no').forEach(function(n, i){ n.textContent = i + 1; });
@@ -9868,17 +9869,25 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return o.concat(['Pre-season', 'Friendly', 'Trial', 'Cup', 'Quarter-final', 'Semi-final', 'Grand final']); })();
   const LU_COMPS = ['NPL', 'Cup', 'Friendly', 'Pre-season', 'Tournament', 'Trial'];
   /* lists the session plan uses too, so they are functions (ready before this part of the script has run) */
-  /* the coaches to pick from: you, the club's coaches, and anyone already named on a session or pre-game */
+  /* the coaches to pick from: the club's coaches, first and last names only (you first) */
+  const CLUB_COACHES = ['David Ambelidis', 'Kristian Popovic', 'Mauricio Novack', 'Sai Gottipati', 'Sam Nockles'];
   function coachNames(){
-    const out = [], seen = {}, add = function(n){ n = String(n || '').replace(/\s+/g, ' ').trim(); const k = n.toLowerCase(); if(n && n !== '-' && !seen[k]){ seen[k] = 1; out.push(n); } };
+    const out = [], seen = {}, full = function(n){ return /^[A-Za-z\u00C0-\u024F'’.-]+(\s+[A-Za-z\u00C0-\u024F'’.-]+)+$/.test(n); };
+    const add = function(n){ n = String(n || '').replace(/\s+/g, ' ').trim(); const k = n.toLowerCase(); if(n && full(n) && !seen[k]){ seen[k] = 1; out.push(n); } };
     let me = '';
     try{ me = (typeof CLOUD !== 'undefined' && CLOUD && CLOUD.name) ? CLOUD.name() : ''; }catch(e){}
-    const rest = [];
+    const rest = CLUB_COACHES.slice();
     try{ if(typeof CLOUD !== 'undefined' && CLOUD && CLOUD.clubCoaches) CLOUD.clubCoaches().forEach(function(c){ rest.push(c.name); }); }catch(e){}
-    try{ listSessions().forEach(function(x){ String((x.plan.meta || {}).coach || '').split(/\s*(?:,|&|\/|\band\b)\s*/i).forEach(function(n){ rest.push(n); }); }); }catch(e){}
+    try{ if(typeof CLOUD !== 'undefined' && CLOUD && CLOUD.roster) CLOUD.roster().forEach(function(r){ rest.push(r.name); }); }catch(e){}
     add(me);
     rest.map(function(n){ return String(n || '').trim(); }).filter(Boolean).sort(function(a, b){ return a.localeCompare(b); }).forEach(add);
     return out;
+  }
+  /* more than one coach: their initials ("DA, KP"); one coach: the full name */
+  function coachShort(v){
+    const ps = String(v || '').split(/\s*,\s*/).map(function(t){ return t.trim(); }).filter(Boolean);
+    if(ps.length < 2) return String(v || '').trim();
+    return ps.map(function(n){ return n.split(/\s+/).filter(Boolean).map(function(w){ return w.charAt(0).toUpperCase(); }).join('').slice(0, 3); }).join(', ');
   }
   function luAges(){ return ['U13', 'U14', 'U15', 'U16', 'U18', 'U20', 'U23', 'Seniors']; }
   function luTimes(){ const o = []; for(let m = 7 * 60; m <= 21 * 60; m += 5){   /* every 5 minutes, 7am to 9pm */ const hh = Math.floor(m / 60), mm = m % 60;
@@ -9903,7 +9912,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const lastSeg = function(){ const v = inp.value, i = v.lastIndexOf(','); return (i === -1 ? v : v.slice(i + 1)).trim(); };
     const segStart = function(){ const v = inp.value, i = v.lastIndexOf(','); if(i === -1) return 0; let j = i + 1; while(v.charAt(j) === ' ') j++; return j; };
     const has = function(t){ const k = key(t); return parts().some(function(p){ return key(p) === k; }); };
-    const paint = function(){ wrap.classList.toggle('filled', !!inp.value.trim()); txt.textContent = inp.value; inp.title = inp.value; };
+    /* o.show: how the value looks when the box isn't being edited (e.g. initials for several coaches); editing shows it in full */
+    let real = o.value || '', editing = false;
+    const shownVal = function(v){ return o.show ? o.show(v) : v; };
+    if(o.show) inp.value = shownVal(real);
+    const paint = function(){ if(editing || !o.show) real = inp.value; wrap.classList.toggle('filled', !!real.trim()); txt.textContent = shownVal(real); inp.title = real; };
     const close = function(){ list.hidden = true; inp.setAttribute('aria-expanded', 'false'); wrap.classList.remove('open'); };
     function render(){
       const q = key(query);
@@ -9953,11 +9966,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     function openAll(){ filtering = false; hi = multi ? -1 : o.options.indexOf(inp.value); render(); }
     /* typing replaces what's there: select it all on the way in (and keep the click's mouseup from undoing that) */
     let fresh = false;
-    inp.addEventListener('focus', function(){ openAll(); if(multi){ return; } if(inp.value){ try{ inp.select(); }catch(e){} fresh = true; } });
+    inp.addEventListener('focus', function(){ if(o.show){ editing = true; inp.value = real; } openAll(); if(multi){ try{ inp.setSelectionRange(inp.value.length, inp.value.length); }catch(e){} return; } if(inp.value){ try{ inp.select(); }catch(e){} fresh = true; } });
     inp.addEventListener('mouseup', function(e){ if(fresh){ e.preventDefault(); fresh = false; } });
     inp.addEventListener('keydown', function(){ fresh = false; });
     inp.addEventListener('click', function(){ if(list.hidden) openAll(); });
-    inp.addEventListener('blur', function(){ close(); });
+    inp.addEventListener('blur', function(){ close(); if(o.show){ real = inp.value; editing = false; inp.value = shownVal(real); paint(); } });
     inp.addEventListener('input', function(e){
       filtering = true; hi = 0;
       const typed = inp.value, at = inp.selectionStart;
@@ -14548,6 +14561,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.55', d:'2 Nov 2026', t:'Coach list, even buttons', n:['Head coach/s list: just the club’s coaches, first and last names', 'Two or more coaches show as initials (e.g. DA, KP) on the plan and when printed — tap the box to see or change the full names', 'The home page buttons are all the same size']},
     {v:'3.54', d:'2 Nov 2026', t:'Several groups and coaches', n:['Squad / group and Head coach/s (sessions and pre-games) take several — tap them in the list to add or take one off (picked ones are ticked), or type your own', 'The coach list has you, the club’s coaches and anyone already named on a session; typing fills in the rest of a name']},
     {v:'3.53', d:'2 Nov 2026', t:'Half minutes', n:['A practice can run for half minutes — type 7.5 and it counts as 7½: the run-sheet, total and finish time add it up (clock times show the seconds, e.g. 4:07:30pm)', 'The arrow keys in the minutes box still go up and down in 5s']},
     {v:'3.52', d:'2 Nov 2026', t:'Pitch list tidied', n:['Half pitch – zoomed in is gone: the choices are Half pitch and Half pitch (wide). Any board that used it shows the half pitch']},
@@ -15140,7 +15154,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       cell('Kick-off', luCombo({value:clean(state.meta.time), ph:'e.g. 3:00pm', label:'Kick-off', options:luTimes(), onChange:set('time')})),
       cell('Venue', textField({value:state.meta.venue, ph:'e.g. Olympic Village', label:'Venue', oneline:true, onInput:set('venue')})),
       cell('Squad / group', luCombo({value:clean(state.meta.squad), ph:'e.g. U18', label:'Squad / group', options:luAges(), multi:true, onChange:set('squad')})),
-      cell('Head coach/s', luCombo({value:clean(state.meta.coach), ph:'Choose or type', label:'Head coach/s', options:coachNames(), multi:true, onChange:set('coach')}))
+      cell('Head coach/s', luCombo({value:clean(state.meta.coach), ph:'Choose or type', label:'Head coach/s', options:coachNames(), multi:true, show:coachShort, onChange:set('coach')}))
     );
     const focus = document.getElementById('focus');
     focus.innerHTML = '';
