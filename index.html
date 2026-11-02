@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102113423">
+<meta name="hufc-build" content="20261102113942">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3434,7 +3434,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 11:34am</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 11:39am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -7308,13 +7308,22 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function fmtTime(min, twelve){
     min = ((min % 1440) + 1440) % 1440;
-    let hh = Math.floor(min/60); const mm = String(min % 60).padStart(2,'0');
+    /* part minutes (a 7½-minute practice) show their seconds: 4:07:30pm */
+    const secs = Math.round((min % 1) * 60), whole = Math.floor(min);
+    let hh = Math.floor(whole/60); const mm = String(whole % 60).padStart(2,'0') + (secs ? ':' + String(secs).padStart(2, '0') : '');
     if(twelve){ const ap = hh >= 12 ? 'pm' : 'am'; hh = hh % 12 || 12; return hh + ':' + mm + ap; }
     return String(hh).padStart(2,'0') + ':' + mm;
   }
+  /* minutes as people say them: 7, 7½, 7.25 */
+  function fmtMin(n){
+    n = Math.round((+n || 0) * 100) / 100;
+    if(n % 1 === 0) return String(n);
+    if(Math.abs(n % 1 - 0.5) < 0.001) return (Math.floor(n) || '') + '½';
+    return String(n);
+  }
   /* the minutes box is just as wide as the number in it */
   function durWidth(v){ return (Math.max(1, String(v == null ? '' : v).length) + 0.15) + 'ch'; }
-  function dur(d){ const n = parseInt(d.duration, 10); return isNaN(n) || n < 0 ? 0 : n; }
+  function dur(d){ const n = parseFloat(String(d.duration == null ? '' : d.duration).replace(',', '.')); return isNaN(n) || n < 0 ? 0 : Math.round(n * 100) / 100; }   /* (half minutes count: 7.5) */
 
   function refreshComputed(){
     if(isPre()){ pgRefresh(); return; }
@@ -7322,7 +7331,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const total = state.drills.reduce(function(a, d){ return a + dur(d); }, 0);
     const tv = document.getElementById('totalVal'), ts = document.getElementById('totalSub');
     if(tv){
-      tv.textContent = total + ' min';
+      tv.textContent = fmtMin(total) + ' min';
       ts.textContent = start ? fmtTime(start.min, start.twelve) + ' – ' + fmtTime(start.min + total, start.twelve)
         : ((state.meta.time || '').trim() ? 'Start time not recognised — try 4:30pm'
          : (state.drills.length ? 'Add a start time to see the finish' : ''));
@@ -7345,14 +7354,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       let t = 0;
       state.drills.forEach(function(d, i){
         const a = t, b = t + dur(d); t = b;
-        const time = start ? fmtTime(start.min + a, start.twelve) + '–' + fmtTime(start.min + b, start.twelve) : a + '–' + b + '′';
+        const time = start ? fmtTime(start.min + a, start.twelve) + '–' + fmtTime(start.min + b, start.twelve) : fmtMin(a) + '–' + fmtMin(b) + '′';
         tbody.appendChild(h('tr', null,
           h('td', {class:'rs-time', text:time}),
           h('td', {class:'rs-name'},
             h('a', {href:'#drill-' + d.id, text:(i+1) + '. ' + (d.name || 'Untitled practice')}),
             d.focus ? h('span', {class:'rs-focus', text:d.focus}) : null
           ),
-          h('td', {class:'rs-dur', text:dur(d) + ' min'})
+          h('td', {class:'rs-dur', text:fmtMin(dur(d)) + ' min'})
         ));
       });
       if(!state.drills.length) tbody.appendChild(h('tr', {class:'muted'}, h('td', {colspan:'4', class:'muted', text:'Add a practice below and it will appear here.'})));
@@ -7362,7 +7371,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('tfoot', null, h('tr', null,
           h('td', {class:'rs-time', text:start ? 'Finish ' + fmtTime(start.min + total, start.twelve) : ''}),
           h('td', {text:state.drills.length + (state.drills.length === 1 ? ' practice' : ' practices')}),
-          h('td', {class:'rs-dur', text:total + ' min'})
+          h('td', {class:'rs-dur', text:fmtMin(total) + ' min'})
         ))
       ));
     }
@@ -7520,8 +7529,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('span', {class:'drill-no', text:idx + 1}),
       nameInput,
       h('label', {class:'dur', title:'Length in minutes'},
-        h('input', {type:'number', min:'0', max:'240', step:'5', inputmode:'numeric', value:d.duration, 'aria-label':'Length in minutes', style:'width:' + durWidth(d.duration),
-          oninput:function(e){ d.duration = e.target.value; e.target.style.width = durWidth(e.target.value); refreshComputed(); scheduleSave(); }}),
+        h('input', {type:'number', min:'0', max:'240', step:'any', inputmode:'decimal', value:d.duration, 'aria-label':'Length in minutes', style:'width:' + durWidth(d.duration),
+          oninput:function(e){ d.duration = e.target.value; e.target.style.width = durWidth(e.target.value); refreshComputed(); scheduleSave(); },
+          /* the arrow keys still go up and down in 5s (any number can be typed, e.g. 7.5) */
+          onkeydown:function(e){ if(e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return; e.preventDefault(); const t = e.target, v = dur({duration:t.value}), step = e.key === 'ArrowUp' ? 5 : -5;
+            const nv = Math.max(0, Math.min(240, step > 0 ? Math.floor(v / 5) * 5 + 5 : Math.ceil(v / 5) * 5 - 5)); t.value = nv; t.dispatchEvent(new Event('input', {bubbles:true})); }}),
         h('span', {class:'dur-unit', text:'min'})),
       h('div', {class:'drill-actions'},
         h('button', {type:'button', class:'icon-btn reveal', title:'Move up', 'aria-label':'Move up', text:'↑', disabled:idx === 0, onclick:function(){ move(-1); }}),
@@ -8291,7 +8303,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         ownerTag(e),
         h('div', {class:'lib-name'}, clean(p.name) || 'Untitled practice'),
         h('div', {class:'lib-chips'},
-          h('span', {class:'chip', text:dur(p) + ' min'}),
+          h('span', {class:'chip', text:fmtMin(dur(p)) + ' min'}),
           opts.picker && inSession ? h('span', {class:'chip chip-in', text:'In this session'}) : null),
         clean(p.focus) ? h('div', {class:'lib-focus', text:clean(p.focus)}) : null,
         desc ? h('div', {class:'lib-desc', text:desc}) : null,
@@ -8339,7 +8351,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         : [clean(m.title) ? clean(f.theme) : '', clean(m.date), clean(m.time), clean(m.venue), clean(m.squad)]).filter(Boolean).join(' · ') || 'No details yet'}),
       h('div', {class:'session-foot'},
         h('span', {text:pre ? s.drills.length + (s.drills.length === 1 ? ' board' : ' boards') + (clipN ? ' · ' + clipN + (clipN === 1 ? ' clip' : ' clips') : '')
-          : s.drills.length + (s.drills.length === 1 ? ' practice' : ' practices') + ' · ' + total + ' min'}),
+          : s.drills.length + (s.drills.length === 1 ? ' practice' : ' practices') + ' · ' + fmtMin(total) + ' min'}),
         h('span', {text:'· ' + (isOpen ? 'Open now' : whenText(s.savedAt))}),
         (isOpen || !canDelete(s)) ? null : h('button', {type:'button', class:'icon-btn danger', title:'Delete this session', 'aria-label':'Remove session', text:'✕', onclick:async function(ev){
           ev.stopPropagation();
@@ -8448,7 +8460,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!on) return;
     const ps = homeSel.map(function(id){ return lib.items[id].practice; });
     const total = ps.reduce(function(a, p){ return a + dur(p); }, 0);
-    document.getElementById('selCount').textContent = homeSel.length + (homeSel.length === 1 ? ' practice selected' : ' practices selected') + ' · ' + total + ' min';
+    document.getElementById('selCount').textContent = homeSel.length + (homeSel.length === 1 ? ' practice selected' : ' practices selected') + ' · ' + fmtMin(total) + ' min';
     document.getElementById('selInfo').textContent = ps.map(function(p, i){ return (i + 1) + '. ' + (clean(p.name) || 'Untitled'); }).join('   ');
   }
   function createSessionFrom(ids){
@@ -14487,6 +14499,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.53', d:'2 Nov 2026', t:'Half minutes', n:['A practice can run for half minutes — type 7.5 and it counts as 7½: the run-sheet, total and finish time add it up (clock times show the seconds, e.g. 4:07:30pm)', 'The arrow keys in the minutes box still go up and down in 5s']},
     {v:'3.52', d:'2 Nov 2026', t:'Pitch list tidied', n:['Half pitch – zoomed in is gone: the choices are Half pitch and Half pitch (wide). Any board that used it shows the half pitch']},
     {v:'3.51', d:'2 Nov 2026', t:'Wide half pitch', n:['New pitch: Half pitch (wide) — a wide board with the half pitch exactly to scale (68 × 52.5 m): the whole width, a big box and round circles, with the goal at the bottom', 'Half pitch is back to the original drawing; the zoomed-in one is still there as Half pitch – zoomed in', 'Changing a practice to or from the wide board moves everything already drawn with it', 'The wide board works in Present, PDF, PowerPoint and the library pictures (the 3D view is for the tall boards)', 'A view-only session now says why — who made it and who its collaborators are']},
     {v:'3.50', d:'2 Nov 2026', t:'Half pitch to scale', n:['The half pitch (sessions and pre-games) is the full pitch zoomed in on one end: the same real shapes, just bigger — the box is much wider and deeper, the 6-yard box, D and spot are in proportion, and the halfway line and centre circle sit near the top', 'PowerPoint and PDF exports draw it the same way']},
