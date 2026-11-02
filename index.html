@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102123541">
+<meta name="hufc-build" content="20261102131326">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3440,7 +3440,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 12:35pm</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 1:13pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3910,6 +3910,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         <select class="js-grass"><option value="stripes">Stripes</option><option value="checks">Chequered</option><option value="plain">Plain</option></select>
       </label>
       <label class="cfg cfg-check" title="Show the club crest faintly on the pitch"><input type="checkbox" class="js-watermark"><span class="lbl">Crest</span></label>
+      <label class="cfg cfg-check" title="Players and keepers turn to face the ball — as you move it, and when the animation plays"><input type="checkbox" class="js-faceball"><span class="lbl">Face ball</span></label>
       <span class="cfg-break" aria-hidden="true"></span>
       <span class="cfg" title="Flat pitch, or tilted back in 3D with the players standing up"><span class="lbl">View</span><span class="seg js-view"><button type="button" data-v="2d">2D</button><button type="button" data-v="3d">3D</button></span></span>
       <span class="cfg" title="What's around the pitch"><span class="lbl">Around</span><span class="seg js-around"><button type="button" data-v="grass">Grass</button><button type="button" data-v="stadium">Stadium</button></span></span>
@@ -4515,6 +4516,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const t = /translate\(([-\d.]+),([-\d.]+)\)/.exec(tf), r = /rotate\(([-\d.]+)\)/.exec(tf), s = /scale\(([-\d.]+)\)/.exec(tf);
     return {x:t?parseFloat(t[1]):0, y:t?parseFloat(t[2]):0, rot:r?parseFloat(r[1]):0, scale:s?parseFloat(s[1]):1};
   }
+  /* "Face ball": which icons turn, and the angle that faces (bx, by) from (x, y) — 0 is facing up the pitch, clockwise */
+  const FACE_TYPES = {'player-a':1, 'player-b':1, 'player-c':1, 'gk-a':1, 'gk-b':1};
+  function faceAngle(x, y, bx, by){ return Math.round(Math.atan2(bx - x, -(by - y)) * 180 / Math.PI); }
+  function nearestOf(list, x, y){ let best = null, bd = Infinity; list.forEach(function(b){ const dd = (b.x - x) * (b.x - x) + (b.y - y) * (b.y - y); if(dd < bd){ bd = dd; best = b; } }); return bd < 4 ? null : best; }
   function setTransform(g, x, y, rot, scale){
     g.setAttribute('transform', 'translate(' + (+x).toFixed(1) + ',' + (+y).toFixed(1) + ') rotate(' + rot + ') scale(' + scale + ')');
     keepLabelUpright(g, rot);
@@ -5039,6 +5044,34 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     wmToggle.checked = !!d.watermark;
     wmToggle.addEventListener('change', function(){ d.watermark = wmToggle.checked; applyWatermark(); onChange(); });
     applyWatermark();
+    /* face the ball: every player and keeper turns to face the nearest ball — live while anything moves, and in the animation */
+    const faceToggle = q('.js-faceball');
+    let faceRaf = 0, faceSave = 0, faceObs = null;
+    function faceBallNow(){
+      faceRaf = 0;
+      if(!d.faceBall) return;
+      const toks = Array.prototype.filter.call(board.children, function(g){ return g.classList.contains('token') && !g.classList.contains('preview'); });
+      const balls = toks.filter(function(g){ return g.dataset.type === 'ball'; }).map(parseTransform);
+      if(!balls.length) return;
+      let moved = false;
+      toks.forEach(function(g){
+        if(!FACE_TYPES[g.dataset.type]) return;
+        const t = parseTransform(g), b = nearestOf(balls, t.x, t.y); if(!b) return;
+        const rot = faceAngle(t.x, t.y, b.x, b.y);
+        if(Math.abs((((rot - (+t.rot || 0)) % 360) + 540) % 360 - 180) < 1) return;
+        setTransform(g, t.x, t.y, rot, t.scale); moved = true;
+      });
+      if(faceObs) faceObs.takeRecords();   /* (its own turning isn't a change to react to) */
+      if(moved){ clearTimeout(faceSave); faceSave = setTimeout(function(){ if(!animPlaying) onChange(); }, 450); }
+    }
+    faceObs = new MutationObserver(function(){ if(d.faceBall) faceBallNow(); });   /* (straight away, before the frame paints — no flicker) */
+    faceObs.observe(board, {attributes:true, attributeFilter:['transform'], subtree:true, childList:true});
+    faceToggle.checked = !!d.faceBall;
+    faceToggle.addEventListener('change', function(){
+      if(faceToggle.checked) d.faceBall = true; else delete d.faceBall;
+      if(d.faceBall){ faceBallNow(); if(!Array.prototype.some.call(board.children, function(g){ return g.dataset && g.dataset.type === 'ball'; })) showToast('Add a ball and the players turn to face it'); }
+      onChange();
+    });
     if(d.layout === 'half-zoom') d.layout = 'half';
     layoutSelect.value = d.layout;
     layoutSelect.addEventListener('change', function(){
@@ -8267,7 +8300,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(i) Object.keys(st || {}).forEach(function(u){ const v = st[u]; if(cur[u] && v) cur[u] = {x:v[0], y:v[1], rot:v[2] != null ? v[2] : cur[u].rot, scale:cur[u].scale}; });
       P.push(JSON.parse(JSON.stringify(cur)));
     });
-    const put = function(m){ Object.keys(m).forEach(function(u){ const g = gs[u], q = m[u]; if(!g) return;
+    const types = {}; (p.items || []).forEach(function(it){ if(it.uid) types[it.uid] = it.type; });
+    const put = function(m){
+      /* "Face ball": the players turn with the ball as it moves */
+      if(p.faceBall){
+        const balls = Object.keys(m).filter(function(u){ return types[u] === 'ball'; }).map(function(u){ return m[u]; });
+        if(balls.length){ const mm = {}; Object.keys(m).forEach(function(u){ const q = m[u]; mm[u] = q; if(!FACE_TYPES[types[u]]) return; const b = nearestOf(balls, q.x, q.y); if(b) mm[u] = {x:q.x, y:q.y, rot:faceAngle(q.x, q.y, b.x, b.y), scale:q.scale}; }); m = mm; }
+      }
+      Object.keys(m).forEach(function(u){ const g = gs[u], q = m[u]; if(!g) return;
       g.setAttribute('transform', 'translate(' + q.x.toFixed(1) + ',' + q.y.toFixed(1) + ') rotate(' + q.rot + ') scale(' + q.scale + ')');
       g.querySelectorAll('.player-num, .tok-light').forEach(function(e){ e.setAttribute('transform', 'rotate(' + (-q.rot) + ')'); }); }); };
     let raf = 0, on = false;
@@ -14579,6 +14619,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.57', d:'2 Nov 2026', t:'Players face the ball', n:['New “Face ball” tick box under each pitch (next to Crest): every player and keeper turns their body to face the ball', 'They turn live as you drag the ball (or the players) around, and follow the ball when the animation plays — on the board and in Present to players', 'Untick it and they keep the direction they were facing; you can still turn anyone by hand']},
     {v:'3.56', d:'2 Nov 2026', t:'Decline a team request', n:['Coaches window: a coach’s request for more (or other) teams has a Decline button — they keep the teams they have and the request is cleared (no more waiting badge)', 'Their app drops the declined team too, with a note, so it isn’t asked for again', 'Save also works to keep their teams as they are']},
     {v:'3.55', d:'2 Nov 2026', t:'Coach list, even buttons', n:['Head coach/s list: just the club’s coaches, first and last names', 'Two or more coaches show as initials (e.g. DA, KP) on the plan and when printed — tap the box to see or change the full names', 'The home page buttons are all the same size']},
     {v:'3.54', d:'2 Nov 2026', t:'Several groups and coaches', n:['Squad / group and Head coach/s (sessions and pre-games) take several — tap them in the list to add or take one off (picked ones are ticked), or type your own', 'The coach list has you, the club’s coaches and anyone already named on a session; typing fills in the rest of a name']},
