@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102131326">
+<meta name="hufc-build" content="20261102145539">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2160,6 +2160,82 @@ body.doc-pregame .collab-btn{display:none !important;}   /* collaborators are fo
 .collab-chip{padding:3px 10px; border-radius:12px; background:var(--paper); border:1px solid var(--line); font-weight:600; font-size:14px;}
 @media screen and (max-width:640px){ .collab-btn .btn-label{display:none;} }
 
+/* ---------- Attendance and availability ---------- */
+/* under the session's Players box */
+.att-link{display:inline-flex; align-items:center; gap:6px; margin-top:6px; padding:3px 10px 3px 4px; border-radius:13px; border:1px dashed var(--line); background:var(--white); color:var(--ink);
+  font:600 12.5px/1.2 'Barlow', Arial, sans-serif; cursor:pointer; transition:background .15s, border-color .15s; max-width:100%;}
+.att-link:hover{border-color:var(--black);}
+.att-link.on{border-style:solid; border-color:var(--yellow); background:#fffbe8;}
+.att-link[hidden]{display:none;}
+.att-link-i{width:18px; height:18px; border-radius:50%; background:var(--yellow); color:var(--black); display:grid; place-items:center; font-size:11px; font-weight:800;}
+.att-link-out{padding:1px 6px; border-radius:8px; background:#d62828; color:#fff; font-size:11px;}
+
+/* status chips: Available / Injured / Unavailable */
+.av-chip{flex:none; display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 9px; border-radius:12px; border:1px solid var(--line); background:var(--white); color:var(--grey);
+  font:600 12.5px/1 'Barlow', Arial, sans-serif; white-space:nowrap; cursor:pointer; transition:background .15s, border-color .15s;}
+button.av-chip:hover{border-color:var(--black);}
+.av-chip.av-ok{color:var(--grey);}
+.av-chip.av-inj{background:#fdecec; border-color:#e9a3a3; color:#b3261e;}
+.av-chip.av-inj::before{content:'+'; font-weight:800; font-size:14px;}
+.av-chip.av-out{background:#fff3e2; border-color:#f0c48a; color:#9a5300;}
+.av-chip.av-out::before{content:'✕'; font-size:10px;}
+span.av-chip{cursor:default;}
+
+/* the change-status window */
+.av-form{display:flex; flex-direction:column; gap:12px;}
+.av-seg{display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;}
+.av-seg button{height:40px; border-radius:8px; border:1px solid var(--line); background:var(--white); font:600 15px 'Barlow', Arial, sans-serif; color:var(--ink); cursor:pointer; transition:background .15s, border-color .15s, color .15s;}
+.av-seg button:hover{border-color:var(--black);}
+.av-seg button.av-ok.on{background:var(--black); border-color:var(--black); color:var(--yellow);}
+.av-seg button.av-inj.on{background:#d62828; border-color:#d62828; color:#fff;}
+.av-seg button.av-out.on{background:#e07a00; border-color:#e07a00; color:#fff;}
+.av-more{display:flex; flex-direction:column; gap:10px;}
+.av-more[hidden]{display:none;}
+
+/* the warning on a lineup / pre-game lineup board */
+.av-warn{display:flex; align-items:flex-start; gap:8px; margin:0 0 8px; padding:8px 10px; border-radius:8px; background:#fdecec; border:1px solid #e9a3a3; color:#7d1a14; font-size:14px; line-height:1.35;}
+.av-warn-i{flex:none; width:18px; height:18px; border-radius:50%; background:#d62828; color:#fff; display:grid; place-items:center; font-weight:800; font-size:12px; margin-top:1px;}
+.pg-lu-col .av-warn{margin:6px 0;}
+#luAvWarn[hidden]{display:none;}
+/* lineup squad rows of players who are out */
+.lu-squad-table tr.av-row-out td{background:#fff6f6;}
+.lu-squad-table tr.av-row-out .lu-name-cell input{color:#9b1c14; text-decoration:line-through; text-decoration-color:rgba(179,38,30,.5);}
+.lu-name-cell .av-chip{height:20px; padding:0 7px; font-size:11.5px;}
+.sq-c-av{width:1%; white-space:nowrap;}
+.sq-count.av-has-out{color:#b3261e; font-weight:600;}
+/* the red/orange mark on the pitch: for the coach, not the players */
+.pg-show .lu-out-mark, .pg-show-lu .lu-out-mark{display:none;}
+@media print{ .lu-out-mark, .av-warn, .av-chip{display:none !important;} .lu-squad-table tr.av-row-out .lu-name-cell input{text-decoration:none; color:inherit;} .lu-squad-table tr.av-row-out td{background:none;} }
+
+/* the attendance window */
+.att-body{display:flex; flex-direction:column; gap:10px;}
+.att-body .set-sub{margin:0;}
+.att-head:empty{display:none;}
+.att-team-f{max-width:160px;}
+.att-tools{font-size:14px;}
+.att-list{display:flex; flex-direction:column; gap:5px; max-height:min(52vh, 520px); overflow:auto; padding-right:2px;}
+.att-row{display:flex; align-items:center; gap:10px; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:var(--white); cursor:pointer; transition:background .15s, border-color .15s;}
+.att-row:hover{border-color:var(--black);}
+.att-row input{width:20px; height:20px; accent-color:var(--black); flex:none; margin:0;}
+.att-row.is-here{background:#fffbe8; border-color:var(--yellow);}
+.att-row.is-out:not(.is-here){background:var(--paper);}
+.att-row.is-out .att-nm{color:var(--grey);}
+.att-num{flex:none; width:22px; text-align:right; font:700 14px 'Barlow Condensed', sans-serif; color:var(--grey);}
+.att-name{flex:1; min-width:0; display:flex; flex-direction:column;}
+.att-nm{font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.att-note{font-size:12.5px; color:var(--grey); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.att-hist{flex:none; font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums;}
+.att-add{display:flex; gap:6px;}
+.att-add-in{flex:1; min-width:0;}
+.att-count{font-weight:600; color:var(--grey); align-self:center;}
+/* the Print button: a word on a computer, an icon on a phone */
+.print-ico{display:none; vertical-align:-3px;}
+/* the smallest phones: the toolbar keeps one row (Export → Save as PDF prints) */
+@media screen and (max-width:380px){ .appbar .print-btn{display:none !important;} }
+@media screen and (max-width:340px){ .appbar #redoBtn{display:none !important;} }
+
+.sq-table.av-off .sq-c-av{display:none;}
+
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
 body.view-lineup .pregame-only{display:none !important;}
@@ -2268,6 +2344,17 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
   font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:18px; letter-spacing:.05em; text-transform:uppercase; cursor:pointer;}
 .pg-show-loop svg{display:block; width:15px; height:15px;}
 .pg-show-loop.on{background:var(--yellow); border-color:var(--yellow); color:var(--black);}
+/* pause / step / stop while the animation is going */
+.pg-show-play.is-paused{background:#fff;}
+.pg-show-ctl{display:inline-grid; place-items:center; width:42px; height:42px; padding:0; border:1px solid rgba(255,255,255,.35); border-radius:50%; background:rgba(255,255,255,.06); color:#fff; cursor:pointer; transition:background .15s, opacity .15s;}
+.pg-show-ctl:hover:not(:disabled){background:rgba(255,255,255,.18);}
+.pg-show-ctl:disabled{opacity:.35; cursor:default;}
+.pg-show-ctl svg{display:block;}
+.pg-show-ctl[hidden], .pg-show-step[hidden]{display:none;}
+.pg-show-step{color:rgba(255,255,255,.8); font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:17px; letter-spacing:.05em; text-transform:uppercase; font-variant-numeric:tabular-nums;}
+.pg-show-pitch:has(svg.th-playing){cursor:pointer;}
+/* paused: a yellow ring round the pitch, so everyone can see it's stopped on purpose */
+.pg-show-pitch svg.th-paused{outline:3px solid var(--yellow); outline-offset:3px; border-radius:2px;}
 /* pictures under each board's notes */
 .pg-pics{margin-top:14px; padding-top:10px; border-top:1px solid var(--line);}
 .pg-pics.drop{outline:2px dashed var(--black); outline-offset:4px; background:#fffbe0; border-radius:6px;}
@@ -2726,6 +2813,14 @@ html.has-selbar .home{padding-bottom:70px;}
   html.view-home .appbar{display:none;}
   .appbar .btn{flex:1; padding:8px 6px; min-width:0;}
   .appbar .btn-hist, .appbar .btn-home, .appbar .btn-del{flex:0 0 38px; justify-content:center;}
+  /* print, attendance and collaborators: icons, so the row fits (Save keeps its word) */
+  .appbar .print-btn, .appbar .collab-btn{flex:0 0 34px; justify-content:center; padding:8px 0;}
+  .appbar-inner{gap:4px;}
+  .appbar .btn-hist, .appbar .btn-home, .appbar .btn-del{flex-basis:36px;}
+  .appbar #saveBtn{flex:0 0 50px; padding:8px 0; justify-content:center;}
+  .appbar .print-btn .btn-label{display:none;}
+  .appbar .print-ico{display:inline-block;}
+  .appbar .collab-btn .collab-n{position:absolute; top:-7px; right:-7px; margin:0; box-shadow:0 0 0 2px var(--white);}
   /* the editing panel for a tapped item slides up from the bottom of the screen */
   .inspector{position:fixed; left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom, 0px)); top:auto; z-index:75;
     max-height:46vh; overflow:auto; padding:10px 12px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.28);
@@ -3329,7 +3424,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <button type="button" class="btn editor-only session-only" id="openBtn" title="Open one of your sessions (Ctrl+O)">Open…</button>
     <button type="button" class="btn pg-present-btn editor-only pregame-only" id="presentBtn" title="Show the boards to the players, one at a time, full screen" aria-label="Present to players"><span aria-hidden="true">▶</span><span class="btn-label"> Present</span></button>
     <button type="button" class="btn editor-only collab-btn" id="collabBtn" title="Collaborators: other coaches who can change this session too"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5"/><path d="M16 4.8a3.2 3.2 0 0 1 0 6.4M18 14.8c1.7.7 2.8 2.5 3.2 5.2"/></svg><span class="btn-label"> Collaborators</span><span class="collab-n" id="collabN" hidden></span></button>
-    <button type="button" class="btn editor-only" id="printBtn">Print</button>
+    <button type="button" class="btn editor-only print-btn" id="printBtn" title="Print" aria-label="Print"><svg class="print-ico" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg><span class="btn-label">Print</span></button>
     <div class="menu-wrap editor-only">
       <button type="button" class="btn" id="exportBtn" aria-haspopup="true" aria-expanded="false" title="Save a copy outside the app: PDF, PowerPoint or a session file">Export ▾</button>
       <div class="menu" id="exportMenu" role="menu" hidden>
@@ -3440,7 +3535,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 1:13pm</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 2:55pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3640,6 +3735,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           </div>
         </div>
         <div class="lu-squad">
+          <div id="luAvWarn" class="no-print" hidden></div>
           <table class="runsheet lu-squad-table">
             <thead><tr><th class="lu-c-num">No.</th><th>Squad</th><th class="lu-c-pos">Pos</th><th class="lu-c-min">Min</th><th class="lu-c-pct" title="Share of the match played">%</th><th class="lu-c-x no-print"></th></tr></thead>
             <tbody id="luSquad"></tbody>
@@ -3677,7 +3773,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         <button type="button" class="add-link" id="sqFromLineup" title="Add the players named in this lineup to your saved squad" hidden>Save this lineup’s players</button>
         <span class="sq-pick-links"><button type="button" class="text-btn" id="sqAll">Tick all</button> · <button type="button" class="text-btn" id="sqNone">Untick all</button></span>
       </div>
-      <table class="runsheet sq-table"><thead><tr><th class="sq-c-tick" title="In this game"></th><th class="sq-c-num">Number</th><th>Player</th><th class="sq-c-pos">Pos</th><th class="sq-c-x"></th></tr></thead><tbody id="sqRows"></tbody></table>
+      <table class="runsheet sq-table"><thead><tr><th class="sq-c-tick" title="In this game"></th><th class="sq-c-num">Number</th><th>Player</th><th class="sq-c-pos">Pos</th><th class="sq-c-av">Status</th><th class="sq-c-x"></th></tr></thead><tbody id="sqRows"></tbody></table>
       <button type="button" class="add-link" id="sqAdd">+ Add player</button>
     </div>
     <div class="sq-foot">
@@ -4516,9 +4612,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const t = /translate\(([-\d.]+),([-\d.]+)\)/.exec(tf), r = /rotate\(([-\d.]+)\)/.exec(tf), s = /scale\(([-\d.]+)\)/.exec(tf);
     return {x:t?parseFloat(t[1]):0, y:t?parseFloat(t[2]):0, rot:r?parseFloat(r[1]):0, scale:s?parseFloat(s[1]):1};
   }
-  /* "Face ball": which icons turn, and the angle that faces (bx, by) from (x, y) — 0 is facing up the pitch, clockwise */
+  /* "Face ball": which icons turn, and the angle that faces (bx, by) from (x, y).
+     A player's front is the side with the arms, which points down the pitch at 0 — so 180 faces up (clockwise) */
   const FACE_TYPES = {'player-a':1, 'player-b':1, 'player-c':1, 'gk-a':1, 'gk-b':1};
-  function faceAngle(x, y, bx, by){ return Math.round(Math.atan2(bx - x, -(by - y)) * 180 / Math.PI); }
+  function faceAngle(x, y, bx, by){ let r = Math.round(Math.atan2(bx - x, -(by - y)) * 180 / Math.PI) + 180; if(r > 180) r -= 360; return r; }
   function nearestOf(list, x, y){ let best = null, bd = Infinity; list.forEach(function(b){ const dd = (b.x - x) * (b.x - x) + (b.y - y) * (b.y - y); if(dd < bd){ bd = dd; best = b; } }); return bd < 4 ? null : best; }
   function setTransform(g, x, y, rot, scale){
     g.setAttribute('transform', 'translate(' + (+x).toFixed(1) + ',' + (+y).toFixed(1) + ') rotate(' + rot + ') scale(' + scale + ')');
@@ -7278,6 +7375,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   ];
   function renderTop(){
     setTimeout(renderOwnerLines, 0);
+    try{ renderAttendBtn(); }catch(e){}
     if(isPre()) return pgRenderTop();
     const tb = document.getElementById('titleBar');
     tb.innerHTML = '';
@@ -7299,8 +7397,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(m[0] === 'date') field = luDateBox(state.meta.date, set);
       else if(META_LISTS[m[0]]) field = luCombo({value:clean(state.meta[m[0]]), ph:m[0] === 'coach' ? 'Choose or type' : m[2], label:m[1], options:META_LISTS[m[0]](), multi:m[0] === 'squad' || m[0] === 'coach', show:m[0] === 'coach' ? coachShort : null, onChange:set});
       else field = textField({value:state.meta[m[0]], ph:m[2], label:m[1], oneline:true, onInput:set});
-      info.appendChild(h('div', {class:'cell'}, h('span', {class:'lbl', text:m[1]}), field));
+      info.appendChild(h('div', {class:'cell' + (m[0] === 'players' ? ' cell-players' : '')}, h('span', {class:'lbl', text:m[1]}), field,
+        /* under Players: take attendance */
+        m[0] === 'players' ? h('button', {type:'button', class:'att-link no-print', id:'attendBtn', onclick:function(){ attendOpen(); }}) : null));
     });
+    try{ renderAttendBtn(); }catch(e){}
     const focus = document.getElementById('focus');
     focus.innerHTML = '';
     [['theme','Session theme','e.g. Building out vs a high press'],
@@ -8310,33 +8411,57 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       Object.keys(m).forEach(function(u){ const g = gs[u], q = m[u]; if(!g) return;
       g.setAttribute('transform', 'translate(' + q.x.toFixed(1) + ',' + q.y.toFixed(1) + ') rotate(' + q.rot + ') scale(' + q.scale + ')');
       g.querySelectorAll('.player-num, .tok-light').forEach(function(e){ e.setAttribute('transform', 'rotate(' + (-q.rot) + ')'); }); }); };
-    let raf = 0, on = false;
-    function stop(){ on = false; cancelAnimationFrame(raf); clearTimeout(raf); svgEl.classList.remove('th-playing'); put(P[0]); if(onTick) onTick(-1); }
+    /* on: started (playing or paused) · held: paused part-way, to explain — Resume carries on from the same spot */
+    let raf = 0, on = false, held = false, heldAt = 0, seg = 0, t0 = null, fresh = false;
+    const sp = +((p.anim && p.anim.speed) || 1), dur = 1100 / sp, pause = 260 / sp;
+    const now = function(){ return (window.performance && performance.now) ? performance.now() : Date.now(); };
+    const tick = function(at){ if(onTick) onTick(at); };
+    function cancel(){ cancelAnimationFrame(raf); clearTimeout(raf); raf = 0; }
+    function frame(ts){
+      if(!on || held) return;
+      if(t0 == null || fresh){ t0 = ts; fresh = false; }
+      const pz = seg === 0 ? pause : 0;
+      const e = (ts - t0 - pz) / dur;
+      if(e >= 1){ put(P[seg + 1]); seg++; t0 += pz + dur; tick(seg); if(seg >= P.length - 1){
+        if(p.anim && p.anim.loop){ raf = setTimeout(function(){ if(!on || held) return; seg = 0; t0 = null; put(P[0]); tick(0); raf = requestAnimationFrame(frame); }, 900); return; }
+        on = false; raf = setTimeout(function(){ svgEl.classList.remove('th-playing'); tick(-2); }, 300); return; } }
+      else if(e > 0){
+        const k = animEase(e, seg === 0, seg === P.length - 2), A = P[seg], B = P[seg + 1], m = {};
+        Object.keys(B).forEach(function(u){ const a = A[u] || B[u], b = B[u]; let dr = ((b.rot - a.rot) % 360); if(dr > 180) dr -= 360; if(dr < -180) dr += 360;
+          m[u] = {x:a.x + (b.x - a.x) * k, y:a.y + (b.y - a.y) * k, rot:+(a.rot + dr * k).toFixed(1), scale:b.scale}; });
+        put(m);
+      }
+      raf = requestAnimationFrame(frame);
+    }
+    function stop(){ on = false; held = false; cancel(); svgEl.classList.remove('th-playing', 'th-paused'); put(P[0]); tick(-1); }
     function play(){
       if(P.length < 2) return;
       stop(); on = true; svgEl.classList.add('th-playing');
-      const sp = +((p.anim && p.anim.speed) || 1), dur = 1100 / sp, pause = 260 / sp;
-      let seg = 0, t0 = null;
-      put(P[0]); if(onTick) onTick(0);
-      const frame = function(ts){
-        if(!on) return;
-        if(t0 == null) t0 = ts;
-        const pz = seg === 0 ? pause : 0;
-        const e = (ts - t0 - pz) / dur;
-        if(e >= 1){ put(P[seg + 1]); seg++; t0 += pz + dur; if(onTick) onTick(seg); if(seg >= P.length - 1){
-          if(p.anim && p.anim.loop){ raf = setTimeout(function(){ if(!on) return; seg = 0; t0 = null; put(P[0]); if(onTick) onTick(0); raf = requestAnimationFrame(frame); }, 900); return; }
-          on = false; raf = setTimeout(function(){ svgEl.classList.remove('th-playing'); if(onTick) onTick(-2); }, 300); return; } }
-        else if(e > 0){
-          const k = animEase(e, seg === 0, seg === P.length - 2), A = P[seg], B = P[seg + 1], m = {};
-          Object.keys(B).forEach(function(u){ const a = A[u] || B[u], b = B[u]; let dr = ((b.rot - a.rot) % 360); if(dr > 180) dr -= 360; if(dr < -180) dr += 360;
-            m[u] = {x:a.x + (b.x - a.x) * k, y:a.y + (b.y - a.y) * k, rot:+(a.rot + dr * k).toFixed(1), scale:b.scale}; });
-          put(m);
-        }
-        raf = requestAnimationFrame(frame);
-      };
+      seg = 0; t0 = null;
+      put(P[0]); tick(0);
       raf = requestAnimationFrame(frame);
     }
-    return {play:play, stop:stop, steps:P.length, playing:function(){ return on; }};
+    function pauseIt(){ if(!on || held) return; held = true; heldAt = now(); cancel(); svgEl.classList.add('th-paused'); tick(seg); }
+    function resume(){
+      if(!on || !held) return;
+      held = false; svgEl.classList.remove('th-paused');
+      if(t0 != null && !fresh) t0 += now() - heldAt;
+      if(seg >= P.length - 1){
+        if(p.anim && p.anim.loop){ seg = 0; t0 = null; fresh = false; put(P[0]); tick(0); raf = requestAnimationFrame(frame); return; }
+        on = false; svgEl.classList.remove('th-playing'); tick(-2); return;
+      }
+      tick(seg);
+      raf = requestAnimationFrame(frame);
+    }
+    /* while paused: jump to the start of a step (and Resume plays on from there) */
+    function stepTo(k){
+      if(!on || !held) return;
+      k = Math.max(0, Math.min(P.length - 1, k));
+      seg = k; put(P[k]); fresh = true; t0 = null;
+      tick(k);
+    }
+    return {play:play, stop:stop, pause:pauseIt, resume:resume, stepTo:stepTo, steps:P.length,
+      playing:function(){ return on; }, paused:function(){ return on && held; }, step:function(){ return seg; }};
   }
 
   function libraryCard(e, opts){
@@ -10155,11 +10280,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const tl = luTimeline(period, Math.max(0, lu.periods.indexOf(period)));
     /* solid grass stripes (a repeating tile shows faint seams on some screens) */
     let s = '<defs>' + shadeDefs('s' + u) + '</defs>' + grassShapes(lu.grass) + markingsFor(futsal ? 'futsal' : 'full', '#ffffff');
+    const avTeam = groupOf(lu);
     period.slots.forEach(function(sl, i){
       const p = luPlayer(sl.pid), col = i === 0 ? lu.gk : lu.shirt, txt = isLight(col) ? '#0d0e0f' : '#ffffff';
       const nm = p ? luShort(p.name) : '';
+      const out = p && clean(p.name) ? avOf(avTeam, p.name) : null;
       s += '<g class="lu-man' + (p ? '' : ' empty') + '" data-i="' + i + '" transform="translate(' + (+sl.x).toFixed(1) + ',' + (+sl.y).toFixed(1) + ') scale(' + LU_MAN_SCALE + ')">' +
         '<circle r="15" fill="transparent"/>' + luShirtMarkup(col, 's' + u) + luEvPitch(p) +
+        (out ? '<g class="lu-out-mark" transform="translate(-12,-12)"><title>' + escapeXml(clean(p.name) + ': ' + avText(out, true)) + '</title><circle r="5.6" fill="' + (out.st === 'inj' ? '#d62828' : '#e07a00') + '" stroke="#fff" stroke-width="1.3"/>' +
+          (out.st === 'inj' ? '<path d="M-2.6 0h5.2M0 -2.6v5.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>' : '<path d="M-2 -2l4 4M2 -2l-4 4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>') + '</g>' : '') +
         '<text class="lu-num" text-anchor="middle" y="4.3" fill="' + txt + '" font-family="Barlow, Arial, sans-serif" font-weight="600" font-size="8">' + escapeXml(p && clean(p.num) ? clean(p.num) : '') + '</text>' +
         '<text class="lu-name' + (nm ? '' : ' muted') + '" text-anchor="middle" y="20.5" font-family="\'Barlow Condensed\', \'Arial Narrow\', Arial, sans-serif" font-weight="600" font-size="9.6" fill="#ffffff" stroke="#0d0e0f" stroke-width="2.6" stroke-linejoin="round" paint-order="stroke">' + escapeXml(nm || sl.pos || '') + '</text>' +
         /* players who came on in this position, under the starter: ▲ 60' Smith */
@@ -10491,6 +10620,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function luRenderSquad(){
     const tb = document.getElementById('luSquad'); tb.innerHTML = '';
+    const team = groupOf(lu);
+    const warn = document.getElementById('luAvWarn');
+    if(warn){ warn.innerHTML = ''; const w = avWarnNode(lu); if(w) warn.appendChild(w); warn.hidden = !w; }
     const first = {}; (lu.periods[0] ? lu.periods[0].slots : []).forEach(function(s){ if(s.pid) first[s.pid] = 1; });
     lu.squad.forEach(function(p, i){
       const inp = function(key, cls, ph, label){
@@ -10511,16 +10643,20 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
             if(r && !clean(p.num) && clean(r.num)){ p.num = r.num; ch = true; }
             if(r && !clean(p.pos) && clean(r.pos)){ p.pos = r.pos; ch = true; }
             sqKeep([p]);
-            if(ch){ luRenderSquad(); luSchedule(); }
+            const a = avOf(groupOf(lu), p.name);
+            if(a) showToast('Heads up: ' + clean(p.name) + ' is ' + avText(a).toLowerCase());
+            if(ch || a || tr.classList.contains('av-row-out')){ luRenderSquad(); luRefresh(); luSchedule(); }
           });
         } else {
           el.addEventListener('change', function(){ sqKeep([p]); });
         }
         return el;
       };
-      tb.appendChild(h('tr', {class:first[p.id] ? 'on-pitch' : '', 'data-id':p.id},
+      const out = clean(p.name) ? avOf(team, p.name) : null;
+      const tr = h('tr', {class:(first[p.id] ? 'on-pitch' : '') + (out ? ' av-row-out' : ''), 'data-id':p.id});
+      tb.appendChild(tr); tr.append(
         h('td', {class:'lu-c-num'}, inp('num', '', '#', 'Shirt number')),
-        h('td', null, h('div', {class:'lu-name-cell'}, inp('name', '', 'Player ' + (i + 1), 'Player name'), h('span', {class:'lu-ev', 'data-ev':p.id, html:luEvHtml(p)}))),
+        h('td', null, h('div', {class:'lu-name-cell'}, inp('name', '', 'Player ' + (i + 1), 'Player name'), out ? avChip(team, p.name) : null, h('span', {class:'lu-ev', 'data-ev':p.id, html:luEvHtml(p)}))),
         h('td', {class:'lu-c-pos'}, inp('pos', '', 'Pos', 'Position')),
         h('td', {class:'lu-c-min', 'data-min':p.id, text:String(luMinutes(p.id))}),
         h('td', {class:'lu-c-pct ' + gtBand(luPct(p.id)), 'data-pct':p.id, text:luPct(p.id) + '%'}),
@@ -10538,7 +10674,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           luRender(); luSchedule();
           showToast('Removed ' + (clean(p.name) || 'player ' + (i + 1)) + ' from the squad', function(){ luApply(before); luCommit(); });
         }}))
-      ));
+      );
     });
   }
   /* things that follow from typing (names on the pitch, minutes, bench, totals) without rebuilding the inputs */
@@ -10877,9 +11013,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     setReadOnly(false);
     lu = applyLineupDefaults(luDefault(luFormatDefault())); luKey = LU_PREFIX + lu.id;
     sqKeep([]);    /* (first time: brings in everyone already named in this team's lineups) */
-    /* start from the team's saved squad (the first 17, in shirt-number order) */
+    /* start from the team's saved squad (the first 17 who are available, in shirt-number order) */
     const sq = sqFor(sqTeam());
-    if(sq && sq.players.length) sqApplyToLineup(sqSorted(sq.players).slice(0, LU_SQUAD_SIZE[lu.format]));
+    if(sq && sq.players.length) sqApplyToLineup(sqSorted(sq.players).filter(function(r){ return !avOf(sqTeam(), r.name); }).slice(0, LU_SQUAD_SIZE[lu.format]));   /* (not the injured / unavailable) */
     while(lu.squad.length < LU_SQUAD_SIZE[lu.format]) lu.squad.push(luNewPlayer());    /* a new lineup always starts with a full squad of rows */
     lu.periods.forEach(function(p){ p.slots.forEach(function(sl){ sl.pid = null; }); });      /* ...and an empty pitch: just the positions, you put the players on */
     luRender(); luShow();
@@ -11223,7 +11359,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function sqStore(team, players){
     let sq = sqFor(team);
-    if(!sq || !canEdit(sq)) sq = {kind:'squad', id:newId(), group:team || undefined, players:[]};
+    if(!sq || !canEdit(sq)) sq = {kind:'squad', id:newId(), group:team || undefined, players:[], avail:sq && sq.avail ? Object.assign({}, sq.avail) : undefined};
     sq.players = sqUnique(players);
     sq.savedAt = Date.now(); sq.seeded = true;
     try{ hufcStore.setItem(SQ_PREFIX + sq.id, JSON.stringify(sq)); }catch(e){}
@@ -11282,6 +11418,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const team = sqTeam();
     document.getElementById('sqTitle').textContent = 'My squad' + (team ? ' · ' + team : '');
     const rows = document.getElementById('sqRows'); rows.innerHTML = '';
+    try{ rows.closest('table').classList.toggle('av-off', !AV_ON); }catch(e){}
     document.getElementById('sqLead').textContent = sqWork.length
       ? 'Everyone you name in a lineup is saved here automatically. Tick who is in this game, then press the button at the bottom — players already in this lineup are ticked. You can add the rest of your squad below.'
       : 'No players yet. Type names in the lineup’s squad list and they are saved here automatically, or add players below.';
@@ -11306,6 +11443,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('td', {class:'sq-c-num'}, inp('num', '#')),
         h('td', null, inp('name', 'Player name')),
         h('td', {class:'sq-c-pos'}, inp('pos', 'Pos')),
+        h('td', {class:'sq-c-av'}, clean(r.name) ? avChip(team, r.name) : null),
         h('td', {class:'sq-c-x'}, h('button', {type:'button', class:'icon-btn danger', title:'Remove from the saved squad', 'aria-label':'Remove ' + (r.name || 'player'), text:'✕', onclick:function(){
           const gone = sqWork.splice(i, 1)[0];
           const t = {}; Object.keys(sqTick).forEach(function(k){ const n = +k; if(n < i) t[n] = sqTick[k]; else if(n > i) t[n - 1] = sqTick[k]; }); sqTick = t;
@@ -11317,7 +11455,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function sqCount(){
     const n = sqWork.filter(function(r, i){ return sqTick[i] && clean(r.name); }).length;
-    document.getElementById('sqCount').textContent = n + (n === 1 ? ' player ticked' : ' players ticked');
+    const out = sqWork.filter(function(r, i){ return sqTick[i] && clean(r.name) && avOf(sqTeam(), r.name); }).length;
+    document.getElementById('sqCount').textContent = n + (n === 1 ? ' player ticked' : ' players ticked') + (out ? ' · ' + out + ' out' : '');
+    document.getElementById('sqCount').classList.toggle('av-has-out', !!out);
     document.getElementById('sqApply').disabled = !n || readOnly;
   }
   function openSquad(){
@@ -11328,7 +11468,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     sqWork = sq ? sqSorted(sq.players).map(function(r){ return {name:r.name, num:r.num, pos:r.pos}; }) : [];
     const inLu = {}; lu.squad.forEach(function(p){ const k = gtKey(p.name); if(k) inLu[k] = 1; });
     const any = Object.keys(inLu).length;
-    sqTick = {}; sqWork.forEach(function(r, i){ sqTick[i] = any ? !!inLu[gtKey(r.name)] : i < LU_SQUAD_SIZE[lu.format]; });
+    sqTick = {};
+    /* a new lineup: the first players who are available (injured / unavailable ones start unticked) */
+    let room = LU_SQUAD_SIZE[lu.format];
+    sqWork.forEach(function(r, i){ if(any) sqTick[i] = !!inLu[gtKey(r.name)]; else if(room > 0 && !avOf(sqTeam(), r.name)){ sqTick[i] = true; room--; } });
     sqRender(); openModal(sqModal);
   }
   function closeSquad(instant){ if(!sqModal.hidden) closeModal(sqModal, instant); }
@@ -11364,7 +11507,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const before = luJSON();
     sqApplyToLineup(picked);
     closeSquad(); luRender(); luSchedule();
-    showToast(picked.length + ' players put in this lineup', function(){ luApply(before); luCommit(); });
+    const out = picked.filter(function(r){ return avOf(sqTeam(), r.name); });
+    showToast(picked.length + ' players put in this lineup' + (out.length ? ' — ' + out.length + ' of them ' + (out.length === 1 ? 'is' : 'are') + ' out: ' + out.map(function(r){ return clean(r.name); }).join(', ') : ''), function(){ luApply(before); luCommit(); });
   });
   /* every player named in a lineup goes into the team's saved squad automatically (added or updated, never taken out) */
   function sqKeep(players){
@@ -14619,6 +14763,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.58', d:'2 Nov 2026', t:'Pause in Present, Face ball fixed', n:['Present to players: Pause an animation at any moment to explain — tap Pause, tap the pitch or press Space. While paused: Resume, step back or forward a step, or Stop', 'A yellow ring round the pitch shows it’s paused', 'Face ball: players now face the ball (they were facing away from it)', 'Season plan: the ⋯ menu on a day (colours etc.) no longer closes by itself when a sync comes in', 'Phones: Print is an icon in the top bar so everything fits (on the smallest iPhones use Export → Save as PDF)']},
     {v:'3.57', d:'2 Nov 2026', t:'Players face the ball', n:['New “Face ball” tick box under each pitch (next to Crest): every player and keeper turns their body to face the ball', 'They turn live as you drag the ball (or the players) around, and follow the ball when the animation plays — on the board and in Present to players', 'Untick it and they keep the direction they were facing; you can still turn anyone by hand']},
     {v:'3.56', d:'2 Nov 2026', t:'Decline a team request', n:['Coaches window: a coach’s request for more (or other) teams has a Decline button — they keep the teams they have and the request is cleared (no more waiting badge)', 'Their app drops the declined team too, with a note, so it isn’t asked for again', 'Save also works to keep their teams as they are']},
     {v:'3.55', d:'2 Nov 2026', t:'Coach list, even buttons', n:['Head coach/s list: just the club’s coaches, first and last names', 'Two or more coaches show as initials (e.g. DA, KP) on the plan and when printed — tap the box to see or change the full names', 'The home page buttons are all the same size']},
@@ -15436,6 +15581,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       col.append(
         h('div', {class:'pg-lu-head'}, h('strong', {text:luName(L) || 'Untitled lineup'}),
           h('span', {class:'pg-lu-meta', text:LU_FORMATS[L.format].label + ' · ' + luFormLabel(pgLineupHalf(L, d.lineup).formation)})),
+        avWarnNode(L, 'no-print'),
         h('div', {class:'pg-lu-big', html:pgLineupSvg(L, d.lineup)}),
         bench.length ? h('div', {class:'pg-lu-meta', text:'Bench: ' + bench.join(' · ')}) : null,
         h('div', {class:'pg-lu-tools no-print'},
@@ -16158,6 +16304,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(!pgShowEl || pgShowEl.hidden) return;
         if(e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
         if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); pgShowClose(); }
+        /* Space pauses / carries on an animation that's playing (otherwise: next board) · P or K: play / pause */
+        else if((e.key === ' ' || e.key === 'k' || e.key === 'K' || e.key === 'p' || e.key === 'P') && PG_PAUSE_ON && pgShowAnim && (pgShowAnim.playing() || e.key !== ' ')){
+          e.preventDefault();
+          if(!pgShowAnim.playing()) pgShowAnim.play(); else if(pgShowAnim.paused()) pgShowAnim.resume(); else pgShowAnim.pause();
+        }
         else if(e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' '){ e.preventDefault(); pgShowGo(1); }
         else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); pgShowGo(-1); }
       }, true);
@@ -16175,6 +16326,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   /* the pitch in Present mode, with ▶ Play when the board has animation steps */
   let pgShowAnim = null;
+  var PG_PAUSE_ON = true;   /* Pause / step / Stop in Present mode */
   function pgShowPitch(d){
     /* shown the way the board is set in the editor: 2D or 3D, grass or the stadium (and its zoom) */
     const three = pgBoard3d(d);
@@ -16186,14 +16338,45 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const n = d.anim && d.anim.steps ? d.anim.steps.length : 1;
     if(n < 2) return box;
     const btn = h('button', {type:'button', class:'pg-show-play'});
-    const label = function(at){
-      btn.innerHTML = (at >= 0 ? '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg> Step ' + (at + 1) + ' / ' + n
-        : '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M8.5 5.2 L19 12 L8.5 18.8 Z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> ' + (at === -2 ? 'Play again' : 'Play'));
+    const ICON = {
+      play:'<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M8.5 5.2 L19 12 L8.5 18.8 Z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+      pause:'<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2" fill="currentColor"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" fill="currentColor"/></svg>',
+      stop:'<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>',
+      prev:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M15 6 9 12l6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      next:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     };
-    const anim = thumbAnimator(sv, d, label);
+    /* while it plays: Pause (and Stop) · paused: Resume, step back / forward, Stop */
+    const stopB = h('button', {type:'button', class:'pg-show-ctl pg-show-stop', title:'Stop — back to the start', 'aria-label':'Stop', html:ICON.stop});
+    const prevB = h('button', {type:'button', class:'pg-show-ctl', title:'Back a step', 'aria-label':'Back a step', html:ICON.prev});
+    const nextB = h('button', {type:'button', class:'pg-show-ctl', title:'Forward a step', 'aria-label':'Forward a step', html:ICON.next});
+    const stepT = h('span', {class:'pg-show-step', 'aria-live':'polite'});
+    let anim = null;
+    const label = function(at){
+      if(!PG_PAUSE_ON){
+        stopB.hidden = prevB.hidden = nextB.hidden = stepT.hidden = true;
+        btn.innerHTML = (at >= 0 ? ICON.stop + ' Step ' + (at + 1) + ' / ' + n : ICON.play + ' ' + (at === -2 ? 'Play again' : 'Play'));
+        return;
+      }
+      const going = anim && anim.playing(), held = going && anim.paused();
+      btn.classList.toggle('is-paused', !!held);
+      btn.innerHTML = held ? ICON.play + ' Resume' : going ? ICON.pause + ' Pause' : ICON.play + ' ' + (at === -2 ? 'Play again' : 'Play');
+      btn.title = held ? 'Carry on from here (Space)' : going ? 'Pause here to explain (Space, or tap the pitch)' : 'Play the animation';
+      stopB.hidden = !going; prevB.hidden = nextB.hidden = !held;
+      const k = going ? anim.step() : -1;
+      stepT.hidden = !going; stepT.textContent = going ? 'Step ' + (Math.min(k, n - 1) + 1) + ' / ' + n : '';
+      if(held){ prevB.disabled = k <= 0; nextB.disabled = k >= n - 1; }
+    };
+    anim = thumbAnimator(sv, d, label);
     pgShowAnim = anim;
     label(-1);
-    btn.addEventListener('click', function(){ if(anim.playing()) anim.stop(); else anim.play(); });
+    const toggle = function(){ if(!anim.playing()) anim.play(); else if(!PG_PAUSE_ON) anim.stop(); else if(anim.paused()) anim.resume(); else anim.pause(); };
+    btn.addEventListener('click', toggle);
+    stopB.addEventListener('click', function(){ anim.stop(); });
+    prevB.addEventListener('click', function(){ anim.stepTo(anim.step() - 1); });
+    nextB.addEventListener('click', function(){ anim.stepTo(anim.step() + 1); });
+    /* tap the pitch to pause / carry on (once it's playing) */
+    box.addEventListener('click', function(e){ if(PG_PAUSE_ON && anim.playing() && !(e.target.closest && e.target.closest('button'))) toggle(); });
+    box._toggle = function(){ if(!anim.playing()) return false; toggle(); return true; };
     /* Repeat: same setting as the board's Animation bar */
     const rep = h('button', {type:'button', class:'pg-show-loop' + (d.anim.loop ? ' on' : ''), 'aria-pressed':d.anim.loop ? 'true' : 'false', title:'Play over and over until you press Stop',
       html:ANIM_LOOP_ICON + ' Repeat'});
@@ -16202,7 +16385,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       rep.classList.toggle('on', !!d.anim.loop); rep.setAttribute('aria-pressed', d.anim.loop ? 'true' : 'false');
       try{ scheduleSave(); }catch(e){}
     });
-    box._play = h('div', {class:'pg-show-plays'}, btn, rep);
+    box._play = h('div', {class:'pg-show-plays'}, btn, prevB, nextB, stopB, stepT, rep);
     return box;
   }
   function pgShowClose(){
@@ -16964,9 +17147,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* ---------- a small menu (⋯) ---------- */
   let seMenuEl = null;
-  function seMenuClose(){ if(seMenuEl){ const m = seMenuEl; seMenuEl = null; if(reduceMotion.matches){ m.remove(); return; } m.classList.add('pop-closing'); setTimeout(function(){ m.remove(); }, 120); } }
+  let seRefreshLater = false;   /* a redraw that waited for the open menu to close */
+  function seMenuClose(){
+    if(seMenuEl){ const m = seMenuEl; seMenuEl = null; if(reduceMotion.matches) m.remove(); else { m.classList.add('pop-closing'); setTimeout(function(){ m.remove(); }, 120); } }
+    if(seRefreshLater){ seRefreshLater = false; setTimeout(seRefreshIfOpen, 0); }
+  }
   function seMenu(anchor, items){
     seMenuClose();
+    seMenuW = window.innerWidth;
     const m = h('div', {class:'se-menu', role:'menu'});
     items.filter(Boolean).forEach(function(it){
       m.appendChild(it.node ? it.node : it.head ? h('div', {class:'se-menu-h', text:it.head})
@@ -16982,7 +17170,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   document.addEventListener('mousedown', function(e){ if(seMenuEl && !seMenuEl.contains(e.target)) seMenuClose(); }, true);
   document.addEventListener('touchstart', function(e){ if(seMenuEl && !seMenuEl.contains(e.target)) seMenuClose(); }, {capture:true, passive:true});
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && seMenuEl){ e.stopPropagation(); e.preventDefault(); seMenuClose(); } }, true);
-  window.addEventListener('resize', seMenuClose);
+  /* (only a real change of width closes it — phones fire "resize" as the browser bars slide in and out while you scroll) */
+  let seMenuW = window.innerWidth;
+  window.addEventListener('resize', function(){ if(Math.abs(window.innerWidth - seMenuW) > 40){ seMenuW = window.innerWidth; seMenuClose(); } });
 
   /* ---------- one day: Training or Match, and what's on it ---------- */
   function seDayCard(s, info, ro, compact){
@@ -17117,6 +17307,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* changes from other devices: redraw, unless you're typing in it */
   function seRefreshIfOpen(){
     if(seModal.hidden) return;
+    if(seMenuEl){ seRefreshLater = true; return; }   /* a sync landed while a ⋯ menu is open: redraw once it's closed, so it doesn't vanish under your finger */
     const a = document.activeElement;
     if(a && seModal.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
     seRememberScroll(); seRender(false);
@@ -17535,6 +17726,230 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }, !canSave);
   }
   if(collabBtn) collabBtn.addEventListener('click', collabOpen);
+
+  /* =====================================================================
+     Attendance and availability
+     - Availability: each team's saved squad can mark a player Injured or Unavailable (with a note and the day they're back).
+       It's kept with the squad (sq.avail, by player name), so it syncs to every coach of that team.
+     - Attendance: a session ticks off who turned up (state.attend = {team, here:[names], at}).
+     - Lineups and pre-games warn when someone who's out is picked.
+     ===================================================================== */
+  /* switched off until it goes live (attendance, availability and the warnings) */
+  var AV_ON = false;
+  const AV_ST = {
+    inj:{label:'Injured', short:'Injured', cls:'av-inj'},
+    out:{label:'Unavailable', short:'Unavailable', cls:'av-out'}
+  };
+  function avToday(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function avFmt(iso){ const p = String(iso || '').split('-'); if(p.length !== 3) return ''; const d = new Date(+p[0], +p[1] - 1, +p[2], 12); return isNaN(d) ? '' : d.toLocaleDateString('en-AU', {weekday:'short', day:'numeric', month:'short'}); }
+  function avMap(team){ const sq = sqFor(team || ''); return (sq && sq.avail) || {}; }
+  /* this player's status if they're out today (null when available, or once their "back" day has come) */
+  function avOf(team, name){
+    if(!AV_ON) return null;
+    const k = gtKey(name); if(!k) return null;
+    const a = avMap(team)[k];
+    if(!a || !AV_ST[a.st]) return null;
+    if(a.back && a.back <= avToday()) return null;
+    return a;
+  }
+  function avText(a, long){
+    if(!a) return 'Available';
+    return AV_ST[a.st].label + (long && clean(a.note) ? ' — ' + clean(a.note) : '') + (a.back ? (long ? ' · back ' : ', back ') + avFmt(a.back) : '');
+  }
+  /* save a player's status (null = available) — into the team's saved squad, adding the player if they aren't in it */
+  function avSet(team, name, a){
+    const k = gtKey(name); if(!k) return;
+    let sq = sqFor(team || '');
+    const players = sq ? sq.players.slice() : [];
+    if(!players.some(function(r){ return gtKey(r.name) === k; })) players.push({name:clean(name), num:'', pos:''});
+    if(!sq || !canEdit(sq) || players.length !== sq.players.length) sq = sqStore(team, players);
+    const av = Object.assign({}, sq.avail || {});
+    if(a && AV_ST[a.st]){ const o = {st:a.st}; if(clean(a.note)) o.note = clean(a.note); if(a.back) o.back = a.back; av[k] = o; } else delete av[k];
+    sq.avail = av; sq.savedAt = Date.now();
+    try{ hufcStore.setItem(SQ_PREFIX + sq.id, JSON.stringify(sq)); }catch(e){}
+    try{ clubSyncSoon(); }catch(e){}
+    avChanged();
+  }
+  /* anything showing availability redraws */
+  function avChanged(){
+    try{ if(typeof lu !== 'undefined' && lu && !document.documentElement.classList.contains('view-home') && document.getElementById('luSquad')) { luRenderSquad(); luRefresh(); } }catch(e){}
+    try{ if(sqModal && !sqModal.hidden) sqRender(); }catch(e){}
+    try{ if(typeof state !== 'undefined' && state && isPre(state)) rerender(); }catch(e){}
+    try{ renderAttendBtn(); }catch(e){}
+  }
+  /* the little status button on a player's row: tap to change */
+  function avChip(team, name, after){
+    const a = avOf(team, name);
+    const b = h('button', {type:'button', class:'av-chip ' + (a ? AV_ST[a.st].cls : 'av-ok'), title:avText(a, true) + ' · tap to change', 'aria-label':clean(name) + ': ' + avText(a, true) + '. Change',
+      text:a ? AV_ST[a.st].short : 'Available'});
+    b.addEventListener('click', function(e){ e.stopPropagation(); if(!clean(name)) return; avEdit(team, name, after); });
+    return b;
+  }
+  /* change one player's status */
+  function avEdit(team, name, after){
+    const cur = avOf(team, name) || {};
+    let st = cur.st || '';
+    const seg = h('div', {class:'av-seg', role:'radiogroup', 'aria-label':'Status'});
+    const opts = [['', 'Available', 'av-ok'], ['inj', 'Injured', 'av-inj'], ['out', 'Unavailable', 'av-out']];
+    const more = h('div', {class:'av-more'});
+    const note = h('input', {type:'text', class:'set-input', value:cur.note || '', placeholder:'e.g. hamstring · school camp · holiday', 'aria-label':'Note'});
+    const back = h('input', {type:'date', class:'set-input', value:cur.back || '', min:avToday(), 'aria-label':'Back on'});
+    more.append(seField('Note', note), seField('Back on', back, 'Leave blank if you don’t know yet. From this day they show as available again.'));
+    const paint = function(){ seg.querySelectorAll('button').forEach(function(b){ const on = b.dataset.v === st; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); }); more.hidden = !st; };
+    opts.forEach(function(o){ seg.appendChild(h('button', {type:'button', role:'radio', class:o[2], 'data-v':o[0], text:o[1], onclick:function(){ st = o[0]; paint(); if(st) note.focus(); }})); });
+    paint();
+    const body = h('div', {class:'se-form-body av-form'}, seg, more);
+    seForm(clean(name) + (team ? ' · ' + team : ''), body, function(close){
+      return [h('span', {class:'se-sp'}),
+        h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}),
+        h('button', {type:'button', class:'btn btn-primary', text:'Save', onclick:function(){
+          avSet(team, name, st ? {st:st, note:note.value, back:back.value} : null);
+          close();
+          showToast(clean(name) + (st ? ' is ' + avText({st:st, back:back.value}).toLowerCase().replace(', back', ' — back') : ' is available again'));
+          if(after) after();
+        }})];
+    }, true);
+  }
+  /* who in a lineup is out: [{p, a}] — the starters (in any half) and the bench */
+  function avLineupOut(L){
+    const team = groupOf(L), out = [];
+    (L.squad || []).forEach(function(p){ const a = clean(p.name) && avOf(team, p.name); if(a) out.push({p:p, a:a}); });
+    return out;
+  }
+  function avWarnText(list){
+    return list.map(function(x){ return clean(x.p.name) + ' (' + AV_ST[x.a.st].label.toLowerCase() + ')'; }).join(', ');
+  }
+  /* the warning strip shown on a lineup and on a pre-game's lineup board */
+  function avWarnNode(L, cls){
+    const list = avLineupOut(L); if(!list.length) return null;
+    return h('div', {class:'av-warn ' + (cls || ''), role:'status'},
+      h('span', {class:'av-warn-i', 'aria-hidden':'true', text:'!'}),
+      h('span', null, h('strong', {text:list.length === 1 ? '1 player in this lineup is out: ' : list.length + ' players in this lineup are out: '}), avWarnText(list)));
+  }
+
+  /* ---------- attendance on a session ---------- */
+  function attTeams(x){
+    const g = groupOf(x), out = [g];
+    String((x && x.meta && x.meta.squad) || '').split(/\s*,\s*/).forEach(function(t){ t = clean(t); if(AGE_GROUPS.indexOf(t) !== -1 && out.indexOf(t) === -1) out.push(t); });
+    return out;
+  }
+  /* the link under the session's Players box: "Take attendance", then "12 here · 2 out" */
+  function renderAttendBtn(){
+    const b = document.getElementById('attendBtn'); if(!b) return;
+    if(!AV_ON){ b.hidden = true; return; }
+    const x = typeof state !== 'undefined' ? state : null;
+    if(!x || isPre(x)){ b.hidden = true; return; }
+    b.hidden = false;
+    const at = x.attend, n = at && Array.isArray(at.here) ? at.here.length : 0;
+    const team = (at && at.team) || groupOf(x), sq = sqFor(team);
+    const out = sq ? sq.players.filter(function(r){ return avOf(team, r.name); }).length : 0;
+    b.classList.toggle('on', !!at);
+    b.innerHTML = '';
+    b.append(h('span', {class:'att-link-i', 'aria-hidden':'true', text:'✓'}),
+      h('span', {text:at ? n + ' here' : 'Take attendance'}),
+      out ? h('span', {class:'att-link-out', text:out + ' out'}) : null);
+    b.title = at ? n + (n === 1 ? ' player' : ' players') + ' at this session' + (out ? ' · ' + out + ' injured or unavailable' : '') + ' · tap to change' : 'Attendance: tick off who turned up, and who’s injured or unavailable';
+  }
+  /* each player's attendance across the team's sessions (the ones where it was taken) */
+  function attHistory(team){
+    const stat = {}; let total = 0;
+    listSessions().forEach(function(it){
+      const s = it.plan, a = s.attend;
+      if(!a || isPre(s) || (a.team || groupOf(s)) !== team || !Array.isArray(a.here)) return;
+      total++;
+      a.here.forEach(function(n){ const k = gtKey(n); if(k) stat[k] = (stat[k] || 0) + 1; });
+    });
+    return {total:total, of:function(name){ return stat[gtKey(name)] || 0; }};
+  }
+  function attendOpen(){
+    const x = typeof state !== 'undefined' ? state : null; if(!x || isPre(x)) return;
+    const ro = readOnly || (typeof canEdit === 'function' && !canEdit(x));
+    const teams = attTeams(x);
+    let team = (x.attend && x.attend.team) || teams[0];
+    const here = {}; ((x.attend && x.attend.here) || []).forEach(function(n){ here[gtKey(n)] = clean(n); });
+    let extra = [];   /* players added here who aren't in the squad list yet */
+    const body = h('div', {class:'se-form-body att-body'});
+    const head = h('div', {class:'att-head'});
+    const list = h('div', {class:'att-list', role:'group', 'aria-label':'Players'});
+    const count = h('span', {class:'att-count'});
+    const addIn = h('input', {type:'text', class:'set-input att-add-in', placeholder:'Add a player', 'aria-label':'Add a player', autocomplete:'off'});
+    const addBtn = h('button', {type:'button', class:'btn', text:'Add'});
+    const players = function(){
+      const sq = sqFor(team), seen = {}, out = [];
+      (sq ? sqSorted(sq.players) : []).concat(extra).forEach(function(r){ const k = gtKey(r.name); if(k && !seen[k]){ seen[k] = 1; out.push(r); } });
+      Object.keys(here).forEach(function(k){ if(!seen[k]){ seen[k] = 1; out.push({name:here[k], num:'', pos:''}); } });   /* (ticked before, since taken off the squad) */
+      return out;
+    };
+    const paintCount = function(){
+      const ps = players(), n = ps.filter(function(r){ return here[gtKey(r.name)]; }).length;
+      const out = ps.filter(function(r){ return avOf(team, r.name); }).length;
+      count.textContent = n + ' of ' + ps.length + ' here' + (out ? ' · ' + out + ' out' : '');
+    };
+    const render = function(){
+      head.innerHTML = '';
+      if(teams.length > 1){
+        const sel = h('select', {class:'set-input att-team', 'aria-label':'Team'});
+        teams.forEach(function(t){ sel.appendChild(h('option', {value:t, text:t, selected:t === team})); });
+        sel.addEventListener('change', function(){ team = sel.value; render(); });
+        head.append(h('label', {class:'se-field att-team-f'}, h('span', {class:'se-field-l', text:'Team'}), sel));
+      }
+      const hist = attHistory(team);
+      list.innerHTML = '';
+      const ps = players();
+      if(!ps.length) list.appendChild(h('p', {class:'set-sub', text:'No players saved for ' + team + ' yet. Add them below — or name them in a matchday lineup and they’re saved automatically.'}));
+      ps.forEach(function(r){
+        const k = gtKey(r.name), a = avOf(team, r.name);
+        const cb = h('input', {type:'checkbox', 'aria-label':clean(r.name) + ' is here', disabled:ro});
+        cb.checked = !!here[k];
+        cb.addEventListener('change', function(){ if(cb.checked) here[k] = clean(r.name); else delete here[k]; row.classList.toggle('is-here', cb.checked); paintCount(); });
+        const seen = hist.total ? hist.of(r.name) : 0;
+        const row = h('label', {class:'att-row' + (here[k] ? ' is-here' : '') + (a ? ' is-out' : '')},
+          cb,
+          h('span', {class:'att-num', text:clean(r.num) || ''}),
+          h('span', {class:'att-name'}, h('span', {class:'att-nm', text:clean(r.name)}),
+            a && (clean(a.note) || a.back) ? h('span', {class:'att-note', text:[clean(a.note), a.back ? 'back ' + avFmt(a.back) : ''].filter(Boolean).join(' · ')}) : null),
+          hist.total ? h('span', {class:'att-hist', title:'Sessions attended (of the ' + hist.total + ' where attendance was taken)', text:seen + '/' + hist.total}) : null,
+          ro ? h('span', {class:'av-chip ' + (a ? AV_ST[a.st].cls : 'av-ok'), text:a ? AV_ST[a.st].short : 'Available'}) : avChip(team, r.name, render));
+        list.appendChild(row);
+      });
+      paintCount();
+    };
+    const add = function(){
+      const v = clean(addIn.value).replace(/\s+/g, ' '); if(!v) return;
+      const k = gtKey(v);
+      if(!players().some(function(r){ return gtKey(r.name) === k; })){
+        extra.push({name:v, num:'', pos:''});
+        if(!ro){ const sq = sqFor(team); sqStore(team, (sq ? sq.players : []).concat([{name:v, num:'', pos:''}])); }
+      }
+      here[k] = v; addIn.value = ''; render(); addIn.focus();
+    };
+    addBtn.addEventListener('click', add);
+    addIn.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); add(); } });
+    addIn.addEventListener('input', function(){ luCapName(addIn); });
+    const tools = ro ? null : h('div', {class:'att-tools'},
+      h('button', {type:'button', class:'text-btn', text:'Everyone available is here', onclick:function(){ players().forEach(function(r){ if(!avOf(team, r.name)) here[gtKey(r.name)] = clean(r.name); }); render(); }}),
+      h('span', {text:' · '}),
+      h('button', {type:'button', class:'text-btn', text:'Clear', onclick:function(){ Object.keys(here).forEach(function(k){ delete here[k]; }); render(); }}));
+    body.append(
+      h('p', {class:'set-sub', text:'Tick who turned up. Tap a player’s status to mark them injured or unavailable — it shows on every session, lineup and pre-game for ' + (teams.length > 1 ? 'that team' : team) + ' until they’re back.'}),
+      head, tools, list, ro ? null : h('div', {class:'att-add'}, addIn, addBtn));
+    render();
+    seForm('Attendance', body, function(close){
+      return [count, h('span', {class:'se-sp'}),
+        ro ? h('button', {type:'button', class:'btn btn-primary', text:'Close', onclick:close}) : h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}),
+        ro ? null : h('button', {type:'button', class:'btn btn-primary', text:'Save', onclick:function(){
+          const names = players().filter(function(r){ return here[gtKey(r.name)]; }).map(function(r){ return clean(r.name); });
+          const before = JSON.stringify(x.attend || null);
+          if(names.length) x.attend = {team:team, here:names, at:Date.now()}; else delete x.attend;
+          /* the "Players" box in the header fills in with the number here (unless you've typed something else in it) */
+          if(names.length && (!clean(x.meta.players) || /^\d+$/.test(clean(x.meta.players)))) x.meta.players = String(names.length);
+          close();
+          if(JSON.stringify(x.attend || null) === before) return;
+          saveLocal(); try{ commitHistory(); }catch(e){} try{ renderTop(); }catch(e){} renderAttendBtn();
+          showToast(names.length ? names.length + (names.length === 1 ? ' player' : ' players') + ' at this session' : 'Attendance cleared');
+        }})];
+    }, true);
+  }
 
 
   /* =====================================================================
