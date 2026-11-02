@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102105856">
+<meta name="hufc-build" content="20261102113423">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3434,7 +3434,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 10:58am</p>
+  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 11:34am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3893,7 +3893,6 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           <option value="full-thirds">Full pitch + thirds</option>
           <option value="lanes">Full pitch + 5 vertical zones</option>
           <option value="half">Half pitch</option>
-          <option value="half-zoom">Half pitch – zoomed in</option>
           <option value="half-wide">Half pitch (wide)</option>
           <option value="thirds">Thirds</option>
           <option value="futsal">Futsal pitch</option>
@@ -4614,17 +4613,6 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       '<path d="M40,445 A5,5 0 0 1 45,450" ' + sw + '/><path d="M255,450 A5,5 0 0 1 260,445" ' + sw + '/>' +
       permanentGoalMarkup(150, 10, 16.5, 9, c, true) + permanentGoalMarkup(150, 450, 16.5, 9, c, false);
   }
-  /* the half pitch: the full pitch zoomed in on one end, so everything keeps its real shape (round circles) and is
-     just bigger — 6.5 board units to the metre (the full pitch is about 4.15): the box nearly fills the width,
-     the halfway line and centre circle are near the top, and the touchlines sit just off the sides */
-  const HALF = (function(){
-    const s = 6.5, cx = 150, gl = 450, r = 9.15 * s;
-    return {s:s, cx:cx, gl:gl, r:r,
-      box:{x:cx - 20.16 * s, y:gl - 16.5 * s, w:40.32 * s, h:16.5 * s},
-      six:{x:cx - 9.16 * s, y:gl - 5.5 * s, w:18.32 * s, h:5.5 * s},
-      spot:gl - 11 * s, half:gl - 52.5 * s,
-      dX:Math.sqrt(9.15 * 9.15 - 5.5 * 5.5) * s, dA:Math.asin(5.5 / 9.15) * 180 / Math.PI, goal:3.66 * s};
-  })();
   /* the board's shape: tall (300 × 460) for every pitch, or wide (460 × 360) for the wide half pitch */
   const BOARD_TALL = {w:300, h:460}, BOARD_WIDE = {w:460, h:360};
   function boardDims(layout){ return layout === 'half-wide' ? BOARD_WIDE : BOARD_TALL; }
@@ -4658,17 +4646,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       '<circle cx="150" cy="420" r="2" fill="' + c + '"/>' +
       cornerArcsBottom(c) + permanentGoalMarkup(150, 450, 18, 9, c, false);
   }
-  function halfPitchMarkings(c){
-    const f = function(n){ return +n.toFixed(2); }, st = ' fill="none" stroke="' + c + '" stroke-width="2"', H = HALF;
-    const dot = function(x, y){ return '<circle cx="' + x + '" cy="' + f(y) + '" r="2" fill="' + c + '"/>'; };
-    return '<line x1="0" y1="' + H.gl + '" x2="300" y2="' + H.gl + '" stroke="' + c + '" stroke-width="2"/>' +
-      '<line x1="0" y1="' + f(H.half) + '" x2="300" y2="' + f(H.half) + '" stroke="' + c + '" stroke-width="2"/>' +
-      '<circle cx="' + H.cx + '" cy="' + f(H.half) + '" r="' + f(H.r) + '"' + st + '/>' + dot(H.cx, H.half) +
-      '<rect x="' + f(H.box.x) + '" y="' + f(H.box.y) + '" width="' + f(H.box.w) + '" height="' + f(H.box.h) + '"' + st + '/>' +
-      '<rect x="' + f(H.six.x) + '" y="' + f(H.six.y) + '" width="' + f(H.six.w) + '" height="' + f(H.six.h) + '"' + st + '/>' +
-      '<path d="M' + f(H.cx - H.dX) + ',' + f(H.box.y) + ' A' + f(H.r) + ',' + f(H.r) + ' 0 0 1 ' + f(H.cx + H.dX) + ',' + f(H.box.y) + '"' + st + '/>' +
-      dot(H.cx, H.spot) + permanentGoalMarkup(150, H.gl, f(H.goal), 9, c, false);
-  }
+
   /* the set-piece close-ups (Penalty area, Corners, Free kicks) were taken out (Oct 2026): boards that used them go back to the full pitch */
   const OLD_CLOSEUPS = {box:1, corners:1, freekick:1};
   function markingsFor(layout, c){
@@ -4677,8 +4655,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(layout === 'thirds') return '<rect x="10" y="10" width="280" height="440" fill="none" stroke="' + c + '" stroke-width="2"/>' + thirdsLines(c) + cornerArcsFull(c) + permanentGoalMarkup(150, 10, 18, 9, c, true) + permanentGoalMarkup(150, 450, 18, 9, c, false);
     if(layout === 'lanes') return lanesPitchMarkings(c);
     if(layout === 'full-thirds') return fullPitchMarkings(c) + thirdsLines(c);
-    if(layout === 'half') return halfPitchClassic(c);
-    if(layout === 'half-zoom') return halfPitchMarkings(c);
+    if(layout === 'half' || layout === 'half-zoom') return halfPitchClassic(c);   /* (the zoomed-in half pitch was taken out: those boards show the half pitch) */
     if(layout === 'half-wide') return halfWideMarkings(c);
     return fullPitchMarkings(c);
   }
@@ -5056,6 +5033,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     wmToggle.checked = !!d.watermark;
     wmToggle.addEventListener('change', function(){ d.watermark = wmToggle.checked; applyWatermark(); onChange(); });
     applyWatermark();
+    if(d.layout === 'half-zoom') d.layout = 'half';
     layoutSelect.value = d.layout;
     layoutSelect.addEventListener('change', function(){
       const from = bd(), to = boardDims(layoutSelect.value);
@@ -6762,18 +6740,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }
     else if(L === 'futsal') futsal();
     else if(L === 'thirds'){ rect(10, 10, 280, 440); thirds(); corners(true); goalFixed(150, 10, true); goalFixed(150, 450, false); }
-    else if(L === 'half'){
+    else if(L === 'half' || L === 'half-zoom'){
       rect(10, 10, 280, 440); line(10, 10, 290, 10, {width:pt(3)}); arc(150, 10, 35, 0, 180);
       rect(90, 405, 120, 45); rect(125, 435, 50, 15); arc(150, 420, 25, 216.87, 323.13); circ(150, 420, 2, {fill:{color:lc}, line:{type:'none'}});
       corners(false); goalFixed(150, 450, false);
-    }
-    else if(L === 'half-zoom'){
-      /* the full pitch zoomed in on one end, as on the board */
-      const H = HALF, dot = function(x, y){ circ(x, y, 2, {fill:{color:lc}, line:{type:'none'}}); };
-      line(0, H.gl, 300, H.gl); line(0, H.half, 300, H.half); circ(H.cx, H.half, H.r); dot(H.cx, H.half);
-      rect(H.box.x, H.box.y, H.box.w, H.box.h); rect(H.six.x, H.six.y, H.six.w, H.six.h);
-      arc(H.cx, H.spot, H.r, 180 + H.dA, 360 - H.dA); dot(H.cx, H.spot);
-      goalFixed(150, 450, false, H.goal);
     }
     else if(L === 'half-wide'){
       /* the wide half pitch, to scale, as on the board */
@@ -14517,6 +14487,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.52', d:'2 Nov 2026', t:'Pitch list tidied', n:['Half pitch – zoomed in is gone: the choices are Half pitch and Half pitch (wide). Any board that used it shows the half pitch']},
     {v:'3.51', d:'2 Nov 2026', t:'Wide half pitch', n:['New pitch: Half pitch (wide) — a wide board with the half pitch exactly to scale (68 × 52.5 m): the whole width, a big box and round circles, with the goal at the bottom', 'Half pitch is back to the original drawing; the zoomed-in one is still there as Half pitch – zoomed in', 'Changing a practice to or from the wide board moves everything already drawn with it', 'The wide board works in Present, PDF, PowerPoint and the library pictures (the 3D view is for the tall boards)', 'A view-only session now says why — who made it and who its collaborators are']},
     {v:'3.50', d:'2 Nov 2026', t:'Half pitch to scale', n:['The half pitch (sessions and pre-games) is the full pitch zoomed in on one end: the same real shapes, just bigger — the box is much wider and deeper, the 6-yard box, D and spot are in proportion, and the halfway line and centre circle sit near the top', 'PowerPoint and PDF exports draw it the same way']},
     {v:'3.49', d:'2 Nov 2026', t:'Times every 5 minutes', n:['Start time, arrival time and kick-off lists go up in 5 minutes (was 15) — 3:05pm, 3:10pm, …']},
