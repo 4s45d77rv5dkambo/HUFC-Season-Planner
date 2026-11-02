@@ -1,5 +1,5 @@
 /* HUFC Session Planner — keeps the planner on the phone so it opens with no signal */
-const VERSION = '20261102160026-87088d76';
+const VERSION = '20261103073325-b758ceb3';
 const CACHE = 'hufc-' + VERSION;
 const FILES = ["./", "index.html", "lib-pdf.js", "lib-pdffonts.js", "lib-pptx.js", "logos.json", "manifest.webmanifest", "apple-touch-icon.png", "icon-180.png", "icon-192.png", "icon-512.png", "icon-512-maskable.png"];
 self.addEventListener('install', function(e){
@@ -22,6 +22,7 @@ self.addEventListener('fetch', function(e){
   /* other pages on the site (e.g. the Windows download page) come straight from the internet */
   if(nav && !/\/(index\.html)?$/.test(new URL(req.url).pathname)) return;
   if(/\/win\//.test(new URL(req.url).pathname)) return;
+  if(/\/guide\//.test(new URL(req.url).pathname)) return;   /* the how-to videos stream straight from the internet */
   e.respondWith(caches.open(CACHE).then(function(c){
     return c.match(nav ? 'index.html' : req, {ignoreSearch:true}).then(function(hit){
       return hit || fetch(req).catch(function(){ return nav ? c.match('index.html') : Response.error(); });

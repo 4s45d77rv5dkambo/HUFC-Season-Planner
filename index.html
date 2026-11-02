@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261102160026">
+<meta name="hufc-build" content="20261103073325">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1917,6 +1917,47 @@ html.wl-open, html.wl-open body{overflow:hidden;}
 .home-set-btn .set-badge{display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; margin-left:2px; border-radius:999px; background:var(--yellow); color:var(--black); font-size:11px; font-weight:800; line-height:1;}
 .home-set-btn .set-badge.warn{background:#f0a020;}
 
+/* ---------- How to use ---------- */
+.guide-jump{display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;}
+.guide-chip{cursor:pointer; background:var(--white); border-style:solid; color:var(--ink); font-size:14px; padding:6px 11px; transition:background .15s, border-color .15s, color .15s;}
+.guide-chip:hover{border-color:var(--black);}
+.guide-chip.on{background:var(--black); border-color:var(--black); color:var(--yellow);}
+.guide-sec{padding:0; overflow:hidden; scroll-margin-top:8px; flex:none;}
+.set-pane > .set-card{flex-shrink:0;}   /* (long tabs scroll instead of squashing their cards) */
+.guide-head{display:flex; align-items:center; gap:12px; width:100%; padding:14px 16px; border:0; background:transparent; text-align:left; cursor:pointer; color:var(--ink); font:inherit;}
+.guide-head:hover{background:#fafaf7;}
+.guide-ico{flex:none; width:38px; height:38px; border-radius:10px; background:var(--paper); display:grid; place-items:center; font-size:19px;}
+.guide-sec.open .guide-ico{background:var(--yellow);}
+.guide-ttl{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+.guide-t{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:18px; letter-spacing:.04em; text-transform:uppercase;}
+.guide-lead{color:var(--grey); font-size:14px; line-height:1.35;}
+.guide-has-vid{flex:none; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:13px; letter-spacing:.04em; padding:3px 9px; border-radius:999px; background:var(--black); color:var(--yellow);}
+.guide-caret{flex:none; color:var(--muted); transition:transform .2s;}
+.guide-sec.open .guide-caret{transform:rotate(180deg);}
+.guide-body{padding:0 18px 16px 66px; animation:fade-in .18s ease-out;}
+.guide-acts{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px;}
+.guide-len{opacity:.7; font-weight:600;}
+.guide-steps{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:8px; font-size:15px; line-height:1.45;}
+.guide-steps li::marker{font-family:'Barlow Condensed', sans-serif; font-weight:700; color:var(--ink);}
+.guide-tips{margin-top:14px; padding:10px 14px; border-radius:8px; background:#fff8dc; border:1px solid #f3e19a;}
+.guide-tips-h{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px;}
+.guide-tips ul{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:4px; font-size:14px; line-height:1.4; color:var(--ink);}
+@media screen and (max-width:640px){:where(html:not(.print-sim)) .guide-chip{font-size:13px; padding:5px 9px;}
+:where(html:not(.print-sim)) .guide-body{padding:0 14px 14px 16px;}
+:where(html:not(.print-sim)) .guide-head{padding:12px 12px;}
+:where(html:not(.print-sim)) .guide-ico{width:32px; height:32px; font-size:16px;}
+:where(html:not(.print-sim)) .guide-lead{display:none;}
+:where(html:not(.print-sim)) .guide-sec.open .guide-lead{display:block;}}
+/* a guide video, over everything */
+.guide-vid-wrap{position:fixed; inset:0; z-index:200; background:rgba(13,14,15,.82); display:grid; place-items:center; padding:16px; animation:fade-in .18s ease-out;}
+.guide-vid-wrap.closing{animation:fade-out .15s ease-in forwards;}
+.guide-vid-box{width:min(1100px, 100%); background:var(--black); border-radius:12px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.guide-vid-head{display:flex; align-items:center; gap:10px; padding:10px 14px; color:var(--white); border-bottom:3px solid var(--yellow); font-family:'Barlow Condensed', sans-serif; font-size:19px; letter-spacing:.04em; text-transform:uppercase;}
+.guide-vid-head strong{flex:1;}
+.guide-vid-x{color:var(--white);}
+.guide-vid{display:block; width:100%; max-height:calc(100vh - 120px); background:#000;}
+.guide-vid-err{margin:0; padding:12px 14px; color:var(--yellow);}
+
 /* ---------- Season plan ---------- */
 .home-actions .home-season-btn, .home-actions .home-gt-btn{grid-row:auto; border-color:var(--yellow); color:var(--yellow);}
 .home-season-btn svg{flex:none; margin-right:6px; vertical-align:-3px;}
@@ -2088,26 +2129,28 @@ html.view-home .se-page .se-appbar{display:block;}
 .hw-prompt{display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 14px; border:1px dashed #c9cbc6; border-radius:10px; background:var(--white);}
 .hw-prompt-t{flex:1; min-width:200px; font-size:15px;}
 
-@media screen and (max-width:640px){:where(html:not(.print-sim)) .se-sheet{margin:0 0 40px; box-shadow:none;}
-:where(html:not(.print-sim)) .se-body{padding:12px 10px 40px; padding-bottom:max(40px, env(safe-area-inset-bottom));}
-:where(html:not(.print-sim)) .se-status{display:none;}
-:where(html:not(.print-sim)) .se-appbar .appbar-inner{row-gap:6px; padding:6px 10px;}
-:where(html:not(.print-sim)) .se-appbar .appbar-inner{gap:6px;}
-:where(html:not(.print-sim)) .se-ctl{display:contents;}
-:where(html:not(.print-sim)) .se-ctl .se-sel{flex:none; font-size:15px; padding:5px 24px 5px 8px; background-position:right 7px center;}
-:where(html:not(.print-sim)) .se-ctl .se-sel-season{flex:1 1 150px; min-width:0;}
-:where(html:not(.print-sim)) .se-appbar .se-ctl .btn{flex:1 1 auto; min-width:auto; white-space:nowrap; padding:6px 10px; font-size:13px; justify-content:center;}
-:where(html:not(.print-sim)) .se-ctl .se-long{display:none;}
-:where(html:not(.print-sim)) .se-week{position:relative;}
-:where(html:not(.print-sim)) .se-wk-num .se-wk-more{position:absolute; top:6px; right:6px; margin:0;}
-:where(html:not(.print-sim)) .se-week{grid-template-columns:minmax(0, 1fr); gap:8px; padding:10px;}
-:where(html:not(.print-sim)) .se-wk-side{flex-direction:row; flex-wrap:wrap; align-items:baseline; column-gap:10px;}
-:where(html:not(.print-sim)) .se-wk-blk{flex-basis:100%; flex-direction:row; align-items:baseline; gap:8px; margin-top:2px;}
-:where(html:not(.print-sim)) .se-days,:where(html:not(.print-sim)) .hw-days{grid-template-columns:minmax(0, 1fr);}
-:where(html:not(.print-sim)) .se-tl-blk{font-size:12px; padding:0 4px;}
-:where(html:not(.print-sim)) .se-tl-mon{font-size:10px;}
-:where(html:not(.print-sim)) .se-field-pair{grid-template-columns:minmax(0, 1fr);}
-:where(html:not(.print-sim)) .home-actions .home-season-btn,:where(html:not(.print-sim)) .home-actions .home-gt-btn{grid-column:1 / span 2;}}
+@media screen and (max-width:640px){
+  .se-sheet{margin:0 0 40px; box-shadow:none;}
+  .se-body{padding:12px 10px 40px; padding-bottom:max(40px, env(safe-area-inset-bottom));}
+  .se-status{display:none;}
+  .se-appbar .appbar-inner{row-gap:6px; padding:6px 10px;}
+  .se-appbar .appbar-inner{gap:6px;}
+  .se-ctl{display:contents;}
+  .se-ctl .se-sel{flex:none; font-size:15px; padding:5px 24px 5px 8px; background-position:right 7px center;}
+  .se-ctl .se-sel-season{flex:1 1 150px; min-width:0;}
+  .se-appbar .se-ctl .btn{flex:1 1 auto; min-width:auto; white-space:nowrap; padding:6px 10px; font-size:13px; justify-content:center;}
+  .se-ctl .se-long{display:none;}
+  .se-week{position:relative;}
+  .se-wk-num .se-wk-more{position:absolute; top:6px; right:6px; margin:0;}
+  .se-week{grid-template-columns:minmax(0, 1fr); gap:8px; padding:10px;}
+  .se-wk-side{flex-direction:row; flex-wrap:wrap; align-items:baseline; column-gap:10px;}
+  .se-wk-blk{flex-basis:100%; flex-direction:row; align-items:baseline; gap:8px; margin-top:2px;}
+  .se-days, .hw-days{grid-template-columns:minmax(0, 1fr);}
+  .se-tl-blk{font-size:12px; padding:0 4px;}
+  .se-tl-mon{font-size:10px;}
+  .se-field-pair{grid-template-columns:minmax(0, 1fr);}
+  .home-actions .home-season-btn, .home-actions .home-gt-btn{grid-column:1 / span 2;}
+}
 @media print{ .se-page, .home-week, .se-menu{display:none !important;} }
 
 /* weeks off (breaks, holidays) and removed days */
@@ -3535,7 +3578,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 2 Nov 2026, 4:00pm</p>
+  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 7:33am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -14762,6 +14805,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.60', d:'3 Nov 2026', t:'How to use, and attendance', n:['Settings → How to use: a short guide to each part of the planner — sessions, lineups, pre-games, match video, stats and the season plan — each with a video that talks you through it (needs the internet to play)', 'Attendance (under a session’s Players box): tick who turned up — the Players box fills in with the number, and each player shows how many sessions they’ve made', 'Mark a player injured or unavailable, with a note and the day they’re back (in attendance or My squad) — it shows for every coach of that team until then', 'Lineups and pre-games warn you when someone who’s out is picked (a red or orange mark on the pitch, only for you), and a new lineup leaves them out']},
     {v:'3.59', d:'2 Nov 2026', t:'Collaborators by name', n:['The coach line on a session shows collaborators by name only, e.g. “David Ambelidis + Kristian Popovic” (no age group) — their teams still show in the Collaborators window', 'Clock times with half-minute practices can no longer show “:60”']},
     {v:'3.58', d:'2 Nov 2026', t:'Pause in Present, Face ball fixed', n:['Present to players: Pause an animation at any moment to explain — tap Pause, tap the pitch or press Space. While paused: Resume, step back or forward a step, or Stop', 'A yellow ring round the pitch shows it’s paused', 'Face ball: players now face the ball (they were facing away from it)', 'Season plan: the ⋯ menu on a day (colours etc.) no longer closes by itself when a sync comes in', 'Phones: Print is an icon in the top bar so everything fits (on the smallest iPhones use Export → Save as PDF)']},
     {v:'3.57', d:'2 Nov 2026', t:'Players face the ball', n:['New “Face ball” tick box under each pitch (next to Crest): every player and keeper turns their body to face the ball', 'They turn live as you drag the ball (or the players) around, and follow the ball when the animation plays — on the board and in Present to players', 'Untick it and they keep the direction they were facing; you can still turn anyone by hand']},
@@ -14846,7 +14890,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     {v:'1.0', d:'11 Oct 2026', t:'The first session plan', n:['The Heidelberg United training session plan: run-sheet, practices with pitch diagrams and session review', 'Prints on A4 with the club crest and watermark']}
   ];
   const SET_TABS = [
-    ['account', 'Account', '👤'], ['teams', 'My teams', '⚽'], ['drive', 'Google Drive', '☁️'], ['sessions', 'New sessions', '📋'],
+    ['guide', 'How to use', '📖'], ['account', 'Account', '👤'], ['teams', 'My teams', '⚽'], ['drive', 'Google Drive', '☁️'], ['sessions', 'New sessions', '📋'],
     ['lineups', 'Matchday lineups', {html:'<svg viewBox="0 0 24 24" width="22" height="22"><rect x="3.5" y="1" width="17" height="22" rx="2" fill="#2e9d5b" stroke="#1f7a43" stroke-width=".8"/><path d="M3.5 12h17" stroke="#fff" stroke-width=".9" opacity=".85"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="#fff" stroke-width=".9" opacity=".85"/><path d="M8.5 23v-3h7v3M8.5 1v3h7V1" fill="none" stroke="#fff" stroke-width=".9" opacity=".85"/><circle cx="12" cy="20.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="6.6" cy="16.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="10.2" cy="17.2" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="13.8" cy="17.2" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="17.4" cy="16.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="8" cy="11.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="12" cy="12.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="16" cy="11.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="7.4" cy="5.8" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="12" cy="4.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="16.6" cy="5.8" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/></svg>'}], ['data', 'Backup & data', '💾'], ['club', 'Club & sharing', {crest:true}], ['about', 'About', 'ℹ']
   ];
   /* a tab's picture: an emoji, a drawing, or the club crest */
@@ -14905,7 +14949,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         onclick:function(){ if(setTab === t[0]) return; setTab = t[0]; renderSettings(); const pn = document.getElementById('setPane'); pn.classList.remove('tab-in'); void pn.offsetWidth; pn.classList.add('tab-in'); clearTimeout(pn._t); pn._t = setTimeout(function(){ pn.classList.remove('tab-in'); }, 400); }}, setTabIco(t[2]), h('span', {text:t[1]})));
     });
     const pane = document.getElementById('setPane'); pane.innerHTML = '';
-    const fn = {account:setAccount, teams:setTeams, drive:setDrive, sessions:setSessions, lineups:setLineups, data:setData, club:setClub, about:setAbout}[setTab];
+    const fn = {guide:setGuide, account:setAccount, teams:setTeams, drive:setDrive, sessions:setSessions, lineups:setLineups, data:setData, club:setClub, about:setAbout}[setTab];
     fn(pane);
     pane.scrollTop = 0;
     const on = nav.querySelector('.set-tab.on'); if(on && on.scrollIntoView && nav.scrollWidth > nav.clientWidth) on.scrollIntoView({block:'nearest', inline:'center'});
@@ -15088,6 +15132,145 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn btn-primary', text:pend ? 'Review ' + pend + ' waiting' : 'Open coaches', onclick:function(){ coachesOpen(); }})));
     p.appendChild(c);
   }
+  /* ---------- How to use: a short guide to each part of the planner (with a video where there is one) ---------- */
+  /* the guide's videos: on the planner's website (iPhone/iPad app, Windows program), or stored with the online planner */
+  const GUIDE_WEB = 'https://4s45d77rv5dkambo.github.io/HUFC-Season-Planner/guide/';
+  const GUIDE_VIDEOS = {   /* id: {file, blob (the online planner's copy), len} */
+    sessions:{file:'sessions.mp4', blob:'/_blob/d0a42424f9465df43b301e108c6a48e3', len:'1:27'}, lineups:{file:'lineups.mp4', blob:'/_blob/b3ba9ecfd9b8c2d35752794af650c48c', len:'0:58'}, pregames:{file:'pregames.mp4', blob:'/_blob/c01d321f5b8b889b7077b9976e734ff9', len:'1:09'},
+    video:{file:'video.mp4', blob:'/_blob/dc2478c900ad15ecda283665db492649', len:'1:04'}, stats:{file:'stats.mp4', blob:'/_blob/89bdc2a9022236ca3ec5de0739cf3d60', len:'0:41'}, season:{file:'season.mp4', blob:'/_blob/78aea1ab7d72e97884b3233a1cbcc9f4', len:'1:11'}
+  };
+  const GUIDE = [
+    {id:'basics', title:'The basics', ico:'🏠', open:'', lead:'Everything starts from the Home page.', steps:[
+      'The big buttons on the Home page start or open each kind of work: sessions, matchday lineups, pre-games and match videos — plus the Season plan and Game time & player stats.',
+      'Your work is kept in folders, one for each team you coach. Pick the folder at the top of the lists. “Shared with you” holds plans other coaches sent you.',
+      'Everything saves by itself as you go (the dot in the top bar goes green). Undo and Redo are in the top bar too (Ctrl+Z / Ctrl+Shift+Z).',
+      'Sign in (Settings → Account) to have the same work on your iPhone, iPad and computer, and to see the club library. The club admin approves each new coach and their teams.',
+      'Settings → My teams: the teams you coach. Settings → New sessions and Matchday lineups: what a new one starts with.'
+    ], tips:[
+      'Updates arrive by themselves — the planner switches over when you’re on the Home page.',
+      'Backup & data (in Settings) saves a copy of everything to a file, and brings it back.'
+    ]},
+    {id:'sessions', title:'Training sessions', ico:'📋', open:'homeNewBtn', openText:'Start a session', lead:'A session is the plan for one training: the details at the top, then each practice with its own pitch.', steps:[
+      'Home → + New session. Give it a title, then fill in the date, start time, venue, squad / group, head coach/s and how many players. Squad and Head coach take several — tap each one in the list.',
+      'Across the dark band: the session theme, the phase of play and the objectives.',
+      'Each practice has a name and its minutes (type 7.5 for 7½). The run-sheet at the top adds them up and gives the clock time of each one from the start time.',
+      'Draw on the pitch: pick a tool — players, keepers, cones, balls, goals, mannequins, arrows (pass, run, dribble, shot), drill areas, zones or text — then tap the pitch. Tap anything you’ve drawn to move, turn, resize, recolour or delete it.',
+      'Under the pitch: the kind of pitch (full, half, half wide, thirds, futsal …), the grass, its size and zoom, the crest, Face ball (the players turn to face the ball) and the 2D / 3D view.',
+      'Animation: press + in the Animation bar to add step 2, drag the players and the ball to where they go, add more steps, then press Play.',
+      'Underneath: organisation, coaching points and equipment (+ Add field for your own).',
+      '+ Add practice for the next one, or + From saved practices to reuse one. Every practice you make is kept in Saved practices on the Home page.',
+      'Print, or Export → Save as PDF, PowerPoint, or Share with coaches.'
+    ], tips:[
+      'Copy (under a pitch) copies the whole drawing — paste it onto any board in any session or pre-game.',
+      'Hold Alt while dragging to place something without it snapping to the lines.',
+      'Collaborators (top bar): let other club coaches change this session too. It stays yours — only you can delete it.',
+      'Take attendance (under Players): tick who turned up, and tap a player’s status to mark them injured or unavailable — with a note and the day they’re back.'
+    ]},
+    {id:'lineups', title:'Matchday lineups', ico:'👕', open:'homeLineupBtn', openText:'Start a lineup', lead:'A lineup is your team for one match: who starts, the subs and how long everyone plays.', steps:[
+      'Home → + New matchday lineup. Fill in the opponent (their badge shows), home or away, venue, date, arrival time, kick-off, round, competition and kit.',
+      'Pick the format (11, 9 or 7-a-side, or futsal), how long each half is, and a formation for each half.',
+      'The squad list: names, numbers and positions. Names you’ve used before come up as you type. My squad holds your team’s players — tick who’s in, then put them in the lineup.',
+      'Tap a shirt on the pitch to put a player there, or to swap two players.',
+      '+ Sub under a half: the minute, who comes off and who goes on. Each player’s minutes and % of the match update by themselves.',
+      'The score goes at the top. Tap a player on the pitch to mark goals, assists, penalty saves and cards.',
+      'After the game: the post-match review — man of the match, injuries, what went well, what to improve and the focus for training.'
+    ], tips:[
+      'Kit colours for shirts and keepers are under the pitch.',
+      'Match video (under the squad list) opens this game’s video, with these players ready to tag.',
+      'Players marked injured or unavailable (in a session’s attendance or in My squad) are left out of a new lineup, and you get a warning if you pick one — with a red or orange mark on the pitch.'
+    ]},
+    {id:'pregames', title:'Pre-game plans', ico:'🎯', open:'homePgNewBtn', openText:'Start a pre-game', lead:'A pre-game is what you show the players before a match — one board for each part of your game plan.', steps:[
+      'Home → + New pre-game. Fill in the opponent, date, kick-off, venue, squad and coaches.',
+      'It starts with a board for each of your six principles — Possession, Progression, Penetration, Pressure, Prevention, Protection. + Add board, or + Add a ready-made board, for more.',
+      'On each board: draw the shape (and animate it, just like a session), write the message for the players and your notes.',
+      'Add clips from your match videos, upload a video, add a video link or pictures.',
+      'Add lineup: show one of your saved matchday lineups on a board — it keeps up with any changes to the lineup.',
+      'Present to players: full screen, one board at a time — Next / Back (or swipe, or the arrow keys).'
+    ], tips:[
+      'In Present, press Play on a board with an animation. Pause it at any moment to explain (tap Pause, tap the pitch or press Space), step back or forward, then Resume.',
+      'Repeat plays the animation over and over until you press Stop.'
+    ]},
+    {id:'video', title:'Match video', ico:'🎬', open:'homeMvNewBtn', openText:'Open a match video', lead:'Tag the moments in a match video (e.g. from Veo) to get clips and stats.', steps:[
+      'Home → + Match video, or Match video on a lineup. Link it to the lineup (for the players and opponent) or to a pre-game.',
+      'Open the video file — it stays on your device and the planner remembers its name. You can also use a video link, or Put on Drive to share it with other coaches.',
+      'As it plays, tap a tag — Goal, Chance, Shot, Turnover won or lost, Press won, Good build-up, Corner, Free kick, Mistake (or + New tag for your own) — then pick the player. HUFC / the opponent above the tags switches whose moment it is.',
+      'Game start, Half-time, 2nd half start and Full time mark the match clock, so tags show the match minute.',
+      'Tags: tap one to watch that moment, or watch them all one after another. Filter by tag, side or player.',
+      '✂ Clip cuts a clip. Pause it and draw what happens next — arrows, runs, areas and rings — and give it a name, a note and the players in it.',
+      'Stats: the count of each tag, for us and them, and by player.'
+    ], tips:[
+      'Add a clip to a pre-game board to show it to the players.',
+      'The number keys 1–0 tag too (1 = Goal … 0 = Mistake).',
+      '−5s / +5s and the speed buttons (½× to 4×) help you find the moment.'
+    ]},
+    {id:'stats', title:'Game time & player stats', ico:'📊', open:'homeGtBigBtn', openText:'See the stats', lead:'Every player’s minutes, starts, goals, assists and cards, across all your lineups.', steps:[
+      'Home → Game time & player stats (or from a lineup).',
+      'Game time: the games each player was in the squad, their starts, minutes and their % of the minutes in those games — from the starting team in each half and the subs in each lineup.',
+      'Goals, assists & cards: the totals from the events you marked on the lineups.',
+      'Each team is counted on its own, from that team’s lineups only.'
+    ], tips:[
+      'Sort the list (top right) — e.g. least time first, to see who needs more minutes.',
+      'Players are matched by name, so spell names the same way each week (picking them from the list does this for you).',
+      'The match video’s own Stats tab has the tags from that game.'
+    ]},
+    {id:'season', title:'Season plan', ico:'📅', open:'homeSeasonBtn', openText:'Open the season plan', lead:'The season week by week: training nights and match days, with the session, lineup, pre-game and video for each.', steps:[
+      'Home → Season plan → Set up the season: its name, first week, last day, training nights, match day, and the colours for training and match days.',
+      'Each training night and match day shows what’s on it. + Session, + Lineup, + Pre-game and + Match video start one already dated (a lineup gets the opponent too). Anything with a date turns up on its day by itself.',
+      '+ Theme block: e.g. 4 weeks of Pressure. Your six principles come first. New sessions in those weeks start with that theme.',
+      'Add a focus for each week underneath it.',
+      'A day’s ⋯ menu: give it its own colour, make it a training or match day, or remove it. The ✕ removes a game or training completely (Undo straight after).',
+      'A week’s ⋯ menu: take the week off (school holidays, a break — for several weeks if you like), remove the games or the training that week, or put back what was removed.'
+    ], tips:[
+      'This week on the Home page shows the current week for your team.',
+      'This week (top bar) jumps back to today; the strip of weeks at the top jumps to any week.',
+      'Other coaches see your plan view-only.'
+    ]}
+  ];
+  let guideOpenId = 'basics';
+  function guideVideoSrc(v){ return v ? (document.documentElement.classList.contains('hosted') && v.blob ? v.blob : GUIDE_WEB + v.file) : ''; }
+  /* a guide video, big, over the Settings window */
+  function guidePlay(sec){
+    const v = GUIDE_VIDEOS[sec.id]; if(!v) return;
+    const vid = h('video', {class:'guide-vid', src:guideVideoSrc(v), controls:true, autoplay:true, playsinline:true, preload:'auto'});
+    const close = function(){ try{ vid.pause(); }catch(e){} window.removeEventListener('keydown', key, true); wrap.classList.add('closing'); setTimeout(function(){ wrap.remove(); }, reduceMotion.matches ? 0 : 150); };
+    const key = function(e){ if(e.key === 'Escape'){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); close(); } };
+    const err = h('p', {class:'guide-vid-err', hidden:true, text:'The video couldn’t load — it needs the internet. Try again when you’re online.'});
+    vid.addEventListener('error', function(){ err.hidden = false; });
+    const wrap = h('div', {class:'guide-vid-wrap', role:'dialog', 'aria-label':sec.title + ' video', onclick:function(e){ if(e.target === wrap) close(); }},
+      h('div', {class:'guide-vid-box'},
+        h('div', {class:'guide-vid-head'}, h('strong', {text:sec.title}), h('button', {type:'button', class:'icon-btn guide-vid-x', 'aria-label':'Close', text:'✕', onclick:close})),
+        vid, err));
+    document.body.appendChild(wrap);
+    window.addEventListener('keydown', key, true);   /* (before Settings' own Esc: only the video closes) */
+  }
+  function setGuide(p){
+    const top = setCard('How to use the planner', 'A quick guide to each part. Tap a part to open it' + (Object.keys(GUIDE_VIDEOS).length ? ', or watch its short video.' : '.'));
+    const jump = h('div', {class:'guide-jump'});
+    GUIDE.forEach(function(sec){ jump.appendChild(h('button', {type:'button', class:'set-chip guide-chip' + (sec.id === guideOpenId ? ' on' : ''), onclick:function(){ guideOpenId = sec.id; renderSettings(); const el = document.getElementById('guide-' + sec.id); if(el) el.scrollIntoView({block:'start', behavior:reduceMotion.matches ? 'auto' : 'smooth'}); }}, h('span', {'aria-hidden':'true', text:sec.ico + ' '}), sec.title)); });
+    top.append(jump);
+    p.appendChild(top);
+    GUIDE.forEach(function(sec){
+      const v = GUIDE_VIDEOS[sec.id], on = sec.id === guideOpenId;
+      const card = h('section', {class:'set-card guide-sec' + (on ? ' open' : ''), id:'guide-' + sec.id});
+      const head = h('button', {type:'button', class:'guide-head', 'aria-expanded':String(on), onclick:function(){ guideOpenId = on ? '' : sec.id; renderSettings(); const el = document.getElementById('guide-' + sec.id); if(el && !on) el.scrollIntoView({block:'nearest'}); }},
+        h('span', {class:'guide-ico', 'aria-hidden':'true', text:sec.ico}),
+        h('span', {class:'guide-ttl'}, h('span', {class:'guide-t', text:sec.title}), h('span', {class:'guide-lead', text:sec.lead})),
+        v ? h('span', {class:'guide-has-vid', title:'Has a video', text:'▶ ' + (v.len || 'Video')}) : null,
+        h('span', {class:'guide-caret', 'aria-hidden':'true', text:'▾'}));
+      card.appendChild(head);
+      if(on){
+        const body = h('div', {class:'guide-body'});
+        if(v || sec.open) body.appendChild(h('div', {class:'guide-acts'},
+          v ? h('button', {type:'button', class:'btn btn-primary btn-small', html:'▶ Watch the video' + (v.len ? ' <span class="guide-len">(' + v.len + ')</span>' : ''), onclick:function(){ guidePlay(sec); }}) : null,
+          sec.open && document.getElementById(sec.open) ? h('button', {type:'button', class:'btn btn-small', text:sec.openText + ' →', onclick:function(){ closeModal(setModal); const b = document.getElementById(sec.open); if(b) setTimeout(function(){ b.click(); }, 160); }}) : null));
+        body.appendChild(h('ol', {class:'guide-steps'}, sec.steps.map(function(t){ return h('li', {text:t}); })));
+        if(sec.tips && sec.tips.length) body.appendChild(h('div', {class:'guide-tips'}, h('div', {class:'guide-tips-h', text:'Good to know'}), h('ul', null, sec.tips.map(function(t){ return h('li', {text:t}); }))));
+        card.appendChild(body);
+      }
+      p.appendChild(card);
+    });
+  }
+
   /* ---------- About ---------- */
   function setAbout(p){
     const ver = (document.querySelector('.home-version') || {}).textContent || '';
@@ -17735,7 +17918,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
      - Lineups and pre-games warn when someone who's out is picked.
      ===================================================================== */
   /* switched off until it goes live (attendance, availability and the warnings) */
-  var AV_ON = false;
+  var AV_ON = true;
   const AV_ST = {
     inj:{label:'Injured', short:'Injured', cls:'av-inj'},
     out:{label:'Unavailable', short:'Unavailable', cls:'av-out'}
