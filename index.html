@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261103201135">
+<meta name="hufc-build" content="20261103202117">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3603,7 +3603,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 8:11pm</p>
+  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 8:21pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -6410,6 +6410,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(!(s.v >= 9)) ensureEquip(nd);
       /* the warm-up no longer has a Mobility box: take out an empty one */
       if(!(s.v >= 10)) nd.notes = nd.notes.filter(function(f){ return !(/^mobility$/i.test(clean(f.label)) && !clean(f.value)); });
+      if(nd.libId && !nd.libHash) practiceMark(nd);   /* (plans saved before practices kept their own versions) */
       return nd;
     });
     s.v = 10;
@@ -7889,26 +7890,45 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function practiceHasContent(d){
     return !!((d.items && d.items.length) || clean(d.focus) || (d.notes || []).some(function(f){ return clean(f.value); }));
   }
-  function practiceSnapshot(d){ const c = JSON.parse(JSON.stringify(d)); delete c.id; return c; }
-  /* adds / refreshes the practices of a plan; returns how many changed */
+  function practiceSnapshot(d){ const c = JSON.parse(JSON.stringify(d)); delete c.id; delete c.libHash; return c; }
+  /* what a practice holds, without its ids and bookkeeping (so two copies of the same practice match) */
+  function practiceKey(d){
+    const c = JSON.parse(JSON.stringify(d || {})); delete c.id; delete c.libId; delete c.libHash;
+    (c.notes || []).forEach(function(f){ delete f.id; });
+    let x = 5381; const s = JSON.stringify(c);
+    for(let i = 0; i < s.length; i++) x = ((x << 5) + x + s.charCodeAt(i)) | 0;
+    return s.length + ':' + (x >>> 0).toString(36);
+  }
+  /* each session keeps its own copy of a practice; libHash marks what that copy held when it last matched the library */
+  function practiceMark(d){ if(d && d.libId) d.libHash = practiceKey(d); return d; }
+  /* adds / refreshes the practices of a plan; returns how many changed.
+     A practice changed in the session it was made in updates the Practices library. A practice taken from the library
+     into another session and changed there becomes a NEW practice, so the original — and every other session using it — stays as it was. */
   function libraryUpsert(plan, lib){
     let n = 0;
     if(isPre(plan)) return 0;
-    const src = {theme:sessionName(plan), date:clean(plan.meta && plan.meta.date)};
+    const src = {theme:sessionName(plan), date:clean(plan.meta && plan.meta.date)}, pid = plan.planId || '';
     (plan.drills || []).forEach(function(d){
       if(!practiceHasContent(d)) return;
       if(!d.libId) d.libId = d.id;
-      const g = groupOf(plan), snap = practiceSnapshot(d);
+      const g = groupOf(plan), key = practiceKey(d);
       let cur = lib.items[d.libId];
-      /* a practice taken from another age group: unchanged it stays theirs; once changed it becomes a new one in this folder */
-      if(cur && (groupOf(cur) !== g || !canEdit(cur))){
-        if(JSON.stringify(cur.practice) === JSON.stringify(snap)) return;
-        d.libId = (d.libId === d.id) ? newId() : d.id; cur = lib.items[d.libId];
-        if(cur && !canEdit(cur)){ d.libId = newId(); cur = null; }
+      const same = cur && practiceKey(cur.practice) === key;
+      if(cur && !same){
+        /* changed here since it last matched? (an older copy that the library has since moved on from stays as it is) */
+        const changed = d.libHash ? d.libHash !== key : true;
+        if(!changed) return;
+        /* the session that made it (older practices: the copy whose id it carries) */
+        const owner = cur.plan ? cur.plan === pid : d.libId === d.id;
+        /* another age group's, someone else's, or made in another session: a new practice */
+        if(groupOf(cur) !== g || !canEdit(cur) || !owner){
+          d.libId = newId(); cur = null;
+        }
       }
       if(lib.removed[d.libId]) return;
-      if(cur && JSON.stringify(cur.practice) === JSON.stringify(snap)) return;
-      lib.items[d.libId] = {libId:d.libId, practice:snap, updatedAt:Date.now(), source:src, group:g};
+      d.libHash = practiceKey(d);
+      if(same) return;
+      lib.items[d.libId] = {libId:d.libId, practice:practiceSnapshot(d), updatedAt:Date.now(), source:src, group:g, plan:pid};
       n++;
     });
     return n;
@@ -8723,7 +8743,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const c = newDrill(JSON.parse(JSON.stringify(e.practice)));
       c.id = newId(); c.libId = e.libId;
       c.notes.forEach(function(f){ f.id = newId(); });
-      return ensureEquip(c);
+      return practiceMark(ensureEquip(c));
     });
     homeSel = [];
     updateSelBar();
@@ -8974,7 +8994,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           const copy = newDrill(JSON.parse(JSON.stringify(e.practice)));
           copy.id = newId(); copy.libId = e.libId;
           copy.notes.forEach(function(f){ f.id = newId(); });
-          ensureEquip(copy);
+          practiceMark(ensureEquip(copy));
           state.drills.push(copy);
           pickerLast = copy.id;
           rerender(); saveLocal();
@@ -14896,6 +14916,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.71', d:'3 Nov 2026', t:'Practices keep their versions', n:['Change a saved practice in a new session and it’s saved as a new practice in your Practices library — the original, and every older session that uses it, stays exactly as it was', 'Changing a practice in the session it was made in still updates it in the library', 'Library cards show which session each version came from (“From: …”)']},
     {v:'3.70', d:'3 Nov 2026', t:'Tidier history', n:['Version history: each dot sits right on the line']},
     {v:'3.69', d:'3 Nov 2026', t:'Technical directors', n:['A Technical director (TD) role for the club: every squad from U13 to U23 (not the Seniors). TDs are not admins — they change their own work, and other coaches’ work stays view-only unless they’re added as a collaborator', 'Sai Gottipati and Renato are set up as TDs when you next open the planner as admin; Coaches → Edit → Technical director turns it on or off for anyone', 'Coaches roster: type “TD” on a coach’s line to add them as a technical director']},
     {v:'3.68', d:'3 Nov 2026', t:'Mauricio Novak', n:['Mauricio Novak’s name is spelt right in the Head coach/s list and on plans that were saved with “Novack”']},
