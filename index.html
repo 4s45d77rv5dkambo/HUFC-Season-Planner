@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261103130250">
+<meta name="hufc-build" content="20261103131233">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2567,6 +2567,7 @@ html.pg-vid-open .toast{z-index:4100;}
 .folder-chips .folder-sep{display:none;}
 .folder-chip{flex:1 1 0; min-width:0; display:flex; align-items:center; justify-content:center; gap:8px; padding:13px 10px; border-radius:12px; font-size:18px; letter-spacing:.06em; white-space:nowrap; border-width:1.5px;}
 .folder-chip:nth-child(1), .folder-chip:nth-child(2){flex:2 0 auto; padding-left:18px; padding-right:18px;}
+.folder-chip.fc-wide{flex:1.8 1 0;}   /* (Seniors: room for the longer name) */
 .folder-chip > span{display:inline-flex; align-items:center; justify-content:center; gap:8px; min-width:0; padding-left:.06em;}
 .folder-chip{-webkit-appearance:none; appearance:none; text-align:center;}
 .folder-chip .fc-sub{font-size:13px; padding:1px 8px;}
@@ -3517,7 +3518,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       <button type="button" class="btn btn-big btn-dark" id="homePgOpenBtn" title="See all your pre-game plans">Open <span class="nowrap">pre-games</span></button>
       <button type="button" class="btn btn-primary btn-big" id="homeMvNewBtn" title="Open a match video (e.g. from Veo) to tag it, cut clips and see stats">+ Match video</button>
       <button type="button" class="btn btn-big btn-dark" id="homeMvOpenBtn" title="The matches you've analysed: tags, clips and stats">Open <span class="nowrap">match videos</span></button>
-      <button type="button" class="btn btn-big btn-dark home-season-btn" id="homeSeasonBtn" title="The season week by week: training nights, match days and themes"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Season plan</button>
+      <button type="button" class="btn btn-big btn-dark home-season-btn" id="homeSeasonBtn" title="The season week by week: training nights, match days and themes"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Season calendar</button>
       <button type="button" class="btn btn-big btn-dark home-gt-btn" id="homeGtBigBtn" title="Every player's minutes, goals, assists and cards across all your lineups">Game time <span class="nowrap">&amp; player stats</span></button>
     </div>
   </section>
@@ -3588,7 +3589,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 1:02pm</p>
+  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 1:12pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -10098,16 +10099,31 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* the coaches to pick from: the club's coaches, first and last names only (you first) */
   const CLUB_COACHES = ['David Ambelidis', 'Kristian Popovic', 'Mauricio Novack', 'Sai Gottipati', 'Sam Nockles'];
   function coachNames(){
-    const out = [], seen = {}, full = function(n){ return /^[A-Za-z\u00C0-\u024F'’.-]+(\s+[A-Za-z\u00C0-\u024F'’.-]+)+$/.test(n); };
-    const add = function(n){ n = String(n || '').replace(/\s+/g, ' ').trim(); const k = n.toLowerCase(); if(n && full(n) && !seen[k]){ seen[k] = 1; out.push(n); } };
+    const out = [], full = function(n){ return /^[A-Za-z\u00C0-\u024F'’.-]+(\s+[A-Za-z\u00C0-\u024F'’.-]+)+$/.test(n); };
+    /* the same coach spelt a little differently (Novack / Novak, a capital, an accent, a middle initial) only shows once — the club's spelling wins */
+    const norm = function(n){ return String(n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z\s]/g, '').replace(/\s+/g, ' ').trim(); };
+    const near = function(a, b){
+      if(a === b) return true;
+      const x = a.split(' '), y = b.split(' ');
+      if(x[0] !== y[0]) return false;
+      const lx = x[x.length - 1], ly = y[y.length - 1];
+      if(lx === ly) return true;
+      if(Math.abs(lx.length - ly.length) > 2 || Math.min(lx.length, ly.length) < 4) return false;
+      const d = []; for(let i = 0; i <= lx.length; i++){ d[i] = [i]; for(let j = 1; j <= ly.length; j++) d[i][j] = i ? Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (lx[i - 1] === ly[j - 1] ? 0 : 1)) : j; }
+      return d[lx.length][ly.length] <= 1;
+    };
+    const keys = [];
+    const add = function(n){ n = String(n || '').replace(/\s+/g, ' ').trim(); if(!n || !full(n)) return; const k = norm(n); if(keys.some(function(q){ return near(q, k); })) return; keys.push(k); out.push(n); };
     let me = '';
     try{ me = (typeof CLOUD !== 'undefined' && CLOUD && CLOUD.name) ? CLOUD.name() : ''; }catch(e){}
-    const rest = CLUB_COACHES.slice();
-    try{ if(typeof CLOUD !== 'undefined' && CLOUD && CLOUD.clubCoaches) CLOUD.clubCoaches().forEach(function(c){ rest.push(c.name); }); }catch(e){}
-    try{ if(typeof CLOUD !== 'undefined' && CLOUD && CLOUD.roster) CLOUD.roster().forEach(function(r){ rest.push(r.name); }); }catch(e){}
-    add(me);
-    rest.map(function(n){ return String(n || '').trim(); }).filter(Boolean).sort(function(a, b){ return a.localeCompare(b); }).forEach(add);
-    return out;
+    const others = [];
+    try{ if(typeof CLOUD !== 'undefined' && CLOUD && CLOUD.clubCoaches) CLOUD.clubCoaches().forEach(function(c){ others.push(c.name); }); }catch(e){}
+    try{ if(typeof CLOUD !== 'undefined' && CLOUD && CLOUD.roster) CLOUD.roster().forEach(function(r){ others.push(r.name); }); }catch(e){}
+    /* the club's own spellings first, then anyone else (accounts and the roster) */
+    CLUB_COACHES.forEach(add); others.forEach(add);
+    const mine = me ? out.find(function(n){ return near(norm(n), norm(me)); }) : null;
+    const rest = out.filter(function(n){ return n !== mine; }).sort(function(a, b){ return a.localeCompare(b); });
+    return (mine ? [mine] : (me && full(me) ? [me] : [])).concat(rest);
   }
   /* more than one coach: their initials ("DA, KP"); one coach: the full name */
   function coachShort(v){
@@ -13652,7 +13668,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
      Linking a shared OneDrive folder makes the whole club's work appear for everyone:
      each coach writes only into their own group's folder, and reads them all.
      ===================================================================== */
-  const AGE_GROUPS = ['U13','U14','U15','U16','U18','U20','U23'];
+  const AGE_GROUPS = ['U13','U14','U15','U16','U18','U20','U23','Seniors'];
   const SET_KEY = 'hufc-settings', SYNC_KEY = 'hufc-sync-index';
   /* things a coach deleted on purpose (pressed Delete): only these are taken out of the club library for everyone.
      Anything else that's missing here is never deleted from the club — a coach's saved work stays until they (or the admin) delete it. */
@@ -13940,7 +13956,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       ms.length ? chip('mine', h('span', null, '★ My folder ', h('span', {class:'fc-sub', text:ms.join(' · ')}))) : null,
       chip('all', h('span', null, 'Club library')),
       h('span', {class:'folder-sep', 'aria-hidden':'true'}),
-      AGE_GROUPS.map(function(g){ return chip(g, h('span', null, g), isMine(g) ? ' is-mine' : ''); }));
+      AGE_GROUPS.map(function(g){ return chip(g, h('span', null, g), (isMine(g) ? ' is-mine' : '') + (g.length > 4 ? ' fc-wide' : '')); }));
     /* (the teams you coach, your account and syncing live in Settings now — the home page keeps just the folders) */
     bar.append(chips);
     const note = document.getElementById('folderNote');
@@ -14473,6 +14489,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       line = line.trim(); if(!line) return;
       const em = (line.match(/[^\s,;<>()]+@[^\s,;<>()]+\.[a-z]{2,}/i) || [''])[0];
       const gs = []; (line.toUpperCase().match(/\bU\s?(13|14|15|16|18|20|23)S?\b/g) || []).forEach(function(t){ const g = 'U' + t.replace(/[^0-9]/g, ''); if(gs.indexOf(g) === -1) gs.push(g); });
+      if(/\bSENIORS?\b|\bFIRSTS?\b/.test(line.toUpperCase()) && gs.indexOf('Seniors') === -1) gs.push('Seniors');
       const name = line.replace(em, ' ').replace(/\bU\s?(13|14|15|16|18|20|23)s?\b/ig, ' ').replace(/[,;:|\-–—]+/g, ' ').replace(/\b(and|&)\b/ig, ' ').replace(/\s+/g, ' ').trim();
       if(name || em) out.push({name:name, email:em.toLowerCase(), groups:gs.sort(function(a, b){ return AGE_GROUPS.indexOf(a) - AGE_GROUPS.indexOf(b); })});
     });
@@ -14829,6 +14846,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.67', d:'3 Nov 2026', t:'Seniors', n:['A Seniors team, beside U23: its own folder on the Home page, in My teams, the Coaches window, the Season calendar and the stats']},
+    {v:'3.66', d:'3 Nov 2026', t:'Season calendar', n:['The Season plan is now called the Season calendar — on the Home page, its own page and in How to use']},
+    {v:'3.65', d:'3 Nov 2026', t:'One of each coach', n:['Head coach/s list: a coach spelt slightly differently in two places (e.g. Novack and Novak) shows once, with the club’s spelling']},
     {v:'3.64', d:'3 Nov 2026', t:'Sort by last name', n:['Game time & player stats (all three tabs): sort By last name — players are listed by surname and show as “Rossi, Sam”', 'By name is now By first name']},
     {v:'3.63', d:'3 Nov 2026', t:'Attendance headings', n:['Training attendance: the columns are now Sessions (e.g. 3 / 4) and Last session']},
     {v:'3.62', d:'3 Nov 2026', t:'Training attendance report', n:['Game time & player stats has a new Training attendance tab: for each player, the sessions they came to out of the sessions where attendance was taken, their %, when they last came, how many they’ve missed in a row, and whether they’re injured or unavailable', 'Sort by lowest attendance or missed most in a row to see who’s dropped off']},
@@ -15165,11 +15185,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const GUIDE_WEB = 'https://4s45d77rv5dkambo.github.io/HUFC-Season-Planner/guide/';
   const GUIDE_VIDEOS = {   /* id: {file, blob (the online planner's copy), len} */
     sessions:{file:'sessions.mp4', blob:'/_blob/d0a42424f9465df43b301e108c6a48e3', len:'1:27'}, lineups:{file:'lineups.mp4', blob:'/_blob/b3ba9ecfd9b8c2d35752794af650c48c', len:'0:58'}, pregames:{file:'pregames.mp4', blob:'/_blob/c01d321f5b8b889b7077b9976e734ff9', len:'1:09'},
-    video:{file:'video.mp4', blob:'/_blob/dc2478c900ad15ecda283665db492649', len:'1:04'}, stats:{file:'stats.mp4', blob:'/_blob/89bdc2a9022236ca3ec5de0739cf3d60', len:'0:41'}, season:{file:'season.mp4', blob:'/_blob/78aea1ab7d72e97884b3233a1cbcc9f4', len:'1:11'}
+    video:{file:'video.mp4', blob:'/_blob/dc2478c900ad15ecda283665db492649', len:'1:04'}, stats:{file:'stats.mp4', blob:'/_blob/89bdc2a9022236ca3ec5de0739cf3d60', len:'0:41'}, season:{file:'season.mp4', blob:'/_blob/5499e1f08c372ab85b10465c9bd9e50c', len:'1:13'}
   };
   const GUIDE = [
     {id:'basics', title:'The basics', ico:'🏠', open:'', lead:'Everything starts from the Home page.', steps:[
-      'The big buttons on the Home page start or open each kind of work: sessions, matchday lineups, pre-games and match videos — plus the Season plan and Game time & player stats.',
+      'The big buttons on the Home page start or open each kind of work: sessions, matchday lineups, pre-games and match videos — plus the Season calendar and Game time & player stats.',
       'Your work is kept in folders, one for each team you coach. Pick the folder at the top of the lists. “Shared with you” holds plans other coaches sent you.',
       'Everything saves by itself as you go (the dot in the top bar goes green). Undo and Redo are in the top bar too (Ctrl+Z / Ctrl+Shift+Z).',
       'Sign in (Settings → Account) to have the same work on your iPhone, iPad and computer, and to see the club library. The club admin approves each new coach and their teams.',
@@ -15242,8 +15262,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       'Players are matched by name, so spell names the same way each week (picking them from the list does this for you).',
       'The match video’s own Stats tab has the tags from that game.'
     ]},
-    {id:'season', title:'Season plan', ico:'📅', open:'homeSeasonBtn', openText:'Open the season plan', lead:'The season week by week: training nights and match days, with the session, lineup, pre-game and video for each.', steps:[
-      'Home → Season plan → Set up the season: its name, first week, last day, training nights, match day, and the colours for training and match days.',
+    {id:'season', title:'Season calendar', ico:'📅', open:'homeSeasonBtn', openText:'Open the season calendar', lead:'The season week by week: training nights and match days, with the session, lineup, pre-game and video for each.', steps:[
+      'Home → Season calendar → Set up the season: its name, first week, last day, training nights, match day, and the colours for training and match days.',
       'Each training night and match day shows what’s on it. + Session, + Lineup, + Pre-game and + Match video start one already dated (a lineup gets the opponent too). Anything with a date turns up on its day by itself.',
       '+ Theme block: e.g. 4 weeks of Pressure. Your six principles come first. New sessions in those weeks start with that theme.',
       'Add a focus for each week underneath it.',
@@ -15252,7 +15272,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     ], tips:[
       'This week on the Home page shows the current week for your team.',
       'This week (top bar) jumps back to today; the strip of weeks at the top jumps to any week.',
-      'Other coaches see your plan view-only.'
+      'Other coaches see your calendar view-only.'
     ]}
   ];
   let guideOpenId = 'basics';
@@ -17420,7 +17440,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('span', {class:'se-day-type', text:match ? 'Match' : 'Training'}),
       today ? h('span', {class:'se-day-today', text:'Today'}) : null,
       h('span', {class:'se-sp'}), menuBtn,
-      ro || info.off ? null : h('button', {type:'button', class:'se-day-x', title:'Remove this ' + (match ? 'game' : 'training') + ' from the plan', 'aria-label':'Remove the ' + (match ? 'game' : 'training') + ' on ' + seDayName(info.iso),
+      ro || info.off ? null : h('button', {type:'button', class:'se-day-x', title:'Remove this ' + (match ? 'game' : 'training') + ' from the calendar', 'aria-label':'Remove the ' + (match ? 'game' : 'training') + ' on ' + seDayName(info.iso),
         html:'<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
         onclick:function(){ seRemoveDay(s, info); }})));
     /* the opponent (from the lineup once there is one; typed here before that) */
@@ -17482,7 +17502,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function seFixLogo(name){ const src = luLogoFor(name); return src ? h('img', {class:'se-fix-logo', src:src, alt:''}) : null; }
 
   /* ---------- the page: its own page like a session or lineup (Home button, club header), scrolling with the yellow pill ---------- */
-  const seModal = h('div', {class:'se-page', id:'seModal', role:'region', 'aria-label':'Season plan'});
+  const seModal = h('div', {class:'se-page', id:'seModal', role:'region', 'aria-label':'Season calendar'});
   seModal.hidden = true;
   document.body.appendChild(seModal);
   function seShow(on){ seModal.hidden = !on; document.documentElement.classList.toggle('se-open', !!on); }
@@ -17552,7 +17572,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('button', {type:'button', class:'btn btn-home', id:'seClose', title:'Home: your sessions, lineups and saved practices', onclick:seClose},
         h('span', {'aria-hidden':'true', text:'⌂'}), h('span', {class:'btn-label', text:' Home'})),
       h('div', {class:'status se-status', role:'status'}, h('span', {class:'dot'}),
-        h('span', {class:'status-text', text:s ? (ro ? 'View only · ' + (coachOf(s) || g + ' coach') + '’s plan' : 'Changes save automatically') : 'Season plan'})),
+        h('span', {class:'status-text', text:s ? (ro ? 'View only · ' + (coachOf(s) || g + ' coach') + '’s calendar' : 'Changes save automatically') : 'Season calendar'})),
       h('div', {class:'se-ctl'}, gSel, sSel,
         s ? h('button', {type:'button', class:'btn se-today-btn', text:'This week', onclick:function(){ seJump(s, true); }}) : null,
         s && !ro ? h('button', {type:'button', class:'btn', title:'Season settings', onclick:function(){ seSetup(s); }}, h('span', {class:'se-long', text:'Season '}), 'settings') : null)));
@@ -17562,7 +17582,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('header', {class:'header se-header'},
         h('img', {class:'crest', alt:'Heidelberg United crest', src:crest}),
         h('div', {class:'club'}, h('div', {class:'club-name', text:'Heidelberg United'}), h('div', {class:'club-sub', text:'Football Club · Est. 1958'})),
-        h('div', {class:'doc-title'}, h('strong', {id:'seTitle', text:'Season Plan'}))),
+        h('div', {class:'doc-title'}, h('strong', {id:'seTitle', text:'Season Calendar'}))),
       scroll));
     if(!s){ scroll.appendChild(seEmpty(g)); return; }
 
@@ -17721,15 +17741,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       seField('Season name', name),
       h('div', {class:'se-field-pair'}, seField('Starts', st), seField('Ends', en)),
       seField('Training nights', seDays(train)),
-      seField('Match day', seDays(match), 'Days you can add, switch or call off one at a time on the plan.'),
+      seField('Match day', seDays(match), 'Days you can add, switch or call off one at a time on the calendar.'),
       h('div', {class:'se-field-pair se-colours'},
         seField('Training colour', seColourPick(cols.train, function(c){ cols.train = c; })),
         seField('Match colour', seColourPick(cols.match, function(c){ cols.match = c; }))),
       msg);
-    seForm(isNew ? 'New season plan · ' + g : 'Season settings', body, function(close){
+    seForm(isNew ? 'New season calendar · ' + g : 'Season settings', body, function(close){
       return [
         isNew ? null : h('button', {type:'button', class:'btn btn-danger-ghost se-form-del', text:'Delete season', onclick:async function(){
-          if(!(await askDelete('season plan', s.name || 'Season', 'Your sessions, lineups and pre-games stay — only the plan goes.'))) return;
+          if(!(await askDelete('season calendar', s.name || 'Season', 'Your sessions, lineups and pre-games stay — only the calendar goes.'))) return;
           const key = SE_PREFIX + s.id, raw = hufcStore.getItem(key);
           try{ hufcStore.removeItem(key); noteDeleted(key); }catch(e){}
           close(); clubSyncSoon();
@@ -17738,7 +17758,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         }}),
         h('span', {class:'se-sp'}),
         h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}),
-        h('button', {type:'button', class:'btn btn-primary', text:isNew ? 'Create season plan' : 'Save', onclick:function(){
+        h('button', {type:'button', class:'btn btn-primary', text:isNew ? 'Create season calendar' : 'Save', onclick:function(){
           const a = st.value, b = en.value;
           if(!seDate(a) || !seDate(b)){ msg.textContent = 'Pick the dates the season starts and ends.'; return; }
           if(b < a){ msg.textContent = 'The season has to end after it starts.'; return; }
@@ -17747,7 +17767,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           o.name = clean(name.value) || g + ' season'; o.start = a; o.end = b; o.train = train; o.match = match; o.colors = {train:cols.train, match:cols.match};
           seSave(o); close();
           seCur = o.id; seScrollTo = null; seRender(true);
-          if(isNew) showToast('Season plan ready · tap + Session on a training night to plan it');
+          if(isNew) showToast('Season calendar ready · tap + Session on a training night to plan it');
         }})
       ];
     });
@@ -17816,7 +17836,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const can = seCanMake(g);
     return h('div', {class:'se-empty'},
       h('div', {class:'se-empty-ico', html:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M7 13.5h3M14 13.5h3M7 17h3"/></svg>'}),
-      h('h4', {text:can ? 'Plan the ' + g + ' season week by week' : 'No ' + g + ' season plan yet'}),
+      h('h4', {text:can ? 'Plan the ' + g + ' season week by week' : 'No ' + g + ' season calendar yet'}),
       h('p', {text:can ? 'Set the season’s dates, training nights and match day. Every week then shows its sessions, lineups, pre-games and match videos, and you can plan themes in blocks.'
         : 'When the ' + g + ' coach plans their season, it shows here.'}),
       can ? h('button', {type:'button', class:'btn btn-primary btn-big', text:'Set up the ' + g + ' season', onclick:function(){ seSetup(null); }}) : null);
@@ -17832,7 +17852,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       box.hidden = !(g && v === 'mine' && seCanMake(g));
       if(!box.hidden) box.appendChild(h('div', {class:'hw-prompt'},
         h('span', {class:'hw-prompt-t', text:'Plan the ' + g + ' season week by week — training nights, match days and themes.'}),
-        h('button', {type:'button', class:'btn btn-small btn-primary', text:'Set up season plan', onclick:function(){ seasonOpen(g); }})));
+        h('button', {type:'button', class:'btn btn-small btn-primary', text:'Set up season calendar', onclick:function(){ seasonOpen(g); }})));
       return;
     }
     const s = x.s, today = seToday(), weeks = seWeeks(s);
