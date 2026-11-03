@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261103131233">
+<meta name="hufc-build" content="20261103131531">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3589,7 +3589,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 1:12pm</p>
+  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 1:15pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -6358,6 +6358,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const base = defaultState();
     if(!s || typeof s !== 'object') return base;
     s.meta = Object.assign(base.meta, s.meta || {});
+    s.meta.coach = coachFix(s.meta.coach);
     s.focus = Object.assign(base.focus, s.focus || {});
     if(!Array.isArray(s.sections)) s.sections = base.sections;
     /* the run-sheet is standard: plans that lost it automatically (v6) get it back; only a coach's
@@ -10097,7 +10098,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const LU_COMPS = ['NPL', 'Cup', 'Friendly', 'Pre-season', 'Tournament', 'Trial'];
   /* lists the session plan uses too, so they are functions (ready before this part of the script has run) */
   /* the coaches to pick from: the club's coaches, first and last names only (you first) */
-  const CLUB_COACHES = ['David Ambelidis', 'Kristian Popovic', 'Mauricio Novack', 'Sai Gottipati', 'Sam Nockles'];
+  const CLUB_COACHES = ['David Ambelidis', 'Kristian Popovic', 'Mauricio Novak', 'Sai Gottipati', 'Sam Nockles'];
+  /* names the club once had spelt wrong, put right in plans saved before the fix */
+  function coachFix(v){ return typeof v === 'string' ? v.replace(/\bNovack\b/g, 'Novak') : v; }
   function coachNames(){
     const out = [], full = function(n){ return /^[A-Za-z\u00C0-\u024F'’.-]+(\s+[A-Za-z\u00C0-\u024F'’.-]+)+$/.test(n); };
     /* the same coach spelt a little differently (Novack / Novak, a capital, an accent, a middle initial) only shows once — the club's spelling wins */
@@ -13777,7 +13780,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function initials(n){ return String(n || '').split(/\s+/).filter(Boolean).map(function(w){ return w.charAt(0).toUpperCase(); }).join('').slice(0, 3); }
   /* home cards: "U18 – David Ambelidis"; the plan's own header: just the coach's name */
   function ownerText(x, short, nameOnly){
-    const g = nameOnly ? '' : groupOf(x), n = coachOf(x), cs = collabNames(x);
+    const g = nameOnly ? '' : groupOf(x), n = coachFix(coachOf(x)), cs = collabNames(x).map(coachFix);
     /* collaborators by name only: "+ Kristian Popovic", or "+ SN, KP" when short (their age groups show in the Collaborators window) */
     const withs = cs.length ? ' + ' + (short || cs.length > 1 ? cs.map(initials).join(', ') : cs[0]) : '';
     return [g || '', n ? (short ? initials(n) : n) + withs : ''].filter(Boolean).join(' – ');
@@ -14846,9 +14849,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.68', d:'3 Nov 2026', t:'Mauricio Novak', n:['Mauricio Novak’s name is spelt right in the Head coach/s list and on plans that were saved with “Novack”']},
     {v:'3.67', d:'3 Nov 2026', t:'Seniors', n:['A Seniors team, beside U23: its own folder on the Home page, in My teams, the Coaches window, the Season calendar and the stats']},
     {v:'3.66', d:'3 Nov 2026', t:'Season calendar', n:['The Season plan is now called the Season calendar — on the Home page, its own page and in How to use']},
-    {v:'3.65', d:'3 Nov 2026', t:'One of each coach', n:['Head coach/s list: a coach spelt slightly differently in two places (e.g. Novack and Novak) shows once, with the club’s spelling']},
+    {v:'3.65', d:'3 Nov 2026', t:'One of each coach', n:['Head coach/s list: a coach spelt slightly differently in two places (e.g. Novak typed as Novack) shows once, with the club’s spelling']},
     {v:'3.64', d:'3 Nov 2026', t:'Sort by last name', n:['Game time & player stats (all three tabs): sort By last name — players are listed by surname and show as “Rossi, Sam”', 'By name is now By first name']},
     {v:'3.63', d:'3 Nov 2026', t:'Attendance headings', n:['Training attendance: the columns are now Sessions (e.g. 3 / 4) and Last session']},
     {v:'3.62', d:'3 Nov 2026', t:'Training attendance report', n:['Game time & player stats has a new Training attendance tab: for each player, the sessions they came to out of the sessions where attendance was taken, their %, when they last came, how many they’ve missed in a row, and whether they’re injured or unavailable', 'Sort by lowest attendance or missed most in a row to see who’s dropped off']},
@@ -14866,9 +14870,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     {v:'3.50', d:'2 Nov 2026', t:'Half pitch to scale', n:['The half pitch (sessions and pre-games) is the full pitch zoomed in on one end: the same real shapes, just bigger — the box is much wider and deeper, the 6-yard box, D and spot are in proportion, and the halfway line and centre circle sit near the top', 'PowerPoint and PDF exports draw it the same way']},
     {v:'3.49', d:'2 Nov 2026', t:'Times every 5 minutes', n:['Start time, arrival time and kick-off lists go up in 5 minutes (was 15) — 3:05pm, 3:10pm, …']},
     {v:'3.48', d:'2 Nov 2026', t:'Collaborators fix', n:['A coach added as a collaborator while they have the session open can change it straight away (it unlocks on their screen, with the latest version) — no need to go back to Home first', 'Collaborators are for sessions only (not pre-games)']},
-    {v:'3.47', d:'2 Nov 2026', t:'Collaborators’ teams, red', n:['Collaborators: each coach’s age group shows beside their name when you pick them, and on the plan’s coach line, e.g. “Mauricio Novack + Sam Nockles (U14)”', 'Red is one of the colours for training days, match days, a single day and theme blocks']},
+    {v:'3.47', d:'2 Nov 2026', t:'Collaborators’ teams, red', n:['Collaborators: each coach’s age group shows beside their name when you pick them, and on the plan’s coach line, e.g. “Mauricio Novak + Sam Nockles (U14)”', 'Red is one of the colours for training days, match days, a single day and theme blocks']},
     {v:'3.46', d:'2 Nov 2026', t:'Remove games and training', n:['Season plan: the ✕ on a game or training takes it off the plan completely (Undo straight after) — the week’s ⋯ menu puts back anything removed', 'The ⋯ on a day: give just that day its own colour, or change the colour of every training or match day']},
-    {v:'3.45', d:'2 Nov 2026', t:'Collaborators', n:['Collaborators (top bar of a session or pre-game): tick other club coaches and they can change it too, on any device — it shows in their own folder', 'It stays yours: only you (and the club admin) can delete it or change who’s on it; take a coach off and their copy goes back to yours', 'The coach line shows who’s on it, e.g. “Mauricio Novack + Sam Nockles”', 'Season plan: choose the colour of training days and match days in Season settings', 'Every scroll bar is the same rounded yellow bubble (some were flat yellow or grey)']},
+    {v:'3.45', d:'2 Nov 2026', t:'Collaborators', n:['Collaborators (top bar of a session or pre-game): tick other club coaches and they can change it too, on any device — it shows in their own folder', 'It stays yours: only you (and the club admin) can delete it or change who’s on it; take a coach off and their copy goes back to yours', 'The coach line shows who’s on it, e.g. “Mauricio Novak + Sam Nockles”', 'Season plan: choose the colour of training days and match days in Season settings', 'Every scroll bar is the same rounded yellow bubble (some were flat yellow or grey)']},
     {v:'3.44', d:'2 Nov 2026', t:'Season plan page, breaks, smoother', n:['The Season plan is its own page, like a session or lineup — Home at the top, the club header, and the yellow scroll pill', 'Each week’s ⋯ menu: take a week (or several) off for school holidays or a break, or remove the game or the training that week — removed days shrink to one line with Back on', 'Smoother everywhere: the Export menu, drawing-tool menus, the lineup player picker, ⋯ menus and the clip-making overlay fade away instead of vanishing; Settings tabs slide in; older iPhones and iPads fade between pages', 'The home page’s This week strip is just the week (open the plan from Season plan)']},
     {v:'3.43', d:'29 Oct 2026', t:'Season plan', n:['New Season plan (home page): the season week by week for each team — training nights and match days, each showing its session, lineup, pre-game and match video', 'Anything with a date turns up on its day by itself; + Session, + Lineup, + Pre-game and + Match video start one already dated (a lineup also gets the opponent)', 'Plan themes in blocks (e.g. 4 weeks of pressing) — new sessions in those weeks start with that theme — and add a focus for each week', 'Call a day off, switch it, or add an extra training or game from the ⋯ menu', 'The home page shows This week for your team; the club sees each team’s plan, view-only', 'Theme blocks start with your six principles — Possession, Progression, Penetration, Pressure, Prevention, Protection — each with its own colour and aim']},
     {v:'3.42', d:'29 Oct 2026', t:'Cleaner home page', n:['The home page keeps just your folders — the teams you coach are in Settings → My teams, and signing in and syncing are in Settings → Account', 'The Settings button shows a small badge when a coach is waiting for your approval or syncing needs a look', 'Esc closes Settings']},
@@ -15465,6 +15469,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function pgNormalize(s){
     const base = {meta:{title:'', opponent:'', date:'', time:'', venue:'', squad:'', coach:'', players:''}, focus:{ours:'', theirs:'', theme:'', phase:'', objectives:''}};
     s.meta = Object.assign(base.meta, s.meta || {});
+    s.meta.coach = coachFix(s.meta.coach);
     s.focus = Object.assign(base.focus, s.focus || {});
     s.runsheetRemoved = true;
     if(!Array.isArray(s.sections)) s.sections = [];
