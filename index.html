@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261103125836">
+<meta name="hufc-build" content="20261103130250">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3588,7 +3588,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 12:58pm</p>
+  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 1:02pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11190,6 +11190,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* 33% or less: red · up to 66%: yellow · more: green */
   function gtBand(pct){ return pct <= 33 ? 'gt-red' : (pct <= 66 ? 'gt-amber' : 'gt-green'); }
   function gtKey(name){ return clean(name).toLowerCase().replace(/\s+/g, ' '); }
+  /* sorting by last name: "Sam Rossi" sorts under R (then by first name), and shows as "Rossi, Sam" */
+  function gtLastFirst(name){ const w = clean(name).split(/\s+/).filter(Boolean); return w.length < 2 ? clean(name) : w[w.length - 1] + ', ' + w.slice(0, -1).join(' '); }
+  function gtNameCmp(sort){ return sort === 'last' ? function(a, b){ return gtLastFirst(a.name).localeCompare(gtLastFirst(b.name)); } : function(a, b){ return a.name.localeCompare(b.name); }; }
+  function gtShowName(name, sort){ return sort === 'last' ? gtLastFirst(name) : name; }
   /* each team (age-group folder) is counted on its own — players are never added up across teams */
   function gtTeam(L){ return groupOf(L) || ''; }
   function gtGroups(){
@@ -11260,9 +11264,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     document.getElementById('gtTitle').textContent = 'Game time & player stats' + (gtGroupNow ? ' · ' + gtGroupNow : '');
     gtModal.querySelectorAll('.gt-tab').forEach(function(b){ const on = b.dataset.tab === gtTab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
     const sortSel = document.getElementById('gtSort');
-    const sorts = stats ? [['goals', 'Top scorers'], ['assists', 'Most assists'], ['cards', 'Most cards'], ['name', 'By name'], ['num', 'By shirt number']]
-                : gtTab === 'train' ? [['low', 'Lowest attendance first'], ['high', 'Highest attendance first'], ['run', 'Missed most in a row'], ['name', 'By name'], ['num', 'By shirt number']]
-                        : [['low', 'Least time first'], ['high', 'Most time first'], ['name', 'By name'], ['num', 'By shirt number']];
+    const sorts = stats ? [['goals', 'Top scorers'], ['assists', 'Most assists'], ['cards', 'Most cards'], ['name', 'By first name'], ['last', 'By last name'], ['num', 'By shirt number']]
+                : gtTab === 'train' ? [['low', 'Lowest attendance first'], ['high', 'Highest attendance first'], ['run', 'Missed most in a row'], ['name', 'By first name'], ['last', 'By last name'], ['num', 'By shirt number']]
+                        : [['low', 'Least time first'], ['high', 'Most time first'], ['name', 'By first name'], ['last', 'By last name'], ['num', 'By shirt number']];
     if(sortSel.dataset.tab !== gtTab){
       sortSel.innerHTML = ''; sorts.forEach(function(o){ sortSel.appendChild(h('option', {value:o[0], text:o[1]})); });
       sortSel.dataset.tab = gtTab; sortSel.value = gtSortBy[gtTab];
@@ -11275,7 +11279,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     document.getElementById('gtLeaders').hidden = true;
     document.getElementById('gtNote').innerHTML = GT_NOTE_TIME;
     const sort = sortSel.value;
-    const byName = function(a, b){ return a.name.localeCompare(b.name); };
+    const byName = gtNameCmp(sort);
     res.rows.sort(sort === 'low' ? function(a, b){ return a.pct - b.pct || byName(a, b); } : sort === 'high' ? function(a, b){ return b.pct - a.pct || byName(a, b); }
       : sort === 'num' ? function(a, b){ return ((parseInt(a.num, 10) || 999) - (parseInt(b.num, 10) || 999)) || byName(a, b); } : byName);
     const n = res.games.length, mins = res.games.reduce(function(a, L){ return a + L.periods.length * L.length; }, 0);
@@ -11293,7 +11297,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const pct = Math.round(r.pct);
       tb.appendChild(h('tr', {class:gtBand(pct)},
         h('td', {class:'gt-num'}, h('span', {class:'gt-shirt', text:r.num || '·'})),
-        h('td', {class:'gt-name', text:r.name}),
+        h('td', {class:'gt-name', text:gtShowName(r.name, sort)}),
         h('td', {class:'gt-pos', text:r.pos || '–'}),
         h('td', {class:'gt-n', text:String(r.games)}),
         h('td', {class:'gt-n', text:String(r.starts)}),
@@ -11335,7 +11339,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         tile(gtIcon('r'), 'Most red cards', best(function(r){ return r.ev.r; }), 'red card'));
     }
     lead.hidden = !rows.length;
-    const byName = function(a, b){ return a.name.localeCompare(b.name); };
+    const byName = gtNameCmp(sort);
     const cards = function(r){ return r.ev.r * 3 + r.ev.y; };
     rows.sort(sort === 'goals' ? function(a, b){ return (b.ev.g - a.ev.g) || (b.ev.a - a.ev.a) || byName(a, b); }
       : sort === 'assists' ? function(a, b){ return (b.ev.a - a.ev.a) || (b.ev.g - a.ev.g) || byName(a, b); }
@@ -11359,7 +11363,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     rows.forEach(function(r){
       tb.appendChild(h('tr', null,
         h('td', {class:'gt-num'}, h('span', {class:'gt-shirt', text:r.num || '·'})),
-        h('td', {class:'gt-name', text:r.name}),
+        h('td', {class:'gt-name', text:gtShowName(r.name, sort)}),
         h('td', {class:'gt-pos', text:r.pos || '–'}),
         h('td', {class:'gt-n', text:String(r.games)}),
         cols.map(function(c){ const v = r.ev[c[0]]; return h('td', {class:'gt-ev gt-ev-' + c[0] + (v ? '' : ' zero'), text:String(v)}); }),
@@ -14825,6 +14829,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.64', d:'3 Nov 2026', t:'Sort by last name', n:['Game time & player stats (all three tabs): sort By last name — players are listed by surname and show as “Rossi, Sam”', 'By name is now By first name']},
     {v:'3.63', d:'3 Nov 2026', t:'Attendance headings', n:['Training attendance: the columns are now Sessions (e.g. 3 / 4) and Last session']},
     {v:'3.62', d:'3 Nov 2026', t:'Training attendance report', n:['Game time & player stats has a new Training attendance tab: for each player, the sessions they came to out of the sessions where attendance was taken, their %, when they last came, how many they’ve missed in a row, and whether they’re injured or unavailable', 'Sort by lowest attendance or missed most in a row to see who’s dropped off']},
     {v:'3.61', d:'3 Nov 2026', t:'No more “null”', n:['The word “null” no longer shows beside Take attendance (or anywhere else something is left out)']},
@@ -18189,7 +18194,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const avg = rows.length && n ? Math.round(rows.reduce(function(a, r){ return a + r.pct; }, 0) / rows.length) : 0;
     const first = n ? avFmt(res.sessions[0].day) : '', last = n ? avFmt(res.sessions[n - 1].day) : '';
     document.getElementById('gtSummary').textContent = n ? n + (n === 1 ? ' session' : ' sessions') + (n > 1 ? ' · ' + first + ' – ' + last : ' · ' + first) + ' · average ' + avg + '%' : '';
-    const byName = function(a, b){ return a.name.localeCompare(b.name); };
+    const byName = gtNameCmp(sort);
     rows.sort(sort === 'low' ? function(a, b){ return a.pct - b.pct || b.run - a.run || byName(a, b); }
       : sort === 'high' ? function(a, b){ return b.pct - a.pct || byName(a, b); }
       : sort === 'run' ? function(a, b){ return b.run - a.run || a.pct - b.pct || byName(a, b); }
@@ -18211,7 +18216,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const pct = Math.round(r.pct);
       tb.appendChild(h('tr', {class:gtBand(pct) + (r.out ? ' att-r-out' : '')},
         h('td', {class:'gt-num'}, h('span', {class:'gt-shirt', text:r.num || '·'})),
-        h('td', {class:'gt-name', text:r.name}),
+        h('td', {class:'gt-name', text:gtShowName(r.name, sort)}),
         h('td', {class:'gt-pos', text:r.pos || '–'}),
         h('td', {class:'gt-n', text:r.n + ' / ' + r.total}),
         h('td', {class:'gt-pct'}, h('span', {class:'gt-bar'}, h('span', {style:'width:' + Math.min(100, r.pct).toFixed(1) + '%'})), h('span', {class:'gt-val', text:pct + '%'})),
