@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261103073325">
+<meta name="hufc-build" content="20261103111454">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3578,7 +3578,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 7:33am</p>
+  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 11:14am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -4217,6 +4217,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   'use strict';
   /* where the planner keeps its plans on this device: the iPhone/iPad app (and the planner in a browser) keep them in the
      device's database, which holds far more (see the loader in the app); the Windows program keeps them as files; otherwise the browser's storage */
+  /* adding an empty part to the page (a part that's only there sometimes) adds nothing — never the word "null" */
+  [Element.prototype, DocumentFragment.prototype].forEach(function(P){
+    ['append', 'prepend'].forEach(function(m){ const f = P[m]; if(!f || f.__hufc) return;
+      const g = function(){ return f.apply(this, Array.prototype.filter.call(arguments, function(a){ return a != null && a !== false; })); };
+      g.__hufc = true; P[m] = g; });
+  });
   const hufcStore = window.__hufcStore || (function(){ try{ return window.localStorage; }catch(e){ return null; } })();
 
   /* Captured before anything is rendered, so "Save plan" can write a clean copy of this file. */
@@ -14805,6 +14811,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.61', d:'3 Nov 2026', t:'No more “null”', n:['The word “null” no longer shows beside Take attendance (or anywhere else something is left out)']},
     {v:'3.60', d:'3 Nov 2026', t:'How to use, and attendance', n:['Settings → How to use: a short guide to each part of the planner — sessions, lineups, pre-games, match video, stats and the season plan — each with a video that talks you through it (needs the internet to play)', 'Attendance (under a session’s Players box): tick who turned up — the Players box fills in with the number, and each player shows how many sessions they’ve made', 'Mark a player injured or unavailable, with a note and the day they’re back (in attendance or My squad) — it shows for every coach of that team until then', 'Lineups and pre-games warn you when someone who’s out is picked (a red or orange mark on the pitch, only for you), and a new lineup leaves them out']},
     {v:'3.59', d:'2 Nov 2026', t:'Collaborators by name', n:['The coach line on a session shows collaborators by name only, e.g. “David Ambelidis + Kristian Popovic” (no age group) — their teams still show in the Collaborators window', 'Clock times with half-minute practices can no longer show “:60”']},
     {v:'3.58', d:'2 Nov 2026', t:'Pause in Present, Face ball fixed', n:['Present to players: Pause an animation at any moment to explain — tap Pause, tap the pitch or press Space. While paused: Resume, step back or forward a step, or Stop', 'A yellow ring round the pitch shows it’s paused', 'Face ball: players now face the ball (they were facing away from it)', 'Season plan: the ⋯ menu on a day (colours etc.) no longer closes by itself when a sync comes in', 'Phones: Print is an icon in the top bar so everything fits (on the smallest iPhones use Export → Save as PDF)']},
