@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261104100632">
+<meta name="hufc-build" content="20261104102509">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1375,7 +1375,7 @@ html.view-home .lu-sheet{display:none !important;}
 .sq-c-tick input{width:18px; height:18px; accent-color:var(--black); cursor:pointer;}
 .sq-c-num{width:64px;}
 .sq-c-num input{background:var(--yellow) !important; border-radius:3px; text-align:center; font-weight:600;}
-.sq-c-pos{width:60px;}
+.sq-c-pos{width:110px;}   /* (room for more than one position, e.g. CB / RB) */
 .sq-c-pos input{text-transform:uppercase;}
 .sq-c-x{width:28px; text-align:center;}
 .sq-c-x .icon-btn{width:22px; height:22px; font-size:12px;}
@@ -2398,7 +2398,8 @@ html.tg-open, html.tg-open body{overflow:hidden;}
 .tg-add .set-input{height:32px;}
 .tg-add-name{width:220px;}
 .tg-add-num{width:56px;}
-.tg-add-pos{width:64px;}
+.tg-add-pos{width:200px; text-transform:uppercase;}
+.tg-add-pos::placeholder{text-transform:none;}
 @media screen and (max-width:640px){ .tg-add-name{width:100%;} .tg-add .tg-lbl{width:100%;} }
 .tg-empty{display:flex; flex-direction:column; gap:4px; padding:24px; text-align:center; color:var(--grey); border:1px dashed var(--line); border-radius:10px;}
 
@@ -2436,6 +2437,18 @@ html.tg-open, html.tg-open body{overflow:hidden;}
 .att-tg-in.att-tg-up{color:#1b7f3a !important;}
 .att-tg-in.att-tg-down{color:#c62828 !important;}
 @media print{ .tg-note-link{display:none !important;} }
+
+/* the Players list: number, the ✎ button, and the row for fixing a player */
+.tg-c-num{margin-left:6px; color:var(--muted); font-size:13px; font-weight:600;}
+.tg-edit{width:26px; height:26px; margin-left:4px; font-size:14px; opacity:.45; vertical-align:middle;}
+.tg-table tr:hover .tg-edit, .tg-edit:focus-visible{opacity:1;}
+.tg-table .tg-c-pos{width:auto; min-width:60px; white-space:nowrap;}
+.tg-edrow td{background:#fffbe8 !important;}
+.tg-ed{display:flex; flex-wrap:wrap; align-items:center; gap:6px;}
+.tg-ed .set-input{height:32px;}
+.tg-ed-name{width:220px;}
+@media (hover:none){ .tg-edit{opacity:.8;} }
+@media screen and (max-width:640px){ .tg-ed-name, .tg-add-pos{width:100%;} .tg-table .tg-c-pos{display:table-cell;} }
 
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
@@ -3742,7 +3755,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 10:06am</p>
+  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 10:25am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15065,6 +15078,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.77', d:'4 Nov 2026', t:'Squads: fix a player, positions, video', n:['Squads → Players: press ✎ beside a player to change their name, number or position (a coach for their own team; the admin and the TDs for any)', 'Positions have room for more than one (e.g. CB / RB / CDM) and always show in capitals — in Squads and in My squad', 'How to use → Squads & training groups now has a video']},
     {v:'3.76', d:'4 Nov 2026', t:'Coaches add players in Squads', n:['Squads → Players: every coach can add a player (name, number, position) to their own team’s squad — it goes straight into that team’s My squad, so it’s there for lineups, attendance and stats too', 'The club admin can add to any team, and Sai and Renato (technical directors) to any squad from U13 to U23 — on the club list every coach sees']},
     {v:'3.75', d:'4 Nov 2026', t:'Squads: its own page', n:['Squads opens as its own page, like the Season calendar — Home button at the top, the club header, and the Players / Training groups tabs', 'Changing the day keeps the group you were looking at, and typing a date only changes the day once the whole date is in', 'From a session’s “+2 from U16” note it opens on that day, and Back takes you to the session']},
     {v:'3.74', d:'4 Nov 2026', t:'Squads: full screen', n:['The Squads window fills the screen; on a computer each group scrolls on its own', 'Moving a player no longer makes the window flash or jump back to the top']},
@@ -15413,7 +15427,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const GUIDE_WEB = 'https://4s45d77rv5dkambo.github.io/HUFC-Season-Planner/guide/';
   const GUIDE_VIDEOS = {   /* id: {file, blob (the online planner's copy), len} */
     sessions:{file:'sessions.mp4', blob:'/_blob/d0a42424f9465df43b301e108c6a48e3', len:'1:27'}, lineups:{file:'lineups.mp4', blob:'/_blob/b3ba9ecfd9b8c2d35752794af650c48c', len:'0:58'}, pregames:{file:'pregames.mp4', blob:'/_blob/c01d321f5b8b889b7077b9976e734ff9', len:'1:09'},
-    video:{file:'video.mp4', blob:'/_blob/dc2478c900ad15ecda283665db492649', len:'1:04'}, stats:{file:'stats.mp4', blob:'/_blob/89bdc2a9022236ca3ec5de0739cf3d60', len:'0:41'}, season:{file:'season.mp4', blob:'/_blob/5499e1f08c372ab85b10465c9bd9e50c', len:'1:13'}
+    video:{file:'video.mp4', blob:'/_blob/dc2478c900ad15ecda283665db492649', len:'1:04'}, stats:{file:'stats.mp4', blob:'/_blob/89bdc2a9022236ca3ec5de0739cf3d60', len:'0:41'}, season:{file:'season.mp4', blob:'/_blob/5499e1f08c372ab85b10465c9bd9e50c', len:'1:13'}, squads:{file:'squads.mp4', blob:'/_blob/fa8ba621dcffa2ec4a7002d1a95b1fde', len:'1:38'}
   };
   const GUIDE = [
     {id:'basics', title:'The basics', ico:'🏠', open:'', lead:'Everything starts from the Home page.', steps:[
@@ -15491,7 +15505,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       'The match video’s own Stats tab has the tags from that game.'
     ]},
     {id:'squads', title:'Squads & training groups', ico:'👥', open:'homeSquadsBtn', openText:'Open Squads', lead:'Every team’s players in one place, and who trains with which group each day.', steps:[
-      'Home → Squads. Players: every player from each team’s saved squad (My squad), with a chip for each team. Add a player at the top — it goes into your team’s My squad. Usually trains with: a player who always trains with another group (e.g. a U15 with the U16s) goes there every day.',
+      'Home → Squads. Players: every player from each team’s saved squad (My squad), with a chip for each team. Add a player at the top — it goes into your team’s My squad. ✎ beside a player fixes their name, number or position. Usually trains with: a player who always trains with another group (e.g. a U15 with the U16s) goes there every day.',
       'Training groups: pick the day, then the squads training. Each squad has a column; players joining from another squad are at the top, with ↑ (training up) or ↓ (training down).',
       'Move a player for the day: drag them to another group, or tap them and pick the group — or Not training today. Undo puts them back.',
       'The club admin and the technical directors set the groups; every other coach sees them.',
@@ -18555,7 +18569,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     tgAll().filter(function(o){ return o.tg === 'club'; }).forEach(function(o){
       Object.keys(o.players || {}).forEach(function(k){
         const src = o.players[k], cur = m.players[k] || (m.players[k] = {});
-        ['name', 'squad', 'usual', 'pos', 'num'].forEach(function(f){
+        ['name', 'squad', 'usual', 'pos', 'num', 'fix'].forEach(function(f){
           if(!(f in src)) return;
           const at = +((src.at || {})[f] || o.savedAt || 0);
           if(!cur.__at) Object.defineProperty(cur, '__at', {value:{}, enumerable:false});
@@ -18576,7 +18590,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     });
     Object.keys(club.players || {}).forEach(function(k){
       const o = club.players[k], p = out.get(k);
-      if(p){ if(o.squad && tgRank(o.squad) !== -1) p.squad = o.squad; if(o.usual) p.usual = o.usual; }
+      if(p){ if(o.squad && tgRank(o.squad) !== -1) p.squad = o.squad; if(o.usual) p.usual = o.usual;
+        if(o.fix){ if(clean(o.name)) p.name = clean(o.name); if('num' in o) p.num = clean(o.num); if('pos' in o) p.pos = clean(o.pos); } }
       else if(o.name && o.squad) out.set(k, {key:k, name:o.name, num:o.num || '', pos:o.pos || '', squad:o.squad, usual:o.usual || '', av:null, added:true});
     });
     return Array.from(out.values());
@@ -18590,6 +18605,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     tgWrite(TG_PRE + id, c);
   }
 
+  /* positions are always capitals ("cb/rb" → "CB/RB"), keeping the cursor where it was */
+  function tgCaps(inp){ const a = inp.selectionStart, b = inp.selectionEnd; inp.value = inp.value.toUpperCase(); try{ inp.setSelectionRange(a, b); }catch(e){} }
+  function tgPos(v){ return clean(v).toUpperCase().replace(/\s*([\/,])\s*/g, ' $1 ').replace(/\s+/g, ' ').trim(); }
   /* ---- one day's groups ---- */
   function tgDefaultTeams(){ return AGE_GROUPS.filter(function(g){ return g !== 'Seniors'; }); }
   /* the day's groups: the newest copy anyone saved for that day */
@@ -18759,7 +18777,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       title:edit ? 'Move ' + p.name : p.name},
       h('span', {class:'tg-num', text:p.num || ''}),
       h('span', {class:'tg-name'}, h('span', {class:'tg-nm', text:gtShowName(p.name)}),
-        h('span', {class:'tg-meta'}, p.pos ? h('span', {class:'tg-pos', text:p.pos}) : '',
+        h('span', {class:'tg-meta'}, p.pos ? h('span', {class:'tg-pos', text:p.pos.toUpperCase()}) : '',
           dir ? h('span', {class:'tg-tag tg-tag-' + dir, title:p.squad + ' player training ' + dir, text:(dir === 'up' ? '↑ ' : '↓ ') + p.squad}) : g === TG_OFF ? h('span', {class:'tg-tag', text:p.squad}) : '',
           p.usual && p.usual !== p.squad && g === p.usual ? h('span', {class:'tg-usual', title:'Usually trains with ' + p.usual, text:'weekly'}) : '')),
       p.av ? h('span', {class:'av-chip ' + AV_ST[p.av.st].cls, title:avText(p.av, true), text:p.av.st === 'inj' ? '+' : '✕'}) : '');
@@ -18813,6 +18831,45 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!onTop) tgClose();
   });
 
+  /* ---- fixing a player: name, number, position ---- */
+  let tgEditing = '';
+  function tgEditRow(p){
+    const nm = h('input', {type:'text', class:'set-input tg-ed-name', value:p.name, 'aria-label':'Name', oninput:function(){ try{ luCapName(this); }catch(e){} }});
+    const nu = h('input', {type:'text', class:'set-input tg-add-num', value:p.num || '', placeholder:'No.', 'aria-label':'Shirt number', inputmode:'numeric', maxlength:'3'});
+    const po = h('input', {type:'text', class:'set-input tg-add-pos', value:(p.pos || '').toUpperCase(), placeholder:'Position(s) e.g. CB / RB', 'aria-label':'Position(s)', maxlength:'30', oninput:function(){ tgCaps(this); }});
+    const save = function(){
+      const n = clean(nm.value).replace(/\s+/g, ' '); if(!n){ nm.focus(); return; }
+      const k = gtKey(n);
+      if(k !== p.key && tgPlayers().some(function(x){ return x.key === k; })){ showToast(n + ' is already on the list'); return; }
+      tgSavePlayer(p, n, clean(nu.value), tgPos(po.value));
+      tgEditing = ''; tgRender(); showToast('Saved ' + n);
+    };
+    [nm, nu, po].forEach(function(i){ i.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); save(); } if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); tgEditing = ''; tgRender(); } }); });
+    return h('tr', {class:'tg-edrow'}, h('td', {colspan:'5'}, h('div', {class:'tg-ed'},
+      h('span', {class:'tg-lbl', text:'Change player'}), nm, nu, po,
+      h('button', {type:'button', class:'btn btn-small', text:'Cancel', onclick:function(){ tgEditing = ''; tgRender(); }}),
+      h('button', {type:'button', class:'btn btn-small btn-primary', text:'Save', onclick:save}))));
+  }
+  /* a coach's own team: fixed in its My squad (the list lineups, attendance and stats use), keeping their status.
+     Otherwise (a TD or the admin, or a player on the club list): a correction on the club list, which every coach's Squads page shows */
+  function tgSavePlayer(p, name, num, pos){
+    const td = !!(CLOUD && CLOUD.isTD && CLOUD.isTD()), nk = gtKey(name);
+    const sq = sqFor(p.squad);
+    const inSquad = sq && sq.players.some(function(r){ return gtKey(r.name) === p.key; });
+    if(isMine(p.squad) && !td && inSquad){
+      const players = sq.players.map(function(r){ return gtKey(r.name) === p.key ? {name:name, num:num, pos:pos} : r; });
+      const out = sqStore(p.squad, players);
+      if(out && out.avail && out.avail[p.key] && nk !== p.key){
+        out.avail[nk] = out.avail[p.key]; delete out.avail[p.key];
+        try{ hufcStore.setItem(SQ_PREFIX + out.id, JSON.stringify(out)); }catch(e){}
+      }
+      /* the club list's settings for them (usually trains with) follow the new name */
+      if(nk !== p.key){ const c = tgClub().players[p.key]; if(c && c.usual) tgSetPlayer(nk, {name:name, usual:c.usual}); }
+      return;
+    }
+    if(p.added) tgSetPlayer(p.key, {name:name, num:num, pos:pos});
+    else tgSetPlayer(p.key, {name:name, num:num, pos:pos, fix:1});
+  }
   /* ---- Players: every team's players, their squad and who they usually train with ---- */
   function tgRenderClub(body, edit){
     const all = tgPlayers();
@@ -18828,7 +18885,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const nameIn = h('input', {type:'text', class:'set-input tg-add-name', placeholder:'New player’s name', 'aria-label':'New player’s name', autocomplete:'off',
       oninput:function(){ try{ luCapName(this); }catch(e){} }, onkeydown:function(e){ if(e.key === 'Enter'){ e.preventDefault(); addBtn.click(); } }});
     const numIn = h('input', {type:'text', class:'set-input tg-add-num', placeholder:'No.', 'aria-label':'Shirt number', inputmode:'numeric', maxlength:'3'});
-    const posIn = h('input', {type:'text', class:'set-input tg-add-pos', placeholder:'Pos', 'aria-label':'Position (e.g. CB)', maxlength:'4', oninput:function(){ this.value = this.value.toUpperCase(); }});
+    const posIn = h('input', {type:'text', class:'set-input tg-add-pos', placeholder:'Position(s) e.g. CB / RB', 'aria-label':'Position(s), e.g. CB / RB', maxlength:'30', oninput:function(){ tgCaps(this); }});
     const sqIn = h('select', {class:'gt-select', 'aria-label':'Their squad'}, addTeams.map(function(g){ return h('option', {value:g, text:g, selected:addDefault === g}); }));
     const addBtn = h('button', {type:'button', class:'btn btn-small btn-primary', text:'+ Add player', onclick:function(){
       const n = clean(nameIn.value).replace(/\s+/g, ' '); if(!n){ nameIn.focus(); return; }
@@ -18841,8 +18898,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(isMine(team) && !td){
         /* into the team's saved squad (My squad): the same list its lineups, attendance and stats use */
         const sq = sqFor(team);
-        sqStore(team, (sq ? sq.players : []).concat([{name:n, num:clean(numIn.value), pos:clean(posIn.value)}]));
-      } else tgSetPlayer(k, {name:n, squad:team, pos:clean(posIn.value), num:clean(numIn.value)});   /* (the admin / a TD adding to a team they don't coach: on the club list) */
+        sqStore(team, (sq ? sq.players : []).concat([{name:n, num:clean(numIn.value), pos:tgPos(posIn.value)}]));
+      } else tgSetPlayer(k, {name:n, squad:team, pos:tgPos(posIn.value), num:clean(numIn.value)});   /* (the admin / a TD adding to a team they don't coach: on the club list) */
       tgRender(); showToast(n + ' added to ' + team);
       const ni = tgPage.querySelector('.tg-add-name'); if(ni) ni.focus();
     }});
@@ -18866,9 +18923,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         AGE_GROUPS.map(function(g){ return h('option', {value:g, text:g, selected:p.squad === g}); }));
       const usSel = h('select', {class:'tg-cell-sel' + (p.usual && p.usual !== p.squad ? ' tg-sel-up' : ''), 'aria-label':'Who ' + p.name + ' usually trains with', disabled:!edit, onchange:function(){ const v = this.value; tgSetPlayer(p.key, {usual:v === p.squad ? '' : v, name:p.name}); tgRender(); showToast(p.name + (v === p.squad ? ' trains with their own squad' : ' usually trains with ' + v)); }},
         AGE_GROUPS.map(function(g){ return h('option', {value:g, text:g === p.squad ? g + ' (own squad)' : g, selected:(p.usual || p.squad) === g}); }));
+      /* who can fix a player's name, number or position: their team's coaches, the admin and the TDs */
+      const canFix = edit || isMine(p.squad);
+      if(tgEditing === p.key){ tb.append(tgEditRow(p)); return; }
       tb.append(h('tr', null,
-        h('td', {class:'tg-c-name'}, h('span', {class:'tg-nm', text:gtShowName(p.name)}), p.av ? h('span', {class:'av-chip ' + AV_ST[p.av.st].cls, title:avText(p.av, true), text:AV_ST[p.av.st].short}) : ''),
-        h('td', {class:'tg-c-pos', text:p.pos || '—'}),
+        h('td', {class:'tg-c-name'}, h('span', {class:'tg-nm', text:gtShowName(p.name)}), p.num ? h('span', {class:'tg-c-num', text:'#' + p.num}) : '', p.av ? h('span', {class:'av-chip ' + AV_ST[p.av.st].cls, title:avText(p.av, true), text:AV_ST[p.av.st].short}) : '',
+          canFix ? h('button', {type:'button', class:'icon-btn tg-edit', title:'Change ' + p.name + '’s name, number or position', 'aria-label':'Change ' + p.name, text:'✎', onclick:function(){ tgEditing = p.key; tgRender(); const i = tgPage.querySelector('.tg-ed-name'); if(i){ i.focus(); i.select(); } }}) : ''),
+        h('td', {class:'tg-c-pos', text:p.pos ? p.pos.toUpperCase() : '—'}),
         h('td', null, sqSel),
         h('td', null, usSel),
         h('td', {class:'tg-c-n', text:ups[p.key] ? String(ups[p.key]) : '—'})));
