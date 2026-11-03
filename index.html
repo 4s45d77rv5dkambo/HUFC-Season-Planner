@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261104093931">
+<meta name="hufc-build" content="20261104100632">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2394,7 +2394,12 @@ html.tg-open, html.tg-open body{overflow:hidden;}
 .tg-cell-sel{height:30px; border:1px solid var(--line); border-radius:6px; background:var(--white); font:inherit; font-size:14px; padding:0 6px; max-width:150px;}
 .tg-cell-sel.tg-sel-up{border-color:var(--yellow); background:#fffbe8; font-weight:600;}
 .tg-add{display:flex; flex-wrap:wrap; gap:6px; align-items:center;}
-.tg-add .set-input{width:220px; height:32px;}
+.tg-add{padding:8px 10px; border:1px dashed var(--line); border-radius:10px; background:var(--white);}
+.tg-add .set-input{height:32px;}
+.tg-add-name{width:220px;}
+.tg-add-num{width:56px;}
+.tg-add-pos{width:64px;}
+@media screen and (max-width:640px){ .tg-add-name{width:100%;} .tg-add .tg-lbl{width:100%;} }
 .tg-empty{display:flex; flex-direction:column; gap:4px; padding:24px; text-align:center; color:var(--grey); border:1px dashed var(--line); border-radius:10px;}
 
 @media screen and (max-width:640px){
@@ -3737,7 +3742,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 9:39am</p>
+  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 10:06am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15060,6 +15065,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.76', d:'4 Nov 2026', t:'Coaches add players in Squads', n:['Squads → Players: every coach can add a player (name, number, position) to their own team’s squad — it goes straight into that team’s My squad, so it’s there for lineups, attendance and stats too', 'The club admin can add to any team, and Sai and Renato (technical directors) to any squad from U13 to U23 — on the club list every coach sees']},
     {v:'3.75', d:'4 Nov 2026', t:'Squads: its own page', n:['Squads opens as its own page, like the Season calendar — Home button at the top, the club header, and the Players / Training groups tabs', 'Changing the day keeps the group you were looking at, and typing a date only changes the day once the whole date is in', 'From a session’s “+2 from U16” note it opens on that day, and Back takes you to the session']},
     {v:'3.74', d:'4 Nov 2026', t:'Squads: full screen', n:['The Squads window fills the screen; on a computer each group scrolls on its own', 'Moving a player no longer makes the window flash or jump back to the top']},
     {v:'3.73', d:'4 Nov 2026', t:'Up in green, down in red', n:['Training groups: players training up are in green, players training down in red — on the groups, the tags, the counts and Attendance']},
@@ -15485,7 +15491,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       'The match video’s own Stats tab has the tags from that game.'
     ]},
     {id:'squads', title:'Squads & training groups', ico:'👥', open:'homeSquadsBtn', openText:'Open Squads', lead:'Every team’s players in one place, and who trains with which group each day.', steps:[
-      'Home → Squads. Players: every player from each team’s saved squad (My squad), with a chip for each team. Usually trains with: a player who always trains with another group (e.g. a U15 with the U16s) goes there every day.',
+      'Home → Squads. Players: every player from each team’s saved squad (My squad), with a chip for each team. Add a player at the top — it goes into your team’s My squad. Usually trains with: a player who always trains with another group (e.g. a U15 with the U16s) goes there every day.',
       'Training groups: pick the day, then the squads training. Each squad has a column; players joining from another squad are at the top, with ↑ (training up) or ↓ (training down).',
       'Move a player for the day: drag them to another group, or tap them and pick the group — or Not training today. Undo puts them back.',
       'The club admin and the technical directors set the groups; every other coach sees them.',
@@ -18549,7 +18555,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     tgAll().filter(function(o){ return o.tg === 'club'; }).forEach(function(o){
       Object.keys(o.players || {}).forEach(function(k){
         const src = o.players[k], cur = m.players[k] || (m.players[k] = {});
-        ['name', 'squad', 'usual', 'pos'].forEach(function(f){
+        ['name', 'squad', 'usual', 'pos', 'num'].forEach(function(f){
           if(!(f in src)) return;
           const at = +((src.at || {})[f] || o.savedAt || 0);
           if(!cur.__at) Object.defineProperty(cur, '__at', {value:{}, enumerable:false});
@@ -18571,7 +18577,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     Object.keys(club.players || {}).forEach(function(k){
       const o = club.players[k], p = out.get(k);
       if(p){ if(o.squad && tgRank(o.squad) !== -1) p.squad = o.squad; if(o.usual) p.usual = o.usual; }
-      else if(o.name && o.squad) out.set(k, {key:k, name:o.name, num:'', pos:o.pos || '', squad:o.squad, usual:o.usual || '', av:null, added:true});
+      else if(o.name && o.squad) out.set(k, {key:k, name:o.name, num:o.num || '', pos:o.pos || '', squad:o.squad, usual:o.usual || '', av:null, added:true});
     });
     return Array.from(out.values());
   }
@@ -18641,7 +18647,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('button', {type:'button', class:'btn btn-home', id:'tgClose', title:tgFromHome ? 'Home: your sessions, lineups and saved practices' : 'Back to the session', onclick:tgClose},
         h('span', {'aria-hidden':'true', text:tgFromHome ? '⌂' : '‹'}), h('span', {class:'btn-label', text:tgFromHome ? ' Home' : ' Back'})),
       h('div', {class:'status se-status', role:'status'}, h('span', {class:'dot'}),
-        h('span', {class:'status-text', text:edit ? 'Changes save automatically' : 'View only · set by the club admin and the technical directors'}))));
+        h('span', {class:'status-text', text:edit ? 'Changes save automatically' : 'Training groups are set by the club admin and the technical directors' + (AGE_GROUPS.some(function(g){ return isMine(g); }) ? ' · you can add players to your own squad' : '')}))));
     const crest = (document.querySelector('.header .crest') || {}).src || '';
     const tab = function(id, t){ return h('button', {type:'button', class:'gt-tab' + (tgTab === id ? ' on' : ''), role:'tab', 'aria-selected':String(tgTab === id), text:t, onclick:function(){ tgTab = id; tgRender(); tgPage.scrollTop = 0; }}); };
     const body = h('div', {class:'tg-body tg-body-' + tgTab});
@@ -18815,8 +18821,32 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const cnt = function(g){ return all.filter(function(p){ return !g || p.squad === g; }).length; };
     const chip = function(g, label){ const on = tgFilter === g; return h('button', {type:'button', class:'coach-g tg-sqchip' + (on ? ' on' : ''), 'aria-pressed':String(on), onclick:function(){ tgFilter = g; tgRender(); }}, label, h('span', {class:'tg-chip-n', text:String(cnt(g))})); };
     body.append(h('div', {class:'tg-teams', role:'group', 'aria-label':'Squad'}, chip('', 'Whole club'), AGE_GROUPS.map(function(g){ return chip(g, g); })));
-    const nameIn = h('input', {type:'text', class:'set-input', placeholder:'New player’s name', 'aria-label':'New player’s name'});
-    const sqIn = h('select', {class:'gt-select', 'aria-label':'Their squad'}, AGE_GROUPS.map(function(g){ return h('option', {value:g, text:g, selected:(tgFilter || 'U13') === g}); }));
+    /* adding a player: every coach, to their own team's squad (the admin and the TDs: any team) */
+    const isTd = !!(CLOUD && CLOUD.isTD && CLOUD.isTD());
+    const addTeams = isTd ? AGE_GROUPS.filter(function(g){ return g !== 'Seniors'; }) : edit ? AGE_GROUPS.slice() : AGE_GROUPS.filter(function(g){ return isMine(g); });   /* (a TD: every squad but the Seniors) */
+    const addDefault = addTeams.indexOf(tgFilter) !== -1 ? tgFilter : (addTeams.indexOf(primaryGroup()) !== -1 ? primaryGroup() : addTeams[0]);
+    const nameIn = h('input', {type:'text', class:'set-input tg-add-name', placeholder:'New player’s name', 'aria-label':'New player’s name', autocomplete:'off',
+      oninput:function(){ try{ luCapName(this); }catch(e){} }, onkeydown:function(e){ if(e.key === 'Enter'){ e.preventDefault(); addBtn.click(); } }});
+    const numIn = h('input', {type:'text', class:'set-input tg-add-num', placeholder:'No.', 'aria-label':'Shirt number', inputmode:'numeric', maxlength:'3'});
+    const posIn = h('input', {type:'text', class:'set-input tg-add-pos', placeholder:'Pos', 'aria-label':'Position (e.g. CB)', maxlength:'4', oninput:function(){ this.value = this.value.toUpperCase(); }});
+    const sqIn = h('select', {class:'gt-select', 'aria-label':'Their squad'}, addTeams.map(function(g){ return h('option', {value:g, text:g, selected:addDefault === g}); }));
+    const addBtn = h('button', {type:'button', class:'btn btn-small btn-primary', text:'+ Add player', onclick:function(){
+      const n = clean(nameIn.value).replace(/\s+/g, ' '); if(!n){ nameIn.focus(); return; }
+      const team = sqIn.value, k = gtKey(n);
+      const there = all.find(function(p){ return p.key === k; });
+      if(there){ showToast(n + ' is already in ' + there.squad); return; }
+      /* a coach adding to their own team: into its My squad. A TD (who has every squad) or the admin adding to a team they don't
+         coach: onto the club list, which every coach's Squads page shows (their own copy of another team's squad wouldn't be) */
+      const td = !!(CLOUD && CLOUD.isTD && CLOUD.isTD());
+      if(isMine(team) && !td){
+        /* into the team's saved squad (My squad): the same list its lineups, attendance and stats use */
+        const sq = sqFor(team);
+        sqStore(team, (sq ? sq.players : []).concat([{name:n, num:clean(numIn.value), pos:clean(posIn.value)}]));
+      } else tgSetPlayer(k, {name:n, squad:team, pos:clean(posIn.value), num:clean(numIn.value)});   /* (the admin / a TD adding to a team they don't coach: on the club list) */
+      tgRender(); showToast(n + ' added to ' + team);
+      const ni = tgPage.querySelector('.tg-add-name'); if(ni) ni.focus();
+    }});
+    if(addTeams.length) body.append(h('div', {class:'tg-add'}, h('span', {class:'tg-lbl', text:'Add a player'}), nameIn, numIn, posIn, sqIn, addBtn));
     body.append(h('div', {class:'tg-tools'},
       h('input', {type:'search', class:'set-input tg-search', placeholder:'Find a player', value:tgQuery, 'aria-label':'Find a player', oninput:function(){ tgQuery = this.value; const at = this.selectionStart; tgRender(); const s = tgPage.querySelector('.tg-search'); if(s){ s.focus(); try{ s.setSelectionRange(at, at); }catch(e){} } }}),
       h('span', {class:'tg-sum'}, h('span', {class:'tg-sum-i', text:(tgFilter ? cnt(tgFilter) + ' in ' + tgFilter : all.length + ' players') }), h('span', {class:'tg-sum-i tg-other', text:all.filter(function(p){ return p.usual && p.usual !== p.squad; }).length + ' train with another group'}))));
@@ -18846,11 +18876,6 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     body.append(h('div', {class:'gt-table-wrap'}, h('table', {class:'runsheet gt-table tg-table'},
       h('thead', null, h('tr', null, h('th', {text:'Player'}), h('th', {class:'tg-c-pos', text:'Pos'}), h('th', {text:'Squad'}), h('th', {text:'Usually trains with'}), h('th', {class:'tg-c-n', text:'Days moved'}))),
       tb)));
-    if(edit) body.append(h('div', {class:'tg-add'}, nameIn, sqIn, h('button', {type:'button', class:'btn btn-small btn-primary', text:'+ Add player', onclick:function(){
-      const n = clean(nameIn.value); if(!n){ nameIn.focus(); return; }
-      const k = gtKey(n); if(all.some(function(p){ return p.key === k; })){ showToast(n + ' is already on the list'); return; }
-      tgSetPlayer(k, {name:n, squad:sqIn.value}); tgRender(); showToast(n + ' added to ' + sqIn.value);
-    }})));
     body.append(h('p', {class:'gt-note tg-note', text:'Every player from each team’s saved squad (My squad). “Usually trains with” puts a player in that group every day — they can still be moved for a single day.'}));
   }
   /* the Home page button */
