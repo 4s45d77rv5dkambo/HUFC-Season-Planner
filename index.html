@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261103131531">
+<meta name="hufc-build" content="20261103200422">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -208,10 +208,12 @@ This typically indicates that your device does not have a healthy Internet conne
     invites.forEach(function(v, id){ if(!hit && ((e && id === e) || (n && norm(v.name) === n))) hit = Object.assign({id:id}, v); });
     return hit;
   }
-  async function invite(name, email, groups){
+  async function invite(name, email, groups, role){
     adminOnly();
     const id = inviteId(name, email); if(!id || id === 'name~') throw err('Type a name', 'bad');
-    await timed(FB.setDoc(FB.doc(fs, 'invites', id), {name:String(name || '').trim(), email:String(email || '').trim().toLowerCase(), groups:groups || [], at:Date.now(), by:me.email}));
+    const d = {name:String(name || '').trim(), email:String(email || '').trim().toLowerCase(), groups:groups || [], at:Date.now(), by:me.email};
+    if(role === 'td') d.role = 'td';
+    await timed(FB.setDoc(FB.doc(fs, 'invites', id), d));
     /* an email added for someone already on the roster by name: one entry, not two */
     const byName = inviteId(name, '');
     if(id !== byName && invites.has(byName)){ try{ await timed(FB.deleteDoc(FB.doc(fs, 'invites', byName))); }catch(e){} }
@@ -228,7 +230,9 @@ This typically indicates that your device does not have a healthy Internet conne
       const s = await timed(FB.getDoc(FB.doc(fs, 'invites', me.email.toLowerCase())));
       if(!s.exists()) return;
       const inv = s.data() || {};
-      await timed(FB.setDoc(FB.doc(fs, 'approved', me.uid), {email:me.email.toLowerCase(), name:inv.name || '', groups:inv.groups || [], at:Date.now(), by:'roster'}));
+      const ap = {email:me.email.toLowerCase(), name:inv.name || '', groups:inv.groups || [], at:Date.now(), by:'roster'};
+      if(inv.role === 'td'){ try{ await timed(FB.setDoc(FB.doc(fs, 'approved', me.uid), Object.assign({role:'td'}, ap))); }catch(e){ await timed(FB.setDoc(FB.doc(fs, 'approved', me.uid), ap)); } }
+      else await timed(FB.setDoc(FB.doc(fs, 'approved', me.uid), ap));
       if(inv.name){ try{ await setName(inv.name); }catch(e){} }
       try{ await timed(FB.setDoc(FB.doc(fs, 'users', me.uid), {groups:inv.groups || []}, {merge:true})); }catch(e){}   /* their teams are settled */
     }catch(e){ triedInvite = false; }
@@ -243,8 +247,13 @@ This typically indicates that your device does not have a healthy Internet conne
   /* the teams this coach may work in: what the admin confirmed (null: no limit — the admin, or not signed in / not approved yet) */
   function allowedGroups(){
     if(!me || me.admin || member !== true) return null;
-    return Array.isArray(mine && mine.groups) ? mine.groups.slice() : [];
+    const gs = Array.isArray(mine && mine.groups) ? mine.groups.slice() : [];
+    /* a technical director: every squad but the Seniors (plus anything else the admin gave them) — not an admin */
+    if(isTD()) TD_GROUPS.forEach(function(g){ if(gs.indexOf(g) === -1) gs.push(g); });
+    return gs;
   }
+  const TD_GROUPS = ['U13', 'U14', 'U15', 'U16', 'U18', 'U20', 'U23'];
+  function isTD(){ return !!(me && !me.admin && member === true && mine && mine.role === 'td'); }
   function startMember(){
     stopMember();
     memberKnown = new Promise(function(res){ memberRes = res; });
@@ -271,7 +280,7 @@ This typically indicates that your device does not have a healthy Internet conne
       memberUnsub = FB.onSnapshot(FB.doc(fs, 'approved', uid), {includeMetadataChanges:true}, function(snap){
         if(snap.metadata.fromCache && !snap.exists()) return;   /* wait for the real answer */
         const now = snap.exists();
-        const g = now ? JSON.stringify((snap.data() || {}).groups || []) : '';
+        const g = now ? JSON.stringify((snap.data() || {}).groups || []) + ((snap.data() || {}).role || '') : '';
         mine = now ? (snap.data() || {}) : null;
         if(now !== member){ member = now; startClub(now); changed(); }
         if(!now) useInvite();
@@ -290,13 +299,16 @@ This typically indicates that your device does not have a healthy Internet conne
       const inv = inviteFor(c);
       out.push({uid:uid, email:c.email || '', name:c.name || (inv && inv.name) || '', at:+c.at || 0, approved:!!ap,
         asked:Array.isArray(c.groups) ? c.groups.slice() : [], given:ap && Array.isArray(ap.groups) ? ap.groups.slice() : [],
-        roster:inv ? {name:inv.name || '', groups:Array.isArray(inv.groups) ? inv.groups.slice() : []} : null});
+        role:(ap && ap.role) || '',
+        roster:inv ? {name:inv.name || '', groups:Array.isArray(inv.groups) ? inv.groups.slice() : [], role:inv.role || ''} : null});
     });
     return out.sort(function(a, b){ return (a.approved - b.approved) || (b.at - a.at); });
   }
-  async function approve(uid, groups){
+  async function approve(uid, groups, role){
     adminOnly(); const c = coaches.get(uid) || {};
-    await timed(FB.setDoc(FB.doc(fs, 'approved', uid), {email:c.email || '', groups:groups || [], at:Date.now(), by:me.email}));
+    const d = {email:c.email || '', groups:groups || [], at:Date.now(), by:me.email};
+    if(role === 'td' || role === 'coach') d.role = role;   /* 'td' technical director: every squad but the Seniors; still not an admin */
+    await timed(FB.setDoc(FB.doc(fs, 'approved', uid), d));
     /* what they asked for is now settled */
     try{ await timed(FB.setDoc(FB.doc(fs, 'users', uid), {groups:groups || []}, {merge:true})); }catch(e){}
   }
@@ -312,7 +324,7 @@ This typically indicates that your device does not have a healthy Internet conne
     const used = new Set();
     coaches.forEach(function(c){ const inv = inviteFor(c); if(inv) used.add(inv.id); });
     const out = [];
-    invites.forEach(function(v, id){ if(!used.has(id)) out.push({id:id, name:v.name || '', email:v.email || '', groups:Array.isArray(v.groups) ? v.groups.slice() : []}); });
+    invites.forEach(function(v, id){ if(!used.has(id)) out.push({id:id, name:v.name || '', email:v.email || '', groups:Array.isArray(v.groups) ? v.groups.slice() : [], role:v.role || ''}); });
     return out.sort(function(a, b){ return a.name.localeCompare(b.name); });
   }
 
@@ -434,7 +446,7 @@ This typically indicates that your device does not have a healthy Internet conne
     member:function(){ return member; },
     name:function(){ if(!me) return ''; if(me.name != null) return me.name; const c = coaches.get(me.uid); return c && c.name || ''; },
     setName:setName, roster:rosterList, invite:invite, uninvite:uninvite, nameCoach:nameCoach,
-    allowedGroups:allowedGroups,
+    allowedGroups:allowedGroups, isTD:isTD, tdGroups:function(){ return TD_GROUPS.slice(); },
     decidedAt:function(){ return mine && +mine.at || 0; },   /* when the club admin last decided this coach's teams */
     coaches:coachList, approve:approve, revoke:revoke,
     /* everyone in the club library you could add as a collaborator */
@@ -2590,6 +2602,8 @@ html.pg-vid-open .toast{z-index:4100;}
 .grp-badge{display:inline-block; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; background:var(--black); color:var(--white); border-radius:4px; padding:1px 6px; margin-right:6px; vertical-align:2px;}
 .grp-badge.mine{background:var(--yellow); color:var(--black);}
 .admin-badge{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:12.5px; letter-spacing:.08em; text-transform:uppercase; background:var(--black); color:var(--yellow); border-radius:5px; padding:3px 8px;}
+.td-badge{background:var(--yellow); color:var(--black); margin-left:6px; vertical-align:1px;}
+.coach-g.coach-td{padding:0 12px;}
 .ro-bar{position:sticky; top:52px; z-index:55; background:#fff6c2; border-bottom:1px solid #e6d77a;}
 .ro-bar[hidden]{display:none;}
 .ro-inner{max-width:900px; margin:0 auto; padding:8px 16px; display:flex; align-items:center; gap:10px; font-size:14px;}
@@ -3589,7 +3603,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 1:15pm</p>
+  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 8:04pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -13947,6 +13961,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(n) writeLibrary(lib);
   }
 
+  /* the teams on the My folder button: three or more in a row read as a range ("U13–U23", a technical director's) */
+  function folderSub(ms){
+    const ix = ms.map(function(g){ return AGE_GROUPS.indexOf(g); }).sort(function(a, b){ return a - b; });
+    const run = ix.length > 2 && ix.every(function(n, i){ return !i || n === ix[i - 1] + 1; });
+    return run ? AGE_GROUPS[ix[0]] + '–' + AGE_GROUPS[ix[ix.length - 1]] : ms.join(' · ');
+  }
   /* ---------- the folder bar on the Home page ---------- */
   function renderFolderBar(){
     const bar = document.getElementById('folderBar'); if(!bar) return;
@@ -13956,7 +13976,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       return h('button', {type:'button', class:'folder-chip' + (v === val ? ' on' : '') + (extra || ''), 'aria-pressed':String(v === val), onclick:function(){ setSettings({view:val}); homeSel = []; renderHome(); }}, label);
     };
     const chips = h('div', {class:'folder-chips'},
-      ms.length ? chip('mine', h('span', null, '★ My folder ', h('span', {class:'fc-sub', text:ms.join(' · ')}))) : null,
+      ms.length ? chip('mine', h('span', null, '★ My folder ', h('span', {class:'fc-sub', text:folderSub(ms)}))) : null,
       chip('all', h('span', null, 'Club library')),
       h('span', {class:'folder-sep', 'aria-hidden':'true'}),
       AGE_GROUPS.map(function(g){ return chip(g, h('span', null, g), (isMine(g) ? ' is-mine' : '') + (g.length > 4 ? ' fc-wide' : '')); }));
@@ -14211,7 +14231,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       : waiting ? 'The club admin needs to approve you and confirm your age groups. Until then your work is saved on this device, and it syncs as soon as you’re approved.'
       : clubBusy ? 'Syncing now…' : cloudLast ? 'Up to date · last synced ' + clock() : 'Connecting…';
     box.appendChild(h('div', {class:'acct-menu', role:'menu'},
-      h('div', {class:'acct-who'}, h('span', {class:'acct-email', text:CLOUD.name() || u.email}), u.admin ? h('span', {class:'admin-badge', text:'Admin'}) : ''),
+      h('div', {class:'acct-who'}, h('span', {class:'acct-email', text:CLOUD.name() || u.email}), u.admin ? h('span', {class:'admin-badge', text:'Admin'}) : (CLOUD.isTD && CLOUD.isTD()) ? h('span', {class:'admin-badge td-badge', title:'Technical director: every squad but the Seniors', text:'TD'}) : ''),
       CLOUD.name() ? h('div', {class:'coach-mail', text:u.email}) : acctNameRow(),
       h('div', {class:'acct-note' + (cloudErr || waiting ? ' warn' : ''), text:note}),
       u.admin ? item(pend ? 'Coaches — ' + pend + ' waiting' : 'Coaches', coachesOpen, pend ? 'hot' : '') : '',
@@ -14391,6 +14411,22 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       welcomeOpen();
     });
   }
+  /* ---------- technical directors: every squad but the Seniors, and NOT admins ---------- */
+  const TD_SQUADS = ['U13', 'U14', 'U15', 'U16', 'U18', 'U20', 'U23'];
+  /* the club's technical directors, by name (Sai Gottipati, Renato) */
+  function tdByName(n){ n = String(n || '').trim().toLowerCase(); return /^sai(\s|$)/.test(n) && /gottipati|^sai$/.test(n) || /^renato(\s|$)/.test(n); }
+  /* on the admin's device, once: an approved Sai or Renato becomes TD (the admin can still change it in Coaches) */
+  function tdSetup(){
+    if(!CLOUD || !CLOUD.user() || !CLOUD.user().admin || !CLOUD.coaches) return;
+    const done = getSettings().tdDone || [];
+    CLOUD.coaches().forEach(function(c){
+      /* (c.role is 'coach' once the admin has decided otherwise in Coaches: left alone) */
+      if(!c.approved || c.role || !tdByName(c.name) || done.indexOf(c.uid) !== -1) return;
+      setSettings({tdDone:done.concat(c.uid)}); done.push(c.uid);
+      CLOUD.approve(c.uid, TD_SQUADS.slice(), 'td').then(function(){ showToast((c.name || c.email) + ' is now a technical director · every squad but the Seniors'); })
+        .catch(function(){ setSettings({tdDone:(getSettings().tdDone || []).filter(function(u){ return u !== c.uid; })}); });
+    });
+  }
   /* the admin's list of coaches: approve new ones, or take a coach out of the club library */
   const coachModal = document.getElementById('coachModal');
   let openRows = {};
@@ -14427,16 +14463,22 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(!secDone[sec]){ secDone[sec] = 1; list.appendChild(h('h4', {class:'coach-sec', text:sec})); }
       /* the teams to give them: start from what they asked for (or what they have, if they haven't asked) */
       let pick = (c.roster && c.roster.groups.length && (!c.approved || !c.given.length) ? c.roster.groups : c.asked.length ? c.asked : c.given).filter(function(g){ return AGE_GROUPS.indexOf(g) !== -1; });
+      /* technical director: every squad but the Seniors — not an admin (they still only change their own work) */
+      let td = c.role === 'td' || (!c.role &&  ((c.roster && c.roster.role === 'td') || tdByName(c.name)));
+      if(td && c.role !== 'td') pick = TD_SQUADS.slice();
       const changeAsked = c.approved && c.asked.length && !same(c.asked, c.given);
       const state = !c.approved ? 'Waiting since ' + new Date(c.at || Date.now()).toLocaleDateString(undefined, {day:'numeric', month:'short'}) + (c.asked.length ? ' · asked for ' + c.asked.join(' · ') : ' · hasn’t picked a team yet')
         : changeAsked ? 'Has ' + (c.given.join(' · ') || 'no teams') + ' · asked for ' + c.asked.join(' · ')
         : 'Approved · ' + (c.given.join(' · ') || 'no teams');
       const chips = h('div', {class:'coach-groups'});
       const main = h('button', {type:'button', class:'btn btn-small btn-primary'});
+      const tdBtn = h('button', {type:'button', class:'coach-g coach-td', title:'Technical director: every squad but the Seniors. Not an admin — they only change their own work',
+        onclick:function(){ td = !td; pick = td ? TD_SQUADS.slice() : (c.given.length && c.role !== 'td' ? c.given.slice() : []); paint(); }}, 'Technical director');
       const paint = function(){
         Array.prototype.forEach.call(chips.children, function(b){ const on = pick.indexOf(b.dataset.g) !== -1; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+        tdBtn.classList.toggle('on', td); tdBtn.setAttribute('aria-pressed', String(td));
         main.textContent = c.approved ? 'Save' : 'Approve';
-        main.disabled = !pick.length || (c.approved && same(pick, c.given) && !changeAsked);   /* (saving their teams as they are settles a request too) */
+        main.disabled = !pick.length || (c.approved && same(pick, c.given) && td === (c.role === 'td') && !changeAsked);   /* (saving their teams as they are settles a request too) */
         main.title = !pick.length ? 'Pick at least one age group' : '';
       };
       AGE_GROUPS.forEach(function(g){
@@ -14448,17 +14490,17 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         try{ await fn(); showToast(done); }catch(e){ showToast(e && e.code === 'offline' ? 'No internet — try again when you’re online' : 'That didn’t work — try again'); b.disabled = false; }
       };
       const who_ = c.name || c.email;
-      main.onclick = function(){ const gs = pick.slice(); act(main, function(){ return CLOUD.approve(c.uid, gs); }, who_ + (c.approved ? ' now has ' : ' is approved for ') + gs.join(' · ')); };
+      main.onclick = function(){ const gs = pick.slice(), role = td ? 'td' : 'coach'; act(main, function(){ return CLOUD.approve(c.uid, gs, role); }, who_ + (td ? ' is a technical director · ' + gs.join(' · ') : (c.approved ? ' now has ' : ' is approved for ') + gs.join(' · '))); };
       const rm = c.approved ? h('button', {type:'button', class:'btn btn-small', text:'Remove access'}) : '';
       /* a request for more (or other) teams: Decline keeps the teams they have and clears the request */
       const no = changeAsked ? h('button', {type:'button', class:'btn btn-small btn-danger-ghost', text:'Decline', title:'Keep ' + (c.given.join(' · ') || 'their teams') + ' and clear the request'}) : '';
-      if(no) no.onclick = function(){ act(no, function(){ return CLOUD.approve(c.uid, c.given.slice()); }, 'Declined · ' + (c.name || c.email) + ' stays on ' + (c.given.join(' · ') || 'no teams')); };
+      if(no) no.onclick = function(){ act(no, function(){ return CLOUD.approve(c.uid, c.given.slice(), c.role); }, 'Declined · ' + (c.name || c.email) + ' stays on ' + (c.given.join(' · ') || 'no teams')); };
       if(rm) rm.onclick = function(){ act(rm, function(){ return CLOUD.revoke(c.uid); }, who_ + ' can no longer see the club library'); };
       if(!isWaiting && !openRows[c.uid]){
         /* approved: one tidy line — Edit opens the teams */
         list.appendChild(h('div', {class:'coach-row compact'},
           h('div', {class:'coach-line'},
-            h('div', {class:'coach-top'}, h('span', {class:'coach-name', text:c.name || c.email || 'A coach'}), h('span', {class:'coach-mail', text:(c.given.join(' · ') || 'no teams') + (c.name ? ' · ' + c.email : '')})),
+            h('div', {class:'coach-top'}, h('span', {class:'coach-name'}, c.name || c.email || 'A coach', c.role === 'td' ? h('span', {class:'admin-badge td-badge', text:'TD'}) : ''), h('span', {class:'coach-mail', text:(c.role === 'td' ? 'Technical director · every squad but the Seniors' : (c.given.join(' · ') || 'no teams')) + (c.name ? ' · ' + c.email : '')})),
             h('button', {type:'button', class:'btn btn-small', text:'Edit', onclick:function(){ openRows[c.uid] = 1; renderCoaches(); }}))));
         return;
       }
@@ -14466,7 +14508,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('div', {class:'coach-top'}, h('span', {class:'coach-name', text:c.name || c.email || 'A coach'}), c.name ? h('span', {class:'coach-mail', text:c.email}) : '', h('span', {class:'coach-state', text:state})),
         !c.approved && c.roster ? h('span', {class:'coach-match', text:'On your roster: ' + (c.roster.name || c.name) + ' · ' + (c.roster.groups.join(' · ') || 'no teams') + ' — ticked for you'}) : '',
         !c.roster && !c.name && free.length ? whoIsThis(c) : '',
-        chips,
+        chips, h('div', {class:'coach-groups'}, tdBtn),
         h('div', {class:'coach-acts'}, c.approved && !isWaiting ? h('button', {type:'button', class:'btn btn-small', text:'Close', onclick:function(){ delete openRows[c.uid]; renderCoaches(); }}) : '', rm, no, main)));
       paint();
     });
@@ -14481,7 +14523,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       rm.onclick = async function(){ rm.disabled = true; try{ await CLOUD.uninvite(r.id); }catch(e){ rm.disabled = false; showToast('No internet — try again when you’re online'); } };
       box.appendChild(h('div', {class:'coach-row'},
         h('div', {class:'coach-top'}, h('span', {class:'coach-name', text:r.name || r.email}),
-          h('span', {class:'coach-mail', text:(r.groups.join(' · ') || 'no teams') + ' · ' + (r.email ? r.email + ' — let in automatically' : 'no email yet — you approve them')})),
+          h('span', {class:'coach-mail', text:(r.role === 'td' ? 'Technical director' : (r.groups.join(' · ') || 'no teams')) + ' · ' + (r.email ? r.email + ' — let in automatically' : 'no email yet — you approve them')})),
         h('div', {class:'coach-acts'}, rm)));
     });
   }
@@ -14493,8 +14535,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const em = (line.match(/[^\s,;<>()]+@[^\s,;<>()]+\.[a-z]{2,}/i) || [''])[0];
       const gs = []; (line.toUpperCase().match(/\bU\s?(13|14|15|16|18|20|23)S?\b/g) || []).forEach(function(t){ const g = 'U' + t.replace(/[^0-9]/g, ''); if(gs.indexOf(g) === -1) gs.push(g); });
       if(/\bSENIORS?\b|\bFIRSTS?\b/.test(line.toUpperCase()) && gs.indexOf('Seniors') === -1) gs.push('Seniors');
+      /* "TD" or "technical director": every squad but the Seniors */
+      const isTd = /\bTD\b|\bTECHNICAL\s+DIRECTOR\b/.test(line.toUpperCase());
+      if(isTd) TD_SQUADS.forEach(function(g){ if(gs.indexOf(g) === -1) gs.push(g); });
+      line = line.replace(/\btechnical\s+director\b/ig, ' ').replace(/\bTD\b/ig, ' ');
       const name = line.replace(em, ' ').replace(/\bU\s?(13|14|15|16|18|20|23)s?\b/ig, ' ').replace(/[,;:|\-–—]+/g, ' ').replace(/\b(and|&)\b/ig, ' ').replace(/\s+/g, ' ').trim();
-      if(name || em) out.push({name:name, email:em.toLowerCase(), groups:gs.sort(function(a, b){ return AGE_GROUPS.indexOf(a) - AGE_GROUPS.indexOf(b); })});
+      if(name || em) out.push({name:name, email:em.toLowerCase(), role:isTd ? 'td' : '', groups:gs.sort(function(a, b){ return AGE_GROUPS.indexOf(a) - AGE_GROUPS.indexOf(b); })});
     });
     return out;
   }
@@ -14506,7 +14552,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       try{
         for(const r of list){
           if(me_ && r.email && r.email === String(me_.email || '').toLowerCase()){ if(r.name) await CLOUD.setName(r.name); self = true; continue; }
-          await CLOUD.invite(r.name, r.email, r.groups); n++;
+          await CLOUD.invite(r.name, r.email, r.groups, r.role); n++;
         }
         ta.value = '';
         showToast((n ? 'Added ' + n + ' coach' + (n > 1 ? 'es' : '') + ' to the roster' : '') + (n && self ? ' · ' : '') + (self ? 'your name is saved' : ''));
@@ -14520,6 +14566,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     let lastAllowed = null;
     window.addEventListener('hufc-cloud-changed', function(){
       renderOwnerLines();
+      try{ tdSetup(); }catch(e){}
       const al = JSON.stringify(CLOUD.allowedGroups ? CLOUD.allowedGroups() : null);
       if(al !== lastAllowed){
         const had = lastAllowed; lastAllowed = al;
@@ -14849,6 +14896,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.69', d:'3 Nov 2026', t:'Technical directors', n:['A Technical director (TD) role for the club: every squad from U13 to U23 (not the Seniors). TDs are not admins — they change their own work, and other coaches’ work stays view-only unless they’re added as a collaborator', 'Sai Gottipati and Renato are set up as TDs when you next open the planner as admin; Coaches → Edit → Technical director turns it on or off for anyone', 'Coaches roster: type “TD” on a coach’s line to add them as a technical director']},
     {v:'3.68', d:'3 Nov 2026', t:'Mauricio Novak', n:['Mauricio Novak’s name is spelt right in the Head coach/s list and on plans that were saved with “Novack”']},
     {v:'3.67', d:'3 Nov 2026', t:'Seniors', n:['A Seniors team, beside U23: its own folder on the Home page, in My teams, the Coaches window, the Season calendar and the stats']},
     {v:'3.66', d:'3 Nov 2026', t:'Season calendar', n:['The Season plan is now called the Season calendar — on the Home page, its own page and in How to use']},
