@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261103200422">
+<meta name="hufc-build" content="20261103201135">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1833,7 +1833,7 @@ td.gt-an{font-size:14px; text-transform:none;}
 .set-about .set-club{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:12.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--yellow); margin:2px 0 6px;}
 .set-hist{list-style:none; margin:8px 0 0; padding:0 0 0 14px; border-left:2px solid var(--line);}
 .set-hist-item{position:relative; padding:0 0 16px 14px;}
-.set-hist-item::before{content:''; position:absolute; left:-21px; top:4px; width:12px; height:12px; border-radius:50%; background:var(--white); border:2px solid var(--muted);}
+.set-hist-item::before{content:''; position:absolute; left:-23px; top:4px; width:12px; height:12px; border-radius:50%; background:var(--white); border:2px solid var(--muted);}
 .set-hist-item.latest::before{background:var(--yellow); border-color:var(--black);}
 .set-hist-item.more{display:none;}
 .set-hist.all .set-hist-item.more{display:block;}
@@ -3603,7 +3603,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 8:04pm</p>
+  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 8:11pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -14896,6 +14896,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.70', d:'3 Nov 2026', t:'Tidier history', n:['Version history: each dot sits right on the line']},
     {v:'3.69', d:'3 Nov 2026', t:'Technical directors', n:['A Technical director (TD) role for the club: every squad from U13 to U23 (not the Seniors). TDs are not admins — they change their own work, and other coaches’ work stays view-only unless they’re added as a collaborator', 'Sai Gottipati and Renato are set up as TDs when you next open the planner as admin; Coaches → Edit → Technical director turns it on or off for anyone', 'Coaches roster: type “TD” on a coach’s line to add them as a technical director']},
     {v:'3.68', d:'3 Nov 2026', t:'Mauricio Novak', n:['Mauricio Novak’s name is spelt right in the Head coach/s list and on plans that were saved with “Novack”']},
     {v:'3.67', d:'3 Nov 2026', t:'Seniors', n:['A Seniors team, beside U23: its own folder on the Home page, in My teams, the Coaches window, the Season calendar and the stats']},
