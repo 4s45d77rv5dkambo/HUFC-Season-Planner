@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261103111454">
+<meta name="hufc-build" content="20261103114025">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2279,6 +2279,16 @@ span.av-chip{cursor:default;}
 
 .sq-table.av-off .sq-c-av{display:none;}
 
+/* Game time & player stats → Training attendance */
+.gt-table.gt-train .gt-n{width:78px; white-space:nowrap;}
+.gt-table.gt-train th.gt-n{white-space:normal; line-height:1.15;}
+.gt-table .gt-last{width:110px; white-space:nowrap;}
+.gt-table td.gt-last{color:var(--grey); font-size:14px;}
+.gt-table .gt-st{width:1%; white-space:nowrap;}
+.gt-table .att-run-hot{color:#b3261e; font-weight:700;}
+.att-st-ok{color:var(--muted); font-size:13px;}
+@media screen and (max-width:640px){ .gt-table.gt-train .gt-last, .gt-table.gt-train .gt-pos{display:none;} .gt-table.gt-train .gt-pct{width:auto;} .att-st-ok{display:none;} }
+
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
 body.view-lineup .pregame-only{display:none !important;}
@@ -3578,7 +3588,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 11:14am</p>
+  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 11:40am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -3838,6 +3848,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <div class="gt-tabs" role="tablist" aria-label="What to show">
       <button type="button" class="gt-tab on" role="tab" data-tab="time" aria-selected="true">Game time</button>
       <button type="button" class="gt-tab" role="tab" data-tab="stats" aria-selected="false">Goals, assists &amp; cards</button>
+      <button type="button" class="gt-tab" role="tab" data-tab="train" aria-selected="false">Training attendance</button>
     </div>
     <div class="gt-body">
       <div class="gt-leaders" id="gtLeaders" hidden></div>
@@ -11242,7 +11253,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     myGroups().concat(gtGroupNow && AGE_GROUPS.indexOf(gtGroupNow) !== -1 ? [gtGroupNow] : []).forEach(function(g){ if(groups.indexOf(g) === -1) groups.push(g); });
     groups.sort(function(a, b){ return (a ? AGE_GROUPS.indexOf(a) : 99) - (b ? AGE_GROUPS.indexOf(b) : 99); });
     sel.innerHTML = '';
-    groups.forEach(function(g){ sel.appendChild(h('option', {value:g, text:(g ? g + ' team' : 'No team set') + (have.indexOf(g) === -1 ? ' (no lineups yet)' : '')})); });
+    groups.forEach(function(g){ sel.appendChild(h('option', {value:g, text:(g ? g + ' team' : 'No team set') + (have.indexOf(g) === -1 && gtTab !== 'train' ? ' (no lineups yet)' : '')})); });
     if(groups.indexOf(gtGroupNow) === -1) gtGroupNow = groups.length ? groups[0] : '';
     sel.value = gtGroupNow; sel.hidden = groups.length < 2;
     const stats = gtTab === 'stats';
@@ -11250,12 +11261,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     gtModal.querySelectorAll('.gt-tab').forEach(function(b){ const on = b.dataset.tab === gtTab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
     const sortSel = document.getElementById('gtSort');
     const sorts = stats ? [['goals', 'Top scorers'], ['assists', 'Most assists'], ['cards', 'Most cards'], ['name', 'By name'], ['num', 'By shirt number']]
+                : gtTab === 'train' ? [['low', 'Lowest attendance first'], ['high', 'Highest attendance first'], ['run', 'Missed most in a row'], ['name', 'By name'], ['num', 'By shirt number']]
                         : [['low', 'Least time first'], ['high', 'Most time first'], ['name', 'By name'], ['num', 'By shirt number']];
     if(sortSel.dataset.tab !== gtTab){
       sortSel.innerHTML = ''; sorts.forEach(function(o){ sortSel.appendChild(h('option', {value:o[0], text:o[1]})); });
       sortSel.dataset.tab = gtTab; sortSel.value = gtSortBy[gtTab];
     }
     gtSortBy[gtTab] = sortSel.value;
+    document.getElementById('gtTable').classList.remove('gt-train');
+    if(gtTab === 'train'){ attRenderTraining(gtGroupNow, sortSel.value); return; }
     const res = gtCompute(gtGroupNow, false);
     if(stats){ gtRenderStats(res, sortSel.value); return; }
     document.getElementById('gtLeaders').hidden = true;
@@ -11292,7 +11306,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const GT_NOTE_TIME = document.getElementById('gtNote').innerHTML;
   const GT_NOTE_STATS = 'Goals, assists, penalty saves and cards come from each matchday lineup — tap a player’s shirt on the pitch to add them. Each team is counted on its own, and within a team players are matched by name.';
   let gtTab = 'time';
-  const gtSortBy = {time:'low', stats:'goals'};
+  const gtSortBy = {time:'low', stats:'goals', train:'low'};
   const GT_COLS = [['g', 'Goals'], ['a', 'Assists'], ['ps', 'Pen saves'], ['y', 'Yellow cards'], ['r', 'Red cards']];
   function gtIcon(e){ return '<svg viewBox="0 0 10 10" width="16" height="16" aria-hidden="true">' + LU_EV_ICON[e] + '</svg>'; }
   function gtRenderStats(res, sort){
@@ -14811,6 +14825,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.62', d:'3 Nov 2026', t:'Training attendance report', n:['Game time & player stats has a new Training attendance tab: for each player, the sessions they came to out of the sessions where attendance was taken, their %, when they last came, how many they’ve missed in a row, and whether they’re injured or unavailable', 'Sort by lowest attendance or missed most in a row to see who’s dropped off']},
     {v:'3.61', d:'3 Nov 2026', t:'No more “null”', n:['The word “null” no longer shows beside Take attendance (or anywhere else something is left out)']},
     {v:'3.60', d:'3 Nov 2026', t:'How to use, and attendance', n:['Settings → How to use: a short guide to each part of the planner — sessions, lineups, pre-games, match video, stats and the season plan — each with a video that talks you through it (needs the internet to play)', 'Attendance (under a session’s Players box): tick who turned up — the Players box fills in with the number, and each player shows how many sessions they’ve made', 'Mark a player injured or unavailable, with a note and the day they’re back (in attendance or My squad) — it shows for every coach of that team until then', 'Lineups and pre-games warn you when someone who’s out is picked (a red or orange mark on the pitch, only for you), and a new lineup leaves them out']},
     {v:'3.59', d:'2 Nov 2026', t:'Collaborators by name', n:['The coach line on a session shows collaborators by name only, e.g. “David Ambelidis + Kristian Popovic” (no age group) — their teams still show in the Collaborators window', 'Clock times with half-minute practices can no longer show “:60”']},
@@ -15210,11 +15225,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       'The number keys 1–0 tag too (1 = Goal … 0 = Mistake).',
       '−5s / +5s and the speed buttons (½× to 4×) help you find the moment.'
     ]},
-    {id:'stats', title:'Game time & player stats', ico:'📊', open:'homeGtBigBtn', openText:'See the stats', lead:'Every player’s minutes, starts, goals, assists and cards, across all your lineups.', steps:[
+    {id:'stats', title:'Game time & player stats', ico:'📊', open:'homeGtBigBtn', openText:'See the stats', lead:'Every player’s minutes, starts, goals, assists, cards and training attendance.', steps:[
       'Home → Game time & player stats (or from a lineup).',
       'Game time: the games each player was in the squad, their starts, minutes and their % of the minutes in those games — from the starting team in each half and the subs in each lineup.',
       'Goals, assists & cards: the totals from the events you marked on the lineups.',
-      'Each team is counted on its own, from that team’s lineups only.'
+      'Each team is counted on its own, from that team’s lineups only.',
+      'Training attendance: each player’s sessions out of the sessions where you took attendance, their %, when they last came, how many they’ve missed in a row, and whether they’re injured or unavailable.'
     ], tips:[
       'Sort the list (top right) — e.g. least time first, to see who needs more minutes.',
       'Players are matched by name, so spell names the same way each week (picking them from the list does this for you).',
@@ -18139,6 +18155,70 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           showToast(names.length ? names.length + (names.length === 1 ? ' player' : ' players') + ' at this session' : 'Attendance cleared');
         }})];
     }, true);
+  }
+
+  /* ---------- Game time & player stats → Training attendance: every session where attendance was taken, player by player ---------- */
+  function attSessionDay(s){
+    const iso = clean(s.meta && s.meta.date) ? luDateToIso(s.meta.date) : '';
+    if(iso) return iso;
+    const d = new Date((s.attend && s.attend.at) || s.savedAt || 0);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function attCompute(team){
+    const sess = listSessions().map(function(x){ return x.plan; }).filter(function(s){
+      return s.attend && !isPre(s) && Array.isArray(s.attend.here) && (s.attend.team || groupOf(s)) === team;
+    }).map(function(s){ return {s:s, day:attSessionDay(s), here:s.attend.here.map(gtKey)}; })
+      .sort(function(a, b){ return a.day < b.day ? -1 : a.day > b.day ? 1 : ((a.s.attend.at || 0) - (b.s.attend.at || 0)); });
+    const rows = {}, add = function(name, num, pos){ const k = gtKey(name); if(!k) return null; if(!rows[k]) rows[k] = {key:k, name:clean(name), num:clean(num), pos:clean(pos).toUpperCase(), n:0, last:'', run:0}; return rows[k]; };
+    const sq = sqFor(team);
+    (sq ? sq.players : []).forEach(function(r){ add(r.name, r.num, r.pos); });
+    sess.forEach(function(x){ x.s.attend.here.forEach(function(n){ add(n, '', ''); }); });
+    Object.keys(rows).forEach(function(k){
+      const r = rows[k];
+      sess.forEach(function(x){ if(x.here.indexOf(k) !== -1){ r.n++; r.last = x.day; r.run = 0; } else r.run++; });
+      r.total = sess.length; r.pct = sess.length ? r.n / sess.length * 100 : 0;
+      r.out = avOf(team, r.name);
+    });
+    return {sessions:sess, rows:Object.keys(rows).map(function(k){ return rows[k]; })};
+  }
+  function attRenderTraining(team, sort){
+    document.getElementById('gtLeaders').hidden = true;
+    document.getElementById('gtNote').textContent = 'From every session where you took attendance (under the session’s Players box) — counted for the team the attendance was taken for. Missed in a row counts back from the latest session. Players are matched by name.';
+    const res = attCompute(team), n = res.sessions.length, rows = res.rows;
+    const avg = rows.length && n ? Math.round(rows.reduce(function(a, r){ return a + r.pct; }, 0) / rows.length) : 0;
+    const first = n ? avFmt(res.sessions[0].day) : '', last = n ? avFmt(res.sessions[n - 1].day) : '';
+    document.getElementById('gtSummary').textContent = n ? n + (n === 1 ? ' session' : ' sessions') + (n > 1 ? ' · ' + first + ' – ' + last : ' · ' + first) + ' · average ' + avg + '%' : '';
+    const byName = function(a, b){ return a.name.localeCompare(b.name); };
+    rows.sort(sort === 'low' ? function(a, b){ return a.pct - b.pct || b.run - a.run || byName(a, b); }
+      : sort === 'high' ? function(a, b){ return b.pct - a.pct || byName(a, b); }
+      : sort === 'run' ? function(a, b){ return b.run - a.run || a.pct - b.pct || byName(a, b); }
+      : sort === 'num' ? function(a, b){ return ((parseInt(a.num, 10) || 999) - (parseInt(b.num, 10) || 999)) || byName(a, b); } : byName);
+    const t = document.getElementById('gtTable'); t.innerHTML = ''; t.classList.remove('gt-stats'); t.classList.add('gt-train');
+    if(!n || !rows.length){
+      t.appendChild(h('tbody', null, h('tr', null, h('td', {class:'gt-empty', text:'No attendance taken for ' + (team || 'this team') + ' yet. In a session, press Take attendance under the Players box and tick who turned up — it adds up here.'}))));
+      return;
+    }
+    t.appendChild(h('thead', null, h('tr', null,
+      h('th', {class:'gt-num', text:'Number'}), h('th', {text:'Player'}), h('th', {class:'gt-pos', text:'Pos'}),
+      h('th', {class:'gt-n', text:'Came', title:'Sessions they came to (of the sessions where attendance was taken)'}),
+      h('th', {class:'gt-pct', text:'Attendance'}),
+      h('th', {class:'gt-last', text:'Last came'}),
+      h('th', {class:'gt-n', text:'Missed in a row', title:'Sessions in a row they’ve missed, up to the latest one'}),
+      h('th', {class:'gt-st', text:'Status'}))));
+    const tb = h('tbody');
+    rows.forEach(function(r){
+      const pct = Math.round(r.pct);
+      tb.appendChild(h('tr', {class:gtBand(pct) + (r.out ? ' att-r-out' : '')},
+        h('td', {class:'gt-num'}, h('span', {class:'gt-shirt', text:r.num || '·'})),
+        h('td', {class:'gt-name', text:r.name}),
+        h('td', {class:'gt-pos', text:r.pos || '–'}),
+        h('td', {class:'gt-n', text:r.n + ' / ' + r.total}),
+        h('td', {class:'gt-pct'}, h('span', {class:'gt-bar'}, h('span', {style:'width:' + Math.min(100, r.pct).toFixed(1) + '%'})), h('span', {class:'gt-val', text:pct + '%'})),
+        h('td', {class:'gt-last', text:r.last ? avFmt(r.last) : 'Not yet'}),
+        h('td', {class:'gt-n' + (r.run >= 3 ? ' att-run-hot' : ''), text:r.run ? String(r.run) : '–'}),
+        h('td', {class:'gt-st'}, r.out ? h('span', {class:'av-chip ' + AV_ST[r.out.st].cls, title:avText(r.out, true), text:AV_ST[r.out.st].short}) : h('span', {class:'att-st-ok', text:'Available'}))));
+    });
+    t.appendChild(tb);
   }
 
 
