@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261103202117">
+<meta name="hufc-build" content="20261104092853">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2301,6 +2301,127 @@ span.av-chip{cursor:default;}
 .att-st-ok{color:var(--muted); font-size:13px;}
 @media screen and (max-width:640px){ .gt-table.gt-train .gt-last, .gt-table.gt-train .gt-pos{display:none;} .gt-table.gt-train .gt-pct{width:auto;} .att-st-ok{display:none;} }
 
+
+/* ---------- Squads: every team's players and the training groups ---------- */
+.modal-box.tg-box{width:min(1480px, 100%); position:relative;}
+.tg-head{flex-wrap:wrap; gap:10px;}
+.tg-head h3{margin-right:auto;}
+.tg-datenav{display:flex; align-items:center; gap:4px;}
+.tg-dn{width:34px; height:34px; font-size:20px; line-height:1;}
+.tg-date{position:relative; display:inline-flex; align-items:center; height:34px; padding:0 12px; border:1px solid var(--line); border-radius:8px; background:var(--white); font-weight:600; font-size:15px; cursor:pointer;}
+.tg-date-in{position:absolute; inset:0; opacity:0; cursor:pointer; width:100%;}
+.tg-date-in::-webkit-calendar-picker-indicator{position:absolute; inset:0; width:auto; height:auto; cursor:pointer;}
+.tg-today{border:none; background:none; color:var(--grey); font:600 13px 'Barlow', Arial, sans-serif; text-decoration:underline; cursor:pointer; padding:0 4px;}
+.tg-body{padding:14px 18px 16px; display:flex; flex-direction:column; gap:12px; overflow:auto;}
+.tg-view{margin:0; padding:8px 12px; border-radius:8px; background:var(--paper); color:var(--grey); font-size:14px;}
+.tg-teams{display:flex; flex-wrap:wrap; align-items:center; gap:6px;}
+.tg-lbl{font:700 13px 'Barlow Condensed', sans-serif; letter-spacing:.07em; text-transform:uppercase; color:var(--grey); margin-right:4px;}
+.tg-sqchip{display:inline-flex; align-items:center; gap:6px;}
+.tg-chip-n{font-size:11.5px; font-weight:700; opacity:.6;}
+.coach-g.on .tg-chip-n{opacity:.85;}
+.tg-tools{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px;}
+.tg-search{width:220px; max-width:100%; height:34px;}
+.tg-sum{display:flex; flex-wrap:wrap; gap:6px;}
+.tg-sum-i{font-size:13px; font-weight:600; padding:3px 9px; border-radius:12px; background:var(--paper); color:var(--grey);}
+.tg-sum-i.tg-up{background:#fff6c2; color:#6b5400;}
+.tg-sum-i.tg-down{background:#e6eef8; color:#28507e;}
+.tg-acts{display:flex; gap:6px; margin-left:auto;}
+
+/* the board: one column a group */
+.tg-board{display:grid; grid-auto-flow:column; grid-auto-columns:minmax(152px, 1fr); gap:10px; overflow-x:auto; padding-bottom:6px; align-items:start;}
+.tg-col{border:1px solid var(--line); border-radius:10px; background:var(--paper); display:flex; flex-direction:column; min-height:120px; transition:border-color .15s, background .15s;}
+.tg-col.tg-over{border-color:var(--yellow); background:#fffbe8;}
+.tg-col-off{background:#f6f6f4; border-style:dashed;}
+.tg-col-h{display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; padding:9px 10px; border-bottom:1px solid var(--line); background:var(--black); color:var(--white); border-radius:9px 9px 0 0;}
+.tg-col-off .tg-col-h{background:var(--white); color:var(--grey);}
+.tg-col-t{font:700 18px 'Barlow Condensed', sans-serif; letter-spacing:.04em; text-transform:uppercase;}
+.tg-col-n{min-width:24px; height:22px; padding:0 7px; border-radius:11px; background:var(--yellow); color:var(--black); font:700 13px/22px 'Barlow', Arial, sans-serif; text-align:center;}
+.tg-col-off .tg-col-n{background:var(--line);}
+.tg-col-x{display:flex; gap:4px; width:100%;}
+.tg-col-x span{font-size:12px; font-weight:600; padding:1px 7px; border-radius:9px;}
+.tg-col-x .tg-up{background:#fff6c2; color:#6b5400;}
+.tg-col-x .tg-down{background:#dce8f7; color:#28507e;}
+.tg-list{display:flex; flex-direction:column; gap:4px; padding:6px;}
+.tg-sub{font:700 11.5px 'Barlow Condensed', sans-serif; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin:4px 2px 0;}
+.tg-none{font-size:13px; color:var(--muted); padding:6px 4px;}
+.tg-card{display:flex; align-items:center; gap:6px; padding:4px 6px; border:1px solid var(--line); border-radius:8px; background:var(--white); cursor:grab; user-select:none; -webkit-user-select:none; transition:border-color .15s, box-shadow .15s;}
+.tg-card:hover, .tg-card:focus-visible{border-color:var(--black); outline:none;}
+.tg-card[draggable="false"]{cursor:default;}
+.tg-card.tg-dragging{opacity:.45;}
+.tg-card.tg-up{border-left:4px solid var(--yellow);}
+.tg-card.tg-down{border-left:4px solid #5b8fd1;}
+.tg-card.tg-out .tg-nm{color:var(--grey);}
+.tg-num{flex:none; width:16px; text-align:right; font:700 14px 'Barlow Condensed', sans-serif; color:var(--muted);}
+.tg-name{flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.2;}
+.tg-nm{font-weight:600; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.tg-meta{display:flex; align-items:center; gap:5px; min-height:16px;}
+.tg-pos{font-size:11.5px; color:var(--muted);}
+.tg-sub-in{color:#6b5400;}
+.tg-card .av-chip{flex:none; width:20px; height:20px; padding:0; justify-content:center; font-size:11px;}
+.tg-card .av-chip::before{content:none;}
+.tg-tag{flex:none; font:700 11.5px/1.3 'Barlow Condensed', sans-serif; letter-spacing:.03em; padding:0 5px; border-radius:5px; background:var(--paper); color:var(--grey);}
+.tg-tag-up{background:var(--yellow); color:var(--black);}
+.tg-tag-down{background:#5b8fd1; color:#fff;}
+.tg-usual{flex:none; font-size:11px; color:var(--muted); font-style:italic;}
+.tg-note{margin:0;}
+
+/* tap a player: where they train today */
+.tg-menu{position:absolute; z-index:5; background:var(--white); border:1px solid var(--line); border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.18); padding:10px; display:flex; flex-direction:column; gap:8px;}
+.tg-menu-h{display:flex; flex-direction:column; gap:1px;}
+.tg-menu-h b{font-size:15px;}
+.tg-menu-h span{font-size:12.5px; color:var(--grey);}
+.tg-opts{display:grid; grid-template-columns:repeat(4, 1fr); gap:5px;}
+.tg-opt{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-height:44px; padding:4px; border:1px solid var(--line); border-radius:8px; background:var(--white); font:700 15px 'Barlow Condensed', sans-serif; letter-spacing:.03em; cursor:pointer; color:var(--black);}
+.tg-opt:hover:not(:disabled){border-color:var(--black);}
+.tg-opt.on{background:var(--black); color:var(--yellow); border-color:var(--black); cursor:default;}
+.tg-opt-s{font:600 10.5px 'Barlow', Arial, sans-serif; color:var(--muted); letter-spacing:0;}
+.tg-opt.on .tg-opt-s{color:var(--yellow); opacity:.8;}
+.tg-menu > .tg-opt{flex-direction:row; min-height:38px; font:600 14px 'Barlow', Arial, sans-serif;}
+
+/* the Players list */
+.tg-table td{vertical-align:middle;}
+.tg-table .tg-c-name .av-chip{margin-left:8px; vertical-align:1px;}
+.tg-table .tg-c-pos{width:60px; color:var(--grey);}
+.tg-table .tg-c-n{width:96px; text-align:center; color:var(--grey);}
+.tg-sqrow td{text-align:left !important; background:var(--black) !important; color:var(--yellow); font:700 14px 'Barlow Condensed', sans-serif; letter-spacing:.08em; text-transform:uppercase; padding:5px 10px !important;}
+.tg-cell-sel{height:30px; border:1px solid var(--line); border-radius:6px; background:var(--white); font:inherit; font-size:14px; padding:0 6px; max-width:150px;}
+.tg-cell-sel.tg-sel-up{border-color:var(--yellow); background:#fffbe8; font-weight:600;}
+.tg-add{display:flex; flex-wrap:wrap; gap:6px; align-items:center;}
+.tg-add .set-input{width:220px; height:32px;}
+.tg-empty{display:flex; flex-direction:column; gap:4px; padding:24px; text-align:center; color:var(--grey); border:1px dashed var(--line); border-radius:10px;}
+
+@media screen and (max-width:640px){
+  .tg-body{padding:12px;}
+  .tg-head h3{width:100%;}
+  .tg-date{font-size:14px; padding:0 8px;}
+  /* phone: one group at a time */
+  .tg-board{grid-auto-flow:row; grid-auto-columns:auto; grid-template-columns:1fr; overflow:visible;}
+  .tg-col:not(.tg-col-sel){display:none;}
+  .tg-pick{display:flex !important;}
+  .tg-teams .coach-g{height:26px; min-width:0; padding:0 8px; font-size:12px;}
+  .tg-acts{margin-left:0;}
+  .tg-search{width:100%;}
+  .tg-table .tg-c-pos, .tg-table .tg-c-n{display:none;}
+  .tg-cell-sel{max-width:110px;}
+}
+@media print{ #tgModal{display:none !important;} }
+
+.home-actions .home-squads-btn svg{flex:none; margin-right:8px; vertical-align:-4px;}
+.home-actions .home-squads-btn{gap:8px;}
+
+.tg-pick{display:none; gap:6px; overflow-x:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch;}
+.tg-pick-b{flex:none; display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 12px; border:1px solid var(--line); border-radius:18px; background:var(--white); font:700 15px 'Barlow Condensed', sans-serif; letter-spacing:.04em; color:var(--black); cursor:pointer;}
+.tg-pick-b.on{background:var(--black); color:var(--yellow); border-color:var(--black);}
+.tg-body > *{flex-shrink:0;}
+/* under the session's Players box */
+.tg-note-link{display:inline-flex; flex-wrap:wrap; align-items:center; gap:2px 5px; white-space:nowrap; margin-top:5px; padding:2px 8px 2px 4px; border:none; border-radius:12px; background:#fff6c2; color:#5a4700; font:600 12.5px/1.3 'Barlow', Arial, sans-serif; cursor:pointer; text-align:left; max-width:100%;}
+.tg-note-link[hidden]{display:none;}
+.tg-note-link:hover{background:#ffeea0;}
+.tg-note-i{width:18px; height:18px; border-radius:50%; background:var(--black); color:var(--yellow); display:grid; place-items:center; font-size:11px; flex:none;}
+.tg-note-out{color:#6b6b6b;}
+.att-tg-in{color:#6b5400 !important; font-weight:600;}
+@media print{ .tg-note-link{display:none !important;} }
+
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
 body.view-lineup .pregame-only{display:none !important;}
@@ -2656,7 +2777,8 @@ body.view-lineup .session-only, body.view-lineup .collab-btn{display:none !impor
 .home-actions .btn{justify-content:center; text-align:center; min-width:0; white-space:normal; line-height:1.15;}
 .home-actions .nowrap{white-space:nowrap;}
 @media (max-width:640px){ .home-actions .hide-narrow{display:none;} }
-.home-actions .home-gt-btn, .home-actions .home-season-btn{grid-row:auto; border-color:var(--yellow); color:var(--yellow);}
+.home-actions .home-gt-btn, .home-actions .home-season-btn, .home-actions .home-squads-btn{grid-row:auto; border-color:var(--yellow); color:var(--yellow);}
+.home-actions .home-squads-btn{grid-row:span 2; flex-direction:column; gap:6px; font-size:18px;}
 .btn-big{font-size:16px; padding:11px 18px;}
 .btn-dark{background:transparent; color:var(--white); border-color:#5b5d61;}
 .btn-dark:hover{border-color:var(--white);}
@@ -2906,7 +3028,8 @@ html.has-selbar .home{padding-bottom:70px;}
   .home-actions .btn{padding:10px 8px; font-size:15px;}
   /* phones: each kind on its own row — + New on the left, Open on the right */
   .home-actions{grid-template-columns:repeat(2, minmax(0,1fr)); grid-template-rows:none; grid-auto-flow:row;}
-  .home-actions .home-gt-btn, .home-actions .home-season-btn{grid-row:auto; grid-column:1 / span 2;}
+  .home-actions .home-gt-btn, .home-actions .home-season-btn, .home-actions .home-squads-btn{grid-row:auto; grid-column:1 / span 2;}
+  .home-actions .home-squads-btn{flex-direction:row; font-size:15px;}
   .home-head .lib-search{min-width:0; flex:1 1 100%; order:5;}
   .home-head #libImportBtn{flex:1 1 100%; order:6;}
   .home-head #backupBtn, .home-head #restoreBtn{flex:1 1 45%; order:7;}
@@ -3534,6 +3657,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       <button type="button" class="btn btn-big btn-dark" id="homeMvOpenBtn" title="The matches you've analysed: tags, clips and stats">Open <span class="nowrap">match videos</span></button>
       <button type="button" class="btn btn-big btn-dark home-season-btn" id="homeSeasonBtn" title="The season week by week: training nights, match days and themes"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Season calendar</button>
       <button type="button" class="btn btn-big btn-dark home-gt-btn" id="homeGtBigBtn" title="Every player's minutes, goals, assists and cards across all your lineups">Game time <span class="nowrap">&amp; player stats</span></button>
+      <button type="button" class="btn btn-big btn-dark home-squads-btn" id="homeSquadsBtn" title="Every team's players, and the training groups for each day"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2c3 .2 5.5 2.6 5.5 5.8"/></svg>Squads</button>
     </div>
   </section>
 
@@ -3603,7 +3727,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 3 Nov 2026, 8:21pm</p>
+  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 9:28am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -14667,6 +14791,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     squads:{prefix:'hufc-squad:', stamp:'savedAt'},     /* each team's saved players */
     matches:{prefix:'hufc-match:', stamp:'savedAt'},    /* match videos: tags and clip details (the videos stay on each device) */
     seasons:{prefix:'hufc-season:', stamp:'savedAt'},   /* season plans: weeks, days and theme blocks */
+    tgroups:{prefix:'hufc-tgroups:', stamp:'savedAt'},  /* Squads: training groups for each day, and the club players list (each editor's own copy) */
     practices:{stamp:'updatedAt'}
   };
   function localGet(kind, id, lib){
@@ -14687,6 +14812,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(kind === 'squads') return sqList().map(function(x){ return {id:x.key.slice(SQ_PREFIX.length), obj:x.sq}; });
     if(kind === 'matches') return mvList().map(function(x){ return {id:x.key.slice(MV_PREFIX.length), obj:x.m}; });
     if(kind === 'seasons') return seList().map(function(x){ return {id:x.key.slice(SE_PREFIX.length), obj:x.s}; });
+    if(kind === 'tgroups'){
+      const out = [];
+      for(let i = 0; i < hufcStore.length; i++){
+        const k = hufcStore.key(i); if(!k || k.indexOf('hufc-tgroups:') !== 0) continue;
+        try{ const o = JSON.parse(hufcStore.getItem(k)); if(o && o.kind === 'tgroups') out.push({id:k.slice(13), obj:o}); }catch(e){}
+      }
+      return out;
+    }
     return Object.keys(lib.items).map(function(id){ return {id:id, obj:lib.items[id]}; });
   }
   function openNow(kind, id){
@@ -14823,6 +14956,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       clubBusy = false;
       renderClubStatus();
       if(changed && document.documentElement.classList.contains('view-home')) renderHome();
+      if(changed){ try{ tgSynced(); }catch(e){} }   /* Squads: show what Sai / Renato just changed */
       if(relay) clubSyncSoon();
     }
   }
@@ -14916,6 +15050,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.72', d:'4 Nov 2026', t:'Squads & training groups', n:['Squads on the Home page: every team’s players in one list, with who each player usually trains with', 'Training groups: pick a day and move players up or down a group (drag, or tap a player), or mark them not training. You, the club admin, and the technical directors set them; every coach sees them', 'A session shows who’s joining that team on its day (“2 joining from U14”), and Attendance lists them too']},
     {v:'3.71', d:'3 Nov 2026', t:'Practices keep their versions', n:['Change a saved practice in a new session and it’s saved as a new practice in your Practices library — the original, and every older session that uses it, stays exactly as it was', 'Changing a practice in the session it was made in still updates it in the library', 'Library cards show which session each version came from (“From: …”)']},
     {v:'3.70', d:'3 Nov 2026', t:'Tidier history', n:['Version history: each dot sits right on the line']},
     {v:'3.69', d:'3 Nov 2026', t:'Technical directors', n:['A Technical director (TD) role for the club: every squad from U13 to U23 (not the Seniors). TDs are not admins — they change their own work, and other coaches’ work stays view-only unless they’re added as a collaborator', 'Sai Gottipati and Renato are set up as TDs when you next open the planner as admin; Coaches → Edit → Technical director turns it on or off for anyone', 'Coaches roster: type “TD” on a coach’s line to add them as a technical director']},
@@ -15335,6 +15470,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       'Sort the list (top right) — e.g. least time first, to see who needs more minutes.',
       'Players are matched by name, so spell names the same way each week (picking them from the list does this for you).',
       'The match video’s own Stats tab has the tags from that game.'
+    ]},
+    {id:'squads', title:'Squads & training groups', ico:'👥', open:'homeSquadsBtn', openText:'Open Squads', lead:'Every team’s players in one place, and who trains with which group each day.', steps:[
+      'Home → Squads. Players: every player from each team’s saved squad (My squad), with a chip for each team. Usually trains with: a player who always trains with another group (e.g. a U15 with the U16s) goes there every day.',
+      'Training groups: pick the day, then the squads training. Each squad has a column; players joining from another squad are at the top, with ↑ (training up) or ↓ (training down).',
+      'Move a player for the day: drag them to another group, or tap them and pick the group — or Not training today. Undo puts them back.',
+      'The club admin and the technical directors set the groups; every other coach sees them.',
+      'A session shows who’s joining that team on its day (“2 joining from U14”) under Players, and Attendance lists them so you can tick them off.'
+    ], tips:[
+      'Same as … copies the last day’s groups; Back to usual groups clears the day’s moves.',
+      'On a phone you see one group at a time — pick it along the top.'
     ]},
     {id:'season', title:'Season calendar', ico:'📅', open:'homeSeasonBtn', openText:'Open the season calendar', lead:'The season week by week: training nights and match days, with the session, lineup, pre-game and video for each.', steps:[
       'Home → Season calendar → Set up the season: its name, first week, last day, training nights, match day, and the colours for training and match days.',
@@ -18156,6 +18301,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('span', {text:at ? n + ' here' : 'Take attendance'}),
       out ? h('span', {class:'att-link-out', text:out + ' out'}) : null);
     b.title = at ? n + (n === 1 ? ' player' : ' players') + ' at this session' + (out ? ' · ' + out + ' injured or unavailable' : '') + ' · tap to change' : 'Attendance: tick off who turned up, and who’s injured or unavailable';
+    try{ renderTgNote(); }catch(e){}
   }
   /* each player's attendance across the team's sessions (the ones where it was taken) */
   function attHistory(team){
@@ -18175,6 +18321,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     let team = (x.attend && x.attend.team) || teams[0];
     const here = {}; ((x.attend && x.attend.here) || []).forEach(function(n){ here[gtKey(n)] = clean(n); });
     let extra = [];   /* players added here who aren't in the squad list yet */
+    /* the day's training groups (Squads): who's joining this team, and who's training elsewhere */
+    let tg = null;
+    const tgLoad = function(){ try{ tg = tgFor(team, tgSessionDay(x)); }catch(e){ tg = null; } };
+    const tgIn = function(k){ return tg ? tg.joining.find(function(p){ return gtKey(p.name) === k; }) : null; };
+    const tgAway = function(k){ return tg ? tg.away.find(function(p){ return gtKey(p.name) === k; }) : null; };
     const body = h('div', {class:'se-form-body att-body'});
     const head = h('div', {class:'att-head'});
     const list = h('div', {class:'att-list', role:'group', 'aria-label':'Players'});
@@ -18183,7 +18334,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const addBtn = h('button', {type:'button', class:'btn', text:'Add'});
     const players = function(){
       const sq = sqFor(team), seen = {}, out = [];
-      (sq ? sqSorted(sq.players) : []).concat(extra).forEach(function(r){ const k = gtKey(r.name); if(k && !seen[k]){ seen[k] = 1; out.push(r); } });
+      const joiners = tg ? tg.joining.map(function(p){ return {name:p.name, num:p.num, pos:p.pos}; }) : [];
+      (sq ? sqSorted(sq.players) : []).concat(extra, joiners).forEach(function(r){ const k = gtKey(r.name); if(k && !seen[k]){ seen[k] = 1; out.push(r); } });
       Object.keys(here).forEach(function(k){ if(!seen[k]){ seen[k] = 1; out.push({name:here[k], num:'', pos:''}); } });   /* (ticked before, since taken off the squad) */
       return out;
     };
@@ -18193,6 +18345,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       count.textContent = n + ' of ' + ps.length + ' here' + (out ? ' · ' + out + ' out' : '');
     };
     const render = function(){
+      tgLoad();
       head.innerHTML = '';
       if(teams.length > 1){
         const sel = h('select', {class:'set-input att-team', 'aria-label':'Team'});
@@ -18205,18 +18358,22 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const ps = players();
       if(!ps.length) list.appendChild(h('p', {class:'set-sub', text:'No players saved for ' + team + ' yet. Add them below — or name them in a matchday lineup and they’re saved automatically.'}));
       ps.forEach(function(r){
-        const k = gtKey(r.name), a = avOf(team, r.name);
+        const k0 = gtKey(r.name), jn = tgIn(k0), aw = tgAway(k0);
+        const own = jn ? jn.from : team;   /* (a player joining from another squad: their status lives with their own squad) */
+        const k = k0, a = avOf(own, r.name);
         const cb = h('input', {type:'checkbox', 'aria-label':clean(r.name) + ' is here', disabled:ro});
         cb.checked = !!here[k];
         cb.addEventListener('change', function(){ if(cb.checked) here[k] = clean(r.name); else delete here[k]; row.classList.toggle('is-here', cb.checked); paintCount(); });
         const seen = hist.total ? hist.of(r.name) : 0;
-        const row = h('label', {class:'att-row' + (here[k] ? ' is-here' : '') + (a ? ' is-out' : '')},
+        const row = h('label', {class:'att-row' + (here[k] ? ' is-here' : '') + (a || aw ? ' is-out' : '')},
           cb,
           h('span', {class:'att-num', text:clean(r.num) || ''}),
           h('span', {class:'att-name'}, h('span', {class:'att-nm', text:clean(r.name)}),
-            a && (clean(a.note) || a.back) ? h('span', {class:'att-note', text:[clean(a.note), a.back ? 'back ' + avFmt(a.back) : ''].filter(Boolean).join(' · ')}) : null),
+            a && (clean(a.note) || a.back) ? h('span', {class:'att-note', text:[clean(a.note), a.back ? 'back ' + avFmt(a.back) : ''].filter(Boolean).join(' · ')}) : null,
+            jn ? h('span', {class:'att-note att-tg-in', text:(jn.dir === 'up' ? '↑ Training up from ' : '↓ Training down from ') + jn.from}) : null,
+            aw ? h('span', {class:'att-note', text:aw.to ? 'Training with ' + aw.to + ' today' : 'Not training today'}) : null),
           hist.total ? h('span', {class:'att-hist', title:'Sessions attended (of the ' + hist.total + ' where attendance was taken)', text:seen + '/' + hist.total}) : null,
-          ro ? h('span', {class:'av-chip ' + (a ? AV_ST[a.st].cls : 'av-ok'), text:a ? AV_ST[a.st].short : 'Available'}) : avChip(team, r.name, render));
+          ro ? h('span', {class:'av-chip ' + (a ? AV_ST[a.st].cls : 'av-ok'), text:a ? AV_ST[a.st].short : 'Available'}) : avChip(own, r.name, render));
         list.appendChild(row);
       });
       paintCount();
@@ -18234,7 +18391,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     addIn.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); add(); } });
     addIn.addEventListener('input', function(){ luCapName(addIn); });
     const tools = ro ? null : h('div', {class:'att-tools'},
-      h('button', {type:'button', class:'text-btn', text:'Everyone available is here', onclick:function(){ players().forEach(function(r){ if(!avOf(team, r.name)) here[gtKey(r.name)] = clean(r.name); }); render(); }}),
+      h('button', {type:'button', class:'text-btn', text:'Everyone available is here', onclick:function(){ players().forEach(function(r){ if(!avOf(team, r.name) && !tgAway(gtKey(r.name))) here[gtKey(r.name)] = clean(r.name); }); render(); }}),
       h('span', {text:' · '}),
       h('button', {type:'button', class:'text-btn', text:'Clear', onclick:function(){ Object.keys(here).forEach(function(k){ delete here[k]; }); render(); }}));
     body.append(
@@ -18320,6 +18477,371 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('td', {class:'gt-st'}, r.out ? h('span', {class:'av-chip ' + AV_ST[r.out.st].cls, title:avText(r.out, true), text:AV_ST[r.out.st].short}) : h('span', {class:'att-st-ok', text:'Available'}))));
     });
     t.appendChild(tb);
+  }
+
+
+  /* =====================================================================
+     Training groups (club-wide)
+     - Club players: every player in the club, from each team's saved squad (My squad), with the squad they belong to
+       and the group they usually train with (e.g. a U15 who always trains with the U16s).
+     - Groups for the day: one column per squad training that day. Players start in their usual group; the admin and the
+       technical directors move players up or down (drag, or tap a player), or mark them as not training.
+     - Synced like squads (kind "tgroups"). Each person who sets groups keeps their own copy — day-<date>-<them> and
+       club-<them> — because each coach's files are theirs alone; the newest day copy wins, and in Players the newest
+       change to each player wins. So you, Sai and Renato can all change the same day.
+     ===================================================================== */
+  const TG_PRE = 'hufc-tgroups:';
+  const TG_OFF = '_off';   /* "Not training today" */
+  const tgModal = h('div', {class:'modal', id:'tgModal', hidden:true});
+  document.body.appendChild(tgModal);
+  let tgDate = '', tgTab = 'day', tgQuery = '', tgFilter = '', tgMenu = null, tgDrag = null, tgSel = '';
+
+  function tgIso(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function tgParse(iso){ const p = String(iso).split('-'); return new Date(+p[0], +p[1] - 1, +p[2], 12); }
+  function tgNice(iso){ return tgParse(iso).toLocaleDateString('en-AU', {weekday:'long', day:'numeric', month:'long'}); }
+  function tgShift(iso, n){ const d = tgParse(iso); d.setDate(d.getDate() + n); return tgIso(d); }
+  function tgRead(k, dflt){ try{ return JSON.parse(hufcStore.getItem(k) || 'null') || dflt; }catch(e){ return dflt; } }
+  function tgWrite(k, v){ try{ hufcStore.setItem(k, JSON.stringify(v)); }catch(e){} try{ clubSyncSoon(); }catch(e){} }
+  /* who sets the groups: the club admin and the technical directors (everyone else sees them) */
+  function tgCanEdit(){
+    if(CLOUD && CLOUD.user && CLOUD.user()){ const u = CLOUD.user(); return !!(u.admin || (CLOUD.isTD && CLOUD.isTD())); }
+    if(who) return !!who.admin;   /* the online planner: its owner */
+    return true;   /* on this device, not signed in */
+  }
+  /* whose copy this device writes */
+  function tgMe(){
+    try{ if(CLOUD && CLOUD.user && CLOUD.user()) return CLOUD.user().uid; }catch(e){}
+    return (who && who.uid) || 'local';
+  }
+  function tgMeName(){ try{ return (CLOUD && CLOUD.name && CLOUD.name()) || ''; }catch(e){ return ''; } }
+  /* every tgroups file on this device */
+  function tgAll(){
+    const out = [];
+    for(let i = 0; i < hufcStore.length; i++){
+      const k = hufcStore.key(i); if(!k || k.indexOf(TG_PRE) !== 0) continue;
+      const o = tgRead(k, null); if(o && !o.deleted) out.push(o);
+    }
+    return out;
+  }
+  const tgRank = function(g){ return AGE_GROUPS.indexOf(g); };
+
+  /* ---- the club's players: every team's saved squad, plus what's been set here ---- */
+  /* everyone's Players changes together: for each player, the newest change to each thing wins */
+  function tgClub(){
+    const m = {players:{}};
+    tgAll().filter(function(o){ return o.tg === 'club'; }).forEach(function(o){
+      Object.keys(o.players || {}).forEach(function(k){
+        const src = o.players[k], cur = m.players[k] || (m.players[k] = {});
+        ['name', 'squad', 'usual', 'pos'].forEach(function(f){
+          if(!(f in src)) return;
+          const at = +((src.at || {})[f] || o.savedAt || 0);
+          if(!cur.__at) Object.defineProperty(cur, '__at', {value:{}, enumerable:false});
+          if(!(f in cur) || at >= (cur.__at[f] || 0)){ cur[f] = src[f]; cur.__at[f] = at; }
+        });
+      });
+    });
+    return m;
+  }
+  function tgPlayers(){
+    const club = tgClub(), out = new Map();
+    AGE_GROUPS.forEach(function(team){
+      const sq = sqFor(team); if(!sq) return;
+      sq.players.forEach(function(r){
+        const k = gtKey(r.name); if(!k || out.has(k)) return;
+        out.set(k, {key:k, name:clean(r.name), num:clean(r.num), pos:clean(r.pos), squad:team, usual:'', av:avOf(team, r.name)});
+      });
+    });
+    Object.keys(club.players || {}).forEach(function(k){
+      const o = club.players[k], p = out.get(k);
+      if(p){ if(o.squad && tgRank(o.squad) !== -1) p.squad = o.squad; if(o.usual) p.usual = o.usual; }
+      else if(o.name && o.squad) out.set(k, {key:k, name:o.name, num:'', pos:o.pos || '', squad:o.squad, usual:o.usual || '', av:null, added:true});
+    });
+    return Array.from(out.values());
+  }
+  function tgSetPlayer(k, ch){
+    const id = 'club-' + tgMe(), now = Date.now();
+    const c = tgRead(TG_PRE + id, null) || {kind:'tgroups', tg:'club', group:'U13', players:{}};
+    const p = c.players[k] = Object.assign({}, c.players[k] || {}); p.at = Object.assign({}, p.at || {});
+    Object.keys(ch).forEach(function(f){ p[f] = ch[f]; p.at[f] = now; });
+    c.savedAt = now; c.by = tgMeName();
+    tgWrite(TG_PRE + id, c);
+  }
+
+  /* ---- one day's groups ---- */
+  function tgDefaultTeams(){ return AGE_GROUPS.filter(function(g){ return g !== 'Seniors'; }); }
+  /* the day's groups: the newest copy anyone saved for that day */
+  function tgDay(iso){
+    let best = null;
+    tgAll().forEach(function(o){ if(o.tg === 'day' && o.date === iso && (!best || (+o.savedAt || 0) > (+best.savedAt || 0))) best = o; });
+    return best ? JSON.parse(JSON.stringify(best)) : null;
+  }
+  function tgDayOrNew(iso){ const d = tgDay(iso) || {teams:tgDefaultTeams(), moves:{}}; d.moves = d.moves || {}; d.teams = Array.isArray(d.teams) ? d.teams : tgDefaultTeams(); d.date = iso; return d; }
+  /* saved as this person's own copy for the day (group U13: every TD and the admin can save there) */
+  function tgSaveDay(day){
+    const out = {kind:'tgroups', tg:'day', group:'U13', date:day.date, teams:day.teams.slice(), moves:Object.assign({}, day.moves), savedAt:Date.now(), by:tgMeName()};
+    tgWrite(TG_PRE + 'day-' + day.date + '-' + tgMe(), out);
+  }
+  /* the group a player trains with: moved for the day, else their usual group, else their squad */
+  function tgWhere(p, day){
+    const m = day.moves[p.key];
+    if(m) return m;
+    const g = p.usual || p.squad;
+    return day.teams.indexOf(g) !== -1 ? g : TG_OFF;
+  }
+  function tgDates(){ const s = {}; tgAll().forEach(function(o){ if(o.tg === 'day' && o.date) s[o.date] = 1; }); return Object.keys(s).sort(); }
+  function tgLastDay(before){
+    const ds = tgDates().filter(function(d){ return d < before; });
+    return ds.length ? tgDay(ds[ds.length - 1]) : null;
+  }
+
+  /* ---- the window ---- */
+  function tgOpen(tab, iso){
+    tgDate = iso || tgIso(new Date()); tgTab = tab || 'club'; tgQuery = ''; tgFilter = '';
+    tgRender(); openModal(tgModal);
+  }
+  function tgClose(){ tgMenuClose(); closeModal(tgModal); }
+  function tgRender(){
+    tgMenuClose();
+    const edit = tgCanEdit();
+    tgModal.innerHTML = '';
+    const dateIn = h('input', {type:'date', class:'tg-date-in', value:tgDate, 'aria-label':'Day', onchange:function(){ if(this.value){ tgDate = this.value; tgRender(); } }});
+    const head = h('div', {class:'modal-head tg-head'},
+      h('h3', {id:'tgTitle', text:'Squads'}),
+      tgTab === 'day' ? h('div', {class:'tg-datenav'},
+        h('button', {type:'button', class:'icon-btn tg-dn', 'aria-label':'Day before', text:'‹', onclick:function(){ tgDate = tgShift(tgDate, -1); tgRender(); }}),
+        h('label', {class:'tg-date'}, h('span', {class:'tg-date-t', text:tgNice(tgDate)}), dateIn),
+        h('button', {type:'button', class:'icon-btn tg-dn', 'aria-label':'Day after', text:'›', onclick:function(){ tgDate = tgShift(tgDate, 1); tgRender(); }}),
+        tgDate !== tgIso(new Date()) ? h('button', {type:'button', class:'tg-today', text:'Today', onclick:function(){ tgDate = tgIso(new Date()); tgRender(); }}) : '') : '',
+      h('button', {type:'button', class:'btn btn-primary', text:'Close', onclick:tgClose}));
+    const tab = function(id, t){ return h('button', {type:'button', class:'gt-tab' + (tgTab === id ? ' on' : ''), role:'tab', 'aria-selected':String(tgTab === id), text:t, onclick:function(){ tgTab = id; tgRender(); }}); };
+    const tabs = h('div', {class:'gt-tabs', role:'tablist'}, tab('club', 'Players'), tab('day', 'Training groups'));
+    const body = h('div', {class:'tg-body'});
+    if(!edit) body.append(h('p', {class:'tg-view', text:'Set by the club admin and the technical directors — view only.'}));
+    if(tgTab === 'day') tgRenderDay(body, edit); else tgRenderClub(body, edit);
+    tgModal.append(h('div', {class:'modal-box tg-box', role:'dialog', 'aria-modal':'true', 'aria-labelledby':'tgTitle'}, head, tabs, body));
+  }
+
+  function tgRenderDay(body, edit){
+    const day = tgDayOrNew(tgDate), players = tgPlayers();
+    if(!players.length){
+      body.append(h('div', {class:'tg-empty'}, h('b', {text:'No players yet'}), h('span', {text:'Players come from each team’s saved squad (a matchday lineup → My squad), or add them in Players.'})));
+      return;
+    }
+    const q = tgQuery.toLowerCase();
+    /* squads training today */
+    const teamChips = h('div', {class:'tg-teams', role:'group', 'aria-label':'Squads training'},
+      h('span', {class:'tg-lbl', text:'Training'}),
+      AGE_GROUPS.map(function(g){
+        const on = day.teams.indexOf(g) !== -1;
+        return h('button', {type:'button', class:'coach-g' + (on ? ' on' : ''), 'aria-pressed':String(on), text:g, disabled:!edit,
+          onclick:function(){ const d = tgDayOrNew(tgDate); const i = d.teams.indexOf(g); if(i === -1) d.teams.push(g); else d.teams.splice(i, 1); d.teams.sort(function(a, b){ return tgRank(a) - tgRank(b); }); tgSaveDay(d); tgRender(); }});
+      }));
+    const where = {}; players.forEach(function(p){ where[p.key] = tgWhere(p, day); });
+    const ups = players.filter(function(p){ const w = where[p.key]; return w !== TG_OFF && w !== p.squad && tgRank(w) > tgRank(p.squad); }).length;
+    const downs = players.filter(function(p){ const w = where[p.key]; return w !== TG_OFF && w !== p.squad && tgRank(w) < tgRank(p.squad); }).length;
+    const offs = players.filter(function(p){ return day.moves[p.key] === TG_OFF; }).length;
+    const last = tgLastDay(tgDate);
+    const tools = h('div', {class:'tg-tools'},
+      h('input', {type:'search', class:'set-input tg-search', placeholder:'Find a player', value:tgQuery, 'aria-label':'Find a player', oninput:function(){ tgQuery = this.value; const at = this.selectionStart; tgRender(); const s = tgModal.querySelector('.tg-search'); if(s){ s.focus(); try{ s.setSelectionRange(at, at); }catch(e){} } }}),
+      h('span', {class:'tg-sum'},
+        h('span', {class:'tg-sum-i tg-up', text:'↑ ' + ups + ' training up'}),
+        h('span', {class:'tg-sum-i tg-down', text:'↓ ' + downs + ' down'}),
+        h('span', {class:'tg-sum-i', text:offs + ' not training'})),
+      edit ? h('span', {class:'tg-acts'},
+        last ? h('button', {type:'button', class:'btn btn-small', title:'Use the moves from ' + tgNice(last.date), text:'Same as ' + tgParse(last.date).toLocaleDateString('en-AU', {weekday:'short', day:'numeric', month:'short'}),
+          onclick:function(){ const d = tgDayOrNew(tgDate); d.moves = Object.assign({}, last.moves); d.teams = last.teams.slice(); tgSaveDay(d); tgRender(); showToast('Groups copied from ' + tgNice(last.date)); }}) : '',
+        Object.keys(day.moves).length ? h('button', {type:'button', class:'btn btn-small', text:'Back to usual groups',
+          onclick:function(){ const d = tgDayOrNew(tgDate), keep = d.moves; d.moves = {}; tgSaveDay(d); tgRender(); showToast('Everyone is back in their usual group', function(){ const d2 = tgDayOrNew(tgDate); d2.moves = keep; tgSaveDay(d2); tgRender(); }); }}) : '') : '');
+    body.append(teamChips, tools);
+    const cols = day.teams.concat([TG_OFF]);
+    /* on a phone: one group at a time (pick it here) */
+    if(cols.indexOf(tgSel) === -1) tgSel = cols.indexOf(primaryGroup()) !== -1 ? primaryGroup() : cols[0];
+    body.append(h('div', {class:'tg-pick', role:'tablist', 'aria-label':'Group'}, cols.map(function(g){
+      const n = players.filter(function(p){ return where[p.key] === g; }).length;
+      return h('button', {type:'button', class:'tg-pick-b' + (g === tgSel ? ' on' : ''), role:'tab', 'aria-selected':String(g === tgSel), onclick:function(){ tgSel = g; tgRender(); }},
+        g === TG_OFF ? 'Not training' : g, h('span', {class:'tg-chip-n', text:String(n)}));
+    })));
+    const board = h('div', {class:'tg-board'});
+    cols.forEach(function(g){
+      const inCol = players.filter(function(p){ return where[p.key] === g; });
+      const show = inCol.filter(function(p){ return !q || p.name.toLowerCase().indexOf(q) !== -1; });
+      /* their own players first, then the ones training up or down with them */
+      /* the players joining this group today first (so the moves stand out), then the group's own players */
+      show.sort(function(a, b){
+        const ga = a.squad === g ? 1 : 0, gb = b.squad === g ? 1 : 0;
+        return (ga - gb) || (tgRank(a.squad) - tgRank(b.squad)) || ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || gtNameCmp(a.name, b.name);
+      });
+      const up = inCol.filter(function(p){ return g !== TG_OFF && tgRank(p.squad) < tgRank(g); }).length;
+      const down = inCol.filter(function(p){ return g !== TG_OFF && tgRank(p.squad) > tgRank(g); }).length;
+      const list = h('div', {class:'tg-list'});
+      let lastHead = '';
+      show.forEach(function(p){
+        const why = g === TG_OFF ? (day.moves[p.key] === TG_OFF ? 'Taken out today' : p.squad + ' not training today')
+          : p.squad === g ? (up || down ? g + ' squad' : '') : 'Joining today';
+        if(why && why !== lastHead){ lastHead = why; list.append(h('div', {class:'tg-sub' + (why === 'Joining today' ? ' tg-sub-in' : ''), text:why})); }
+        list.append(tgCard(p, g, edit));
+      });
+      if(!show.length) list.append(h('div', {class:'tg-none', text:q ? 'No one by that name' : g === TG_OFF ? 'Everyone’s training' : 'No players'}));
+      const col = h('section', {class:'tg-col' + (g === TG_OFF ? ' tg-col-off' : '') + (g === tgSel ? ' tg-col-sel' : ''), 'data-g':g},
+        h('header', {class:'tg-col-h'},
+          h('span', {class:'tg-col-t', text:g === TG_OFF ? 'Not training' : g}),
+          h('span', {class:'tg-col-n', text:String(inCol.length)}),
+          g !== TG_OFF && (up || down) ? h('span', {class:'tg-col-x'}, up ? h('span', {class:'tg-up', text:'+' + up + ' up'}) : '', down ? h('span', {class:'tg-down', text:'+' + down + ' down'}) : '') : ''),
+        list);
+      if(edit){
+        col.addEventListener('dragover', function(e){ if(!tgDrag) return; e.preventDefault(); col.classList.add('tg-over'); });
+        col.addEventListener('dragleave', function(e){ if(!col.contains(e.relatedTarget)) col.classList.remove('tg-over'); });
+        col.addEventListener('drop', function(e){ e.preventDefault(); col.classList.remove('tg-over'); if(tgDrag){ tgMove(tgDrag, g); tgDrag = null; } });
+      }
+      board.append(col);
+    });
+    body.append(board);
+    body.append(h('p', {class:'gt-note tg-note', text:edit ? 'Drag a player to another group, or tap them. Moves are just for this day — a player who always trains with another group can be set in Players.' : 'Who’s training with each group on this day.'}));
+  }
+  function tgCard(p, g, edit){
+    const dir = g === TG_OFF || g === p.squad ? '' : tgRank(g) > tgRank(p.squad) ? 'up' : 'down';
+    const card = h('div', {class:'tg-card' + (dir ? ' tg-guest tg-' + dir : '') + (p.av ? ' tg-out' : ''), tabindex:edit ? '0' : '-1', role:edit ? 'button' : null, draggable:edit ? 'true' : 'false',
+      title:edit ? 'Move ' + p.name : p.name},
+      h('span', {class:'tg-num', text:p.num || ''}),
+      h('span', {class:'tg-name'}, h('span', {class:'tg-nm', text:gtShowName(p.name)}),
+        h('span', {class:'tg-meta'}, p.pos ? h('span', {class:'tg-pos', text:p.pos}) : '',
+          dir ? h('span', {class:'tg-tag tg-tag-' + dir, title:p.squad + ' player training ' + dir, text:(dir === 'up' ? '↑ ' : '↓ ') + p.squad}) : g === TG_OFF ? h('span', {class:'tg-tag', text:p.squad}) : '',
+          p.usual && p.usual !== p.squad && g === p.usual ? h('span', {class:'tg-usual', title:'Usually trains with ' + p.usual, text:'weekly'}) : '')),
+      p.av ? h('span', {class:'av-chip ' + AV_ST[p.av.st].cls, title:avText(p.av, true), text:p.av.st === 'inj' ? '+' : '✕'}) : '');
+    if(edit){
+      card.addEventListener('dragstart', function(e){ tgDrag = p.key; card.classList.add('tg-dragging'); try{ e.dataTransfer.setData('text/plain', p.name); e.dataTransfer.effectAllowed = 'move'; }catch(_){} });
+      card.addEventListener('dragend', function(){ tgDrag = null; card.classList.remove('tg-dragging'); });
+      card.addEventListener('click', function(e){ e.stopPropagation(); tgMenuOpen(card, p, g); });
+      card.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); tgMenuOpen(card, p, g); } });
+    }
+    return card;
+  }
+  function tgMove(k, g){
+    const d = tgDayOrNew(tgDate), p = tgPlayers().find(function(x){ return x.key === k; }); if(!p) return;
+    const usual = (p.usual || p.squad);
+    const before = d.moves[k];
+    if(g === usual && d.teams.indexOf(usual) !== -1) delete d.moves[k]; else d.moves[k] = g;
+    tgSaveDay(d); tgRender();
+    const where = g === TG_OFF ? 'not training today' : 'training with ' + g + (g === p.squad ? '' : tgRank(g) > tgRank(p.squad) ? ' (up)' : ' (down)');
+    showToast(p.name + ' · ' + where, function(){ const d2 = tgDayOrNew(tgDate); if(before) d2.moves[k] = before; else delete d2.moves[k]; tgSaveDay(d2); tgRender(); });
+  }
+  /* tap a player: where should they train today? */
+  function tgMenuClose(){ if(tgMenu){ tgMenu.remove(); tgMenu = null; } }
+  function tgMenuOpen(card, p, cur){
+    tgMenuClose();
+    const day = tgDayOrNew(tgDate), usual = p.usual || p.squad;
+    const opt = function(g, label, sub){
+      return h('button', {type:'button', class:'tg-opt' + (g === cur ? ' on' : ''), disabled:g === cur, onclick:function(e){ e.stopPropagation(); tgMenuClose(); tgMove(p.key, g); }},
+        h('span', {text:label}), sub ? h('span', {class:'tg-opt-s', text:sub}) : '');
+    };
+    tgMenu = h('div', {class:'tg-menu', role:'menu'},
+      h('div', {class:'tg-menu-h'}, h('b', {text:p.name}), h('span', {text:p.squad + (p.usual && p.usual !== p.squad ? ' · usually trains with ' + p.usual : '')})),
+      h('div', {class:'tg-opts'}, day.teams.map(function(g){
+        const sub = g === p.squad ? 'Own squad' : g === usual ? 'Usual' : tgRank(g) > tgRank(p.squad) ? '↑ Up' : '↓ Down';
+        return opt(g, g, sub);
+      })),
+      opt(TG_OFF, 'Not training today', ''));
+    tgModal.querySelector('.tg-box').appendChild(tgMenu);
+    const box = tgModal.querySelector('.tg-box').getBoundingClientRect(), r = card.getBoundingClientRect();
+    const mw = Math.min(300, box.width - 16);
+    tgMenu.style.width = mw + 'px';
+    let left = r.left - box.left, top = r.bottom - box.top + 4;
+    left = Math.max(8, Math.min(left, box.width - mw - 8));
+    tgMenu.style.left = left + 'px'; tgMenu.style.top = top + 'px';
+    const mh = tgMenu.offsetHeight;
+    if(top + mh > box.height - 8) tgMenu.style.top = Math.max(8, r.top - box.top - mh - 4) + 'px';
+  }
+  tgModal.addEventListener('click', function(e){ if(tgMenu && !tgMenu.contains(e.target)) tgMenuClose(); if(e.target === tgModal) tgClose(); });
+  document.addEventListener('keydown', function(e){ if(e.key !== 'Escape' || tgModal.hidden) return; if(tgMenu){ tgMenuClose(); return; } tgClose(); });
+
+  /* ---- Players: every team's players, their squad and who they usually train with ---- */
+  function tgRenderClub(body, edit){
+    const all = tgPlayers();
+    const q = tgQuery.toLowerCase();
+    /* one chip a team (with how many players), or the whole club */
+    const cnt = function(g){ return all.filter(function(p){ return !g || p.squad === g; }).length; };
+    const chip = function(g, label){ const on = tgFilter === g; return h('button', {type:'button', class:'coach-g tg-sqchip' + (on ? ' on' : ''), 'aria-pressed':String(on), onclick:function(){ tgFilter = g; tgRender(); }}, label, h('span', {class:'tg-chip-n', text:String(cnt(g))})); };
+    body.append(h('div', {class:'tg-teams', role:'group', 'aria-label':'Squad'}, chip('', 'Whole club'), AGE_GROUPS.map(function(g){ return chip(g, g); })));
+    const nameIn = h('input', {type:'text', class:'set-input', placeholder:'New player’s name', 'aria-label':'New player’s name'});
+    const sqIn = h('select', {class:'gt-select', 'aria-label':'Their squad'}, AGE_GROUPS.map(function(g){ return h('option', {value:g, text:g, selected:(tgFilter || 'U13') === g}); }));
+    body.append(h('div', {class:'tg-tools'},
+      h('input', {type:'search', class:'set-input tg-search', placeholder:'Find a player', value:tgQuery, 'aria-label':'Find a player', oninput:function(){ tgQuery = this.value; const at = this.selectionStart; tgRender(); const s = tgModal.querySelector('.tg-search'); if(s){ s.focus(); try{ s.setSelectionRange(at, at); }catch(e){} } }}),
+      h('span', {class:'tg-sum'}, h('span', {class:'tg-sum-i', text:(tgFilter ? cnt(tgFilter) + ' in ' + tgFilter : all.length + ' players') }), h('span', {class:'tg-sum-i tg-up', text:all.filter(function(p){ return p.usual && p.usual !== p.squad; }).length + ' train with another group'}))));
+    const list = all.filter(function(p){ return (!tgFilter || p.squad === tgFilter) && (!q || p.name.toLowerCase().indexOf(q) !== -1); })
+      .sort(function(a, b){ return (tgRank(a.squad) - tgRank(b.squad)) || gtNameCmp(a.name, b.name); });
+    /* how often each player trained with another group (the days set so far) */
+    const ups = {};
+    tgDates().forEach(function(iso){
+      const d = tgDay(iso); if(!d || !d.moves) return;
+      Object.keys(d.moves).forEach(function(pk){ if(d.moves[pk] !== TG_OFF) ups[pk] = (ups[pk] || 0) + 1; });
+    });
+    const tb = h('tbody');
+    let lastSq = '';
+    list.forEach(function(p){
+      if(!tgFilter && p.squad !== lastSq){ lastSq = p.squad; tb.append(h('tr', {class:'tg-sqrow'}, h('td', {colspan:'5', text:p.squad}))); }
+      const sqSel = h('select', {class:'tg-cell-sel', 'aria-label':p.name + '’s squad', disabled:!edit, onchange:function(){ tgSetPlayer(p.key, {squad:this.value, name:p.name}); tgRender(); showToast(p.name + ' is in the ' + this.value + ' squad'); }},
+        AGE_GROUPS.map(function(g){ return h('option', {value:g, text:g, selected:p.squad === g}); }));
+      const usSel = h('select', {class:'tg-cell-sel' + (p.usual && p.usual !== p.squad ? ' tg-sel-up' : ''), 'aria-label':'Who ' + p.name + ' usually trains with', disabled:!edit, onchange:function(){ const v = this.value; tgSetPlayer(p.key, {usual:v === p.squad ? '' : v, name:p.name}); tgRender(); showToast(p.name + (v === p.squad ? ' trains with their own squad' : ' usually trains with ' + v)); }},
+        AGE_GROUPS.map(function(g){ return h('option', {value:g, text:g === p.squad ? g + ' (own squad)' : g, selected:(p.usual || p.squad) === g}); }));
+      tb.append(h('tr', null,
+        h('td', {class:'tg-c-name'}, h('span', {class:'tg-nm', text:gtShowName(p.name)}), p.av ? h('span', {class:'av-chip ' + AV_ST[p.av.st].cls, title:avText(p.av, true), text:AV_ST[p.av.st].short}) : ''),
+        h('td', {class:'tg-c-pos', text:p.pos || '—'}),
+        h('td', null, sqSel),
+        h('td', null, usSel),
+        h('td', {class:'tg-c-n', text:ups[p.key] ? String(ups[p.key]) : '—'})));
+    });
+    body.append(h('div', {class:'gt-table-wrap'}, h('table', {class:'runsheet gt-table tg-table'},
+      h('thead', null, h('tr', null, h('th', {text:'Player'}), h('th', {class:'tg-c-pos', text:'Pos'}), h('th', {text:'Squad'}), h('th', {text:'Usually trains with'}), h('th', {class:'tg-c-n', text:'Days moved'}))),
+      tb)));
+    if(edit) body.append(h('div', {class:'tg-add'}, nameIn, sqIn, h('button', {type:'button', class:'btn btn-small btn-primary', text:'+ Add player', onclick:function(){
+      const n = clean(nameIn.value); if(!n){ nameIn.focus(); return; }
+      const k = gtKey(n); if(all.some(function(p){ return p.key === k; })){ showToast(n + ' is already on the list'); return; }
+      tgSetPlayer(k, {name:n, squad:sqIn.value}); tgRender(); showToast(n + ' added to ' + sqIn.value);
+    }})));
+    body.append(h('p', {class:'gt-note tg-note', text:'Every player from each team’s saved squad (My squad). “Usually trains with” puts a player in that group every day — they can still be moved for a single day.'}));
+  }
+  /* the Home page button */
+  (function(){
+    const b = document.getElementById('homeSquadsBtn'); if(b) b.addEventListener('click', function(){ tgOpen('club'); });
+  })();
+
+  /* ---- for a team's session: who's joining them that day, and who's training elsewhere ----
+     null when the team isn't down as training that day (or there's nothing different) */
+  function tgFor(team, iso){
+    if(!team || !iso || tgRank(team) === -1) return null;
+    const day = tgDayOrNew(iso);
+    if(day.teams.indexOf(team) === -1) return null;
+    const joining = [], away = [];
+    tgPlayers().forEach(function(p){
+      const w = tgWhere(p, day);
+      if(w === team && p.squad !== team) joining.push({name:p.name, num:p.num, pos:p.pos, from:p.squad, dir:tgRank(p.squad) < tgRank(team) ? 'up' : 'down'});
+      else if(p.squad === team && w !== team) away.push({name:p.name, to:w === TG_OFF ? '' : w});
+    });
+    return (joining.length || away.length) ? {joining:joining, away:away, date:iso} : null;
+  }
+  /* the session's day: its date, or today when it hasn't got one */
+  function tgSessionDay(x){ const d = clean(x && x.meta && x.meta.date); return (d && luDateToIso(d)) || tgIso(new Date()); }
+  /* under the session's Players box: "2 joining from U14 · 1 training with U16" — tap to see the groups */
+  function renderTgNote(){
+    const b = document.getElementById('attendBtn'); if(!b || !b.parentNode) return;
+    let n = document.getElementById('tgNote');
+    const x = typeof state !== 'undefined' ? state : null;
+    const info = x && !isPre(x) ? tgFor(groupOf(x), tgSessionDay(x)) : null;
+    if(!info){ if(n) n.hidden = true; return; }
+    if(!n){ n = h('button', {type:'button', class:'tg-note-link no-print', id:'tgNote'}); b.parentNode.insertBefore(n, b.nextSibling); n.addEventListener('click', function(){ const i = n.dataset.date; tgOpen('day', i); }); }
+    n.hidden = false; n.dataset.date = info.date; n.innerHTML = '';
+    const from = {}; info.joining.forEach(function(p){ from[p.from] = 1; });
+    n.append(h('span', {class:'tg-note-i', 'aria-hidden':'true', text:'⇅'}),
+      info.joining.length ? h('span', {class:'tg-note-in', text:'+' + info.joining.length + ' from ' + Object.keys(from).sort(function(a, b){ return tgRank(a) - tgRank(b); }).join(', ')}) : '',
+      info.joining.length && info.away.length ? h('span', {text:' · '}) : '',
+      info.away.length ? h('span', {class:'tg-note-out', text:info.away.length + ' away'}) : '');
+    n.title = 'Training groups for ' + tgNice(info.date) + (info.joining.length ? '\nJoining: ' + info.joining.map(function(p){ return p.name + ' (' + p.from + ')'; }).join(', ') : '') + (info.away.length ? '\nElsewhere: ' + info.away.map(function(p){ return p.name + (p.to ? ' (' + p.to + ')' : ' (not training)'); }).join(', ') : '') + '\nTap to see the groups';
+  }
+
+  /* a sync brought new groups in: refresh the window (unless a player's menu is open) and the session's note */
+  function tgSynced(){
+    if(!tgModal.hidden && !tgMenu && !tgDrag && !(document.activeElement && tgModal.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName))) tgRender();
+    try{ renderTgNote(); }catch(e){}
   }
 
 
