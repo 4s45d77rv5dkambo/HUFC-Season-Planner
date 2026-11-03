@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261104093001">
+<meta name="hufc-build" content="20261104093344">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2303,7 +2303,9 @@ span.av-chip{cursor:default;}
 
 
 /* ---------- Squads: every team's players and the training groups ---------- */
-.modal-box.tg-box{width:min(1480px, 100%); position:relative;}
+/* full size: the whole screen (less a small margin) */
+#tgModal{padding:12px;}
+.modal-box.tg-box{width:100%; max-width:none; height:calc(100vh - 24px); height:calc(100dvh - 24px); max-height:none; position:relative; overflow:hidden;}
 .tg-head{flex-wrap:wrap; gap:10px;}
 .tg-head h3{margin-right:auto;}
 .tg-datenav{display:flex; align-items:center; gap:4px;}
@@ -2312,7 +2314,14 @@ span.av-chip{cursor:default;}
 .tg-date-in{position:absolute; inset:0; opacity:0; cursor:pointer; width:100%;}
 .tg-date-in::-webkit-calendar-picker-indicator{position:absolute; inset:0; width:auto; height:auto; cursor:pointer;}
 .tg-today{border:none; background:none; color:var(--grey); font:600 13px 'Barlow', Arial, sans-serif; text-decoration:underline; cursor:pointer; padding:0 4px;}
-.tg-body{padding:14px 18px 16px; display:flex; flex-direction:column; gap:12px; overflow:auto;}
+.tg-body{flex:1; min-height:0; padding:14px 18px 16px; display:flex; flex-direction:column; gap:12px; overflow:auto;}
+/* on a computer the groups fill the window, and each group scrolls on its own */
+@media screen and (min-width:641px){
+  .tg-body-day{overflow:hidden;}
+  .tg-body-day .tg-board{flex:1 1 auto; min-height:0; align-items:stretch; flex-shrink:1 !important;}
+  .tg-body-day .tg-col{min-height:0; max-height:100%;}
+  .tg-body-day .tg-list{flex:1; min-height:0; overflow-y:auto;}
+}
 .tg-view{margin:0; padding:8px 12px; border-radius:8px; background:var(--paper); color:var(--grey); font-size:14px;}
 .tg-teams{display:flex; flex-wrap:wrap; align-items:center; gap:6px;}
 .tg-lbl{font:700 13px 'Barlow Condensed', sans-serif; letter-spacing:.07em; text-transform:uppercase; color:var(--grey); margin-right:4px;}
@@ -2396,6 +2405,8 @@ span.av-chip{cursor:default;}
 .tg-empty{display:flex; flex-direction:column; gap:4px; padding:24px; text-align:center; color:var(--grey); border:1px dashed var(--line); border-radius:10px;}
 
 @media screen and (max-width:640px){
+  #tgModal{padding:0;}
+  .modal-box.tg-box{height:100vh; height:100dvh; border-radius:0;}
   .tg-body{padding:12px;}
   .tg-head h3{width:100%;}
   .tg-date{font-size:14px; padding:0 8px;}
@@ -3734,7 +3745,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 9:30am</p>
+  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 9:33am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15057,6 +15068,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.74', d:'4 Nov 2026', t:'Squads: full screen', n:['The Squads window fills the screen; on a computer each group scrolls on its own', 'Moving a player no longer makes the window flash or jump back to the top']},
     {v:'3.73', d:'4 Nov 2026', t:'Up in green, down in red', n:['Training groups: players training up are in green, players training down in red — on the groups, the tags, the counts and Attendance']},
     {v:'3.72', d:'4 Nov 2026', t:'Squads & training groups', n:['Squads on the Home page: every team’s players in one list, with who each player usually trains with', 'Training groups: pick a day and move players up or down a group (drag, or tap a player), or mark them not training. You, the club admin, and the technical directors set them; every coach sees them', 'A session shows who’s joining that team on its day (“2 joining from U14”), and Attendance lists them too']},
     {v:'3.71', d:'3 Nov 2026', t:'Practices keep their versions', n:['Change a saved practice in a new session and it’s saved as a new practice in your Practices library — the original, and every older session that uses it, stays exactly as it was', 'Changing a practice in the session it was made in still updates it in the library', 'Library cards show which session each version came from (“From: …”)']},
@@ -18501,6 +18513,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const TG_PRE = 'hufc-tgroups:';
   const TG_OFF = '_off';   /* "Not training today" */
   const tgModal = h('div', {class:'modal', id:'tgModal', hidden:true});
+  /* the window itself stays put; only what's inside it is redrawn (so it doesn't flash or jump back to the top) */
+  const tgBox = h('div', {class:'modal-box tg-box', role:'dialog', 'aria-modal':'true', 'aria-labelledby':'tgTitle'});
+  tgModal.appendChild(tgBox);
   document.body.appendChild(tgModal);
   let tgDate = '', tgTab = 'day', tgQuery = '', tgFilter = '', tgMenu = null, tgDrag = null, tgSel = '';
 
@@ -18604,14 +18619,21 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* ---- the window ---- */
   function tgOpen(tab, iso){
-    tgDate = iso || tgIso(new Date()); tgTab = tab || 'club'; tgQuery = ''; tgFilter = '';
+    tgDate = iso || tgIso(new Date()); tgTab = tab || 'club'; tgQuery = ''; tgFilter = ''; tgBox.dataset.tab = '';
     tgRender(); openModal(tgModal);
   }
   function tgClose(){ tgMenuClose(); closeModal(tgModal); }
   function tgRender(){
     tgMenuClose();
     const edit = tgCanEdit();
-    tgModal.innerHTML = '';
+    /* keep where you were: the page's scroll, the board's sideways scroll and each group's own scroll */
+    const keep = {tab:tgBox.dataset.tab, date:tgBox.dataset.date, cols:{}};
+    const ob = tgBox.querySelector('.tg-body'), oboard = tgBox.querySelector('.tg-board');
+    if(ob) keep.top = ob.scrollTop;
+    if(oboard) keep.left = oboard.scrollLeft;
+    tgBox.querySelectorAll('.tg-col').forEach(function(c){ const l = c.querySelector('.tg-list'); if(l) keep.cols[c.dataset.g] = l.scrollTop; });
+    const same = keep.tab === tgTab && (tgTab !== 'day' || keep.date === tgDate);
+    tgBox.innerHTML = ''; tgBox.dataset.tab = tgTab; tgBox.dataset.date = tgDate;
     const dateIn = h('input', {type:'date', class:'tg-date-in', value:tgDate, 'aria-label':'Day', onchange:function(){ if(this.value){ tgDate = this.value; tgRender(); } }});
     const head = h('div', {class:'modal-head tg-head'},
       h('h3', {id:'tgTitle', text:'Squads'}),
@@ -18623,10 +18645,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('button', {type:'button', class:'btn btn-primary', text:'Close', onclick:tgClose}));
     const tab = function(id, t){ return h('button', {type:'button', class:'gt-tab' + (tgTab === id ? ' on' : ''), role:'tab', 'aria-selected':String(tgTab === id), text:t, onclick:function(){ tgTab = id; tgRender(); }}); };
     const tabs = h('div', {class:'gt-tabs', role:'tablist'}, tab('club', 'Players'), tab('day', 'Training groups'));
-    const body = h('div', {class:'tg-body'});
+    const body = h('div', {class:'tg-body tg-body-' + tgTab});
     if(!edit) body.append(h('p', {class:'tg-view', text:'Set by the club admin and the technical directors — view only.'}));
     if(tgTab === 'day') tgRenderDay(body, edit); else tgRenderClub(body, edit);
-    tgModal.append(h('div', {class:'modal-box tg-box', role:'dialog', 'aria-modal':'true', 'aria-labelledby':'tgTitle'}, head, tabs, body));
+    tgBox.append(head, tabs, body);
+    if(same){
+      if(keep.top) body.scrollTop = keep.top;
+      const nb = body.querySelector('.tg-board'); if(nb && keep.left) nb.scrollLeft = keep.left;
+      body.querySelectorAll('.tg-col').forEach(function(c){ const l = c.querySelector('.tg-list'), v = keep.cols[c.dataset.g]; if(l && v) l.scrollTop = v; });
+    }
   }
 
   function tgRenderDay(body, edit){
@@ -18749,8 +18776,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         return opt(g, g, sub);
       })),
       opt(TG_OFF, 'Not training today', ''));
-    tgModal.querySelector('.tg-box').appendChild(tgMenu);
-    const box = tgModal.querySelector('.tg-box').getBoundingClientRect(), r = card.getBoundingClientRect();
+    tgBox.appendChild(tgMenu);
+    const box = tgBox.getBoundingClientRect(), r = card.getBoundingClientRect();
     const mw = Math.min(300, box.width - 16);
     tgMenu.style.width = mw + 'px';
     let left = r.left - box.left, top = r.bottom - box.top + 4;
