@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261104153116">
+<meta name="hufc-build" content="20261105100455">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3800,7 +3800,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 3:31pm</p>
+  <p class="home-version">HUFC Session Planner · updated 5 Nov 2026, 10:04am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11350,6 +11350,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     try{
       if(!lu || readOnly || !canEdit(lu) || typeof tgMatchFor !== 'function') return false;
       const iso = luDateToIso(clean(lu.meta.date)); if(!iso) return false;
+      /* only today's and future lineups follow Matchday squads: a past lineup never changes */
+      const now = new Date(), today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      if(iso < today) return false;
       const team = groupOf(lu), md = tgMatchFor(iso, team);
       if(!md || !md.players.length || (+lu.mdAt || 0) >= md.savedAt) return false;
       sqApplyToLineup(md.players);
@@ -15172,6 +15175,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.84', d:'5 Nov 2026', t:'Past lineups stay as they were', n:['Only lineups for today or later follow Squads → Matchday squads; a lineup from a past date never changes, even if that day’s matchday squad is edited']},
     {v:'3.83', d:'4 Nov 2026', t:'Black and yellow on hover', n:['Every button turns black with yellow text when you point at it — on the Home page, in sessions, lineups, Squads, Settings and the windows (the red Delete buttons stay red)', 'In Squads, pointing at a player’s name (the cards, the Players list and Attendance) turns it black and yellow too']},
     {v:'3.82', d:'4 Nov 2026', t:'Matchday squads: who’s playing', n:['Matchday squads has a Playing row, like Training: tick the teams playing that day — only they get a column', 'It starts with the teams that have a squad or lineup that day, and the teams whose Season calendar has a match that day (a team without a calendar starts ticked)']},
     {v:'3.81', d:'4 Nov 2026', t:'Matchday squads', n:['Squads → Matchday squads: each team’s squad for a match day (it opens on this weekend). Start from the team’s squad, add anyone from another squad — playing up (green ↑) or down (red ↓) — and tap a player to move them to another team or take them out', 'A lineup for that team and date takes its squad from here automatically, and again whenever the matchday squad changes; anything changed in the lineup afterwards stays', 'Coaches set their own team’s; the admin and the technical directors can set any']},
@@ -19264,7 +19268,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     body.append(h('div', {class:'tg-tools'}, h('span', {class:'tg-sum'},
       h('span', {class:'tg-sum-i tg-up', text:'↑ ' + ups + ' playing up'}),
       h('span', {class:'tg-sum-i tg-down', text:'↓ ' + downs + ' playing down'}))), pick, board);
-    body.append(h('p', {class:'gt-note tg-note', text:'Each team’s squad for this match day. A lineup for that team on this date takes its squad from here automatically — anything changed in the lineup afterwards stays, until the squad here changes again. Coaches set their own team; the admin and the technical directors can set any.'}));
+    const past = iso < tgIso(new Date());
+    body.append(h('p', {class:'gt-note tg-note', text:(past ? 'This day has passed: its lineups keep the squads they had — changes here don’t touch them. ' : '') + 'Each team’s squad for this match day. A lineup for that team on this date (today or later) takes its squad from here automatically — anything changed in the lineup afterwards stays, until the squad here changes again. Past lineups never change. Coaches set their own team; the admin and the technical directors can set any.'}));
   }
   function tgMdCard(p, g, can, iso){
     const dir = p.squad === g ? '' : tgRank(g) > tgRank(p.squad) ? 'up' : 'down';
