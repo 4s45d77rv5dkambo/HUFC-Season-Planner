@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261105100455">
+<meta name="hufc-build" content="20261105100955">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3479,6 +3479,8 @@ html.print-sim{--rule:21px;}
 .txt-wrap.filled{--rule-c:var(--black);}
 .focus .txt-wrap, .focus .txt-wrap.filled{--rule-c:rgba(255,255,255,.6);}
 .txt-wrap > .txt, .txt-wrap > .txt:focus{position:relative; z-index:1; background:transparent !important;}
+/* (backup: if a box's lines haven't been drawn yet, it keeps a plain line under each row instead of none) */
+@supports selector(:has(*)){ .txt-wrap:not(:has(> .sl)) > .txt{background:repeating-linear-gradient(to bottom, transparent 0 calc(var(--rule) - 1px), var(--rule-c) calc(var(--rule) - 1px) var(--rule)) !important;} }
 .txt-wrap > .sl{position:absolute; left:0; right:0; top:0; z-index:0; pointer-events:none; display:block; overflow:hidden;}
 .txt-wrap > .sl > i{display:block; height:var(--rule); box-sizing:border-box; border-bottom:var(--hair) solid var(--rule-c);}
 .title-bar .txt-wrap > .sl > i{border-bottom-width:2px;}
@@ -3800,7 +3802,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 5 Nov 2026, 10:04am</p>
+  <p class="home-version">HUFC Session Planner · updated 5 Nov 2026, 10:09am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -7624,8 +7626,19 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     mirror.textContent = ta.value;
     wrap.classList.toggle('filled', !!ta.value.trim());
     wrap.append(ta, mirror);
+    /* draw its lines whenever it appears or changes size (a box made while the page was hidden, or before it could be
+       measured, would otherwise be left with no line under it) */
+    if(tfRO) tfRO.observe(ta);
     return wrap;
   }
+  const tfRO = typeof ResizeObserver === 'function' ? new ResizeObserver(function(list){
+    list.forEach(function(en){
+      const ta = en.target; if(!ta.isConnected || !en.contentRect.width) return;
+      const sl = ta.parentNode && ta.parentNode.querySelector(':scope > .sl');
+      const n = Math.max(1, Math.round(ta.offsetHeight / (parseFloat(getComputedStyle(ta).lineHeight) || 26)));
+      if(!sl || sl.childElementCount !== n || ta.style.height === '' || ta.style.height === 'auto') requestAnimationFrame(function(){ autosize(ta); });
+    });
+  }) : null;
   function fieldItem(f, onRemove){
     return h('div', {class:'fitem' + (f.key === 'desc' ? ' fitem-desc' : '') + (f.key === 'equip' ? ' fitem-equip' : ''), 'data-id':f.id},
       h('div', {class:'fitem-head'},
@@ -15175,6 +15188,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.85', d:'5 Nov 2026', t:'Lines under every box', n:['The line under a box (Venue, the session title, Objectives …) is drawn whenever the box appears, so it can’t go missing when a session opens; any box whose line hasn’t been drawn yet shows a plain one instead']},
     {v:'3.84', d:'5 Nov 2026', t:'Past lineups stay as they were', n:['Only lineups for today or later follow Squads → Matchday squads; a lineup from a past date never changes, even if that day’s matchday squad is edited']},
     {v:'3.83', d:'4 Nov 2026', t:'Black and yellow on hover', n:['Every button turns black with yellow text when you point at it — on the Home page, in sessions, lineups, Squads, Settings and the windows (the red Delete buttons stay red)', 'In Squads, pointing at a player’s name (the cards, the Players list and Attendance) turns it black and yellow too']},
     {v:'3.82', d:'4 Nov 2026', t:'Matchday squads: who’s playing', n:['Matchday squads has a Playing row, like Training: tick the teams playing that day — only they get a column', 'It starts with the teams that have a squad or lineup that day, and the teams whose Season calendar has a match that day (a team without a calendar starts ticked)']},
