@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261105100955">
+<meta name="hufc-build" content="20261105102453">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2443,6 +2443,7 @@ html.tg-open, html.tg-open body{overflow:hidden;}
 .tg-edit{width:26px; height:26px; margin:0 6px 0 -4px; font-size:14px; opacity:.45; vertical-align:middle;}
 .tg-edit-sp{display:inline-block; width:26px; margin:0 6px 0 -4px;}   /* (names line up when there's no ✎) */
 .tg-table tr:hover .tg-edit, .tg-edit:focus-visible{opacity:1;}
+.tg-edit{border:1px solid var(--line); border-radius:6px; background:var(--white);}   /* (a clear little box, black and yellow when you point at it) */
 .tg-table .tg-c-pos{width:auto; min-width:60px; white-space:nowrap;}
 .tg-edrow td{background:#fffbe8 !important;}
 .tg-ed{display:flex; flex-wrap:wrap; align-items:center; gap:6px;}
@@ -3515,14 +3516,10 @@ html.print-sim .txt-wrap > .sl{display:none !important;}
   html body :is(.btn, .icon-btn, .text-btn, .coach-g, .tg-pick-b, .tg-opt, .gt-tab, .set-tab, .folder-chip, .tg-today, .tg-md-lu, .tg-note-link, .att-link, .share-btn, .tool-dd-btn, .size-btn, .acct-btn, .acct-item, [role="menuitem"]):not(:disabled):not(:is(.btn-danger, .btn-danger-ghost, .danger, .btn-del)):not(:is(.an-draw-bar, .pg-vid-bar, .an-fs-tags, .an-rec, .an-box, .an-pick-box, .pg-show, .pg-show-lu) *):hover{
     background:#0d0e0f !important; color:#ffd400 !important; border-color:#0d0e0f !important;}
   html body :is(.btn, .icon-btn, .text-btn, .coach-g, .tg-pick-b, .tg-opt, .gt-tab, .set-tab, .folder-chip, .tg-today, .tg-md-lu, .tg-note-link, .att-link, .share-btn, .tool-dd-btn, .size-btn, .acct-btn, .acct-item, [role="menuitem"]):not(:disabled):not(:is(.btn-danger, .btn-danger-ghost, .danger, .btn-del)):not(:is(.an-draw-bar, .pg-vid-bar, .an-fs-tags, .an-rec, .an-box, .an-pick-box, .pg-show, .pg-show-lu) *):hover :is(svg [stroke], svg[stroke]){stroke:#ffd400;}
-  /* hovering a player's name: black with yellow text (Squads cards, the Players list, Attendance) */
+  /* hovering a player's name: black with yellow text (Squads cards and Attendance — not the Players list, where the ✎ button lights up instead) */
   html body .tg-card:hover{background:#0d0e0f !important; border-color:#0d0e0f !important;}
   html body .tg-card:hover :is(.tg-nm, .tg-num){color:#ffd400 !important;}
   html body .tg-card:hover :is(.tg-pos, .tg-usual){color:#cfd0cd !important;}
-  html body .tg-table tbody tr:not(.tg-sqrow):not(.tg-edrow):hover > td{background:#0d0e0f !important; color:#ffd400 !important;}
-  html body .tg-table tbody tr:not(.tg-sqrow):not(.tg-edrow):hover :is(.tg-nm, .tg-age, .tg-c-num){color:#ffd400 !important;}
-  html body .tg-table tbody tr:not(.tg-sqrow):not(.tg-edrow):hover .tg-edit{color:#ffd400; opacity:1;}
-  html body .tg-table tbody tr:not(.tg-sqrow):not(.tg-edrow):hover select{color:#1c1d1f !important;}
   html body .att-row:hover{background:#0d0e0f !important; border-color:#0d0e0f !important;}
   html body .att-row:hover :is(.att-nm, .att-num, .att-hist){color:#ffd400 !important;}
   html body .att-row:hover .att-note:not(.att-tg-in){color:#cfd0cd !important;}
@@ -3802,7 +3799,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 5 Nov 2026, 10:09am</p>
+  <p class="home-version">HUFC Session Planner · updated 5 Nov 2026, 10:24am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15188,6 +15185,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.86', d:'5 Nov 2026', t:'Players list: clearer ✎', n:['Squads → Players: a player’s row no longer turns black when you point at it, so the ✎ button stands out (it turns black and yellow itself)']},
     {v:'3.85', d:'5 Nov 2026', t:'Lines under every box', n:['The line under a box (Venue, the session title, Objectives …) is drawn whenever the box appears, so it can’t go missing when a session opens; any box whose line hasn’t been drawn yet shows a plain one instead']},
     {v:'3.84', d:'5 Nov 2026', t:'Past lineups stay as they were', n:['Only lineups for today or later follow Squads → Matchday squads; a lineup from a past date never changes, even if that day’s matchday squad is edited']},
     {v:'3.83', d:'4 Nov 2026', t:'Black and yellow on hover', n:['Every button turns black with yellow text when you point at it — on the Home page, in sessions, lineups, Squads, Settings and the windows (the red Delete buttons stay red)', 'In Squads, pointing at a player’s name (the cards, the Players list and Attendance) turns it black and yellow too']},
