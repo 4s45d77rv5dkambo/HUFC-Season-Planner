@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261104153012">
+<meta name="hufc-build" content="20261104153116">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3800,7 +3800,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 3:30pm</p>
+  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 3:31pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -18792,9 +18792,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const get = function(){ return md ? tgMdDate : tgDate; };
     const set = function(v){ if(md) tgMdDate = v; else tgDate = v; tgRender(); };
     const home = md ? tgNextMatchDay() : tgIso(new Date());
-    const dateIn = h('input', {type:'date', class:'tg-date-in', value:get(), 'aria-label':'Day',
-      onchange:function(){ const v = this.value; if(/^\d{4}-\d{2}-\d{2}$/.test(v) && +v.slice(0, 4) >= 2000 && +v.slice(0, 4) <= 2100 && v !== get()) set(v); }});
-    dateIn.addEventListener('blur', function(){ dateIn.onchange(); });
+    const pickDay = function(){ const v = dateIn.value; if(/^\d{4}-\d{2}-\d{2}$/.test(v) && +v.slice(0, 4) >= 2000 && +v.slice(0, 4) <= 2100 && v !== get()) set(v); };
+    const dateIn = h('input', {type:'date', class:'tg-date-in', value:get(), 'aria-label':'Day', onchange:pickDay, onblur:pickDay});
     return h('div', {class:'tg-datenav'},
       h('button', {type:'button', class:'icon-btn tg-dn', 'aria-label':'Day before', title:'Day before', text:'‹', onclick:function(){ set(tgShift(get(), -1)); }}),
       h('label', {class:'tg-date'}, h('span', {class:'tg-date-t', text:tgNice(get())}), dateIn),
