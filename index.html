@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261104120516">
+<meta name="hufc-build" content="20261104143522">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2440,7 +2440,8 @@ html.tg-open, html.tg-open body{overflow:hidden;}
 
 /* the Players list: number, the ✎ button, and the row for fixing a player */
 .tg-c-num{margin-left:6px; color:var(--muted); font-size:13px; font-weight:600;}
-.tg-edit{width:26px; height:26px; margin-left:4px; font-size:14px; opacity:.45; vertical-align:middle;}
+.tg-edit{width:26px; height:26px; margin:0 6px 0 -4px; font-size:14px; opacity:.45; vertical-align:middle;}
+.tg-edit-sp{display:inline-block; width:26px; margin:0 6px 0 -4px;}   /* (names line up when there's no ✎) */
 .tg-table tr:hover .tg-edit, .tg-edit:focus-visible{opacity:1;}
 .tg-table .tg-c-pos{width:auto; min-width:60px; white-space:nowrap;}
 .tg-edrow td{background:#fffbe8 !important;}
@@ -3768,7 +3769,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 12:05pm</p>
+  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 2:35pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15123,6 +15124,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.80', d:'4 Nov 2026', t:'✎ before the name', n:['Squads → Players: the ✎ button is before the first name']},
     {v:'3.79', d:'4 Nov 2026', t:'Lineups linked to Squads', n:['Every team’s matchday lineup is linked to Squads: a new lineup (and My squad) has all of that team’s players — the coach’s own, plus anyone Sai, Renato or the admin added to the team or moved to it in Squads', 'They’re saved into the team’s My squad once the coach uses the lineup']},
     {v:'3.78', d:'4 Nov 2026', t:'Players: foot and date of birth', n:['Squads → Players is laid out First name · Last name · Position · Foot · Number · DOB (with their age), then Squad and Usually trains with', 'Add a player and ✎ use the same boxes, including preferred foot (Right, Left or Both) and date of birth', 'A player’s foot and date of birth stay with them in My squad']},
     {v:'3.77', d:'4 Nov 2026', t:'Squads: fix a player, positions, video', n:['Squads → Players: press ✎ beside a player to change their name, number or position (a coach for their own team; the admin and the TDs for any)', 'Positions have room for more than one (e.g. CB / RB / CDM) and always show in capitals — in Squads and in My squad', 'How to use → Squads & training groups now has a video']},
@@ -19005,8 +19007,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(tgEditing === p.key){ tb.append(tgEditRow(p)); return; }
       const nm = tgSplit(p.name), age = tgAge(p.dob);
       tb.append(h('tr', null,
-        h('td', {class:'tg-c-first'}, h('span', {class:'tg-nm', text:nm[0]}),
-          canFix ? h('button', {type:'button', class:'icon-btn tg-edit', title:'Change ' + p.name + '’s details', 'aria-label':'Change ' + p.name, text:'✎', onclick:function(){ tgEditing = p.key; tgRender(); const i = tgPage.querySelector('.tg-edrow .tg-f-first'); if(i){ i.focus(); i.select(); } }}) : ''),
+        h('td', {class:'tg-c-first'},
+          canFix ? h('button', {type:'button', class:'icon-btn tg-edit', title:'Change ' + p.name + '’s details', 'aria-label':'Change ' + p.name, text:'✎', onclick:function(){ tgEditing = p.key; tgRender(); const i = tgPage.querySelector('.tg-edrow .tg-f-first'); if(i){ i.focus(); i.select(); } }}) : h('span', {class:'tg-edit-sp', 'aria-hidden':'true'}),
+          h('span', {class:'tg-nm', text:nm[0]})),
         h('td', {class:'tg-c-last'}, h('span', {class:'tg-nm', text:nm[1]}), p.av ? h('span', {class:'av-chip ' + AV_ST[p.av.st].cls, title:avText(p.av, true), text:AV_ST[p.av.st].short}) : ''),
         h('td', {class:'tg-c-pos', text:p.pos ? p.pos.toUpperCase() : '—'}),
         h('td', {class:'tg-c-foot', text:tgFootName(p.foot) || '—'}),
