@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261104151856">
+<meta name="hufc-build" content="20261104153012">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3508,6 +3508,24 @@ html.print-sim .txt-wrap > .sl{display:none !important;}
   /* the bar along the top (Home, Undo, Redo, New, Open, Print, Export, Save …) and its menus: black with yellow text */
   html body .appbar :is(button, .btn, [role="menuitem"]):not(:disabled):hover{background:#0d0e0f !important; color:#ffd400 !important; border-color:#0d0e0f !important;}
   html body .appbar :is(button, .btn, [role="menuitem"]):not(:disabled):hover svg [stroke]{stroke:#ffd400;}
+  /* every other button, everywhere (Home page, sessions, lineups, Squads, Settings, windows …): black with yellow text too —
+     not the red Delete buttons, the coloured status chips, or the buttons over a playing video */
+  html body :is(.btn, .icon-btn, .text-btn, .coach-g, .tg-pick-b, .tg-opt, .gt-tab, .set-tab, .folder-chip, .tg-today, .tg-md-lu, .tg-note-link, .att-link, .share-btn, .tool-dd-btn, .size-btn, .acct-btn, .acct-item, [role="menuitem"]):not(:disabled):not(:is(.btn-danger, .btn-danger-ghost, .danger, .btn-del)):not(:is(.an-draw-bar, .pg-vid-bar, .an-fs-tags, .an-rec, .an-box, .an-pick-box, .pg-show, .pg-show-lu) *):hover{
+    background:#0d0e0f !important; color:#ffd400 !important; border-color:#0d0e0f !important;}
+  html body :is(.btn, .icon-btn, .text-btn, .coach-g, .tg-pick-b, .tg-opt, .gt-tab, .set-tab, .folder-chip, .tg-today, .tg-md-lu, .tg-note-link, .att-link, .share-btn, .tool-dd-btn, .size-btn, .acct-btn, .acct-item, [role="menuitem"]):not(:disabled):not(:is(.btn-danger, .btn-danger-ghost, .danger, .btn-del)):not(:is(.an-draw-bar, .pg-vid-bar, .an-fs-tags, .an-rec, .an-box, .an-pick-box, .pg-show, .pg-show-lu) *):hover :is(svg [stroke], svg[stroke]){stroke:#ffd400;}
+  /* hovering a player's name: black with yellow text (Squads cards, the Players list, Attendance) */
+  html body .tg-card:hover{background:#0d0e0f !important; border-color:#0d0e0f !important;}
+  html body .tg-card:hover :is(.tg-nm, .tg-num){color:#ffd400 !important;}
+  html body .tg-card:hover :is(.tg-pos, .tg-usual){color:#cfd0cd !important;}
+  html body .tg-table tbody tr:not(.tg-sqrow):not(.tg-edrow):hover > td{background:#0d0e0f !important; color:#ffd400 !important;}
+  html body .tg-table tbody tr:not(.tg-sqrow):not(.tg-edrow):hover :is(.tg-nm, .tg-age, .tg-c-num){color:#ffd400 !important;}
+  html body .tg-table tbody tr:not(.tg-sqrow):not(.tg-edrow):hover .tg-edit{color:#ffd400; opacity:1;}
+  html body .tg-table tbody tr:not(.tg-sqrow):not(.tg-edrow):hover select{color:#1c1d1f !important;}
+  html body .att-row:hover{background:#0d0e0f !important; border-color:#0d0e0f !important;}
+  html body .att-row:hover :is(.att-nm, .att-num, .att-hist){color:#ffd400 !important;}
+  html body .att-row:hover .att-note:not(.att-tg-in){color:#cfd0cd !important;}
+  /* (on the black Home panel a black button keeps a yellow edge so it still shows) */
+  html body .home-hero .btn:not(:disabled):hover{box-shadow:inset 0 0 0 1.5px #ffd400;}
 }
 /* tick boxes in club colours: a black box with a yellow tick */
 input[type="checkbox"]:not(.toggle input){
@@ -3782,7 +3800,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 3:18pm</p>
+  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 3:30pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15154,6 +15172,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.83', d:'4 Nov 2026', t:'Black and yellow on hover', n:['Every button turns black with yellow text when you point at it — on the Home page, in sessions, lineups, Squads, Settings and the windows (the red Delete buttons stay red)', 'In Squads, pointing at a player’s name (the cards, the Players list and Attendance) turns it black and yellow too']},
     {v:'3.82', d:'4 Nov 2026', t:'Matchday squads: who’s playing', n:['Matchday squads has a Playing row, like Training: tick the teams playing that day — only they get a column', 'It starts with the teams that have a squad or lineup that day, and the teams whose Season calendar has a match that day (a team without a calendar starts ticked)']},
     {v:'3.81', d:'4 Nov 2026', t:'Matchday squads', n:['Squads → Matchday squads: each team’s squad for a match day (it opens on this weekend). Start from the team’s squad, add anyone from another squad — playing up (green ↑) or down (red ↓) — and tap a player to move them to another team or take them out', 'A lineup for that team and date takes its squad from here automatically, and again whenever the matchday squad changes; anything changed in the lineup afterwards stays', 'Coaches set their own team’s; the admin and the technical directors can set any']},
     {v:'3.80', d:'4 Nov 2026', t:'✎ before the name', n:['Squads → Players: the ✎ button is before the first name']},
