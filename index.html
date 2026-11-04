@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261104103920">
+<meta name="hufc-build" content="20261104120516">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3768,7 +3768,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 10:39am</p>
+  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 12:05pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11623,8 +11623,33 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }catch(e){}
     return out;
   }
-  /* the team's saved squad: your own copy first, then the newest */
+  /* the team's squad, linked to Squads: its saved squad, plus every other player Squads has in that team (added by Sai / Renato /
+     the admin, or moved to that team there) — so a new lineup has the whole squad. Nothing is saved until the coach changes something.
+     (cached for a moment: lineups ask for it a lot while drawing) */
+  let sqCache = {}, sqCacheAt = 0;
+  function sqBust(){ sqCache = {}; sqCacheAt = 0; }
   function sqFor(team){
+    team = team || '';
+    if(Date.now() - sqCacheAt > 400){ sqCache = {}; sqCacheAt = Date.now(); }
+    if(team in sqCache) return sqCache[team];
+    const own = sqForOwn(team);
+    let extra = [];
+    try{
+      if(team && typeof tgPlayers === 'function'){
+        const have = {}; (own ? own.players : []).forEach(function(r){ have[gtKey(r.name)] = 1; });
+        extra = tgPlayers().filter(function(p){ return p.squad === team && !have[p.key]; }).map(function(p){
+          const o = {name:p.name, num:p.num || '', pos:p.pos || ''}; if(p.foot) o.foot = p.foot; if(p.dob) o.dob = p.dob; return o;
+        });
+      }
+    }catch(e){ extra = []; }
+    const out = !extra.length ? own
+      : own ? Object.assign({}, own, {players:own.players.concat(extra)})
+      : {kind:'squad', group:team || undefined, players:extra, virtual:true, seeded:false};   /* (no saved squad here yet: just the Squads players) */
+    sqCache[team] = out;
+    return out;
+  }
+  /* the team's saved squad on this device: your own copy first, then the newest */
+  function sqForOwn(team){
     const all = sqList().filter(function(x){ return (groupOf(x.sq) || '') === (team || ''); });
     all.sort(function(a, b){ return ((canEdit(b.sq) ? 1 : 0) - (canEdit(a.sq) ? 1 : 0)) || ((b.sq.savedAt || 0) - (a.sq.savedAt || 0)); });
     if(!all.length) return null;
@@ -11644,10 +11669,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function sqStore(team, players){
     let sq = sqFor(team);
-    if(!sq || !canEdit(sq)) sq = {kind:'squad', id:newId(), group:team || undefined, players:[], avail:sq && sq.avail ? Object.assign({}, sq.avail) : undefined};
+    if(!sq || !canEdit(sq) || sq.virtual) sq = {kind:'squad', id:newId(), group:team || undefined, players:[], avail:sq && sq.avail ? Object.assign({}, sq.avail) : undefined};
+    sq = Object.assign({}, sq); delete sq.virtual; sqBust();
     sq.players = sqUnique(players);
     sq.savedAt = Date.now(); sq.seeded = true;
     try{ hufcStore.setItem(SQ_PREFIX + sq.id, JSON.stringify(sq)); }catch(e){}
+    sqBust();
     try{ clubSyncSoon(); }catch(e){}
     sqNames();
     return sq;
@@ -14843,10 +14870,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     try{ return JSON.parse(hufcStore.getItem(SYNC_KINDS[kind].prefix + id) || 'null'); }catch(e){ return null; }
   }
   function localSet(kind, id, obj, lib){
+    try{ sqBust(); }catch(e){}
     if(kind === 'practices'){ lib.items[id] = obj; return; }
     try{ hufcStore.setItem(SYNC_KINDS[kind].prefix + id, JSON.stringify(obj)); }catch(e){}
   }
   function localDel(kind, id, lib){
+    try{ sqBust(); }catch(e){}
     if(kind === 'practices'){ delete lib.items[id]; return; }
     try{ hufcStore.removeItem(SYNC_KINDS[kind].prefix + id); }catch(e){}
   }
@@ -15094,6 +15123,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.79', d:'4 Nov 2026', t:'Lineups linked to Squads', n:['Every team’s matchday lineup is linked to Squads: a new lineup (and My squad) has all of that team’s players — the coach’s own, plus anyone Sai, Renato or the admin added to the team or moved to it in Squads', 'They’re saved into the team’s My squad once the coach uses the lineup']},
     {v:'3.78', d:'4 Nov 2026', t:'Players: foot and date of birth', n:['Squads → Players is laid out First name · Last name · Position · Foot · Number · DOB (with their age), then Squad and Usually trains with', 'Add a player and ✎ use the same boxes, including preferred foot (Right, Left or Both) and date of birth', 'A player’s foot and date of birth stay with them in My squad']},
     {v:'3.77', d:'4 Nov 2026', t:'Squads: fix a player, positions, video', n:['Squads → Players: press ✎ beside a player to change their name, number or position (a coach for their own team; the admin and the TDs for any)', 'Positions have room for more than one (e.g. CB / RB / CDM) and always show in capitals — in Squads and in My squad', 'How to use → Squads & training groups now has a video']},
     {v:'3.76', d:'4 Nov 2026', t:'Coaches add players in Squads', n:['Squads → Players: every coach can add a player (name, number, position) to their own team’s squad — it goes straight into that team’s My squad, so it’s there for lineups, attendance and stats too', 'The club admin can add to any team, and Sai and Renato (technical directors) to any squad from U13 to U23 — on the club list every coach sees']},
@@ -18244,7 +18274,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   };
   function avToday(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function avFmt(iso){ const p = String(iso || '').split('-'); if(p.length !== 3) return ''; const d = new Date(+p[0], +p[1] - 1, +p[2], 12); return isNaN(d) ? '' : d.toLocaleDateString('en-AU', {weekday:'short', day:'numeric', month:'short'}); }
-  function avMap(team){ const sq = sqFor(team || ''); return (sq && sq.avail) || {}; }
+  function avMap(team){ const sq = sqForOwn(team || ''); return (sq && sq.avail) || {}; }
   /* this player's status if they're out today (null when available, or once their "back" day has come) */
   function avOf(team, name){
     if(!AV_ON) return null;
@@ -18264,11 +18294,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     let sq = sqFor(team || '');
     const players = sq ? sq.players.slice() : [];
     if(!players.some(function(r){ return gtKey(r.name) === k; })) players.push({name:clean(name), num:'', pos:''});
-    if(!sq || !canEdit(sq) || players.length !== sq.players.length) sq = sqStore(team, players);
+    if(!sq || !canEdit(sq) || sq.virtual || players.length !== sq.players.length) sq = sqStore(team, players);
     const av = Object.assign({}, sq.avail || {});
     if(a && AV_ST[a.st]){ const o = {st:a.st}; if(clean(a.note)) o.note = clean(a.note); if(a.back) o.back = a.back; av[k] = o; } else delete av[k];
-    sq.avail = av; sq.savedAt = Date.now();
+    sq.avail = av; sq.savedAt = Date.now(); delete sq.virtual;
     try{ hufcStore.setItem(SQ_PREFIX + sq.id, JSON.stringify(sq)); }catch(e){}
+    try{ sqBust(); }catch(e){}
     try{ clubSyncSoon(); }catch(e){}
     avChanged();
   }
@@ -18555,7 +18586,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function tgNice(iso){ return tgParse(iso).toLocaleDateString('en-AU', {weekday:'long', day:'numeric', month:'long'}); }
   function tgShift(iso, n){ const d = tgParse(iso); d.setDate(d.getDate() + n); return tgIso(d); }
   function tgRead(k, dflt){ try{ return JSON.parse(hufcStore.getItem(k) || 'null') || dflt; }catch(e){ return dflt; } }
-  function tgWrite(k, v){ try{ hufcStore.setItem(k, JSON.stringify(v)); }catch(e){} try{ clubSyncSoon(); }catch(e){} }
+  function tgWrite(k, v){ try{ hufcStore.setItem(k, JSON.stringify(v)); }catch(e){} try{ sqBust(); }catch(e){} try{ clubSyncSoon(); }catch(e){} }
   /* who sets the groups: the club admin and the technical directors (everyone else sees them) */
   function tgCanEdit(){
     if(CLOUD && CLOUD.user && CLOUD.user()){ const u = CLOUD.user(); return !!(u.admin || (CLOUD.isTD && CLOUD.isTD())); }
@@ -18599,7 +18630,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function tgPlayers(){
     const club = tgClub(), out = new Map();
     AGE_GROUPS.forEach(function(team){
-      const sq = sqFor(team); if(!sq) return;
+      const sq = sqForOwn(team); if(!sq) return;
       sq.players.forEach(function(r){
         const k = gtKey(r.name); if(!k || out.has(k)) return;
         out.set(k, {key:k, name:clean(r.name), num:clean(r.num), pos:clean(r.pos), foot:r.foot || '', dob:r.dob || '', squad:team, usual:'', av:avOf(team, r.name)});
