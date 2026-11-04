@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261104144253">
+<meta name="hufc-build" content="20261104151856">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2466,6 +2466,8 @@ html.tg-open, html.tg-open body{overflow:hidden;}
 
 /* Matchday squads */
 .tg-md-board{grid-auto-columns:minmax(150px, 1fr);}
+/* (a few groups: columns stay a sensible width instead of stretching across the page) */
+@media screen and (min-width:641px){ .tg-board{grid-auto-columns:minmax(150px, 300px);} }
 .tg-md-col.tg-md-empty .tg-col-h{background:#2a2c2f;}
 .tg-sub-up{color:#1b7f3a;}
 .tg-sub-down{color:#c62828;}
@@ -3780,7 +3782,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 2:42pm</p>
+  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 3:18pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15152,6 +15154,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.82', d:'4 Nov 2026', t:'Matchday squads: who’s playing', n:['Matchday squads has a Playing row, like Training: tick the teams playing that day — only they get a column', 'It starts with the teams that have a squad or lineup that day, and the teams whose Season calendar has a match that day (a team without a calendar starts ticked)']},
     {v:'3.81', d:'4 Nov 2026', t:'Matchday squads', n:['Squads → Matchday squads: each team’s squad for a match day (it opens on this weekend). Start from the team’s squad, add anyone from another squad — playing up (green ↑) or down (red ↓) — and tap a player to move them to another team or take them out', 'A lineup for that team and date takes its squad from here automatically, and again whenever the matchday squad changes; anything changed in the lineup afterwards stays', 'Coaches set their own team’s; the admin and the technical directors can set any']},
     {v:'3.80', d:'4 Nov 2026', t:'✎ before the name', n:['Squads → Players: the ✎ button is before the first name']},
     {v:'3.79', d:'4 Nov 2026', t:'Lineups linked to Squads', n:['Every team’s matchday lineup is linked to Squads: a new lineup (and My squad) has all of that team’s players — the coach’s own, plus anyone Sai, Renato or the admin added to the team or moved to it in Squads', 'They’re saved into the team’s My squad once the coach uses the lineup']},
@@ -19130,6 +19133,25 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const out = {kind:'tgroups', tg:'match', group:team, team:team, date:iso, players:players.map(function(p){ const o = {name:clean(p.name), num:clean(p.num), pos:clean(p.pos)}; return o; }), savedAt:Date.now(), by:tgMeName()};
     tgWrite(TG_PRE + 'match-' + iso + '-' + team + '-' + tgMe(), out);
   }
+  /* which teams play that day: what someone picked (newest wins), else worked out from the squads, lineups and Season calendars */
+  function tgMdTeams(iso, day, lus){
+    let best = null;
+    tgAll().forEach(function(o){ if(o.tg === 'mdteams' && o.date === iso && (!best || (+o.savedAt || 0) > (+best.savedAt || 0))) best = o; });
+    if(best && Array.isArray(best.teams)) return best.teams.filter(function(g){ return tgRank(g) !== -1; });
+    /* a team with a squad or lineup that day plays; a team with a Season calendar plays on its match days; a team without one is in until it's taken off */
+    const out = [];
+    AGE_GROUPS.forEach(function(g){
+      if((day[g] && (day[g].players || []).length) || (lus[g] && lus[g].length)){ out.push(g); return; }
+      let s = null;
+      try{ s = seSeasons(g).map(function(x){ return x.s; }).find(function(x){ return x.start <= iso && iso <= x.end; }) || null; }catch(e){}
+      if(!s){ out.push(g); return; }
+      try{ const info = seDayInfo(s, iso, {}); if(info.type === 'match' && !info.off && !s.breaks[seMonday(iso)]) out.push(g); }catch(e){}
+    });
+    return out;
+  }
+  function tgMdTeamsSave(iso, teams){
+    tgWrite(TG_PRE + 'mdteams-' + iso + '-' + tgMe(), {kind:'tgroups', tg:'mdteams', group:tgCanEdit() ? 'U13' : (primaryGroup() || 'U13'), date:iso, teams:teams.slice(), savedAt:Date.now(), by:tgMeName()});
+  }
   /* for a lineup: that team's matchday squad on that day (null if none was set) */
   function tgMatchFor(iso, team){
     if(!iso || !team) return null;
@@ -19146,17 +19168,26 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!tgMdDate) tgMdDate = tgNextMatchDay();
     const iso = tgMdDate, all = tgPlayers(), byKey = {};
     all.forEach(function(p){ byKey[p.key] = p; });
-    const day = tgMdDay(iso), lus = tgMdLineups(iso);
+    const day = tgMdDay(iso), lus = tgMdLineups(iso), playing = tgMdTeams(iso, day, lus);
     body.append(tgDateNav(true));
+    /* the teams playing that day (like Training on the training groups) */
+    body.append(h('div', {class:'tg-teams', role:'group', 'aria-label':'Teams playing'},
+      h('span', {class:'tg-lbl', text:'Playing'}),
+      AGE_GROUPS.map(function(g){
+        const on = playing.indexOf(g) !== -1;
+        return h('button', {type:'button', class:'coach-g' + (on ? ' on' : ''), 'aria-pressed':String(on), text:g, disabled:!(tgCanEdit() || isMine(g)),
+          onclick:function(){ const now = tgMdTeams(iso, tgMdDay(iso), tgMdLineups(iso)).slice(), i = now.indexOf(g); if(i === -1) now.push(g); else now.splice(i, 1); now.sort(function(a, b){ return tgRank(a) - tgRank(b); }); tgMdTeamsSave(iso, now); tgRender(); }});
+      })));
     let ups = 0, downs = 0;
     /* on a phone: one team at a time */
-    if(AGE_GROUPS.indexOf(tgMdSel) === -1) tgMdSel = isMine(primaryGroup()) && primaryGroup() ? primaryGroup() : AGE_GROUPS[0];
-    const pick = h('div', {class:'tg-pick', role:'tablist', 'aria-label':'Team'}, AGE_GROUPS.map(function(g){
+    if(playing.indexOf(tgMdSel) === -1) tgMdSel = playing.indexOf(primaryGroup()) !== -1 ? primaryGroup() : playing[0];
+    const pick = h('div', {class:'tg-pick', role:'tablist', 'aria-label':'Team'}, playing.map(function(g){
       const n = day[g] ? (day[g].players || []).length : 0;
       return h('button', {type:'button', class:'tg-pick-b' + (g === tgMdSel ? ' on' : ''), role:'tab', 'aria-selected':String(g === tgMdSel), onclick:function(){ tgMdSel = g; tgRender(); }}, g, h('span', {class:'tg-chip-n', text:String(n)}));
     }));
     const board = h('div', {class:'tg-board tg-md-board'});
-    AGE_GROUPS.forEach(function(g){
+    if(!playing.length) board.append(h('div', {class:'tg-empty'}, h('b', {text:'No teams playing'}), h('span', {text:'Tap the teams playing on this day above.'})));
+    playing.forEach(function(g){
       const can = tgMdCanEdit(g);
       const cur = day[g] ? (day[g].players || []) : [];
       const inCol = cur.map(function(r){ const k = gtKey(r.name), p = byKey[k]; return p ? p : {key:k, name:r.name, num:r.num, pos:r.pos, squad:g, av:null}; });
@@ -19257,7 +19288,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     };
     tgMenu = h('div', {class:'tg-menu', role:'menu'},
       h('div', {class:'tg-menu-h'}, h('b', {text:p.name}), h('span', {text:p.squad + ' · in the ' + g + ' matchday squad'})),
-      h('div', {class:'tg-opts'}, AGE_GROUPS.map(function(o){
+      h('div', {class:'tg-opts'}, AGE_GROUPS.filter(function(o){ return o === g || tgMdTeams(iso, tgMdDay(iso), tgMdLineups(iso)).indexOf(o) !== -1; }).map(function(o){
         const sub = o === p.squad ? 'Own squad' : tgRank(o) > tgRank(p.squad) ? '↑ Up' : '↓ Down';
         return opt(o, o, sub, /Up$/.test(sub) ? 'tg-opt-up' : /Down$/.test(sub) ? 'tg-opt-down' : '');
       })),
