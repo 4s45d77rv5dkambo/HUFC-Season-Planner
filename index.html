@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261104143522">
+<meta name="hufc-build" content="20261104144253">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2464,6 +2464,17 @@ html.tg-open, html.tg-open body{overflow:hidden;}
 @media screen and (max-width:900px){ .tg-table .tg-c-foot, .tg-table .tg-c-dob{display:none;} }
 @media screen and (max-width:640px){ .tg-f-first, .tg-f-last, .tg-f-dob{width:calc(50% - 4px);} .tg-table .tg-c-no{display:none;} .tg-table .tg-c-first{width:auto;} }
 
+/* Matchday squads */
+.tg-md-board{grid-auto-columns:minmax(150px, 1fr);}
+.tg-md-col.tg-md-empty .tg-col-h{background:#2a2c2f;}
+.tg-sub-up{color:#1b7f3a;}
+.tg-sub-down{color:#c62828;}
+.tg-md-foot{display:flex; flex-direction:column; gap:4px; padding:0 6px 8px;}
+.tg-md-add{width:100%; max-width:none; height:32px; font-size:13.5px;}
+.tg-md-acts{display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px; font-size:12.5px;}
+.tg-md-lu{width:100%; margin-top:2px; border:1px solid var(--yellow); border-radius:6px; background:transparent; color:var(--yellow); font:600 11.5px/1.3 'Barlow', Arial, sans-serif; padding:2px 6px; cursor:pointer; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.tg-md-lu:hover{background:rgba(255,212,0,.12);}
+
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
 body.view-lineup .pregame-only{display:none !important;}
@@ -3769,7 +3780,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 2:35pm</p>
+  <p class="home-version">HUFC Session Planner · updated 4 Nov 2026, 2:42pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -10503,7 +10514,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return box;
   }
   function luDateCell(){
-    return h('div', {class:'cell'}, h('span', {class:'lbl', text:'Date'}), luDateBox(lu.meta.date, function(v){ lu.meta.date = v; luSchedule(); }));
+    return h('div', {class:'cell'}, h('span', {class:'lbl', text:'Date'}), luDateBox(lu.meta.date, function(v){ lu.meta.date = v; luSchedule(); setTimeout(luMatchSquad, 0); }));
   }
   function luRenderTop(){
     const tb = document.getElementById('luTitleBar'); tb.innerHTML = '';
@@ -11302,6 +11313,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     try{ hufcStore.setItem(luKey, JSON.stringify(lu)); }catch(e){}
     const t = document.querySelector('#luInfo textarea'); if(t) setTimeout(function(){ t.focus(); }, 0);
     setStatus('New matchday lineup · start with the opponent and round');
+    setTimeout(luMatchSquad, 0);   /* (a lineup started already dated, e.g. from the Season calendar) */
   }
   function luOpen(key){
     let s = null; try{ s = JSON.parse(hufcStore.getItem(key)); }catch(e){}
@@ -11310,6 +11322,22 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     luRender(); luShow();
     setReadOnly(!canEdit(lu), 'lineup', groupOf(lu));
     setStatus('Opened “' + (luName() || 'Untitled lineup') + '”');
+    luMatchSquad();
+  }
+  /* Squads → Matchday squads: a lineup for that team and date takes its squad from there — once each time that squad changes
+     (whatever the coach changes in the lineup afterwards stays) */
+  function luMatchSquad(){
+    try{
+      if(!lu || readOnly || !canEdit(lu) || typeof tgMatchFor !== 'function') return false;
+      const iso = luDateToIso(clean(lu.meta.date)); if(!iso) return false;
+      const team = groupOf(lu), md = tgMatchFor(iso, team);
+      if(!md || !md.players.length || (+lu.mdAt || 0) >= md.savedAt) return false;
+      sqApplyToLineup(md.players);
+      lu.mdAt = md.savedAt;
+      luRender(); luSaveNow();
+      showToast('Squad from Squads → Matchday squads (' + team + ', ' + md.players.length + ' players)');
+      return true;
+    }catch(e){ return false; }
   }
   /* a lineup nobody has typed into yet isn't listed */
   function luHasContent(s){
@@ -15124,6 +15152,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.81', d:'4 Nov 2026', t:'Matchday squads', n:['Squads → Matchday squads: each team’s squad for a match day (it opens on this weekend). Start from the team’s squad, add anyone from another squad — playing up (green ↑) or down (red ↓) — and tap a player to move them to another team or take them out', 'A lineup for that team and date takes its squad from here automatically, and again whenever the matchday squad changes; anything changed in the lineup afterwards stays', 'Coaches set their own team’s; the admin and the technical directors can set any']},
     {v:'3.80', d:'4 Nov 2026', t:'✎ before the name', n:['Squads → Players: the ✎ button is before the first name']},
     {v:'3.79', d:'4 Nov 2026', t:'Lineups linked to Squads', n:['Every team’s matchday lineup is linked to Squads: a new lineup (and My squad) has all of that team’s players — the coach’s own, plus anyone Sai, Renato or the admin added to the team or moved to it in Squads', 'They’re saved into the team’s My squad once the coach uses the lineup']},
     {v:'3.78', d:'4 Nov 2026', t:'Players: foot and date of birth', n:['Squads → Players is laid out First name · Last name · Position · Foot · Number · DOB (with their age), then Squad and Usually trains with', 'Add a player and ✎ use the same boxes, including preferred foot (Right, Left or Both) and date of birth', 'A player’s foot and date of birth stay with them in My squad']},
@@ -15558,7 +15587,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       'Training groups: pick the day, then the squads training. Each squad has a column; players joining from another squad are at the top, with ↑ (training up) or ↓ (training down).',
       'Move a player for the day: drag them to another group, or tap them and pick the group — or Not training today. Undo puts them back.',
       'The club admin and the technical directors set the groups; every other coach sees them.',
-      'A session shows who’s joining that team on its day (“2 joining from U14”) under Players, and Attendance lists them so you can tick them off.'
+      'A session shows who’s joining that team on its day (“2 joining from U14”) under Players, and Attendance lists them so you can tick them off.',
+      'Matchday squads: pick the match day, then build each team’s squad — Start from the squad, + Add a player from any team (playing up or down), tap a player to move them or take them out. The lineup for that team and date takes this squad automatically.'
     ], tips:[
       'Same as … copies the last day’s groups; Back to usual groups clears the day’s moves.',
       'On a phone you see one group at a time — pick it along the top.'
@@ -18581,6 +18611,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   document.body.appendChild(tgPage);
   function tgShow(on){ tgPage.hidden = !on; document.documentElement.classList.toggle('tg-open', !!on); }
   tgPage.addEventListener('scroll', function(){ tgMenuClose(); }, {passive:true});
+  let tgMdDate = '', tgMdSel = '';   /* Matchday squads: its own day (usually the weekend) */
   let tgDate = '', tgTab = 'day', tgQuery = '', tgFilter = '', tgMenu = null, tgDrag = null, tgSel = '';
 
   function tgIso(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -18688,7 +18719,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* ---- the window ---- */
   let tgFromHome = true;
   function tgOpen(tab, iso){
-    tgDate = iso || tgIso(new Date()); tgTab = tab || 'club'; tgQuery = ''; tgFilter = ''; tgPage.dataset.tab = '';
+    tgDate = iso || tgIso(new Date()); tgTab = tab || 'club'; tgMdDate = (tab === 'match' && iso) ? iso : tgNextMatchDay(); tgQuery = ''; tgFilter = ''; tgPage.dataset.tab = '';
     tgFromHome = document.documentElement.classList.contains('view-home');
     swap(function(){ tgShow(true); tgRender(); tgPage.scrollTop = 0; });
   }
@@ -18719,13 +18750,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const crest = (document.querySelector('.header .crest') || {}).src || '';
     const tab = function(id, t){ return h('button', {type:'button', class:'gt-tab' + (tgTab === id ? ' on' : ''), role:'tab', 'aria-selected':String(tgTab === id), text:t, onclick:function(){ tgTab = id; tgRender(); tgPage.scrollTop = 0; }}); };
     const body = h('div', {class:'tg-body tg-body-' + tgTab});
-    if(tgTab === 'day') tgRenderDay(body, edit); else tgRenderClub(body, edit);
+    if(tgTab === 'day') tgRenderDay(body, edit); else if(tgTab === 'match') tgRenderMatch(body, edit); else tgRenderClub(body, edit);
     tgPage.append(bar, h('div', {class:'se-sheet tg-sheet'},
       h('header', {class:'header se-header'},
         h('img', {class:'crest', alt:'Heidelberg United crest', src:crest}),
         h('div', {class:'club'}, h('div', {class:'club-name', text:'Heidelberg United'}), h('div', {class:'club-sub', text:'Football Club · Est. 1958'})),
         h('div', {class:'doc-title'}, h('strong', {id:'tgTitle', text:'Squads'}))),
-      h('div', {class:'gt-tabs tg-tabs', role:'tablist'}, tab('club', 'Players'), tab('day', 'Training groups')),
+      h('div', {class:'gt-tabs tg-tabs', role:'tablist'}, tab('club', 'Players'), tab('day', 'Training groups'), tab('match', 'Matchday squads')),
       body));
     tgPage.style.setProperty('--tg-bar', bar.offsetHeight + 'px');   /* (the Players / Training groups tabs stay in view under the top bar) */
     if(sameTab){
@@ -18735,14 +18766,21 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(refocus){ const d = tgPage.querySelector('.tg-date-in'); if(d) d.focus(); }
   }
   /* the day: ‹ Wednesday 4 November › (Today) */
-  function tgDateNav(){
-    const dateIn = h('input', {type:'date', class:'tg-date-in', value:tgDate, 'aria-label':'Day', onchange:function(){ tgSetDate(this.value); }, onblur:function(){ tgSetDate(this.value); }});
+  function tgDateNav(md){
+    const get = function(){ return md ? tgMdDate : tgDate; };
+    const set = function(v){ if(md) tgMdDate = v; else tgDate = v; tgRender(); };
+    const home = md ? tgNextMatchDay() : tgIso(new Date());
+    const dateIn = h('input', {type:'date', class:'tg-date-in', value:get(), 'aria-label':'Day',
+      onchange:function(){ const v = this.value; if(/^\d{4}-\d{2}-\d{2}$/.test(v) && +v.slice(0, 4) >= 2000 && +v.slice(0, 4) <= 2100 && v !== get()) set(v); }});
+    dateIn.addEventListener('blur', function(){ dateIn.onchange(); });
     return h('div', {class:'tg-datenav'},
-      h('button', {type:'button', class:'icon-btn tg-dn', 'aria-label':'Day before', title:'Day before', text:'‹', onclick:function(){ tgDate = tgShift(tgDate, -1); tgRender(); }}),
-      h('label', {class:'tg-date'}, h('span', {class:'tg-date-t', text:tgNice(tgDate)}), dateIn),
-      h('button', {type:'button', class:'icon-btn tg-dn', 'aria-label':'Day after', title:'Day after', text:'›', onclick:function(){ tgDate = tgShift(tgDate, 1); tgRender(); }}),
-      tgDate !== tgIso(new Date()) ? h('button', {type:'button', class:'tg-today', text:'Today', onclick:function(){ tgDate = tgIso(new Date()); tgRender(); }}) : '');
+      h('button', {type:'button', class:'icon-btn tg-dn', 'aria-label':'Day before', title:'Day before', text:'‹', onclick:function(){ set(tgShift(get(), -1)); }}),
+      h('label', {class:'tg-date'}, h('span', {class:'tg-date-t', text:tgNice(get())}), dateIn),
+      h('button', {type:'button', class:'icon-btn tg-dn', 'aria-label':'Day after', title:'Day after', text:'›', onclick:function(){ set(tgShift(get(), 1)); }}),
+      get() !== home ? h('button', {type:'button', class:'tg-today', text:md ? 'This weekend' : 'Today', onclick:function(){ set(home); }}) : '');
   }
+  /* the next match day: today on a weekend, otherwise the coming Saturday */
+  function tgNextMatchDay(){ const d = new Date(), w = d.getDay(); if(w !== 0 && w !== 6) d.setDate(d.getDate() + (6 - w)); return tgIso(d); }
 
   function tgRenderDay(body, edit){
     const day = tgDayOrNew(tgDate), players = tgPlayers();
@@ -19066,6 +19104,172 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function tgSynced(){
     if(!tgPage.hidden && !tgMenu && !tgDrag && !(document.activeElement && tgPage.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName))) tgRender();
     try{ renderTgNote(); }catch(e){}
+    try{ if(isLineupView()) luMatchSquad(); }catch(e){}   /* (an open lineup takes a matchday squad that just came in) */
+  }
+
+  /* =====================================================================
+     Matchday squads: each team's squad for a match day — players playing up or down are kept here too.
+     Each team's squad is its own file for that day (match-<date>-<team>-<who saved it>); the newest one wins, so a coach,
+     Sai, Renato and the admin can all work on it. A lineup for that team and date takes its squad from here
+     (once, each time the matchday squad changes — anything the coach changes in the lineup afterwards stays).
+     ===================================================================== */
+  function tgMdCanEdit(team){
+    if(tgCanEdit()){ const td = !!(CLOUD && CLOUD.isTD && CLOUD.isTD()); return !(td && team === 'Seniors'); }
+    return isMine(team);
+  }
+  /* the newest saved squad for each team on that day: {U13:{players:[{name,num,pos}], savedAt, by}} */
+  function tgMdDay(iso){
+    const out = {};
+    tgAll().forEach(function(o){
+      if(o.tg !== 'match' || o.date !== iso || !o.team) return;
+      if(!out[o.team] || (+o.savedAt || 0) > (+out[o.team].savedAt || 0)) out[o.team] = o;
+    });
+    return out;
+  }
+  function tgMdSave(iso, team, players){
+    const out = {kind:'tgroups', tg:'match', group:team, team:team, date:iso, players:players.map(function(p){ const o = {name:clean(p.name), num:clean(p.num), pos:clean(p.pos)}; return o; }), savedAt:Date.now(), by:tgMeName()};
+    tgWrite(TG_PRE + 'match-' + iso + '-' + team + '-' + tgMe(), out);
+  }
+  /* for a lineup: that team's matchday squad on that day (null if none was set) */
+  function tgMatchFor(iso, team){
+    if(!iso || !team) return null;
+    const d = tgMdDay(iso)[team];
+    return d ? {players:(d.players || []).slice(), savedAt:+d.savedAt || 0, by:d.by || ''} : null;
+  }
+  /* the lineups saved for that day, by team */
+  function tgMdLineups(iso){
+    const out = {};
+    try{ luList().forEach(function(x){ const d = luDateToIso(clean(x.lu.meta && x.lu.meta.date)); if(d === iso){ const g = groupOf(x.lu); (out[g] = out[g] || []).push(x); } }); }catch(e){}
+    return out;
+  }
+  function tgRenderMatch(body, edit){
+    if(!tgMdDate) tgMdDate = tgNextMatchDay();
+    const iso = tgMdDate, all = tgPlayers(), byKey = {};
+    all.forEach(function(p){ byKey[p.key] = p; });
+    const day = tgMdDay(iso), lus = tgMdLineups(iso);
+    body.append(tgDateNav(true));
+    let ups = 0, downs = 0;
+    /* on a phone: one team at a time */
+    if(AGE_GROUPS.indexOf(tgMdSel) === -1) tgMdSel = isMine(primaryGroup()) && primaryGroup() ? primaryGroup() : AGE_GROUPS[0];
+    const pick = h('div', {class:'tg-pick', role:'tablist', 'aria-label':'Team'}, AGE_GROUPS.map(function(g){
+      const n = day[g] ? (day[g].players || []).length : 0;
+      return h('button', {type:'button', class:'tg-pick-b' + (g === tgMdSel ? ' on' : ''), role:'tab', 'aria-selected':String(g === tgMdSel), onclick:function(){ tgMdSel = g; tgRender(); }}, g, h('span', {class:'tg-chip-n', text:String(n)}));
+    }));
+    const board = h('div', {class:'tg-board tg-md-board'});
+    AGE_GROUPS.forEach(function(g){
+      const can = tgMdCanEdit(g);
+      const cur = day[g] ? (day[g].players || []) : [];
+      const inCol = cur.map(function(r){ const k = gtKey(r.name), p = byKey[k]; return p ? p : {key:k, name:r.name, num:r.num, pos:r.pos, squad:g, av:null}; });
+      const up = inCol.filter(function(p){ return tgRank(p.squad) < tgRank(g); }).length, down = inCol.filter(function(p){ return tgRank(p.squad) > tgRank(g); }).length;
+      ups += up; downs += down;
+      inCol.sort(function(a, b){ return ((a.squad === g ? 1 : 0) - (b.squad === g ? 1 : 0)) || ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || gtNameCmp(a.name, b.name); });
+      const save = function(list, msg){ tgMdSave(iso, g, list); tgRender(); if(msg) showToast(msg); };
+      const curList = function(){ const d = tgMdDay(iso)[g]; return d ? (d.players || []).slice() : []; };
+      const list = h('div', {class:'tg-list'});
+      let lastHead = '';
+      inCol.forEach(function(p){
+        const why = p.squad === g ? g + ' squad' : (tgRank(p.squad) < tgRank(g) ? 'Playing up' : 'Playing down');
+        if(why !== lastHead){ lastHead = why; list.append(h('div', {class:'tg-sub' + (why === 'Playing up' ? ' tg-sub-up' : why === 'Playing down' ? ' tg-sub-down' : ''), text:why})); }
+        list.append(tgMdCard(p, g, can, iso));
+      });
+      if(!inCol.length) list.append(h('div', {class:'tg-none', text:'No squad yet'}));
+      /* add a player: their own squad first, then everyone else by squad */
+      let addSel = '';
+      if(can){
+        const have = {}; inCol.forEach(function(p){ have[p.key] = 1; });
+        const opts = [h('option', {value:'', text:'+ Add a player…'})];
+        const grp = function(label, ps){ if(!ps.length) return; opts.push(h('optgroup', {label:label}, ps.map(function(p){ return h('option', {value:p.key, text:(p.num ? p.num + '  ' : '') + p.name + (p.pos ? ' · ' + p.pos.toUpperCase() : '')}); }))); };
+        const free = all.filter(function(p){ return !have[p.key]; }).sort(function(a, b){ return ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || gtNameCmp(a.name, b.name); });
+        grp(g + ' squad', free.filter(function(p){ return p.squad === g; }));
+        AGE_GROUPS.forEach(function(o){ if(o !== g) grp(o + (tgRank(o) < tgRank(g) ? ' (playing up)' : ' (playing down)'), free.filter(function(p){ return p.squad === o; })); });
+        addSel = h('select', {class:'gt-select tg-md-add', 'aria-label':'Add a player to the ' + g + ' matchday squad', onchange:function(){
+          const p = byKey[this.value]; if(!p) return;
+          const l = curList(); l.push({name:p.name, num:p.num, pos:p.pos});
+          save(l, p.name + ' is in the ' + g + ' matchday squad' + (p.squad !== g ? (tgRank(p.squad) < tgRank(g) ? ' (playing up)' : ' (playing down)') : ''));
+        }}, opts);
+      }
+      const own = all.filter(function(p){ return p.squad === g; });
+      const fill = can && own.length ? h('button', {type:'button', class:'text-btn tg-md-fill', title:'Add every available ' + g + ' player who isn’t in it yet', text:inCol.length ? 'Add the rest of ' + g : 'Start from the ' + g + ' squad', onclick:function(){
+        const l = curList(), have = {}; l.forEach(function(r){ have[gtKey(r.name)] = 1; });
+        own.sort(function(a, b){ return ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || gtNameCmp(a.name, b.name); })
+          .forEach(function(p){ if(!have[p.key] && !p.av) l.push({name:p.name, num:p.num, pos:p.pos}); });
+        save(l, g + ' squad added');
+      }}) : '';
+      const clear = can && inCol.length ? h('button', {type:'button', class:'text-btn', text:'Clear', onclick:function(){ const keep = curList(); save([], g + ' matchday squad cleared'); showToast(g + ' matchday squad cleared', function(){ tgMdSave(iso, g, keep); tgRender(); }); }}) : '';
+      const luHere = (lus[g] || [])[0];
+      const col = h('section', {class:'tg-col tg-md-col' + (inCol.length ? '' : ' tg-md-empty') + (g === tgMdSel ? ' tg-col-sel' : ''), 'data-g':g},
+        h('header', {class:'tg-col-h'},
+          h('span', {class:'tg-col-t', text:g}),
+          h('span', {class:'tg-col-n', text:String(inCol.length)}),
+          (up || down) ? h('span', {class:'tg-col-x'}, up ? h('span', {class:'tg-up', text:'+' + up + ' up'}) : '', down ? h('span', {class:'tg-down', text:'+' + down + ' down'}) : '') : '',
+          luHere ? h('button', {type:'button', class:'tg-md-lu', title:'Open this lineup', text:'Open lineup' + (luName(luHere.lu) ? ' · ' + luName(luHere.lu) : ''), onclick:function(){ tgClose(); setTimeout(function(){ luOpen(luHere.key); }, 50); }}) : ''),
+        list,
+        can ? h('div', {class:'tg-md-foot'}, addSel, h('div', {class:'tg-md-acts'}, fill, clear)) : '');
+      if(can){
+        col.addEventListener('dragover', function(e){ if(!tgDrag || !tgDrag.md) return; e.preventDefault(); col.classList.add('tg-over'); });
+        col.addEventListener('dragleave', function(e){ if(!col.contains(e.relatedTarget)) col.classList.remove('tg-over'); });
+        col.addEventListener('drop', function(e){ e.preventDefault(); col.classList.remove('tg-over'); if(tgDrag && tgDrag.md){ const d = tgDrag; tgDrag = null; if(d.from !== g) tgMdMove(iso, d.key, d.from, g); } });
+      }
+      board.append(col);
+    });
+    body.append(h('div', {class:'tg-tools'}, h('span', {class:'tg-sum'},
+      h('span', {class:'tg-sum-i tg-up', text:'↑ ' + ups + ' playing up'}),
+      h('span', {class:'tg-sum-i tg-down', text:'↓ ' + downs + ' playing down'}))), pick, board);
+    body.append(h('p', {class:'gt-note tg-note', text:'Each team’s squad for this match day. A lineup for that team on this date takes its squad from here automatically — anything changed in the lineup afterwards stays, until the squad here changes again. Coaches set their own team; the admin and the technical directors can set any.'}));
+  }
+  function tgMdCard(p, g, can, iso){
+    const dir = p.squad === g ? '' : tgRank(g) > tgRank(p.squad) ? 'up' : 'down';
+    const card = h('div', {class:'tg-card' + (dir ? ' tg-guest tg-' + dir : '') + (p.av ? ' tg-out' : ''), tabindex:can ? '0' : '-1', role:can ? 'button' : null, draggable:can ? 'true' : 'false', title:can ? p.name + ' · tap to move or take out' : p.name},
+      h('span', {class:'tg-num', text:p.num || ''}),
+      h('span', {class:'tg-name'}, h('span', {class:'tg-nm', text:gtShowName(p.name)}),
+        h('span', {class:'tg-meta'}, p.pos ? h('span', {class:'tg-pos', text:String(p.pos).toUpperCase()}) : '',
+          dir ? h('span', {class:'tg-tag tg-tag-' + dir, title:p.squad + ' player playing ' + dir, text:(dir === 'up' ? '↑ ' : '↓ ') + p.squad}) : '')),
+      p.av ? h('span', {class:'av-chip ' + AV_ST[p.av.st].cls, title:avText(p.av, true), text:p.av.st === 'inj' ? '+' : '✕'}) : '');
+    if(can){
+      card.addEventListener('dragstart', function(e){ tgDrag = {md:true, key:p.key, from:g}; card.classList.add('tg-dragging'); try{ e.dataTransfer.setData('text/plain', p.name); e.dataTransfer.effectAllowed = 'move'; }catch(_){} });
+      card.addEventListener('dragend', function(){ tgDrag = null; card.classList.remove('tg-dragging'); });
+      const open = function(e){ if(e) e.stopPropagation(); tgMdMenu(card, p, g, iso); };
+      card.addEventListener('click', open);
+      card.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(); } });
+    }
+    return card;
+  }
+  function tgMdMove(iso, k, from, to){
+    const day = tgMdDay(iso);
+    const a = (day[from] ? day[from].players || [] : []).slice(), b = (day[to] ? day[to].players || [] : []).slice();
+    const i = a.findIndex(function(r){ return gtKey(r.name) === k; }); if(i === -1) return;
+    const r = a.splice(i, 1)[0];
+    if(to && !b.some(function(x){ return gtKey(x.name) === k; })) b.push(r);
+    if(to && !tgMdCanEdit(to)){ showToast('Only the ' + to + ' coach, the admin or a technical director can change the ' + to + ' squad'); return; }
+    tgMdSave(iso, from, a); if(to) tgMdSave(iso, to, b);
+    tgRender();
+    showToast(r.name + (to ? ' moved to the ' + to + ' matchday squad' : ' taken out of the ' + from + ' matchday squad'), function(){
+      const d2 = tgMdDay(iso); tgMdSave(iso, from, (d2[from] ? d2[from].players : []).concat([r]));
+      if(to) tgMdSave(iso, to, (d2[to] ? d2[to].players : []).filter(function(x){ return gtKey(x.name) !== k; }));
+      tgRender();
+    });
+  }
+  function tgMdMenu(card, p, g, iso){
+    tgMenuClose();
+    const opt = function(to, label, sub, cls){
+      return h('button', {type:'button', class:'tg-opt' + (to === g ? ' on' : ''), disabled:to === g || (to && !tgMdCanEdit(to)), onclick:function(e){ e.stopPropagation(); tgMenuClose(); tgMdMove(iso, p.key, g, to); }},
+        h('span', {text:label}), sub ? h('span', {class:'tg-opt-s' + (cls ? ' ' + cls : ''), text:sub}) : '');
+    };
+    tgMenu = h('div', {class:'tg-menu', role:'menu'},
+      h('div', {class:'tg-menu-h'}, h('b', {text:p.name}), h('span', {text:p.squad + ' · in the ' + g + ' matchday squad'})),
+      h('div', {class:'tg-opts'}, AGE_GROUPS.map(function(o){
+        const sub = o === p.squad ? 'Own squad' : tgRank(o) > tgRank(p.squad) ? '↑ Up' : '↓ Down';
+        return opt(o, o, sub, /Up$/.test(sub) ? 'tg-opt-up' : /Down$/.test(sub) ? 'tg-opt-down' : '');
+      })),
+      opt('', 'Take out of the squad', ''));
+    tgPage.appendChild(tgMenu);
+    const vw = document.documentElement.clientWidth, vh = window.innerHeight, r = card.getBoundingClientRect();
+    const mw = Math.min(300, vw - 16);
+    tgMenu.style.width = mw + 'px';
+    let left = Math.max(8, Math.min(r.left, vw - mw - 8)), top = r.bottom + 4;
+    const mh = tgMenu.offsetHeight;
+    if(top + mh > vh - 8) top = Math.max(8, r.top - mh - 4);
+    tgMenu.style.left = left + 'px'; tgMenu.style.top = top + 'px';
   }
 
 
