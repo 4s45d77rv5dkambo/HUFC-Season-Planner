@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261105145032">
+<meta name="hufc-build" content="20261105151245">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3982,7 +3982,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 5 Nov 2026, 2:50pm</p>
+  <p class="home-version">HUFC Session Planner · updated 5 Nov 2026, 3:12pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15368,6 +15368,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.90', d:'5 Nov 2026', t:'Player IDPs stay open', n:['Fixed: the Player IDPs list closed itself a moment after opening, when the planner synced with the club']},
     {v:'3.89', d:'5 Nov 2026', t:'Player IDPs stay open', n:['A planner update no longer reloads the planner while you’re in a Player IDP, Squads or the Season calendar — it waits until you’re back on the Home page (or press Update now), and saves what you’ve typed first']},
     {v:'3.88', d:'5 Nov 2026', t:'Player IDPs', n:['Player IDPs on the Home page: every player’s individual development plan, team by team — who has a plan, On track / Needs support / Excelling, the five areas at a glance, and when each review is due (overdue in red)', 'Each plan is its own page and prints as a club template: the player’s details, their season so far (training, games, minutes, goals), strengths and areas to improve, and Technical, Tactical, Physical, Emotional and Mental — each with strengths, weaknesses, a goal, how we’ll get there, a date, status and progress, videos of the player, and pros to watch', 'Feedback: dated coach feedback, the player’s view and review meetings, newest first', 'Also opens from Squads → Players (IDP on each player). The player’s team coaches, the admin and the technical directors can see and change it', 'The yellow + New buttons on the Home page stay yellow when you point at them or press them']},
     {v:'3.87', d:'5 Nov 2026', t:'Tabs stay as they are', n:['Tabs (Players / Training groups / Matchday squads, Game time & stats, and the Settings list) no longer turn black when you point at them — only buttons do']},
@@ -19631,7 +19632,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function idpFlush(){ Object.keys(idpTimers).forEach(function(f){ clearTimeout(idpTimers[f]); }); idpPage.querySelectorAll('[data-f]').forEach(function(el){ const p = idpPlayer(idpKey); if(!p) return; const v = el.value; const cur = idpGet(idpKey).f[el.dataset.f] || ''; if(v !== cur) idpSet(p, el.dataset.f, v); }); }
 
   function idpRender(){
-    const p = idpPlayer(idpKey); if(!p){ idpShow(false); return; }
+    const p = idpPlayer(idpKey); if(!p){ if(idpInList){ idpKey = ''; idpRenderList(); } return; }   /* (never shuts the page by itself) */
     const can = idpCan(p), d = idpGet(p.key), f = d.f;
     const top = idpPage.scrollTop;
     idpPage.innerHTML = '';
@@ -19844,6 +19845,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function idpSynced(){
     if(idpPage.hidden) return;
     const a = document.activeElement; if(a && idpPage.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
+    /* the Player IDPs list (no plan open) redraws as the list, keeping its place */
+    if(!idpKey){ if(idpInList){ const top = idpPage.scrollTop; idpRenderList(); idpPage.scrollTop = top; } return; }
     idpRender();
   }
 
