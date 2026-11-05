@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261105103419">
+<meta name="hufc-build" content="20261105144347">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2478,6 +2478,187 @@ html.tg-open, html.tg-open body{overflow:hidden;}
 .tg-md-lu{width:100%; margin-top:2px; border:1px solid var(--yellow); border-radius:6px; background:transparent; color:var(--yellow); font:600 11.5px/1.3 'Barlow', Arial, sans-serif; padding:2px 6px; cursor:pointer; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .tg-md-lu:hover{background:rgba(255,212,0,.12);}
 
+
+/* ---------- Player IDP: its own page, a printable plan ---------- */
+html.idp-open, html.idp-open body{overflow:hidden;}
+.idp-page{z-index:87;}
+.idp-sheet{max-width:1100px;}
+.idp-of{font:600 13px 'Barlow', Arial, sans-serif; color:var(--grey); white-space:nowrap;}
+.idp-sheet section{padding:16px 22px; border-bottom:1px solid var(--line);}
+.idp-sheet section:last-child{border-bottom:none;}
+.idp-h{margin:0 0 10px; font:700 15px 'Barlow Condensed', sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--black);}
+.idp-h-good{color:#1b7f3a;}
+.idp-h-work{color:#b3261e;}
+.idp-note{margin:6px 0 0; font-size:12.5px; color:var(--muted);}
+.idp-print-txt{display:none;}
+
+/* the player */
+.idp-player{background:var(--white);}
+.idp-name-row{display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
+.idp-num{flex:none; width:58px; height:58px; border-radius:50%; background:var(--yellow); color:var(--black); display:grid; place-items:center; font:700 26px 'Barlow Condensed', sans-serif; box-shadow:inset 0 0 0 3px var(--black);}
+.idp-name{flex:1; min-width:200px;}
+.idp-name-t{font:700 30px/1.05 'Barlow Condensed', sans-serif; letter-spacing:.02em; text-transform:uppercase;}
+.idp-name-sub{margin-top:4px; color:var(--grey); font-size:15px;}
+.idp-ov{display:flex; flex-direction:column; gap:4px; min-width:170px;}
+.idp-ov-sel{height:36px; border-radius:18px; border:1px solid var(--line); padding:0 14px; font:700 15px 'Barlow', Arial, sans-serif; background:var(--white); cursor:pointer;}
+.idp-ov-sel.idp-ov-track{background:#e2f4e7; border-color:#9fd3ad; color:#1b7f3a;}
+.idp-ov-sel.idp-ov-support{background:#fff1dc; border-color:#f0c48a; color:#9a5300;}
+.idp-ov-sel.idp-ov-excel{background:#e6eefb; border-color:#9dbbe8; color:#1f4f99;}
+.idp-grid{display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:10px 18px; margin-top:16px;}
+.idp-cell{display:flex; flex-direction:column; gap:4px; min-width:0;}
+.idp-in{height:28px; border:none; border-bottom:1px solid var(--black); background:transparent; font:inherit; font-size:15px; padding:0; min-width:0; width:100%;}
+.idp-in:focus{outline:none; border-bottom-color:var(--charcoal); box-shadow:0 2px 0 -1px var(--yellow);}
+.idp-in:disabled, .idp-ta:disabled{color:var(--ink); opacity:1;}
+.idp-val{height:28px; line-height:28px; border-bottom:1px solid var(--line); font-size:15px; color:var(--grey);}
+
+/* this season */
+.idp-stats{display:grid; grid-template-columns:repeat(8, minmax(0, 1fr)); gap:8px;}
+.idp-stat{display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 6px; border-radius:10px; background:var(--paper); text-align:center;}
+.idp-stat b{font:700 24px/1 'Barlow Condensed', sans-serif;}
+.idp-stat span{font-size:11.5px; color:var(--grey); line-height:1.2;}
+
+/* writing boxes: lined like the session sheet */
+.idp-ta-wrap{position:relative;}
+.idp-ta{display:block; width:100%; min-height:30px; border:none; resize:none; overflow:hidden; padding:0; margin:0; font:inherit; font-size:15px; line-height:26px; background:repeating-linear-gradient(to bottom, transparent 0 25px, var(--line) 25px 26px); color:var(--ink);}
+.idp-ta:focus{outline:none; background-image:repeating-linear-gradient(to bottom, transparent 0 25px, var(--charcoal) 25px 26px);}
+.idp-ta::placeholder{color:#a3a6aa; font-style:italic;}
+.idp-two{display:grid; grid-template-columns:1fr 1fr; gap:26px;}
+
+/* the five goals */
+.idp-goals{display:grid; grid-template-columns:1fr; gap:12px;}
+.idp-goal{border:1px solid var(--line); border-left:6px solid var(--ac); border-radius:10px; background:var(--white); overflow:hidden; break-inside:avoid;}
+.idp-goal-h{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; padding:9px 14px; background:color-mix(in srgb, var(--ac) 10%, white);}
+.idp-goal-t{font:700 19px 'Barlow Condensed', sans-serif; letter-spacing:.05em; text-transform:uppercase; color:var(--ac);}
+.idp-goal-hint{font-size:12.5px; color:var(--grey);}
+.idp-goal-body{display:grid; grid-template-columns:1fr 1fr; gap:10px 22px; padding:10px 14px 12px;}
+.idp-f{display:flex; flex-direction:column; gap:4px; min-width:0;}
+.idp-goal-foot{grid-column:1 / -1; display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px 26px;}
+.idp-f-date{width:150px;}
+.idp-seg{display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+.idp-seg button{border:none; border-right:1px solid var(--line); background:var(--white); padding:6px 12px; font:600 13px 'Barlow', Arial, sans-serif; color:var(--grey); cursor:pointer;}
+.idp-seg button:last-child{border-right:none;}
+.idp-seg button.on.idp-st-0{background:var(--paper); color:var(--ink);}
+.idp-seg button.on.idp-st-1{background:#fff1dc; color:#9a5300;}
+.idp-seg button.on.idp-st-2{background:#e2f4e7; color:#1b7f3a;}
+.idp-dots{display:flex; gap:6px; height:30px; align-items:center;}
+.idp-dot{width:20px; height:20px; border-radius:50%; border:2px solid var(--ac); background:var(--white); padding:0; cursor:pointer;}
+.idp-dot.on{background:var(--ac);}
+
+/* feedback */
+.idp-fb-add{display:flex; flex-direction:column; gap:8px; padding:12px; border:1px dashed var(--line); border-radius:10px; background:var(--paper); margin-bottom:12px;}
+.idp-fb-row{display:flex; gap:8px; flex-wrap:wrap;}
+.idp-fb-go{justify-content:flex-end;}
+.idp-fb-date{width:160px; height:34px;}
+.idp-fb-text{width:100%; min-height:70px; resize:vertical; font:inherit; font-size:15px; line-height:1.4; padding:8px 10px;}
+.idp-fb-list{display:flex; flex-direction:column; gap:8px;}
+.idp-fb{padding:10px 14px; border-radius:10px; border:1px solid var(--line); border-left:5px solid var(--black); background:var(--white); break-inside:avoid;}
+.idp-fb-player{border-left-color:var(--yellow);}
+.idp-fb-review{border-left-color:#2e7dd7;}
+.idp-fb-h{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--grey);}
+.idp-fb-h b{color:var(--ink); font-size:14px;}
+.idp-fb-type{padding:1px 8px; border-radius:9px; background:var(--paper); font-weight:600; color:var(--ink);}
+.idp-fb-x{margin-left:auto; width:26px; height:26px;}
+.idp-fb-t{margin:6px 0 0; font-size:15px; line-height:1.45; white-space:pre-wrap;}
+
+/* sign-off */
+.idp-sign{display:grid; grid-template-columns:repeat(4, 1fr); gap:24px; padding-top:34px !important;}
+.idp-sign-c{display:flex; flex-direction:column; gap:4px;}
+.idp-sign-l{display:block; height:30px; border-bottom:1px solid var(--black);}
+
+/* Squads → Players: the IDP button on each player */
+.tg-table .tg-c-idp{width:1%; white-space:nowrap; text-align:right;}
+.tg-idp-btn{white-space:nowrap; display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid var(--line); border-radius:14px; background:var(--white); font:700 12px 'Barlow Condensed', sans-serif; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; color:var(--ink);}
+.tg-idp-btn i{width:9px; height:9px; border-radius:50%; background:#c9cbc7; flex:none;}
+.tg-idp-btn.idp-track i{background:#1b7f3a;}
+.tg-idp-btn.idp-support i{background:#e07a00;}
+.tg-idp-btn.idp-excel i{background:#2e7dd7;}
+.tg-idp-btn.idp-none{color:var(--grey); border-style:dashed;}
+
+@media screen and (max-width:800px){
+  .idp-grid{grid-template-columns:1fr 1fr;}
+  .idp-stats{grid-template-columns:repeat(4, minmax(0, 1fr));}
+  .idp-two, .idp-goal-body{grid-template-columns:1fr;}
+  .idp-sign{grid-template-columns:1fr 1fr;}
+  .idp-sheet section{padding:14px;}
+  .idp-name-t{font-size:24px;}
+  .idp-of{display:none;}
+}
+
+/* printing a plan: just the plan, on white paper */
+@media print{
+  html.idp-open body > *:not(#idpPage){display:none !important;}
+  html.idp-open #idpPage{display:block !important; position:static !important; overflow:visible !important; background:#fff;}
+  html.idp-open, html.idp-open body{overflow:visible !important; height:auto !important; background:#fff !important;}
+  html.idp-open #idpPage .appbar, html.idp-open #idpPage .no-print{display:none !important;}
+  html.idp-open .idp-sheet{box-shadow:none; margin:0; max-width:none;}
+  html.idp-open .idp-sheet section{padding:10px 4px;}
+  .idp-ta, .idp-seg, .idp-ov-sel, .idp-dots button:not(.on){}
+  .idp-ta-wrap .idp-ta{display:none;}
+  .idp-print-txt{display:block !important; white-space:pre-wrap; font-size:13px; line-height:1.45; min-height:22px; border-bottom:1px solid #999;}
+  .idp-seg, .idp-ov-sel{display:none !important;}
+  .idp-in{border-bottom:1px solid #999;}
+  .idp-goal, .idp-fb{break-inside:avoid;}
+  .idp-stat{background:#f3f3f0 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .idp-goal-h, .idp-num, .idp-dot.on{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+}
+
+/* each area: strengths / weaknesses, videos of the player, players to watch */
+.idp-l-good{color:#1b7f3a !important;}
+.idp-l-work{color:#b3261e !important;}
+.idp-media{gap:6px; padding-top:8px; border-top:1px dashed var(--line);}
+.idp-vids{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px;}
+.idp-vid{display:flex; flex-direction:column; gap:4px; min-width:0;}
+.idp-vid-play{position:relative; aspect-ratio:16 / 9; border:none; border-radius:8px; overflow:hidden; background:#1c1d1f; cursor:pointer; padding:0; display:grid; place-items:center;}
+.idp-vid-play img{width:100%; height:100%; object-fit:cover; display:block;}
+.idp-vid-src{position:absolute; left:8px; bottom:6px; color:#cfd0cd; font:600 12px 'Barlow', Arial, sans-serif;}
+.idp-vid-tri{position:absolute; width:38px; height:38px; border-radius:50%; background:rgba(255,212,0,.95); color:#0d0e0f; display:grid; place-items:center; font-size:15px; padding-left:3px; box-shadow:0 2px 8px rgba(0,0,0,.4);}
+.idp-vid-play:hover .idp-vid-tri{background:#0d0e0f; color:#ffd400;}
+.idp-vid-t{display:flex; align-items:flex-start; gap:4px; font-size:13px; line-height:1.3;}
+.idp-vid-t > span{flex:1; min-width:0;}
+.idp-x{width:22px; height:22px; font-size:11px; flex:none;}
+.idp-add{display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;}
+.idp-add .set-input{height:32px; font-size:14px; flex:1 1 140px; min-width:0;}
+.idp-add .idp-add-club{flex:0 1 110px;}
+.idp-watch{display:flex; flex-direction:column; gap:6px;}
+.idp-pro{display:flex; align-items:flex-start; gap:8px; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:var(--white);}
+.idp-pro-i{color:var(--ac); font-size:15px; line-height:1.3;}
+.idp-pro-b{flex:1; min-width:0; font-size:14px; line-height:1.35;}
+.idp-pro-n span{color:var(--grey);}
+.idp-pro-w{color:var(--ink);}
+.idp-pro-link{padding:2px 0; font-size:13px; font-weight:600;}
+.idp-link-print{font-size:10px !important; color:#666; border:none !important; word-break:break-all;}
+/* the video player over the plan */
+.idp-player-ov{position:fixed; inset:0; z-index:200; background:rgba(13,14,15,.86); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:16px;}
+.idp-player-top{width:min(960px, 100%); display:flex; align-items:center; gap:12px; color:#fff;}
+.idp-player-top b{flex:1; min-width:0; font-size:16px;}
+.idp-player-open{color:#ffd400; font-weight:600; font-size:14px;}
+.idp-player-box{width:min(960px, 100%); aspect-ratio:16 / 9; background:#000; border-radius:10px; overflow:hidden;}
+.idp-player-box iframe, .idp-player-box video{width:100%; height:100%; border:0; display:block;}
+@media print{ .idp-vid-play{display:none;} .idp-vids{grid-template-columns:1fr;} .idp-media{border-top:1px dashed #bbb;} }
+
+/* Player IDPs: the list of plans */
+.idp-list .idp-sec{padding-top:14px;}
+.idp-list-teams{margin-bottom:12px;}
+.idp-list-sum{display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:8px;}
+.idp-s-track b{color:#1b7f3a;} .idp-s-support b{color:#9a5300;} .idp-s-excel b{color:#1f4f99;} .idp-s-due b{color:#b3261e;}
+.idp-list-table td{vertical-align:middle;}
+.idp-list-row{cursor:pointer;}
+.idp-list-row:hover td{background:#fffbe8 !important;}
+.idp-l-num{width:40px; text-align:center; font:700 16px 'Barlow Condensed', sans-serif; color:var(--grey);}
+.idp-l-name b{display:block; font-size:15px;}
+.idp-l-name span{font-size:12.5px; color:var(--grey);}
+.idp-l-ov{display:inline-block; padding:3px 10px; border-radius:12px; font-size:13px; font-weight:700; background:var(--paper); color:var(--grey);}
+.idp-l-ov.idp-ov-track{background:#e2f4e7; color:#1b7f3a;} .idp-l-ov.idp-ov-support{background:#fff1dc; color:#9a5300;} .idp-l-ov.idp-ov-excel{background:#e6eefb; color:#1f4f99;}
+.idp-l-none{font-size:13px; color:var(--muted); font-style:italic;}
+.idp-l-pips{display:inline-flex; gap:4px;}
+.idp-pip{width:13px; height:13px; border-radius:50%; border:2px solid var(--ac); background:#fff;}
+.idp-pip.idp-pip-done{background:var(--ac);}
+.idp-pip.idp-pip-go{background:linear-gradient(90deg, var(--ac) 50%, #fff 50%);}
+.idp-l-rev, .idp-l-fb{white-space:nowrap; font-size:14px; color:var(--grey); font-variant-numeric:tabular-nums;}
+.idp-l-rev.late{color:#b3261e; font-weight:700;} .idp-l-rev.near{color:#9a5300; font-weight:600;}
+.idp-l-go{width:1%; text-align:right;}
+@media screen and (max-width:700px){ .idp-list-sum{grid-template-columns:repeat(3, minmax(0, 1fr));} .idp-list-table .idp-l-fb, .idp-list-table th:nth-child(6), .idp-list-table .idp-l-goals, .idp-list-table th:nth-child(4){display:none;} }
+
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
 body.view-lineup .pregame-only{display:none !important;}
@@ -2833,8 +3014,8 @@ body.view-lineup .session-only, body.view-lineup .collab-btn{display:none !impor
 .home-actions .btn{justify-content:center; text-align:center; min-width:0; white-space:normal; line-height:1.15;}
 .home-actions .nowrap{white-space:nowrap;}
 @media (max-width:640px){ .home-actions .hide-narrow{display:none;} }
-.home-actions .home-gt-btn, .home-actions .home-season-btn, .home-actions .home-squads-btn{grid-row:auto; border-color:var(--yellow); color:var(--yellow);}
-.home-actions .home-squads-btn{grid-row:span 2; flex-direction:column; gap:6px; font-size:18px;}
+.home-actions .home-gt-btn, .home-actions .home-season-btn, .home-actions .home-squads-btn, .home-actions .home-idp-btn{grid-row:auto; border-color:var(--yellow); color:var(--yellow);}
+.home-actions .home-squads-btn svg, .home-actions .home-idp-btn svg{flex:none; margin-right:8px; vertical-align:-4px;}
 .btn-big{font-size:16px; padding:11px 18px;}
 .btn-dark{background:transparent; color:var(--white); border-color:#5b5d61;}
 .btn-dark:hover{border-color:var(--white);}
@@ -3084,8 +3265,7 @@ html.has-selbar .home{padding-bottom:70px;}
   .home-actions .btn{padding:10px 8px; font-size:15px;}
   /* phones: each kind on its own row — + New on the left, Open on the right */
   .home-actions{grid-template-columns:repeat(2, minmax(0,1fr)); grid-template-rows:none; grid-auto-flow:row;}
-  .home-actions .home-gt-btn, .home-actions .home-season-btn, .home-actions .home-squads-btn{grid-row:auto; grid-column:1 / span 2;}
-  .home-actions .home-squads-btn{flex-direction:row; font-size:15px;}
+  .home-actions .home-gt-btn, .home-actions .home-season-btn, .home-actions .home-squads-btn, .home-actions .home-idp-btn{grid-row:auto; grid-column:auto;}
   .home-head .lib-search{min-width:0; flex:1 1 100%; order:5;}
   .home-head #libImportBtn{flex:1 1 100%; order:6;}
   .home-head #backupBtn, .home-head #restoreBtn{flex:1 1 45%; order:7;}
@@ -3730,6 +3910,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       <button type="button" class="btn btn-big btn-dark home-season-btn" id="homeSeasonBtn" title="The season week by week: training nights, match days and themes"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>Season calendar</button>
       <button type="button" class="btn btn-big btn-dark home-gt-btn" id="homeGtBigBtn" title="Every player's minutes, goals, assists and cards across all your lineups">Game time <span class="nowrap">&amp; player stats</span></button>
       <button type="button" class="btn btn-big btn-dark home-squads-btn" id="homeSquadsBtn" title="Every team's players, and the training groups for each day"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2c3 .2 5.5 2.6 5.5 5.8"/></svg>Squads</button>
+      <button type="button" class="btn btn-big btn-dark home-idp-btn" id="homeIdpBtn" title="Every player's individual development plan"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2"/><path d="M9 3.5h6v3H9z"/><path d="M8.5 11.5l2 2 4-4M8.5 17h7"/></svg>Player IDPs</button>
     </div>
   </section>
 
@@ -3799,7 +3980,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 5 Nov 2026, 10:34am</p>
+  <p class="home-version">HUFC Session Planner · updated 5 Nov 2026, 2:43pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15185,6 +15366,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.88', d:'5 Nov 2026', t:'Player IDPs', n:['Player IDPs on the Home page: every player’s individual development plan, team by team — who has a plan, On track / Needs support / Excelling, the five areas at a glance, and when each review is due (overdue in red)', 'Each plan is its own page and prints as a club template: the player’s details, their season so far (training, games, minutes, goals), strengths and areas to improve, and Technical, Tactical, Physical, Emotional and Mental — each with strengths, weaknesses, a goal, how we’ll get there, a date, status and progress, videos of the player, and pros to watch', 'Feedback: dated coach feedback, the player’s view and review meetings, newest first', 'Also opens from Squads → Players (IDP on each player). The player’s team coaches, the admin and the technical directors can see and change it']},
     {v:'3.87', d:'5 Nov 2026', t:'Tabs stay as they are', n:['Tabs (Players / Training groups / Matchday squads, Game time & stats, and the Settings list) no longer turn black when you point at them — only buttons do']},
     {v:'3.86', d:'5 Nov 2026', t:'Players list: clearer ✎', n:['Squads → Players: a player’s row no longer turns black when you point at it, so the ✎ button stands out (it turns black and yellow itself)']},
     {v:'3.85', d:'5 Nov 2026', t:'Lines under every box', n:['The line under a box (Venue, the session title, Objectives …) is drawn whenever the box appears, so it can’t go missing when a session opens; any box whose line hasn’t been drawn yet shows a plain one instead']},
@@ -15631,6 +15813,19 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     ], tips:[
       'Same as … copies the last day’s groups; Back to usual groups clears the day’s moves.',
       'On a phone you see one group at a time — pick it along the top.'
+    ]},
+    {id:'idp', title:'Player IDPs', ico:'📋', open:'homeIdpBtn', openText:'Open Player IDPs', lead:'Each player’s individual development plan: where they are, what they’re working on, and your feedback.', steps:[
+      'Home → Player IDPs. Pick a team: every player with their overall status, the five areas at a glance (full dot achieved, half working on it), and when their next review is due.',
+      'Tap a player (or + Start plan). Fill in the season, coach, when the plan started and the next review, and their overall status.',
+      'This season so far fills in by itself from attendance, lineups and the training groups.',
+      'For each area — Technical, Tactical, Physical, Emotional, Mental: their strengths and weaknesses, one goal, how we’ll get there, by when, the status and progress (1–5).',
+      'Videos of the player: paste a Veo, YouTube or Google Drive link — it plays on the plan. Players to watch: a pro who does it well, what to watch for, and a clip.',
+      'Feedback: add dated coach feedback, the player’s view or notes from a review meeting.',
+      'Print / PDF gives a club copy to go through with the player (and parents) and sign.'
+    ], tips:[
+      '‹ › at the top goes through the squad in shirt-number order.',
+      'You can also open a plan from Squads → Players (IDP on each player).',
+      'The player’s team coaches, the admin and the technical directors can see and change a plan.'
     ]},
     {id:'season', title:'Season calendar', ico:'📅', open:'homeSeasonBtn', openText:'Open the season calendar', lead:'The season week by week: training nights and match days, with the session, lineup, pre-game and video for each.', steps:[
       'Home → Season calendar → Set up the season: its name, first week, last day, training nights, match day, and the colours for training and match days.',
@@ -18868,7 +19063,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       /* the players joining this group today first (so the moves stand out), then the group's own players */
       show.sort(function(a, b){
         const ga = a.squad === g ? 1 : 0, gb = b.squad === g ? 1 : 0;
-        return (ga - gb) || (tgRank(a.squad) - tgRank(b.squad)) || ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || gtNameCmp(a.name, b.name);
+        return (ga - gb) || (tgRank(a.squad) - tgRank(b.squad)) || ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || a.name.localeCompare(b.name);
       });
       const up = inCol.filter(function(p){ return g !== TG_OFF && tgRank(p.squad) < tgRank(g); }).length;
       const down = inCol.filter(function(p){ return g !== TG_OFF && tgRank(p.squad) > tgRank(g); }).length;
@@ -18997,7 +19192,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       tgEditing = ''; tgRender(); showToast('Saved ' + n);
     };
     const f = tgFields(p, save, close);
-    return h('tr', {class:'tg-edrow'}, h('td', {colspan:'9'}, h('div', {class:'tg-ed'},
+    return h('tr', {class:'tg-edrow'}, h('td', {colspan:'10'}, h('div', {class:'tg-ed'},
       h('span', {class:'tg-lbl', text:'Change player'}), f.list,
       h('button', {type:'button', class:'btn btn-small', text:'Cancel', onclick:close}),
       h('button', {type:'button', class:'btn btn-small btn-primary', text:'Save', onclick:save}))));
@@ -19063,7 +19258,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('input', {type:'search', class:'set-input tg-search', placeholder:'Find a player', value:tgQuery, 'aria-label':'Find a player', oninput:function(){ tgQuery = this.value; const at = this.selectionStart; tgRender(); const s = tgPage.querySelector('.tg-search'); if(s){ s.focus(); try{ s.setSelectionRange(at, at); }catch(e){} } }}),
       h('span', {class:'tg-sum'}, h('span', {class:'tg-sum-i', text:(tgFilter ? cnt(tgFilter) + ' in ' + tgFilter : all.length + ' players') }), h('span', {class:'tg-sum-i tg-other', text:all.filter(function(p){ return p.usual && p.usual !== p.squad; }).length + ' train with another group'}))));
     const list = all.filter(function(p){ return (!tgFilter || p.squad === tgFilter) && (!q || p.name.toLowerCase().indexOf(q) !== -1); })
-      .sort(function(a, b){ return (tgRank(a.squad) - tgRank(b.squad)) || gtNameCmp(a.name, b.name); });
+      .sort(function(a, b){ return (tgRank(a.squad) - tgRank(b.squad)) || a.name.localeCompare(b.name); });
     /* how often each player trained with another group (the days set so far) */
     const ups = {};
     tgDates().forEach(function(iso){
@@ -19073,7 +19268,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const tb = h('tbody');
     let lastSq = '';
     list.forEach(function(p){
-      if(!tgFilter && p.squad !== lastSq){ lastSq = p.squad; tb.append(h('tr', {class:'tg-sqrow'}, h('td', {colspan:'9', text:p.squad}))); }
+      if(!tgFilter && p.squad !== lastSq){ lastSq = p.squad; tb.append(h('tr', {class:'tg-sqrow'}, h('td', {colspan:'10', text:p.squad}))); }
       const sqSel = h('select', {class:'tg-cell-sel', 'aria-label':p.name + '’s squad', disabled:!edit, onchange:function(){ tgSetPlayer(p.key, {squad:this.value, name:p.name}); tgRender(); showToast(p.name + ' is in the ' + this.value + ' squad'); }},
         AGE_GROUPS.map(function(g){ return h('option', {value:g, text:g, selected:p.squad === g}); }));
       const usSel = h('select', {class:'tg-cell-sel' + (p.usual && p.usual !== p.squad ? ' tg-sel-up' : ''), 'aria-label':'Who ' + p.name + ' usually trains with', disabled:!edit, onchange:function(){ const v = this.value; tgSetPlayer(p.key, {usual:v === p.squad ? '' : v, name:p.name}); tgRender(); showToast(p.name + (v === p.squad ? ' trains with their own squad' : ' usually trains with ' + v)); }},
@@ -19093,10 +19288,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('td', {class:'tg-c-dob'}, p.dob ? tgDob(p.dob) : '—', age ? h('span', {class:'tg-age', text:' (' + age + ')'}) : ''),
         h('td', null, sqSel),
         h('td', null, usSel),
-        h('td', {class:'tg-c-n', text:ups[p.key] ? String(ups[p.key]) : '—'})));
+        h('td', {class:'tg-c-n', text:ups[p.key] ? String(ups[p.key]) : '—'}),
+        h('td', {class:'tg-c-idp'}, idpCan(p) ? (function(){
+          const d = idpGet(p.key), ov = d.f.overall || '', has = d.savedAt > 0;
+          const lbl = {track:'On track', support:'Needs support', excel:'Excelling'}[ov] || (has ? 'IDP' : '+ IDP');
+          return h('button', {type:'button', class:'tg-idp-btn ' + (ov ? 'idp-' + ov : has ? '' : 'idp-none'), title:'Open ' + p.name + '’s individual development plan', onclick:function(){ idpOpen(p.key, 'squads'); }}, has ? h('i') : '', lbl);
+        })() : '')));
     });
     body.append(h('div', {class:'gt-table-wrap'}, h('table', {class:'runsheet gt-table tg-table'},
-      h('thead', null, h('tr', null, h('th', {class:'tg-c-first', text:'First name'}), h('th', {class:'tg-c-last', text:'Last name'}), h('th', {class:'tg-c-pos', text:'Position'}), h('th', {class:'tg-c-foot', text:'Foot'}), h('th', {class:'tg-c-no', text:'No.'}), h('th', {class:'tg-c-dob', text:'DOB'}), h('th', {text:'Squad'}), h('th', {text:'Usually trains with'}), h('th', {class:'tg-c-n', text:'Days moved'}))),
+      h('thead', null, h('tr', null, h('th', {class:'tg-c-first', text:'First name'}), h('th', {class:'tg-c-last', text:'Last name'}), h('th', {class:'tg-c-pos', text:'Position'}), h('th', {class:'tg-c-foot', text:'Foot'}), h('th', {class:'tg-c-no', text:'No.'}), h('th', {class:'tg-c-dob', text:'DOB'}), h('th', {text:'Squad'}), h('th', {text:'Usually trains with'}), h('th', {class:'tg-c-n', text:'Days moved'}), h('th', {class:'tg-c-idp', text:'IDP'}))),
       tb)));
     body.append(h('p', {class:'gt-note tg-note', text:'Every player from each team’s saved squad (My squad). “Usually trains with” puts a player in that group every day — they can still be moved for a single day.'}));
   }
@@ -19143,6 +19343,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!tgPage.hidden && !tgMenu && !tgDrag && !(document.activeElement && tgPage.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName))) tgRender();
     try{ renderTgNote(); }catch(e){}
     try{ if(isLineupView()) luMatchSquad(); }catch(e){}   /* (an open lineup takes a matchday squad that just came in) */
+    try{ idpSynced(); }catch(e){}
   }
 
   /* =====================================================================
@@ -19228,7 +19429,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const inCol = cur.map(function(r){ const k = gtKey(r.name), p = byKey[k]; return p ? p : {key:k, name:r.name, num:r.num, pos:r.pos, squad:g, av:null}; });
       const up = inCol.filter(function(p){ return tgRank(p.squad) < tgRank(g); }).length, down = inCol.filter(function(p){ return tgRank(p.squad) > tgRank(g); }).length;
       ups += up; downs += down;
-      inCol.sort(function(a, b){ return ((a.squad === g ? 1 : 0) - (b.squad === g ? 1 : 0)) || ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || gtNameCmp(a.name, b.name); });
+      inCol.sort(function(a, b){ return ((a.squad === g ? 1 : 0) - (b.squad === g ? 1 : 0)) || ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || a.name.localeCompare(b.name); });
       const save = function(list, msg){ tgMdSave(iso, g, list); tgRender(); if(msg) showToast(msg); };
       const curList = function(){ const d = tgMdDay(iso)[g]; return d ? (d.players || []).slice() : []; };
       const list = h('div', {class:'tg-list'});
@@ -19245,7 +19446,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         const have = {}; inCol.forEach(function(p){ have[p.key] = 1; });
         const opts = [h('option', {value:'', text:'+ Add a player…'})];
         const grp = function(label, ps){ if(!ps.length) return; opts.push(h('optgroup', {label:label}, ps.map(function(p){ return h('option', {value:p.key, text:(p.num ? p.num + '  ' : '') + p.name + (p.pos ? ' · ' + p.pos.toUpperCase() : '')}); }))); };
-        const free = all.filter(function(p){ return !have[p.key]; }).sort(function(a, b){ return ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || gtNameCmp(a.name, b.name); });
+        const free = all.filter(function(p){ return !have[p.key]; }).sort(function(a, b){ return ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || a.name.localeCompare(b.name); });
         grp(g + ' squad', free.filter(function(p){ return p.squad === g; }));
         AGE_GROUPS.forEach(function(o){ if(o !== g) grp(o + (tgRank(o) < tgRank(g) ? ' (playing up)' : ' (playing down)'), free.filter(function(p){ return p.squad === o; })); });
         addSel = h('select', {class:'gt-select tg-md-add', 'aria-label':'Add a player to the ' + g + ' matchday squad', onchange:function(){
@@ -19257,7 +19458,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const own = all.filter(function(p){ return p.squad === g; });
       const fill = can && own.length ? h('button', {type:'button', class:'text-btn tg-md-fill', title:'Add every available ' + g + ' player who isn’t in it yet', text:inCol.length ? 'Add the rest of ' + g : 'Start from the ' + g + ' squad', onclick:function(){
         const l = curList(), have = {}; l.forEach(function(r){ have[gtKey(r.name)] = 1; });
-        own.sort(function(a, b){ return ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || gtNameCmp(a.name, b.name); })
+        own.sort(function(a, b){ return ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || a.name.localeCompare(b.name); })
           .forEach(function(p){ if(!have[p.key] && !p.av) l.push({name:p.name, num:p.num, pos:p.pos}); });
         save(l, g + ' squad added');
       }}) : '';
@@ -19338,6 +19539,382 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(top + mh > vh - 8) top = Math.max(8, r.top - mh - 4);
     tgMenu.style.left = left + 'px'; tgMenu.style.top = top + 'px';
   }
+
+  /* =====================================================================
+     Player IDP (individual development plan): its own page and printable template for each player —
+     their details, what the planner already knows about them, strengths and areas to improve, goals for
+     Technical, Tactical, Physical, Emotional and Mental (each with how, by when, status and progress),
+     and a feedback log.
+     - Synced with the club (kind "tgroups"): each person who works on a plan keeps their own copy (idp-<player>-<them>);
+       for each part, the newest change wins, and feedback from everyone is kept together.
+     - The player's team coaches, the admin and the technical directors can see and change it.
+     ===================================================================== */
+  const IDP_AREAS = [
+    {id:'tech', t:'Technical', c:'#2e7dd7', hint:'Ball skills — first touch, passing range, 1v1, finishing, weaker foot'},
+    {id:'tact', t:'Tactical', c:'#7a4fc9', hint:'Understanding the game — scanning, positioning, decisions, roles in each phase'},
+    {id:'phys', t:'Physical', c:'#d6522b', hint:'Speed, agility, strength, endurance, recovery'},
+    {id:'emo', t:'Emotional', c:'#d18a00', hint:'Handling mistakes and pressure, confidence, enjoyment, relationships'},
+    {id:'ment', t:'Mental', c:'#1b7f3a', hint:'Focus, resilience, coachability, communication, leadership, habits'}
+  ];
+  const IDP_ST = [['', 'Not started', 'idp-st-0'], ['go', 'Working on it', 'idp-st-1'], ['done', 'Achieved', 'idp-st-2']];
+  const IDP_OVERALL = [['', 'Not set'], ['track', 'On track'], ['support', 'Needs support'], ['excel', 'Excelling']];
+  const IDP_FB = [['coach', 'Coach feedback'], ['player', 'Player’s view'], ['review', 'Review meeting']];
+  const idpPage = h('div', {class:'se-page idp-page', id:'idpPage', role:'region', 'aria-label':'Player IDP'});
+  idpPage.hidden = true;
+  document.body.appendChild(idpPage);
+  let idpKey = '', idpFrom = '';
+  function idpShow(on){ idpPage.hidden = !on; document.documentElement.classList.toggle('idp-open', !!on); }
+  function idpSlug(k){ return String(k).replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''); }
+  function idpPlayer(k){ return tgPlayers().find(function(p){ return p.key === k; }) || null; }
+  /* who can see and change a player's plan: their team's coaches, the admin, and the technical directors (not the Seniors) */
+  function idpCan(p){ return !!p && tgMdCanEdit(p.squad); }
+
+  /* ---- the plan: everyone's copies together ---- */
+  function idpGet(k){
+    const out = {f:{}, at:{}, fb:[], l:{}, gone:{}, savedAt:0, by:''};
+    tgAll().forEach(function(o){
+      if(o.tg !== 'idp' || o.player !== k) return;
+      Object.keys(o.f || {}).forEach(function(n){ const x = o.f[n]; if(!x) return; if(!(n in out.at) || (+x.at || 0) >= out.at[n]){ out.f[n] = x.v; out.at[n] = +x.at || 0; } });
+      (o.fb || []).forEach(function(e){ if(e && e.id && !out.fb.some(function(y){ return y.id === e.id; })) out.fb.push(e); });
+      Object.keys(o.l || {}).forEach(function(n){ const L = out.l[n] = out.l[n] || []; (o.l[n] || []).forEach(function(e){ if(e && e.id && !L.some(function(y){ return y.id === e.id; })) L.push(e); }); });
+      (o.gone || []).forEach(function(id){ out.gone[id] = 1; });
+      if((+o.savedAt || 0) > out.savedAt){ out.savedAt = +o.savedAt || 0; out.by = o.by || ''; }
+    });
+    Object.keys(out.l).forEach(function(n){ out.l[n] = out.l[n].filter(function(e){ return !out.gone[e.id]; }).sort(function(a, b){ return (a.at || 0) - (b.at || 0); }); });
+    out.fb = out.fb.filter(function(e){ return !out.gone[e.id]; }).sort(function(a, b){ return (b.date || '').localeCompare(a.date || '') || (b.at || 0) - (a.at || 0); });
+    return out;
+  }
+  function idpMine(p){
+    const id = TG_PRE + 'idp-' + idpSlug(p.key) + '-' + tgMe();
+    return {id:id, o:tgRead(id, null) || {kind:'tgroups', tg:'idp', player:p.key, f:{}, fb:[], gone:[]}};
+  }
+  function idpSave(p, mine){ const o = mine.o; o.name = p.name; o.group = p.squad; o.savedAt = Date.now(); o.by = tgMeName(); tgWrite(mine.id, o); }
+  function idpSet(p, field, v){ const m = idpMine(p); m.o.f = m.o.f || {}; m.o.f[field] = {v:v, at:Date.now()}; idpSave(p, m); }
+  /* typing: saved a moment after you stop (no redraw, so the box keeps your cursor) */
+  const idpTimers = {};
+  function idpSetSoon(p, field, v){ clearTimeout(idpTimers[field]); idpTimers[field] = setTimeout(function(){ idpSet(p, field, v); idpStatus('Saved · ' + clock()); }, 500); idpStatus('Saving…'); }
+  function idpStatus(t){ const s = idpPage.querySelector('.status-text'); if(s) s.textContent = t; }
+
+  /* ---- what the planner already knows: attendance, game time, goals, training up / down ---- */
+  function idpNumbers(p){
+    const out = {};
+    try{ const a = attCompute(p.squad), r = a.rows.find(function(x){ return x.key === p.key; }); if(r && a.sessions.length){ out.att = r.n + ' of ' + a.sessions.length; out.attPct = Math.round(r.pct) + '%'; } }catch(e){}
+    try{ const g = gtCompute(p.squad), r = g.rows.find(function(x){ return gtKey(x.name) === p.key; }); if(r){ out.games = r.games; out.starts = r.starts; out.min = Math.round(r.min); out.pct = Math.round(r.pct) + '%'; out.goals = r.ev.g; out.assists = r.ev.a; out.cards = r.ev.y + r.ev.r; } }catch(e){}
+    try{ let up = 0, down = 0; tgDates().forEach(function(iso){ const d = tgDay(iso); const w = d && d.moves && d.moves[p.key]; if(w && w !== TG_OFF){ if(tgRank(w) > tgRank(p.squad)) up++; else if(tgRank(w) < tgRank(p.squad)) down++; } }); out.up = up; out.down = down; }catch(e){}
+    return out;
+  }
+
+  /* ---- the page ---- */
+  function idpOpen(k, from){
+    const p = idpPlayer(k); if(!p) return;
+    idpKey = k; idpFrom = from || (idpInList ? 'list' : tgPage && !tgPage.hidden ? 'squads' : 'home');
+    swap(function(){ idpShow(true); idpRender(); idpPage.scrollTop = 0; });
+  }
+  function idpClose(){
+    Object.keys(idpTimers).forEach(function(f){ clearTimeout(idpTimers[f]); });
+    /* opened from the Player IDPs list: back to the list */
+    if(idpFrom === 'list'){ swap(function(){ idpKey = ''; idpRenderList(); idpPage.scrollTop = idpListTop; }); return; }
+    idpInList = false;
+    swap(function(){ idpShow(false); if(idpFrom === 'squads' && tgPage && !tgPage.hidden){ try{ tgRender(); }catch(e){} } else if(document.documentElement.classList.contains('view-home')) renderHome(); });
+  }
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape' || idpPage.hidden || e.defaultPrevented) return;
+    const t = e.target; if(t && /INPUT|TEXTAREA|SELECT/.test(t.tagName)) return;
+    idpClose();
+  });
+  /* flush typing before leaving / printing */
+  function idpFlush(){ Object.keys(idpTimers).forEach(function(f){ clearTimeout(idpTimers[f]); }); idpPage.querySelectorAll('[data-f]').forEach(function(el){ const p = idpPlayer(idpKey); if(!p) return; const v = el.value; const cur = idpGet(idpKey).f[el.dataset.f] || ''; if(v !== cur) idpSet(p, el.dataset.f, v); }); }
+
+  function idpRender(){
+    const p = idpPlayer(idpKey); if(!p){ idpShow(false); return; }
+    const can = idpCan(p), d = idpGet(p.key), f = d.f;
+    const top = idpPage.scrollTop;
+    idpPage.innerHTML = '';
+    /* the players of this squad, in shirt-number order: ‹ › to go through them */
+    const mates = tgPlayers().filter(function(x){ return x.squad === p.squad; }).sort(function(a, b){ return ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || a.name.localeCompare(b.name); });
+    const at = mates.findIndex(function(x){ return x.key === p.key; });
+    const go = function(n){ const x = mates[(at + n + mates.length) % mates.length]; if(x){ idpFlush(); idpKey = x.key; idpRender(); idpPage.scrollTop = 0; } };
+    const bar = h('div', {class:'appbar se-appbar idp-appbar'}, h('div', {class:'appbar-inner'},
+      h('button', {type:'button', class:'btn btn-home', title:idpFrom === 'squads' ? 'Back to Squads' : idpFrom === 'list' ? 'Back to all the IDPs' : 'Home', onclick:function(){ idpFlush(); idpClose(); }},
+        h('span', {'aria-hidden':'true', text:idpFrom === 'home' ? '⌂' : '‹'}), h('span', {class:'btn-label', text:idpFrom === 'squads' ? ' Squads' : idpFrom === 'list' ? ' Player IDPs' : ' Home'})),
+      h('div', {class:'status se-status', role:'status'}, h('span', {class:'dot'}), h('span', {class:'status-text', text:can ? (d.savedAt ? 'Saved' + (d.by ? ' · last changed by ' + d.by : '') : 'Changes save automatically') : 'View only'})),
+      h('div', {class:'se-ctl'},
+        mates.length > 1 ? h('button', {type:'button', class:'btn', title:'Previous player in ' + p.squad, onclick:function(){ go(-1); }}, '‹') : '',
+        mates.length > 1 ? h('span', {class:'idp-of', text:(at + 1) + ' of ' + mates.length + ' · ' + p.squad}) : '',
+        mates.length > 1 ? h('button', {type:'button', class:'btn', title:'Next player in ' + p.squad, onclick:function(){ go(1); }}, '›') : '',
+        h('button', {type:'button', class:'btn btn-primary', text:'Print / PDF', onclick:function(){ idpFlush(); setTimeout(function(){ window.print(); }, 50); }}))));
+    const crest = (document.querySelector('.header .crest') || {}).src || '';
+    const ta = function(field, ph, rows){
+      const el = h('textarea', {class:'idp-ta', 'data-f':field, rows:String(rows || 3), placeholder:can ? ph : '', 'aria-label':ph, disabled:!can});
+      el.value = f[field] || '';
+      const fit = function(){ el.style.height = 'auto'; el.style.height = Math.max(el.scrollHeight, 30) + 'px'; };
+      el.addEventListener('input', function(){ fit(); idpSetSoon(p, field, el.value); });
+      setTimeout(fit, 0);
+      return h('div', {class:'idp-ta-wrap'}, el, h('div', {class:'idp-print-txt', text:f[field] || ''}));
+    };
+    const inp = function(field, ph, type){
+      const el = h('input', {type:type || 'text', class:'idp-in', 'data-f':field, placeholder:can ? (ph || '') : '', 'aria-label':ph || field, disabled:!can, value:f[field] || ''});
+      el.addEventListener(type === 'date' ? 'change' : 'input', function(){ if(type === 'date') idpSet(p, field, el.value); else idpSetSoon(p, field, el.value); });
+      return el;
+    };
+    const age = tgAge(p.dob);
+    const ov = f.overall || '';
+    const cell = function(lbl, content, cls){ return h('div', {class:'idp-cell' + (cls ? ' ' + cls : '')}, h('span', {class:'lbl', text:lbl}), content); };
+    const sheet = h('div', {class:'se-sheet idp-sheet'},
+      h('header', {class:'header se-header'},
+        h('img', {class:'crest', alt:'Heidelberg United crest', src:crest}),
+        h('div', {class:'club'}, h('div', {class:'club-name', text:'Heidelberg United'}), h('div', {class:'club-sub', text:'Football Club · Est. 1958'})),
+        h('div', {class:'doc-title'}, h('strong', {text:'Individual Development Plan'}))));
+    /* the player */
+    const ovSel = h('select', {class:'idp-ov-sel idp-ov-' + (ov || 'none'), 'aria-label':'Overall status', disabled:!can, onchange:function(){ idpSet(p, 'overall', this.value); idpRender(); }},
+      IDP_OVERALL.map(function(o){ return h('option', {value:o[0], text:o[1], selected:ov === o[0]}); }));
+    sheet.append(h('section', {class:'idp-player'},
+      h('div', {class:'idp-name-row'},
+        h('div', {class:'idp-num', text:p.num || '–'}),
+        h('div', {class:'idp-name'}, h('div', {class:'idp-name-t', text:p.name}),
+          h('div', {class:'idp-name-sub', text:[p.squad, p.pos ? String(p.pos).toUpperCase() : '', tgFootName(p.foot) ? tgFootName(p.foot) + ' foot' : '', p.dob ? 'Born ' + tgDob(p.dob) + (age ? ' (' + age + ')' : '') : ''].filter(Boolean).join(' · ')})),
+        h('div', {class:'idp-ov'}, h('span', {class:'lbl', text:'Overall'}), ovSel, h('span', {class:'idp-print-txt', text:(IDP_OVERALL.find(function(o){ return o[0] === ov; }) || IDP_OVERALL[0])[1]}))),
+      h('div', {class:'idp-grid'},
+        cell('Season', inp('season', 'e.g. 2026–27')),
+        cell('Coach', inp('coach', 'Coach name')),
+        cell('Plan started', inp('start', '', 'date')),
+        cell('Next review', inp('review', '', 'date')),
+        cell('Usually trains with', h('span', {class:'idp-val', text:p.usual && p.usual !== p.squad ? p.usual : p.squad + ' (own squad)'})))));
+    /* from the planner */
+    const n = idpNumbers(p);
+    const stat = function(v, l){ return h('div', {class:'idp-stat'}, h('b', {text:v == null || v === '' ? '—' : String(v)}), h('span', {text:l})); };
+    sheet.append(h('section', {class:'idp-sec'},
+      h('h3', {class:'idp-h', text:'This season so far'}),
+      h('div', {class:'idp-stats'},
+        stat(n.att ? n.att : null, 'Training' + (n.attPct ? ' · ' + n.attPct : '')),
+        stat(n.games, 'Games in squad'), stat(n.starts, 'Starts'), stat(n.min != null ? n.min + "'" : null, 'Minutes' + (n.pct ? ' · ' + n.pct : '')),
+        stat(n.goals, 'Goals'), stat(n.assists, 'Assists'), stat(n.cards, 'Cards'),
+        stat((n.up || 0) + ' / ' + (n.down || 0), 'Trained up / down')),
+      h('p', {class:'idp-note', text:'Filled in by the planner from attendance, lineups and the training groups.'})));
+    /* strengths and areas to improve */
+    sheet.append(h('section', {class:'idp-sec idp-two'},
+      h('div', null, h('h3', {class:'idp-h idp-h-good', text:'Strengths'}), ta('strengths', 'What they do well — what we want them to keep doing', 4)),
+      h('div', null, h('h3', {class:'idp-h idp-h-work', text:'Areas to improve'}), ta('improve', 'What will make the biggest difference to their game', 4))));
+    /* the five goals */
+    const goals = h('div', {class:'idp-goals'});
+    IDP_AREAS.forEach(function(a){
+      const key = function(x){ return 'g.' + a.id + '.' + x; };
+      const st = f[key('st')] || '', rate = +f[key('rate')] || 0;
+      const seg = h('div', {class:'idp-seg', role:'group', 'aria-label':a.t + ' status'}, IDP_ST.map(function(s){
+        return h('button', {type:'button', class:s[2] + (st === s[0] ? ' on' : ''), 'aria-pressed':String(st === s[0]), disabled:!can, text:s[1], onclick:function(){ idpFlush(); idpSet(p, key('st'), s[0]); idpRender(); }});
+      }));
+      const dots = h('div', {class:'idp-dots', role:'group', 'aria-label':a.t + ' progress'}, [1, 2, 3, 4, 5].map(function(i){
+        return h('button', {type:'button', class:'idp-dot' + (i <= rate ? ' on' : ''), title:'Progress ' + i + ' of 5', 'aria-label':'Progress ' + i + ' of 5', disabled:!can, onclick:function(){ idpFlush(); idpSet(p, key('rate'), rate === i ? 0 : i); idpRender(); }});
+      }));
+      goals.append(h('article', {class:'idp-goal', style:'--ac:' + a.c},
+        h('div', {class:'idp-goal-h'}, h('span', {class:'idp-goal-t', text:a.t}), h('span', {class:'idp-goal-hint', text:a.hint})),
+        h('div', {class:'idp-goal-body'},
+          h('label', {class:'idp-f'}, h('span', {class:'lbl idp-l-good', text:'Strengths'}), ta(key('str'), ({tech:'e.g. Clean first touch, strong passing off the right foot', tact:'e.g. Reads danger early, good starting positions', phys:'e.g. Quick over 10m, strong in duels', emo:'e.g. Enjoys the challenge, stays positive', ment:'e.g. Coachable, works hard every session'})[a.id], 2)),
+          h('label', {class:'idp-f'}, h('span', {class:'lbl idp-l-work', text:'Weaknesses'}), ta(key('weak'), ({tech:'e.g. Weaker left foot, heavy touch under pressure', tact:'e.g. Doesn’t scan before receiving', phys:'e.g. Fades late in games', emo:'e.g. Frustrated after mistakes', ment:'e.g. Quiet — doesn’t organise others'})[a.id], 2)),
+          h('label', {class:'idp-f'}, h('span', {class:'lbl', text:'Goal'}), ta(key('goal'), 'One clear goal, e.g. ' + ({tech:'Receive on the half-turn with either foot', tact:'Scan twice before receiving in midfield', phys:'Improve repeat-sprint ability', emo:'Reset quickly after a mistake', ment:'Talk more — organise the back line'})[a.id], 2)),
+          h('label', {class:'idp-f'}, h('span', {class:'lbl', text:'How we’ll get there'}), ta(key('how'), 'What they’ll do in training and at home, and how we’ll help', 2)),
+          h('div', {class:'idp-goal-foot'},
+            h('label', {class:'idp-f idp-f-date'}, h('span', {class:'lbl', text:'By'}), inp(key('by'), '', 'date')),
+            h('div', {class:'idp-f'}, h('span', {class:'lbl', text:'Status'}), seg, h('span', {class:'idp-print-txt', text:(IDP_ST.find(function(s){ return s[0] === st; }) || IDP_ST[0])[1]})),
+            h('div', {class:'idp-f'}, h('span', {class:'lbl', text:'Progress'}), dots)),
+          idpVideos(p, d, a, can),
+          idpWatch(p, d, a, can))));
+    });
+    sheet.append(h('section', {class:'idp-sec'}, h('h3', {class:'idp-h', text:'Development goals'}), goals));
+    /* feedback */
+    const fbType = h('select', {class:'gt-select', 'aria-label':'Type'}, IDP_FB.map(function(o){ return h('option', {value:o[0], text:o[1]}); }));
+    const fbDate = h('input', {type:'date', class:'set-input idp-fb-date', value:tgIso(new Date()), 'aria-label':'Date'});
+    const fbText = h('textarea', {class:'set-input idp-fb-text', rows:'3', placeholder:'Feedback for the player — what went well, what to work on next, and how', 'aria-label':'Feedback'});
+    const fbAdd = h('button', {type:'button', class:'btn btn-primary', text:'Add feedback', onclick:function(){
+      const t = clean(fbText.value); if(!t){ fbText.focus(); return; }
+      idpFlush();
+      const m = idpMine(p); m.o.fb = m.o.fb || [];
+      m.o.fb.push({id:newId(), date:fbDate.value || tgIso(new Date()), type:fbType.value, text:t, by:tgMeName() || 'Coach', who:tgMe(), at:Date.now()});
+      idpSave(p, m); idpRender(); showToast('Feedback added');
+    }});
+    const list = h('div', {class:'idp-fb-list'});
+    if(!d.fb.length) list.append(h('p', {class:'idp-note', text:'No feedback yet.'}));
+    d.fb.forEach(function(e){
+      const lbl = (IDP_FB.find(function(o){ return o[0] === e.type; }) || IDP_FB[0])[1];
+      const mineE = e.who === tgMe() || (who && who.admin) || (CLOUD && CLOUD.user && CLOUD.user() && CLOUD.user().admin);
+      list.append(h('article', {class:'idp-fb idp-fb-' + (e.type || 'coach')},
+        h('div', {class:'idp-fb-h'}, h('b', {text:tgDob(e.date) || ''}), h('span', {class:'idp-fb-type', text:lbl}), e.by ? h('span', {class:'idp-fb-by', text:'· ' + e.by}) : '',
+          can && mineE ? h('button', {type:'button', class:'icon-btn idp-fb-x no-print', title:'Remove', 'aria-label':'Remove this feedback', text:'✕', onclick:function(){
+            const m = idpMine(p); m.o.gone = (m.o.gone || []).concat([e.id]); idpSave(p, m); idpRender();
+            showToast('Feedback removed', function(){ const m2 = idpMine(p); m2.o.gone = (m2.o.gone || []).filter(function(x){ return x !== e.id; }); idpSave(p, m2); idpRender(); });
+          }}) : ''),
+        h('p', {class:'idp-fb-t', text:e.text})));
+    });
+    sheet.append(h('section', {class:'idp-sec'},
+      h('h3', {class:'idp-h', text:'Feedback'}),
+      can ? h('div', {class:'idp-fb-add no-print'}, h('div', {class:'idp-fb-row'}, fbType, fbDate), fbText, h('div', {class:'idp-fb-row idp-fb-go'}, fbAdd)) : '',
+      list));
+    /* sign-off (for the printed copy) */
+    sheet.append(h('section', {class:'idp-sec idp-sign'},
+      ['Player', 'Coach', 'Parent / guardian', 'Date'].map(function(t){ return h('div', {class:'idp-sign-c'}, h('span', {class:'idp-sign-l'}), h('span', {class:'lbl', text:t})); })));
+    idpPage.append(bar, sheet);
+    idpPage.scrollTop = top;
+  }
+  /* ---- lists on a plan (videos, players to watch): everyone's entries are kept together ---- */
+  function idpAddItem(p, name, item){ idpFlush(); const m = idpMine(p); m.o.l = m.o.l || {}; (m.o.l[name] = m.o.l[name] || []).push(Object.assign({id:newId(), at:Date.now(), by:tgMeName()}, item)); idpSave(p, m); idpRender(); }
+  function idpDropItem(p, id, what){
+    idpFlush(); const m = idpMine(p); m.o.gone = (m.o.gone || []).concat([id]); idpSave(p, m); idpRender();
+    showToast(what + ' removed', function(){ const m2 = idpMine(p); m2.o.gone = (m2.o.gone || []).filter(function(x){ return x !== id; }); idpSave(p, m2); idpRender(); });
+  }
+  /* a YouTube link's picture */
+  function idpThumb(url){
+    try{ const u = new URL(url), host = u.hostname.replace(/^www\.|^m\./, '');
+      let id = host === 'youtu.be' ? u.pathname.slice(1).split('/')[0] : /(^|\.)youtube\.com$/.test(host) ? (u.searchParams.get('v') || ((u.pathname.match(/^\/(?:embed|shorts|live|v)\/([\w-]{6,})/) || [])[1] || '')) : '';
+      return id ? 'https://i.ytimg.com/vi/' + encodeURIComponent(id) + '/mqdefault.jpg' : '';
+    }catch(e){ return ''; }
+  }
+  /* play a link: on the plan when it can (YouTube, Vimeo, Google Drive, a video file), otherwise it opens */
+  function idpPlay(url, title){
+    const e = pgEmbed(url);
+    if(!e){ window.open(url, '_blank', 'noopener'); return; }
+    const box = h('div', {class:'idp-player-box'});
+    if(e.kind === 'frame') box.append(h('iframe', {src:e.src, allow:'autoplay; fullscreen; picture-in-picture', allowfullscreen:'true', title:title || 'Video'}));
+    else box.append(h('video', {src:e.src, controls:'true', autoplay:'true', playsinline:'true'}));
+    const ov = h('div', {class:'idp-player-ov', role:'dialog', 'aria-label':title || 'Video'},
+      h('div', {class:'idp-player-top'}, h('b', {text:title || 'Video'}), h('a', {href:url, target:'_blank', rel:'noopener', class:'idp-player-open', text:'Open ' + pgSource(url) + ' ↗'}),
+        h('button', {type:'button', class:'btn', text:'Close', onclick:function(){ ov.remove(); }})), box);
+    ov.addEventListener('click', function(ev){ if(ev.target === ov) ov.remove(); });
+    document.addEventListener('keydown', function esc(ev){ if(ev.key === 'Escape' && ov.isConnected){ ev.preventDefault(); ev.stopPropagation(); ov.remove(); document.removeEventListener('keydown', esc, true); } }, true);
+    document.body.appendChild(ov);
+  }
+  function idpVideos(p, d, a, can){
+    const name = a.id + '.vids', list = d.l[name] || [];
+    const first = (tgSplit(p.name)[0] || 'the player');
+    const box = h('div', {class:'idp-f idp-media'}, h('span', {class:'lbl', text:'Videos of ' + first}));
+    const grid = h('div', {class:'idp-vids'});
+    list.forEach(function(v){
+      const th = idpThumb(v.url);
+      grid.append(h('div', {class:'idp-vid'},
+        h('button', {type:'button', class:'idp-vid-play', title:'Play', onclick:function(){ idpPlay(v.url, v.title); }},
+          th ? h('img', {src:th, alt:'', loading:'lazy'}) : h('span', {class:'idp-vid-src', text:pgSource(v.url)}),
+          h('span', {class:'idp-vid-tri', 'aria-hidden':'true', text:'▶'})),
+        h('div', {class:'idp-vid-t'}, h('span', {text:v.title || pgSource(v.url)}),
+          can ? h('button', {type:'button', class:'icon-btn idp-x no-print', title:'Remove', 'aria-label':'Remove this video', text:'✕', onclick:function(){ idpDropItem(p, v.id, 'Video'); }}) : ''),
+        h('span', {class:'idp-print-txt idp-link-print', text:v.url})));
+    });
+    if(!list.length) grid.append(h('p', {class:'idp-note', text:'No videos yet.'}));
+    box.append(grid);
+    if(can){
+      const title = h('input', {type:'text', class:'set-input idp-add-t', placeholder:'What it shows, e.g. Scanning v Avondale', 'aria-label':'What the video shows'});
+      const link = h('input', {type:'url', class:'set-input idp-add-u', placeholder:'Paste a link (Veo, YouTube, Google Drive…)', 'aria-label':'Video link', 'data-nocap':'1'});
+      const add = function(){ const u = pgNormUrl(link.value); if(!u){ link.focus(); showToast('Paste the share link from Veo, YouTube or Google Drive'); return; } idpAddItem(p, name, {url:u, title:clean(title.value)}); };
+      [title, link].forEach(function(i){ i.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); add(); } }); });
+      box.append(h('div', {class:'idp-add no-print'}, title, link, h('button', {type:'button', class:'btn btn-small', text:'+ Add video', onclick:add})));
+    }
+    return box;
+  }
+  function idpWatch(p, d, a, can){
+    const name = a.id + '.watch', list = d.l[name] || [];
+    const box = h('div', {class:'idp-f idp-media'}, h('span', {class:'lbl', text:'Players to watch'}));
+    const ul = h('div', {class:'idp-watch'});
+    list.forEach(function(w){
+      ul.append(h('div', {class:'idp-pro'},
+        h('span', {class:'idp-pro-i', 'aria-hidden':'true', text:'★'}),
+        h('div', {class:'idp-pro-b'},
+          h('div', {class:'idp-pro-n'}, h('b', {text:w.name}), w.club ? h('span', {text:' · ' + w.club}) : ''),
+          w.note ? h('div', {class:'idp-pro-w', text:'Watch: ' + w.note}) : '',
+          w.url ? h('button', {type:'button', class:'text-btn idp-pro-link', text:'▶ ' + pgSource(w.url), onclick:function(){ idpPlay(w.url, w.name + (w.note ? ' — ' + w.note : '')); }}) : '',
+          w.url ? h('span', {class:'idp-print-txt idp-link-print', text:w.url}) : ''),
+        can ? h('button', {type:'button', class:'icon-btn idp-x no-print', title:'Remove', 'aria-label':'Remove ' + w.name, text:'✕', onclick:function(){ idpDropItem(p, w.id, w.name); }}) : ''));
+    });
+    if(!list.length) ul.append(h('p', {class:'idp-note', text:'No players yet — add a pro who does this well.'}));
+    box.append(ul);
+    if(can){
+      const nm = h('input', {type:'text', class:'set-input', placeholder:'Player, e.g. ' + ({tech:'Pedri', tact:'Rodri', phys:'Kylian Mbappé', emo:'Bukayo Saka', ment:'Virgil van Dijk'})[a.id], 'aria-label':'Player to watch', oninput:function(){ try{ luCapName(this); }catch(e){} }});
+      const club = h('input', {type:'text', class:'set-input idp-add-club', placeholder:'Club', 'aria-label':'Their club'});
+      const note = h('input', {type:'text', class:'set-input idp-add-t', placeholder:'What to watch for', 'aria-label':'What to watch for'});
+      const link = h('input', {type:'url', class:'set-input idp-add-u', placeholder:'Link to a clip (optional)', 'aria-label':'Link to a clip', 'data-nocap':'1'});
+      const add = function(){ const n = clean(nm.value); if(!n){ nm.focus(); return; } const u = clean(link.value) ? pgNormUrl(link.value) : ''; if(clean(link.value) && !u){ link.focus(); showToast('That link doesn’t look right'); return; } idpAddItem(p, name, {name:n, club:clean(club.value), note:clean(note.value), url:u}); };
+      [nm, club, note, link].forEach(function(i){ i.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); add(); } }); });
+      box.append(h('div', {class:'idp-add idp-add-pro no-print'}, nm, club, note, link, h('button', {type:'button', class:'btn btn-small', text:'+ Add player', onclick:add})));
+    }
+    return box;
+  }
+  /* back from a sync: show what someone else changed, unless you're typing in it */
+  function idpSynced(){
+    if(idpPage.hidden) return;
+    const a = document.activeElement; if(a && idpPage.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
+    idpRender();
+  }
+
+  /* ---- Player IDPs (from the Home page): every player whose plan you can see, team by team ---- */
+  let idpInList = false, idpListTeam = '', idpListTop = 0;
+  function idpListOpen(){
+    idpInList = true; idpKey = ''; idpFrom = 'home';
+    const mine = AGE_GROUPS.filter(function(g){ return tgMdCanEdit(g); });
+    if(mine.indexOf(idpListTeam) === -1) idpListTeam = mine.indexOf(primaryGroup()) !== -1 ? primaryGroup() : (mine[0] || '');
+    swap(function(){ idpShow(true); idpRenderList(); idpPage.scrollTop = 0; });
+  }
+  function idpListClose(){ idpInList = false; swap(function(){ idpShow(false); if(document.documentElement.classList.contains('view-home')) renderHome(); }); }
+  function idpRenderList(){
+    idpInList = true; idpFrom = 'list';
+    const teams = AGE_GROUPS.filter(function(g){ return tgMdCanEdit(g); });
+    const all = tgPlayers().filter(function(p){ return teams.indexOf(p.squad) !== -1; });
+    const today = tgIso(new Date()), soon = tgShift(today, 14);
+    const info = {};
+    all.forEach(function(p){
+      const d = idpGet(p.key), f = d.f;
+      let done = 0, going = 0, set = 0;
+      IDP_AREAS.forEach(function(a){ const g = 'g.' + a.id + '.'; if(clean(f[g + 'goal'])) set++; if(f[g + 'st'] === 'done') done++; else if(f[g + 'st'] === 'go') going++; });
+      info[p.key] = {has:d.savedAt > 0, ov:f.overall || '', review:f.review || '', set:set, done:done, going:going, fb:d.fb[0] ? d.fb[0].date : '', by:d.by};
+    });
+    idpPage.innerHTML = '';
+    const bar = h('div', {class:'appbar se-appbar idp-appbar'}, h('div', {class:'appbar-inner'},
+      h('button', {type:'button', class:'btn btn-home', title:'Home', onclick:idpListClose}, h('span', {'aria-hidden':'true', text:'⌂'}), h('span', {class:'btn-label', text:' Home'})),
+      h('div', {class:'status se-status', role:'status'}, h('span', {class:'dot'}), h('span', {class:'status-text', text:'Individual development plans'}))));
+    const crest = (document.querySelector('.header .crest') || {}).src || '';
+    const cnt = function(g){ return all.filter(function(p){ return p.squad === g; }); };
+    const chips = h('div', {class:'tg-teams idp-list-teams', role:'group', 'aria-label':'Team'}, teams.map(function(g){
+      const ps = cnt(g), n = ps.filter(function(p){ return info[p.key].has; }).length;
+      return h('button', {type:'button', class:'coach-g tg-sqchip' + (g === idpListTeam ? ' on' : ''), 'aria-pressed':String(g === idpListTeam), onclick:function(){ idpListTeam = g; idpRenderList(); }}, g, h('span', {class:'tg-chip-n', text:n + '/' + ps.length}));
+    }));
+    const ps = cnt(idpListTeam).sort(function(a, b){ return ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || a.name.localeCompare(b.name); });
+    const withPlan = ps.filter(function(p){ return info[p.key].has; }).length;
+    const due = ps.filter(function(p){ const r = info[p.key].review; return r && r <= soon; });
+    const ovN = function(o){ return ps.filter(function(p){ return info[p.key].ov === o; }).length; };
+    const sum = h('div', {class:'idp-list-sum'},
+      h('div', {class:'idp-stat'}, h('b', {text:withPlan + '/' + ps.length}), h('span', {text:'Players with a plan'})),
+      h('div', {class:'idp-stat idp-s-track'}, h('b', {text:String(ovN('track'))}), h('span', {text:'On track'})),
+      h('div', {class:'idp-stat idp-s-support'}, h('b', {text:String(ovN('support'))}), h('span', {text:'Need support'})),
+      h('div', {class:'idp-stat idp-s-excel'}, h('b', {text:String(ovN('excel'))}), h('span', {text:'Excelling'})),
+      h('div', {class:'idp-stat' + (due.length ? ' idp-s-due' : '')}, h('b', {text:String(due.length)}), h('span', {text:'Reviews due (2 weeks)'})));
+    const tb = h('tbody');
+    ps.forEach(function(p){
+      const x = info[p.key];
+      const ovl = (IDP_OVERALL.find(function(o){ return o[0] === x.ov; }) || IDP_OVERALL[0])[1];
+      const late = x.review && x.review < today, near = x.review && !late && x.review <= soon;
+      const open = function(){ idpListTop = idpPage.scrollTop; idpOpen(p.key, 'list'); };
+      const row = h('tr', {class:'idp-list-row', tabindex:'0', onclick:open, onkeydown:function(e){ if(e.key === 'Enter'){ e.preventDefault(); open(); } }},
+        h('td', {class:'idp-l-num', text:p.num || ''}),
+        h('td', {class:'idp-l-name'}, h('b', {text:p.name}), h('span', {text:[p.pos ? String(p.pos).toUpperCase() : '', tgAge(p.dob) ? tgAge(p.dob) + ' yrs' : ''].filter(Boolean).join(' · ')})),
+        h('td', null, x.has ? h('span', {class:'idp-l-ov idp-ov-' + (x.ov || 'none')}, ovl) : h('span', {class:'idp-l-none', text:'No plan yet'})),
+        h('td', {class:'idp-l-goals'}, x.has ? h('span', {class:'idp-l-pips', title:x.done + ' achieved · ' + x.going + ' working on · ' + x.set + ' of 5 goals set'}, IDP_AREAS.map(function(a){
+          const st = (idpGet(p.key).f['g.' + a.id + '.st']) || '';
+          return h('i', {class:'idp-pip idp-pip-' + (st || 'no'), style:'--ac:' + a.c, title:a.t + ': ' + (IDP_ST.find(function(s){ return s[0] === st; }) || IDP_ST[0])[1]});
+        })) : ''),
+        h('td', {class:'idp-l-rev' + (late ? ' late' : near ? ' near' : ''), text:x.review ? tgDob(x.review) + (late ? ' · overdue' : '') : '—'}),
+        h('td', {class:'idp-l-fb', text:x.fb ? tgDob(x.fb) : '—'}),
+        h('td', {class:'idp-l-go'}, h('span', {class:'tg-idp-btn' + (x.has ? '' : ' idp-none')}, x.has ? 'Open' : '+ Start plan')));
+      tb.append(row);
+    });
+    const sheet = h('div', {class:'se-sheet idp-sheet idp-list'},
+      h('header', {class:'header se-header'},
+        h('img', {class:'crest', alt:'Heidelberg United crest', src:crest}),
+        h('div', {class:'club'}, h('div', {class:'club-name', text:'Heidelberg United'}), h('div', {class:'club-sub', text:'Football Club · Est. 1958'})),
+        h('div', {class:'doc-title'}, h('strong', {text:'Player IDPs'}))),
+      h('section', {class:'idp-sec'}, chips, sum),
+      h('section', {class:'idp-sec'}, ps.length ? h('div', {class:'gt-table-wrap'}, h('table', {class:'runsheet gt-table idp-list-table'},
+        h('thead', null, h('tr', null, h('th', {text:'No.'}), h('th', {text:'Player'}), h('th', {text:'Overall'}), h('th', {text:'Goals'}), h('th', {text:'Next review'}), h('th', {text:'Last feedback'}), h('th', {text:''}))), tb))
+        : h('p', {class:'idp-note', text:'No players in ' + idpListTeam + ' yet — add them in Squads → Players.'}),
+        h('p', {class:'idp-note', text:'Each dot is one area — Technical, Tactical, Physical, Emotional, Mental: full = achieved, half = working on it, empty = not started.'})));
+    idpPage.append(bar, sheet);
+  }
+  (function(){ const b = document.getElementById('homeIdpBtn'); if(b) b.addEventListener('click', function(){ idpListOpen(); }); })();
 
 
   /* =====================================================================
