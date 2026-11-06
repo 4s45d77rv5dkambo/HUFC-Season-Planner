@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261106115858">
+<meta name="hufc-build" content="20261106120230">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2626,6 +2626,10 @@ html.idp-open, html.idp-open body{overflow:hidden;}
 .idp-pro-n span{color:var(--grey);}
 .idp-pro-w{color:var(--ink);}
 .idp-pro-link{padding:2px 0; font-size:13px; font-weight:600;}
+.idp-pro-acts{display:flex; gap:2px; flex:none;}
+.idp-pro-editing{padding:8px; border-color:var(--black);}
+.idp-pro-edit{width:100%; margin:0;}
+.idp-pro-edit-b{display:flex; gap:6px; flex:none;}
 .idp-link-print{font-size:10px !important; color:#666; border:none !important; word-break:break-all;}
 /* the video player over the plan */
 .idp-player-ov{position:fixed; inset:0; z-index:200; background:rgba(13,14,15,.86); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:16px;}
@@ -3982,7 +3986,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 6 Nov 2026, 11:58am</p>
+  <p class="home-version">HUFC Session Planner · updated 6 Nov 2026, 12:02pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15373,6 +15377,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.93', d:'6 Nov 2026', t:'Edit players to watch', n:['Player IDPs: press ✎ on a player to watch to change the name, club, what to watch for or the clip link (Enter saves, Esc cancels)']},
     {v:'3.92', d:'6 Nov 2026', t:'Player IDPs feel lighter', n:['Progress dots, status buttons and Overall change instantly, without redrawing the plan or moving the page','A plan only redraws when someone else changes it — your own saves going up no longer redraw it']},
     {v:'3.91', d:'6 Nov 2026', t:'No more jumping', n:['Fixed: a lineup or session deleted by its coach could keep coming back and going again every couple of seconds, making pages like Player IDPs jump and buttons slow to respond','Pages only redraw when something on them has actually changed']},
     {v:'3.90', d:'5 Nov 2026', t:'Player IDPs stay open', n:['Fixed: the Player IDPs list closed itself a moment after opening, when the planner synced with the club']},
@@ -19797,6 +19802,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   /* ---- lists on a plan (videos, players to watch): everyone's entries are kept together ---- */
   function idpAddItem(p, name, item){ idpFlush(); const m = idpMine(p); m.o.l = m.o.l || {}; (m.o.l[name] = m.o.l[name] || []).push(Object.assign({id:newId(), at:Date.now(), by:tgMeName()}, item)); idpSave(p, m); idpRender(); }
+  /* change one (a player to watch, a video): the old copy goes and the changed one takes its place in the same spot —
+     so it reaches everyone, whoever added it */
+  function idpEditItem(p, name, old, changes){
+    idpFlush(); const m = idpMine(p); m.o.l = m.o.l || {};
+    m.o.gone = (m.o.gone || []).concat([old.id]);
+    (m.o.l[name] = m.o.l[name] || []).push(Object.assign({}, old, changes, {id:newId(), at:old.at || Date.now(), by:tgMeName()}));
+    idpSave(p, m); idpRender();
+  }
   function idpDropItem(p, id, what){
     idpFlush(); const m = idpMine(p); m.o.gone = (m.o.gone || []).concat([id]); idpSave(p, m); idpRender();
     showToast(what + ' removed', function(){ const m2 = idpMine(p); m2.o.gone = (m2.o.gone || []).filter(function(x){ return x !== id; }); idpSave(p, m2); idpRender(); });
@@ -19853,14 +19866,39 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const box = h('div', {class:'idp-f idp-media'}, h('span', {class:'lbl', text:'Players to watch'}));
     const ul = h('div', {class:'idp-watch'});
     list.forEach(function(w){
-      ul.append(h('div', {class:'idp-pro'},
-        h('span', {class:'idp-pro-i', 'aria-hidden':'true', text:'★'}),
-        h('div', {class:'idp-pro-b'},
-          h('div', {class:'idp-pro-n'}, h('b', {text:w.name}), w.club ? h('span', {text:' · ' + w.club}) : ''),
-          w.note ? h('div', {class:'idp-pro-w', text:'Watch: ' + w.note}) : '',
-          w.url ? h('button', {type:'button', class:'text-btn idp-pro-link', text:'▶ ' + pgSource(w.url), onclick:function(){ idpPlay(w.url, w.name + (w.note ? ' — ' + w.note : '')); }}) : '',
-          w.url ? h('span', {class:'idp-print-txt idp-link-print', text:w.url}) : ''),
-        can ? h('button', {type:'button', class:'icon-btn idp-x no-print', title:'Remove', 'aria-label':'Remove ' + w.name, text:'✕', onclick:function(){ idpDropItem(p, w.id, w.name); }}) : ''));
+      const card = h('div', {class:'idp-pro'});
+      const show = function(){
+        card.classList.remove('idp-pro-editing'); card.innerHTML = '';
+        card.append(h('span', {class:'idp-pro-i', 'aria-hidden':'true', text:'★'}),
+          h('div', {class:'idp-pro-b'},
+            h('div', {class:'idp-pro-n'}, h('b', {text:w.name}), w.club ? h('span', {text:' · ' + w.club}) : ''),
+            w.note ? h('div', {class:'idp-pro-w', text:'Watch: ' + w.note}) : '',
+            w.url ? h('button', {type:'button', class:'text-btn idp-pro-link', text:'▶ ' + pgSource(w.url), onclick:function(){ idpPlay(w.url, w.name + (w.note ? ' — ' + w.note : '')); }}) : '',
+            w.url ? h('span', {class:'idp-print-txt idp-link-print', text:w.url}) : ''),
+          can ? h('div', {class:'idp-pro-acts no-print'},
+            h('button', {type:'button', class:'icon-btn idp-x', title:'Edit', 'aria-label':'Edit ' + w.name, text:'✎', onclick:edit}),
+            h('button', {type:'button', class:'icon-btn idp-x', title:'Remove', 'aria-label':'Remove ' + w.name, text:'✕', onclick:function(){ idpDropItem(p, w.id, w.name); }})) : '');
+      };
+      /* ✎: change the player, club, what to watch for or the clip, right there */
+      const edit = function(){
+        card.classList.add('idp-pro-editing'); card.innerHTML = '';
+        const nm = h('input', {type:'text', class:'set-input', value:w.name || '', placeholder:'Player', 'aria-label':'Player to watch', oninput:function(){ try{ luCapName(this); }catch(e){} }});
+        const club = h('input', {type:'text', class:'set-input idp-add-club', value:w.club || '', placeholder:'Club', 'aria-label':'Their club'});
+        const note = h('input', {type:'text', class:'set-input idp-add-t', value:w.note || '', placeholder:'What to watch for', 'aria-label':'What to watch for'});
+        const link = h('input', {type:'url', class:'set-input idp-add-u', value:w.url || '', placeholder:'Link to a clip (optional)', 'aria-label':'Link to a clip', 'data-nocap':'1'});
+        const save = function(){
+          const n = clean(nm.value); if(!n){ nm.focus(); showToast('Add the player’s name'); return; }
+          const u = clean(link.value) ? pgNormUrl(link.value) : ''; if(clean(link.value) && !u){ link.focus(); showToast('That link doesn’t look right'); return; }
+          const ch = {name:n, club:clean(club.value), note:clean(note.value), url:u};
+          if(ch.name === (w.name || '') && ch.club === (w.club || '') && ch.note === (w.note || '') && ch.url === (w.url || '')){ show(); return; }
+          idpEditItem(p, name, w, ch); showToast('Saved');
+        };
+        [nm, club, note, link].forEach(function(i){ i.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); save(); } else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); show(); } }); });
+        card.append(h('div', {class:'idp-add idp-add-pro idp-pro-edit'}, nm, club, note, link,
+          h('div', {class:'idp-pro-edit-b'}, h('button', {type:'button', class:'btn btn-small btn-primary', text:'Save', onclick:save}), h('button', {type:'button', class:'btn btn-small', text:'Cancel', onclick:show}))));
+        nm.focus(); nm.select();
+      };
+      show(); ul.append(card);
     });
     if(!list.length) ul.append(h('p', {class:'idp-note', text:'No players yet — add a pro who does this well.'}));
     box.append(ul);
