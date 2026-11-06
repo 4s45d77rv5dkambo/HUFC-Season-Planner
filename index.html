@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261106120740">
+<meta name="hufc-build" content="20261106121121">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2661,7 +2661,7 @@ html.idp-open, html.idp-open body{overflow:hidden;}
 .idp-l-rev, .idp-l-fb{white-space:nowrap; font-size:14px; color:var(--grey); font-variant-numeric:tabular-nums;}
 .idp-l-rev.late{color:#b3261e; font-weight:700;} .idp-l-rev.near{color:#9a5300; font-weight:600;}
 .idp-l-go{width:1%; text-align:right;}
-@media screen and (max-width:700px){ .idp-list-sum{grid-template-columns:repeat(3, minmax(0, 1fr));} .idp-list-table .idp-l-fb, .idp-list-table th:nth-child(6), .idp-list-table .idp-l-goals, .idp-list-table th:nth-child(4){display:none;} }
+@media screen and (max-width:700px){ .idp-list-sum{grid-template-columns:repeat(3, minmax(0, 1fr));} .idp-list-table .idp-l-fb, .idp-list-table th:nth-child(5){display:none;} }
 
 /* strengths in green, weaknesses / areas to improve in red: bold headings with a bar, and the writing in the same colour */
 .idp-page .idp-h-good, .idp-page .idp-h-work{display:flex; align-items:center; gap:8px; font-size:18px; font-weight:800; letter-spacing:.07em;}
@@ -4002,7 +4002,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 6 Nov 2026, 12:07pm</p>
+  <p class="home-version">HUFC Session Planner · updated 6 Nov 2026, 12:11pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15393,6 +15393,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.95', d:'6 Nov 2026', t:'Simpler IDP list', n:['Player IDPs list: the Goals column of coloured bubbles is gone — open a player to see their goals']},
     {v:'3.94', d:'6 Nov 2026', t:'Strengths in green, weaknesses in red', n:['Player IDPs: Strengths are written in green and Weaknesses / Areas to improve in red, with bolder headings and a coloured bar (on screen and when printed)','Status: Not started is red, Working on it amber, Achieved green (printed in the same colours)','Fixed: text typed just before Print / PDF (or a status just changed) now shows on the printout straight away']},
     {v:'3.93', d:'6 Nov 2026', t:'Edit players to watch', n:['Player IDPs: press ✎ on a player to watch to change the name, club, what to watch for or the clip link (Enter saves, Esc cancels)']},
     {v:'3.92', d:'6 Nov 2026', t:'Player IDPs feel lighter', n:['Progress dots, status buttons and Overall change instantly, without redrawing the plan or moving the page','A plan only redraws when someone else changes it — your own saves going up no longer redraw it']},
@@ -19992,10 +19993,6 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('td', {class:'idp-l-num', text:p.num || ''}),
         h('td', {class:'idp-l-name'}, h('b', {text:p.name}), h('span', {text:[p.pos ? String(p.pos).toUpperCase() : '', tgAge(p.dob) ? tgAge(p.dob) + ' yrs' : ''].filter(Boolean).join(' · ')})),
         h('td', null, x.has ? h('span', {class:'idp-l-ov idp-ov-' + (x.ov || 'none')}, ovl) : h('span', {class:'idp-l-none', text:'No plan yet'})),
-        h('td', {class:'idp-l-goals'}, x.has ? h('span', {class:'idp-l-pips', title:x.done + ' achieved · ' + x.going + ' working on · ' + x.set + ' of 5 goals set'}, IDP_AREAS.map(function(a){
-          const st = (idpGet(p.key).f['g.' + a.id + '.st']) || '';
-          return h('i', {class:'idp-pip idp-pip-' + (st || 'no'), style:'--ac:' + a.c, title:a.t + ': ' + (IDP_ST.find(function(s){ return s[0] === st; }) || IDP_ST[0])[1]});
-        })) : ''),
         h('td', {class:'idp-l-rev' + (late ? ' late' : near ? ' near' : ''), text:x.review ? tgDob(x.review) + (late ? ' · overdue' : '') : '—'}),
         h('td', {class:'idp-l-fb', text:x.fb ? tgDob(x.fb) : '—'}),
         h('td', {class:'idp-l-go'}, h('span', {class:'tg-idp-btn' + (x.has ? '' : ' idp-none')}, x.has ? 'Open' : '+ Start plan')));
@@ -20008,7 +20005,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('div', {class:'doc-title'}, h('strong', {text:'Player IDPs'}))),
       h('section', {class:'idp-sec'}, chips, sum),
       h('section', {class:'idp-sec'}, ps.length ? h('div', {class:'gt-table-wrap'}, h('table', {class:'runsheet gt-table idp-list-table'},
-        h('thead', null, h('tr', null, h('th', {text:'No.'}), h('th', {text:'Player'}), h('th', {text:'Overall'}), h('th', {text:'Goals'}), h('th', {text:'Next review'}), h('th', {text:'Last feedback'}), h('th', {text:''}))), tb))
+        h('thead', null, h('tr', null, h('th', {text:'No.'}), h('th', {text:'Player'}), h('th', {text:'Overall'}), h('th', {text:'Next review'}), h('th', {text:'Last feedback'}), h('th', {text:''}))), tb))
         : h('p', {class:'idp-note', text:'No players in ' + idpListTeam + ' yet — add them in Squads → Players.'}),
         h('p', {class:'idp-note', text:'Each dot is one area — Technical, Tactical, Physical, Emotional, Mental: full = achieved, half = working on it, empty = not started.'})));
     idpPage.append(bar, sheet);
