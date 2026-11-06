@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261106115139">
+<meta name="hufc-build" content="20261106115858">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3982,7 +3982,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 6 Nov 2026, 11:51am</p>
+  <p class="home-version">HUFC Session Planner · updated 6 Nov 2026, 11:58am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15373,6 +15373,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.92', d:'6 Nov 2026', t:'Player IDPs feel lighter', n:['Progress dots, status buttons and Overall change instantly, without redrawing the plan or moving the page','A plan only redraws when someone else changes it — your own saves going up no longer redraw it']},
     {v:'3.91', d:'6 Nov 2026', t:'No more jumping', n:['Fixed: a lineup or session deleted by its coach could keep coming back and going again every couple of seconds, making pages like Player IDPs jump and buttons slow to respond','Pages only redraw when something on them has actually changed']},
     {v:'3.90', d:'5 Nov 2026', t:'Player IDPs stay open', n:['Fixed: the Player IDPs list closed itself a moment after opening, when the planner synced with the club']},
     {v:'3.89', d:'5 Nov 2026', t:'Player IDPs stay open', n:['A planner update no longer reloads the planner while you’re in a Player IDP, Squads or the Season calendar — it waits until you’re back on the Home page (or press Update now), and saves what you’ve typed first']},
@@ -19615,7 +19616,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const id = TG_PRE + 'idp-' + idpSlug(p.key) + '-' + tgMe();
     return {id:id, o:tgRead(id, null) || {kind:'tgroups', tg:'idp', player:p.key, f:{}, fb:[], gone:[]}};
   }
-  function idpSave(p, mine){ const o = mine.o; o.name = p.name; o.group = p.squad; o.savedAt = Date.now(); o.by = tgMeName(); tgWrite(mine.id, o); }
+  function idpSave(p, mine){ const o = mine.o; o.name = p.name; o.group = p.squad; o.savedAt = Date.now(); o.by = tgMeName(); tgWrite(mine.id, o); if(p.key === idpKey) idpShown = idpSig(p.key); }
+  /* what the open plan was drawn from (your own saves count as drawn): a sync only redraws it when someone else changed it */
+  let idpShown = '';
+  function idpSig(k){ const p = idpPlayer(k); return JSON.stringify([idpGet(k), p && [p.name, p.num, p.pos, p.foot, p.dob, p.squad, p.usual]]); }
   function idpSet(p, field, v){ const m = idpMine(p); m.o.f = m.o.f || {}; m.o.f[field] = {v:v, at:Date.now()}; idpSave(p, m); }
   /* typing: saved a moment after you stop (no redraw, so the box keeps your cursor) */
   const idpTimers = {};
@@ -19693,7 +19697,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('div', {class:'club'}, h('div', {class:'club-name', text:'Heidelberg United'}), h('div', {class:'club-sub', text:'Football Club · Est. 1958'})),
         h('div', {class:'doc-title'}, h('strong', {text:'Individual Development Plan'}))));
     /* the player */
-    const ovSel = h('select', {class:'idp-ov-sel idp-ov-' + (ov || 'none'), 'aria-label':'Overall status', disabled:!can, onchange:function(){ idpSet(p, 'overall', this.value); idpRender(); }},
+    const ovSel = h('select', {class:'idp-ov-sel idp-ov-' + (ov || 'none'), 'aria-label':'Overall status', disabled:!can, onchange:function(){ idpSet(p, 'overall', this.value); this.className = 'idp-ov-sel idp-ov-' + (this.value || 'none'); const v = this.value, t = this.parentElement && this.parentElement.querySelector('.idp-print-txt'); if(t) t.textContent = (IDP_OVERALL.find(function(o){ return o[0] === v; }) || IDP_OVERALL[0])[1]; }},
       IDP_OVERALL.map(function(o){ return h('option', {value:o[0], text:o[1], selected:ov === o[0]}); }));
     sheet.append(h('section', {class:'idp-player'},
       h('div', {class:'idp-name-row'},
@@ -19726,12 +19730,20 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const goals = h('div', {class:'idp-goals'});
     IDP_AREAS.forEach(function(a){
       const key = function(x){ return 'g.' + a.id + '.' + x; };
-      const st = f[key('st')] || '', rate = +f[key('rate')] || 0;
+      const st = f[key('st')] || '';
+      let rate = +f[key('rate')] || 0;
+      /* status and progress change in place: no redraw, so the page stays exactly where it is */
       const seg = h('div', {class:'idp-seg', role:'group', 'aria-label':a.t + ' status'}, IDP_ST.map(function(s){
-        return h('button', {type:'button', class:s[2] + (st === s[0] ? ' on' : ''), 'aria-pressed':String(st === s[0]), disabled:!can, text:s[1], onclick:function(){ idpFlush(); idpSet(p, key('st'), s[0]); idpRender(); }});
+        return h('button', {type:'button', class:s[2] + (st === s[0] ? ' on' : ''), 'data-st':s[0], 'aria-pressed':String(st === s[0]), disabled:!can, text:s[1], onclick:function(){
+          idpSet(p, key('st'), s[0]);
+          seg.querySelectorAll('button').forEach(function(b){ const on = b.dataset.st === s[0]; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+        }});
       }));
       const dots = h('div', {class:'idp-dots', role:'group', 'aria-label':a.t + ' progress'}, [1, 2, 3, 4, 5].map(function(i){
-        return h('button', {type:'button', class:'idp-dot' + (i <= rate ? ' on' : ''), title:'Progress ' + i + ' of 5', 'aria-label':'Progress ' + i + ' of 5', disabled:!can, onclick:function(){ idpFlush(); idpSet(p, key('rate'), rate === i ? 0 : i); idpRender(); }});
+        return h('button', {type:'button', class:'idp-dot' + (i <= rate ? ' on' : ''), title:'Progress ' + i + ' of 5', 'aria-label':'Progress ' + i + ' of 5', disabled:!can, onclick:function(){
+          rate = rate === i ? 0 : i; idpSet(p, key('rate'), rate);
+          dots.querySelectorAll('.idp-dot').forEach(function(b, j){ b.classList.toggle('on', j < rate); });
+        }});
       }));
       goals.append(h('article', {class:'idp-goal', style:'--ac:' + a.c},
         h('div', {class:'idp-goal-h'}, h('span', {class:'idp-goal-t', text:a.t}), h('span', {class:'idp-goal-hint', text:a.hint})),
@@ -19781,6 +19793,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       ['Player', 'Coach', 'Parent / guardian', 'Date'].map(function(t){ return h('div', {class:'idp-sign-c'}, h('span', {class:'idp-sign-l'}), h('span', {class:'lbl', text:t})); })));
     idpPage.append(bar, sheet);
     idpPage.scrollTop = top;
+    idpShown = idpSig(p.key);
   }
   /* ---- lists on a plan (videos, players to watch): everyone's entries are kept together ---- */
   function idpAddItem(p, name, item){ idpFlush(); const m = idpMine(p); m.o.l = m.o.l || {}; (m.o.l[name] = m.o.l[name] || []).push(Object.assign({id:newId(), at:Date.now(), by:tgMeName()}, item)); idpSave(p, m); idpRender(); }
@@ -19868,6 +19881,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const a = document.activeElement; if(a && idpPage.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
     /* the Player IDPs list (no plan open) redraws as the list, keeping its place */
     if(!idpKey){ if(idpInList){ const top = idpPage.scrollTop; idpRenderList(); idpPage.scrollTop = top; } return; }
+    if(idpSig(idpKey) === idpShown) return;   /* nothing new on this plan (e.g. only your own save went up) */
     idpRender();
   }
 
