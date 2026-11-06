@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261106120230">
+<meta name="hufc-build" content="20261106120740">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2537,7 +2537,7 @@ html.idp-open, html.idp-open body{overflow:hidden;}
 .idp-seg{display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
 .idp-seg button{border:none; border-right:1px solid var(--line); background:var(--white); padding:6px 12px; font:600 13px 'Barlow', Arial, sans-serif; color:var(--grey); cursor:pointer;}
 .idp-seg button:last-child{border-right:none;}
-.idp-seg button.on.idp-st-0{background:var(--paper); color:var(--ink);}
+.idp-seg button.on.idp-st-0{background:#fde7e5; color:#b3261e;}
 .idp-seg button.on.idp-st-1{background:#fff1dc; color:#9a5300;}
 .idp-seg button.on.idp-st-2{background:#e2f4e7; color:#1b7f3a;}
 .idp-dots{display:flex; gap:6px; height:30px; align-items:center;}
@@ -2662,6 +2662,22 @@ html.idp-open, html.idp-open body{overflow:hidden;}
 .idp-l-rev.late{color:#b3261e; font-weight:700;} .idp-l-rev.near{color:#9a5300; font-weight:600;}
 .idp-l-go{width:1%; text-align:right;}
 @media screen and (max-width:700px){ .idp-list-sum{grid-template-columns:repeat(3, minmax(0, 1fr));} .idp-list-table .idp-l-fb, .idp-list-table th:nth-child(6), .idp-list-table .idp-l-goals, .idp-list-table th:nth-child(4){display:none;} }
+
+/* strengths in green, weaknesses / areas to improve in red: bold headings with a bar, and the writing in the same colour */
+.idp-page .idp-h-good, .idp-page .idp-h-work{display:flex; align-items:center; gap:8px; font-size:18px; font-weight:800; letter-spacing:.07em;}
+.idp-page .idp-h-good::before, .idp-page .idp-h-work::before{content:''; width:5px; height:18px; border-radius:3px; background:currentColor; flex:none;}
+.idp-page .idp-l-good, .idp-page .idp-l-work{display:inline-flex !important; align-items:center; gap:6px; font-size:14px !important; font-weight:800 !important; letter-spacing:.07em;}
+.idp-page .idp-l-good::before, .idp-page .idp-l-work::before{content:''; width:4px; height:14px; border-radius:2px; background:currentColor; flex:none;}
+.idp-page textarea[data-f="strengths"], .idp-page textarea[data-f$=".str"],
+.idp-page textarea[data-f="strengths"] + .idp-print-txt, .idp-page textarea[data-f$=".str"] + .idp-print-txt{color:#1b7f3a; -webkit-text-fill-color:#1b7f3a;}
+.idp-page textarea[data-f="improve"], .idp-page textarea[data-f$=".weak"],
+.idp-page textarea[data-f="improve"] + .idp-print-txt, .idp-page textarea[data-f$=".weak"] + .idp-print-txt{color:#b3261e; -webkit-text-fill-color:#b3261e;}
+.idp-page textarea[data-f="strengths"]::placeholder, .idp-page textarea[data-f$=".str"]::placeholder,
+.idp-page textarea[data-f="improve"]::placeholder, .idp-page textarea[data-f$=".weak"]::placeholder{color:#9a9b98; -webkit-text-fill-color:#9a9b98;}
+@media print{ .idp-page .idp-h-good::before, .idp-page .idp-h-work::before, .idp-page .idp-l-good::before, .idp-page .idp-l-work::before{-webkit-print-color-adjust:exact; print-color-adjust:exact;} }
+
+/* the printed status in the same colours: not started red, working on it amber, achieved green */
+.idp-st-txt-0{color:#b3261e;} .idp-st-txt-1{color:#9a5300;} .idp-st-txt-2{color:#1b7f3a;}
 
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
@@ -3986,7 +4002,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 6 Nov 2026, 12:02pm</p>
+  <p class="home-version">HUFC Session Planner · updated 6 Nov 2026, 12:07pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15377,6 +15393,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.94', d:'6 Nov 2026', t:'Strengths in green, weaknesses in red', n:['Player IDPs: Strengths are written in green and Weaknesses / Areas to improve in red, with bolder headings and a coloured bar (on screen and when printed)','Status: Not started is red, Working on it amber, Achieved green (printed in the same colours)','Fixed: text typed just before Print / PDF (or a status just changed) now shows on the printout straight away']},
     {v:'3.93', d:'6 Nov 2026', t:'Edit players to watch', n:['Player IDPs: press ✎ on a player to watch to change the name, club, what to watch for or the clip link (Enter saves, Esc cancels)']},
     {v:'3.92', d:'6 Nov 2026', t:'Player IDPs feel lighter', n:['Progress dots, status buttons and Overall change instantly, without redrawing the plan or moving the page','A plan only redraws when someone else changes it — your own saves going up no longer redraw it']},
     {v:'3.91', d:'6 Nov 2026', t:'No more jumping', n:['Fixed: a lineup or session deleted by its coach could keep coming back and going again every couple of seconds, making pages like Player IDPs jump and buttons slow to respond','Pages only redraw when something on them has actually changed']},
@@ -19684,9 +19701,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const el = h('textarea', {class:'idp-ta', 'data-f':field, rows:String(rows || 3), placeholder:can ? ph : '', 'aria-label':ph, disabled:!can});
       el.value = f[field] || '';
       const fit = function(){ el.style.height = 'auto'; el.style.height = Math.max(el.scrollHeight, 30) + 'px'; };
-      el.addEventListener('input', function(){ fit(); idpSetSoon(p, field, el.value); });
+      const pr = h('div', {class:'idp-print-txt', text:f[field] || ''});   /* (what prints: kept in step as you type) */
+      el.addEventListener('input', function(){ fit(); pr.textContent = el.value; idpSetSoon(p, field, el.value); });
       setTimeout(fit, 0);
-      return h('div', {class:'idp-ta-wrap'}, el, h('div', {class:'idp-print-txt', text:f[field] || ''}));
+      return h('div', {class:'idp-ta-wrap'}, el, pr);
     };
     const inp = function(field, ph, type){
       const el = h('input', {type:type || 'text', class:'idp-in', 'data-f':field, placeholder:can ? (ph || '') : '', 'aria-label':ph || field, disabled:!can, value:f[field] || ''});
@@ -19740,7 +19758,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       /* status and progress change in place: no redraw, so the page stays exactly where it is */
       const seg = h('div', {class:'idp-seg', role:'group', 'aria-label':a.t + ' status'}, IDP_ST.map(function(s){
         return h('button', {type:'button', class:s[2] + (st === s[0] ? ' on' : ''), 'data-st':s[0], 'aria-pressed':String(st === s[0]), disabled:!can, text:s[1], onclick:function(){
-          idpSet(p, key('st'), s[0]);
+          idpSet(p, key('st'), s[0]); const t = seg.nextElementSibling; if(t){ t.textContent = s[1]; t.className = 'idp-print-txt idp-st-txt-' + IDP_ST.indexOf(s); }
           seg.querySelectorAll('button').forEach(function(b){ const on = b.dataset.st === s[0]; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
         }});
       }));
@@ -19759,7 +19777,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           h('label', {class:'idp-f'}, h('span', {class:'lbl', text:'How we’ll get there'}), ta(key('how'), 'What they’ll do in training and at home, and how we’ll help', 2)),
           h('div', {class:'idp-goal-foot'},
             h('label', {class:'idp-f idp-f-date'}, h('span', {class:'lbl', text:'By'}), inp(key('by'), '', 'date')),
-            h('div', {class:'idp-f'}, h('span', {class:'lbl', text:'Status'}), seg, h('span', {class:'idp-print-txt', text:(IDP_ST.find(function(s){ return s[0] === st; }) || IDP_ST[0])[1]})),
+            h('div', {class:'idp-f'}, h('span', {class:'lbl', text:'Status'}), seg, h('span', {class:'idp-print-txt idp-st-txt-' + Math.max(0, IDP_ST.findIndex(function(s){ return s[0] === st; })), text:(IDP_ST.find(function(s){ return s[0] === st; }) || IDP_ST[0])[1]})),
             h('div', {class:'idp-f'}, h('span', {class:'lbl', text:'Progress'}), dots)),
           idpVideos(p, d, a, can),
           idpWatch(p, d, a, can))));
