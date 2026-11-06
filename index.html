@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261106121121">
+<meta name="hufc-build" content="20261106122533">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2478,6 +2478,12 @@ html.tg-open, html.tg-open body{overflow:hidden;}
 .tg-md-lu{width:100%; margin-top:2px; border:1px solid var(--yellow); border-radius:6px; background:transparent; color:var(--yellow); font:600 11.5px/1.3 'Barlow', Arial, sans-serif; padding:2px 6px; cursor:pointer; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .tg-md-lu:hover{background:rgba(255,212,0,.12);}
 
+/* attendance on each training group */
+.tg-att{margin-left:auto; display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 9px; border:1px solid rgba(255,212,0,.6); border-radius:12px; background:transparent; color:var(--yellow); font:700 12px 'Barlow', Arial, sans-serif; cursor:pointer; white-space:nowrap;}
+.tg-att.on{background:var(--yellow); color:var(--black); border-color:var(--yellow);}
+.tg-att:hover{background:var(--yellow); color:var(--black);}
+.att-day{font-weight:600; color:var(--ink) !important;}
+
 
 /* ---------- Player IDP: its own page, a printable plan ---------- */
 html.idp-open, html.idp-open body{overflow:hidden;}
@@ -4002,7 +4008,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 6 Nov 2026, 12:11pm</p>
+  <p class="home-version">HUFC Session Planner · updated 6 Nov 2026, 12:25pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15393,6 +15399,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.96', d:'6 Nov 2026', t:'Attendance without a session', n:['Squads → Training groups: press Attendance on a team to tick who turned up that day — no session needed','It’s the same attendance as a session for that team on that day: tick in either place and the other shows it, and the day is only counted once in the stats and IDPs']},
     {v:'3.95', d:'6 Nov 2026', t:'Simpler IDP list', n:['Player IDPs list: the Goals column of coloured bubbles is gone — open a player to see their goals']},
     {v:'3.94', d:'6 Nov 2026', t:'Strengths in green, weaknesses in red', n:['Player IDPs: Strengths are written in green and Weaknesses / Areas to improve in red, with bolder headings and a coloured bar (on screen and when printed)','Status: Not started is red, Working on it amber, Achieved green (printed in the same colours)','Fixed: text typed just before Print / PDF (or a status just changed) now shows on the printout straight away']},
     {v:'3.93', d:'6 Nov 2026', t:'Edit players to watch', n:['Player IDPs: press ✎ on a player to watch to change the name, club, what to watch for or the clip link (Enter saves, Esc cancels)']},
@@ -15843,13 +15850,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       'Move a player for the day: drag them to another group, or tap them and pick the group — or Not training today. Undo puts them back.',
       'The club admin and the technical directors set the groups; every other coach sees them.',
       'A session shows who’s joining that team on its day (“2 joining from U14”) under Players, and Attendance lists them so you can tick them off.',
+      'Attendance without a session: on a team’s column press ✓ Attendance and tick who turned up that day (the team’s coach, the admin and the technical directors can). It’s the same record as a session for that team on that day — tick in either place and the other shows it, and the day only counts once.',
       'Matchday squads: pick the match day, then build each team’s squad — Start from the squad, + Add a player from any team (playing up or down), tap a player to move them or take them out. The lineup for that team and date takes this squad automatically.'
     ], tips:[
       'Same as … copies the last day’s groups; Back to usual groups clears the day’s moves.',
       'On a phone you see one group at a time — pick it along the top.'
     ]},
     {id:'idp', title:'Player IDPs', ico:'📋', open:'homeIdpBtn', openText:'Open Player IDPs', lead:'Each player’s individual development plan: where they are, what they’re working on, and your feedback.', steps:[
-      'Home → Player IDPs. Pick a team: every player with their overall status, the five areas at a glance (full dot achieved, half working on it), and when their next review is due.',
+      'Home → Player IDPs. Pick a team: every player with their overall status, when their next review is due and their last feedback.',
       'Tap a player (or + Start plan). Fill in the season, coach, when the plan started and the next review, and their overall status.',
       'This season so far fills in by itself from attendance, lineups and the training groups.',
       'For each area — Technical, Tactical, Physical, Emotional, Mental: their strengths and weaknesses, one goal, how we’ll get there, by when, the status and progress (1–5).',
@@ -18673,8 +18681,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const x = typeof state !== 'undefined' ? state : null;
     if(!x || isPre(x)){ b.hidden = true; return; }
     b.hidden = false;
-    const at = x.attend, n = at && Array.isArray(at.here) ? at.here.length : 0;
-    const team = (at && at.team) || groupOf(x), sq = sqFor(team);
+    const team0 = (x.attend && x.attend.team) || groupOf(x), rec = attDayRec(team0, attSessionDay(x), x);
+    const at = rec && rec.here.length ? rec : null, n = at ? at.here.length : 0;
+    const team = team0, sq = sqFor(team);
     const out = sq ? sq.players.filter(function(r){ return avOf(team, r.name); }).length : 0;
     b.classList.toggle('on', !!at);
     b.innerHTML = '';
@@ -18687,24 +18696,27 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* each player's attendance across the team's sessions (the ones where it was taken) */
   function attHistory(team){
     const stat = {}; let total = 0;
-    listSessions().forEach(function(it){
-      const s = it.plan, a = s.attend;
-      if(!a || isPre(s) || (a.team || groupOf(s)) !== team || !Array.isArray(a.here)) return;
+    attDays(team).forEach(function(d){
       total++;
-      a.here.forEach(function(n){ const k = gtKey(n); if(k) stat[k] = (stat[k] || 0) + 1; });
+      d.here.forEach(function(n){ const k = gtKey(n); if(k) stat[k] = (stat[k] || 0) + 1; });
     });
     return {total:total, of:function(name){ return stat[gtKey(name)] || 0; }};
   }
-  function attendOpen(){
-    const x = typeof state !== 'undefined' ? state : null; if(!x || isPre(x)) return;
-    const ro = readOnly || (typeof canEdit === 'function' && !canEdit(x));
-    const teams = attTeams(x);
-    let team = (x.attend && x.attend.team) || teams[0];
-    const here = {}; ((x.attend && x.attend.here) || []).forEach(function(n){ here[gtKey(n)] = clean(n); });
+  /* opts (from Squads → Training groups, no session): {team, day} */
+  function attendOpen(opts){
+    const x = opts ? null : (typeof state !== 'undefined' ? state : null); if(!opts && (!x || isPre(x))) return;
+    const ro = opts ? !tgMdCanEdit(opts.team) : (readOnly || (typeof canEdit === 'function' && !canEdit(x)));
+    const teams = opts ? [opts.team] : attTeams(x);
+    const day = opts ? opts.day : attSessionDay(x);
+    let team = opts ? opts.team : ((x.attend && x.attend.team) || teams[0]);
+    /* one attendance a team a day: whatever was ticked last — here, or in Training groups — is what you start from */
+    const here = {};
+    const loadHere = function(){ Object.keys(here).forEach(function(k){ delete here[k]; }); const rec = attDayRec(team, day, x); ((rec && rec.here) || []).forEach(function(n){ here[gtKey(n)] = clean(n); }); };
+    loadHere();
     let extra = [];   /* players added here who aren't in the squad list yet */
     /* the day's training groups (Squads): who's joining this team, and who's training elsewhere */
     let tg = null;
-    const tgLoad = function(){ try{ tg = tgFor(team, tgSessionDay(x)); }catch(e){ tg = null; } };
+    const tgLoad = function(){ try{ tg = tgFor(team, opts ? day : tgSessionDay(x)); }catch(e){ tg = null; } };
     const tgIn = function(k){ return tg ? tg.joining.find(function(p){ return gtKey(p.name) === k; }) : null; };
     const tgAway = function(k){ return tg ? tg.away.find(function(p){ return gtKey(p.name) === k; }) : null; };
     const body = h('div', {class:'se-form-body att-body'});
@@ -18731,7 +18743,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(teams.length > 1){
         const sel = h('select', {class:'set-input att-team', 'aria-label':'Team'});
         teams.forEach(function(t){ sel.appendChild(h('option', {value:t, text:t, selected:t === team})); });
-        sel.addEventListener('change', function(){ team = sel.value; render(); });
+        sel.addEventListener('change', function(){ team = sel.value; loadHere(); render(); });
         head.append(h('label', {class:'se-field att-team-f'}, h('span', {class:'se-field-l', text:'Team'}), sel));
       }
       const hist = attHistory(team);
@@ -18776,42 +18788,89 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('span', {text:' · '}),
       h('button', {type:'button', class:'text-btn', text:'Clear', onclick:function(){ Object.keys(here).forEach(function(k){ delete here[k]; }); render(); }}));
     body.append(
+      opts ? h('p', {class:'set-sub att-day', text:team + ' · ' + avFmt(day) + ' — the same attendance as a ' + team + ' session that day, so it’s only counted once.'}) : null,
       h('p', {class:'set-sub', text:'Tick who turned up. Tap a player’s status to mark them injured or unavailable — it shows on every session, lineup and pre-game for ' + (teams.length > 1 ? 'that team' : team) + ' until they’re back.'}),
       head, tools, list, ro ? null : h('div', {class:'att-add'}, addIn, addBtn));
     render();
-    seForm('Attendance', body, function(close){
+    seForm(opts ? 'Attendance · ' + team : 'Attendance', body, function(close){
       return [count, h('span', {class:'se-sp'}),
         ro ? h('button', {type:'button', class:'btn btn-primary', text:'Close', onclick:close}) : h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}),
         ro ? null : h('button', {type:'button', class:'btn btn-primary', text:'Save', onclick:function(){
           const names = players().filter(function(r){ return here[gtKey(r.name)]; }).map(function(r){ return clean(r.name); });
+          const before0 = attDayRec(team, day, x);
+          const same = before0 ? JSON.stringify(before0.here) === JSON.stringify(names) : !names.length;
+          /* the day's record in Squads (so a session and Training groups share it) */
+          if(!same){ try{ attSaveDay(team, day, names); }catch(e){} }
+          if(opts){
+            close();
+            if(same) return;
+            try{ tgRender(); }catch(e){} try{ renderTgNote(); }catch(e){}
+            showToast(names.length ? names.length + (names.length === 1 ? ' player' : ' players') + ' at ' + team + ' training' : 'Attendance cleared');
+            return;
+          }
           const before = JSON.stringify(x.attend || null);
           if(names.length) x.attend = {team:team, here:names, at:Date.now()}; else delete x.attend;
           /* the "Players" box in the header fills in with the number here (unless you've typed something else in it) */
           if(names.length && (!clean(x.meta.players) || /^\d+$/.test(clean(x.meta.players)))) x.meta.players = String(names.length);
           close();
-          if(JSON.stringify(x.attend || null) === before) return;
+          if(JSON.stringify(x.attend || null) === before){ renderAttendBtn(); return; }
           saveLocal(); try{ commitHistory(); }catch(e){} try{ renderTop(); }catch(e){} renderAttendBtn();
           showToast(names.length ? names.length + (names.length === 1 ? ' player' : ' players') + ' at this session' : 'Attendance cleared');
         }})];
     }, true);
   }
 
+  /* ---------- one attendance a team a day ----------
+     A session's attendance and the one taken in Squads → Training groups are the same record: for each team and day
+     the latest ticks win (wherever they were made), and the day counts once in the stats, however many places it was taken. */
+  function attDayDocs(team){
+    const out = {};
+    try{ tgAll().forEach(function(o){ if(o.tg !== 'att' || o.team !== team || !o.date) return; if(!out[o.date] || (+o.at || 0) > (+out[o.date].at || 0)) out[o.date] = o; }); }catch(e){}
+    return out;
+  }
+  function attDaysAll(team, extra){
+    const by = {};
+    const put = function(day, here, at, s){ const cur = by[day]; if(!cur || at > cur.at) by[day] = {day:day, here:(here || []).slice(), at:at, s:s || (cur && cur.s) || null}; else if(s && !cur.s) cur.s = s; };
+    const seen = {};
+    const sess = listSessions().map(function(it){ return it.plan; });
+    if(extra && !sess.some(function(s){ return s === extra || (s.id && s.id === extra.id); })) sess.push(extra);
+    sess.forEach(function(s){
+      if(extra && s !== extra && s.id && s.id === extra.id) s = extra;   /* (the open session: as it is now, not as last saved) */
+      if(seen[s.id || Math.random()]) return; if(s.id) seen[s.id] = 1;
+      const a = s.attend; if(!a || isPre(s) || !Array.isArray(a.here) || (a.team || groupOf(s)) !== team) return;
+      put(attSessionDay(s), a.here, +a.at || 0, s);
+    });
+    const docs = attDayDocs(team);
+    Object.keys(docs).forEach(function(d){ put(d, docs[d].here, +docs[d].at || 0, null); });
+    return by;
+  }
+  /* the days a team's attendance was taken (cleared ones left out), oldest first */
+  function attDays(team){
+    const by = attDaysAll(team);
+    return Object.keys(by).map(function(k){ return by[k]; }).filter(function(d){ return d.here.length; })
+      .sort(function(a, b){ return a.day < b.day ? -1 : a.day > b.day ? 1 : 0; });
+  }
+  function attDayRec(team, day, x){ return attDaysAll(team, x)[day] || null; }
+  function attSaveDay(team, day, names){
+    if(typeof tgMdCanEdit === 'function' && !tgMdCanEdit(team)) return false;
+    const now = Date.now();
+    tgWrite(TG_PRE + 'att-' + day + '-' + team + '-' + tgMe(), {kind:'tgroups', tg:'att', team:team, date:day, here:names, at:now, savedAt:now, by:tgMeName(), group:team});
+    return true;
+  }
+
   /* ---------- Game time & player stats → Training attendance: every session where attendance was taken, player by player ---------- */
   function attSessionDay(s){
     const iso = clean(s.meta && s.meta.date) ? luDateToIso(s.meta.date) : '';
     if(iso) return iso;
-    const d = new Date((s.attend && s.attend.at) || s.savedAt || 0);
+    const d = new Date((s.attend && s.attend.at) || s.savedAt || Date.now());   /* (no date on it: the day attendance was taken — today for a new one) */
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
   function attCompute(team){
-    const sess = listSessions().map(function(x){ return x.plan; }).filter(function(s){
-      return s.attend && !isPre(s) && Array.isArray(s.attend.here) && (s.attend.team || groupOf(s)) === team;
-    }).map(function(s){ return {s:s, day:attSessionDay(s), here:s.attend.here.map(gtKey)}; })
-      .sort(function(a, b){ return a.day < b.day ? -1 : a.day > b.day ? 1 : ((a.s.attend.at || 0) - (b.s.attend.at || 0)); });
+    const sess = attDays(team).map(function(d){ return {s:d.s, day:d.day, names:d.here, here:d.here.map(gtKey)}; });
     const rows = {}, add = function(name, num, pos){ const k = gtKey(name); if(!k) return null; if(!rows[k]) rows[k] = {key:k, name:clean(name), num:clean(num), pos:clean(pos).toUpperCase(), n:0, last:'', run:0}; return rows[k]; };
     const sq = sqFor(team);
     (sq ? sq.players : []).forEach(function(r){ add(r.name, r.num, r.pos); });
-    sess.forEach(function(x){ x.s.attend.here.forEach(function(n){ add(n, '', ''); }); });
+    sess.forEach(function(x){ x.names.forEach(function(n){ add(n, '', ''); }); });
     Object.keys(rows).forEach(function(k){
       const r = rows[k];
       sess.forEach(function(x){ if(x.here.indexOf(k) !== -1){ r.n++; r.last = x.day; r.run = 0; } else r.run++; });
@@ -18822,7 +18881,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function attRenderTraining(team, sort){
     document.getElementById('gtLeaders').hidden = true;
-    document.getElementById('gtNote').textContent = 'From every session where you took attendance (under the session’s Players box) — counted for the team the attendance was taken for. Missed in a row counts back from the latest session. Players are matched by name.';
+    document.getElementById('gtNote').textContent = 'From every day attendance was taken — in a session (under its Players box) or in Squads → Training groups. A team’s day counts once, even if it was taken in both. Missed in a row counts back from the latest day. Players are matched by name.';
     const res = attCompute(team), n = res.sessions.length, rows = res.rows;
     const avg = rows.length && n ? Math.round(rows.reduce(function(a, r){ return a + r.pct; }, 0) / rows.length) : 0;
     const first = n ? avFmt(res.sessions[0].day) : '', last = n ? avFmt(res.sessions[n - 1].day) : '';
@@ -18834,7 +18893,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       : sort === 'num' ? function(a, b){ return ((parseInt(a.num, 10) || 999) - (parseInt(b.num, 10) || 999)) || byName(a, b); } : byName);
     const t = document.getElementById('gtTable'); t.innerHTML = ''; t.classList.remove('gt-stats'); t.classList.add('gt-train');
     if(!n || !rows.length){
-      t.appendChild(h('tbody', null, h('tr', null, h('td', {class:'gt-empty', text:'No attendance taken for ' + (team || 'this team') + ' yet. In a session, press Take attendance under the Players box and tick who turned up — it adds up here.'}))));
+      t.appendChild(h('tbody', null, h('tr', null, h('td', {class:'gt-empty', text:'No attendance taken for ' + (team || 'this team') + ' yet. Press Attendance on the team in Squads → Training groups (or Take attendance under a session’s Players box) and tick who turned up — it adds up here.'}))));
       return;
     }
     t.appendChild(h('thead', null, h('tr', null,
@@ -19049,6 +19108,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* the next match day: today on a weekend, otherwise the coming Saturday */
   function tgNextMatchDay(){ const d = new Date(), w = d.getDay(); if(w !== 0 && w !== 6) d.setDate(d.getDate() + (6 - w)); return tgIso(d); }
 
+  /* attendance for this group's training (the same record as a session for that team on that day) */
+  function tgAttBtn(g){
+    let rec = null; try{ rec = attDayRec(g, tgDate); }catch(e){}
+    const n = rec ? rec.here.length : 0, can = tgMdCanEdit(g);
+    if(!can && !n) return '';
+    return h('button', {type:'button', class:'tg-att' + (n ? ' on' : ''), title:n ? n + ' at ' + g + ' training · tap to see' + (can ? ' or change' : '') : 'Take attendance for ' + g + ' on this day',
+      onclick:function(e){ e.stopPropagation(); attendOpen({team:g, day:tgDate}); }}, h('span', {'aria-hidden':'true', text:'✓ '}), n ? n + ' here' : 'Attendance');
+  }
   function tgRenderDay(body, edit){
     const day = tgDayOrNew(tgDate), players = tgPlayers();
     if(!players.length){
@@ -19114,7 +19181,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('header', {class:'tg-col-h'},
           h('span', {class:'tg-col-t', text:g === TG_OFF ? 'Not training' : g}),
           h('span', {class:'tg-col-n', text:String(inCol.length)}),
-          g !== TG_OFF && (up || down) ? h('span', {class:'tg-col-x'}, up ? h('span', {class:'tg-up', text:'+' + up + ' up'}) : '', down ? h('span', {class:'tg-down', text:'+' + down + ' down'}) : '') : ''),
+          g !== TG_OFF && (up || down) ? h('span', {class:'tg-col-x'}, up ? h('span', {class:'tg-up', text:'+' + up + ' up'}) : '', down ? h('span', {class:'tg-down', text:'+' + down + ' down'}) : '') : '',
+          g !== TG_OFF ? tgAttBtn(g) : ''),
         list);
       if(edit){
         col.addEventListener('dragover', function(e){ if(!tgDrag) return; e.preventDefault(); col.classList.add('tg-over'); });
