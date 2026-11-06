@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261106122533">
+<meta name="hufc-build" content="20261106125950">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2483,6 +2483,8 @@ html.tg-open, html.tg-open body{overflow:hidden;}
 .tg-att.on{background:var(--yellow); color:var(--black); border-color:var(--yellow);}
 .tg-att:hover{background:var(--yellow); color:var(--black);}
 .att-day{font-weight:600; color:var(--ink) !important;}
+.tg-att-lu{cursor:default;}
+.tg-md-col .tg-col-h{flex-wrap:wrap;}
 
 
 /* ---------- Player IDP: its own page, a printable plan ---------- */
@@ -4008,7 +4010,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 6 Nov 2026, 12:25pm</p>
+  <p class="home-version">HUFC Session Planner · updated 6 Nov 2026, 12:59pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -11715,7 +11717,30 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         r.games++; r.avail += total; r.min += m; if(m > 0) r.apps++; if(starter[p.id]) r.starts++;
       });
     });
-    return {games:games, rows:Object.keys(rows).map(function(k){
+    /* games without a lineup: match attendance from Squads → Matchday squads (who turned up counts as a game in squad).
+       A game that has a lineup is counted from the lineup only. */
+    let extra = 0;
+    if(!onlyScored){
+      try{
+        const luDays = {}; games.forEach(function(L){ const d = luDateToIso(clean(L.meta && L.meta.date)); if(d) luDays[d] = 1; });
+        const best = {};
+        tgAll().forEach(function(o){ if(o.tg === 'matt' && o.team === group && o.date && (!best[o.date] || (+o.at || 0) > (+best[o.date].at || 0))) best[o.date] = o; });
+        let info = null;
+        Object.keys(best).forEach(function(d){
+          const here = best[d].here || []; if(luDays[d] || !here.length) return;
+          extra++;
+          if(!info){ info = {}; const sq = sqForOwn(group); (sq ? sq.players : []).forEach(function(p){ info[gtKey(p.name)] = p; }); }
+          const seenHere = {};
+          here.forEach(function(n){
+            const k = gtKey(n); if(!k || seenHere[k]) return; seenHere[k] = 1;
+            const sp = info[k] || {};
+            const r = rows[k] = rows[k] || {name:clean(n), num:clean(sp.num), pos:clean(sp.pos).toUpperCase(), posAt:-1, played:{}, games:0, starts:0, apps:0, min:0, avail:0, last:-1, ev:{g:0, a:0, ps:0, y:0, r:0}};
+            r.games++;
+          });
+        });
+      }catch(e){}
+    }
+    return {games:games, extra:extra, rows:Object.keys(rows).map(function(k){
       const r = rows[k]; r.pct = r.avail ? r.min / r.avail * 100 : 0;
       if(!r.pos) r.pos = Object.keys(r.played).sort(function(a, b){ return r.played[b] - r.played[a]; }).slice(0, 2).join(' / ');
       return r;
@@ -11734,7 +11759,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           const rows = res.rows.slice().sort(function(a, b){ return (parseInt(a.num, 10) || 999) - (parseInt(b.num, 10) || 999) || a.name.localeCompare(b.name); });
           const lines = [['Number', 'Player', 'Position', 'Games in squad', 'Starts', 'Games played', 'Minutes', '% of time', 'Goals', 'Assists', 'Yellow cards', 'Red cards'].join(',')]
             .concat(rows.map(function(r){ return [r.num, r.name, r.pos, r.games, r.starts, r.apps, r.min, Math.round(r.pct) + '%', r.ev.g, r.ev.a, r.ev.y, r.ev.r].map(q).join(','); }));
-          return {team:g || 'No team', games:res.games.length, csv:lines.join('\r\n')};
+          return {team:g || 'No team', games:res.games.length + (res.extra || 0), csv:lines.join('\r\n')};
         }));
       }catch(e){}
     }, 1200);
@@ -11772,7 +11797,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     res.rows.sort(sort === 'low' ? function(a, b){ return a.pct - b.pct || byName(a, b); } : sort === 'high' ? function(a, b){ return b.pct - a.pct || byName(a, b); }
       : sort === 'num' ? function(a, b){ return ((parseInt(a.num, 10) || 999) - (parseInt(b.num, 10) || 999)) || byName(a, b); } : byName);
     const n = res.games.length, mins = res.games.reduce(function(a, L){ return a + L.periods.length * L.length; }, 0);
-    document.getElementById('gtSummary').textContent = n ? n + (n === 1 ? ' game' : ' games') + ' · ' + mins + ' minutes in all' : '';
+    document.getElementById('gtSummary').textContent = n || res.extra ? n + (n === 1 ? ' game' : ' games') + ' · ' + mins + ' minutes in all' + (res.extra ? ' · +' + res.extra + ' without a lineup (games in squad only)' : '') : '';
     const t = document.getElementById('gtTable'); t.innerHTML = ''; t.classList.remove('gt-stats');
     if(!res.rows.length){
       t.appendChild(h('tbody', null, h('tr', null, h('td', {class:'gt-empty', text:n ? 'Name the players in your lineups to see their minutes here.' : 'No ' + (gtGroupNow ? gtGroupNow + ' ' : '') + 'lineups yet. Make a matchday lineup in the ' + (gtGroupNow || 'team’s') + ' folder and its minutes show up here.'}))));
@@ -15399,6 +15424,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.97', d:'6 Nov 2026', t:'Match attendance', n:['Squads → Matchday squads: press Attendance on a team to tick who turned up for the game — separate from training attendance','Each player ticked counts as a game in squad in Game time & player stats and their IDP. A game with a lineup counts from the lineup instead, so it’s never counted twice']},
     {v:'3.96', d:'6 Nov 2026', t:'Attendance without a session', n:['Squads → Training groups: press Attendance on a team to tick who turned up that day — no session needed','It’s the same attendance as a session for that team on that day: tick in either place and the other shows it, and the day is only counted once in the stats and IDPs']},
     {v:'3.95', d:'6 Nov 2026', t:'Simpler IDP list', n:['Player IDPs list: the Goals column of coloured bubbles is gone — open a player to see their goals']},
     {v:'3.94', d:'6 Nov 2026', t:'Strengths in green, weaknesses in red', n:['Player IDPs: Strengths are written in green and Weaknesses / Areas to improve in red, with bolder headings and a coloured bar (on screen and when printed)','Status: Not started is red, Working on it amber, Achieved green (printed in the same colours)','Fixed: text typed just before Print / PDF (or a status just changed) now shows on the printout straight away']},
@@ -15850,6 +15876,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       'Move a player for the day: drag them to another group, or tap them and pick the group — or Not training today. Undo puts them back.',
       'The club admin and the technical directors set the groups; every other coach sees them.',
       'A session shows who’s joining that team on its day (“2 joining from U14”) under Players, and Attendance lists them so you can tick them off.',
+      'Match attendance: in Matchday squads, press ✓ Attendance on a team and tick who turned up for the game (separate from training). Each one counts as a game in squad in the stats and IDPs; if the game has a lineup, the lineup counts instead.',
       'Attendance without a session: on a team’s column press ✓ Attendance and tick who turned up that day (the team’s coach, the admin and the technical directors can). It’s the same record as a session for that team on that day — tick in either place and the other shows it, and the day only counts once.',
       'Matchday squads: pick the match day, then build each team’s squad — Start from the squad, + Add a player from any team (playing up or down), tap a player to move them or take them out. The lineup for that team and date takes this squad automatically.'
     ], tips:[
@@ -19586,6 +19613,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           h('span', {class:'tg-col-t', text:g}),
           h('span', {class:'tg-col-n', text:String(inCol.length)}),
           (up || down) ? h('span', {class:'tg-col-x'}, up ? h('span', {class:'tg-up', text:'+' + up + ' up'}) : '', down ? h('span', {class:'tg-down', text:'+' + down + ' down'}) : '') : '',
+          g ? tgMattBtn(g, iso, inCol, luHere) : '',
           luHere ? h('button', {type:'button', class:'tg-md-lu', title:'Open this lineup', text:'Open lineup' + (luName(luHere.lu) ? ' · ' + luName(luHere.lu) : ''), onclick:function(){ tgClose(); setTimeout(function(){ luOpen(luHere.key); }, 50); }}) : ''),
         list,
         can ? h('div', {class:'tg-md-foot'}, addSel, h('div', {class:'tg-md-acts'}, fill, clear)) : '');
@@ -19601,6 +19629,76 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('span', {class:'tg-sum-i tg-down', text:'↓ ' + downs + ' playing down'}))), pick, board);
     const past = iso < tgIso(new Date());
     body.append(h('p', {class:'gt-note tg-note', text:(past ? 'This day has passed: its lineups keep the squads they had — changes here don’t touch them. ' : '') + 'Each team’s squad for this match day. A lineup for that team on this date (today or later) takes its squad from here automatically — anything changed in the lineup afterwards stays, until the squad here changes again. Past lineups never change. Coaches set their own team; the admin and the technical directors can set any.'}));
+  }
+  /* ---- match attendance: who turned up to the game (separate from training attendance) ----
+     It counts as a game in squad in Game time & player stats and the IDPs. When the game has a lineup, the lineup's squad
+     is what counts (so a game is never counted twice) — this is for games without one. */
+  function tgMattGet(iso, team){
+    let best = null;
+    tgAll().forEach(function(o){ if(o.tg === 'matt' && o.date === iso && o.team === team && (!best || (+o.at || 0) > (+best.at || 0))) best = o; });
+    return best;
+  }
+  function tgMattSave(iso, team, names){
+    const now = Date.now();
+    tgWrite(TG_PRE + 'matt-' + iso + '-' + team + '-' + tgMe(), {kind:'tgroups', tg:'matt', team:team, date:iso, here:names, at:now, savedAt:now, by:tgMeName(), group:team});
+  }
+  function luUsed(L){ return !!(L && (L.periods || []).some(function(pr){ return (pr.slots || []).some(function(sl){ return sl.pid; }); })); }
+  function tgMattBtn(g, iso, inCol, luHere){
+    const can = tgMdCanEdit(g);
+    if(luHere && luUsed(luHere.lu)){
+      const n = (luHere.lu.squad || []).filter(function(p){ return clean(p.name); }).length;
+      return h('span', {class:'tg-att tg-att-lu on', title:'This game has a lineup: its squad (' + n + ') counts as games in squad — change it in the lineup', text:'✓ ' + n + ' in lineup'});
+    }
+    const rec = tgMattGet(iso, g), n = rec ? (rec.here || []).length : 0;
+    if(!can && !n) return '';
+    return h('button', {type:'button', class:'tg-att' + (n ? ' on' : ''), title:n ? n + ' turned up for the ' + g + ' game · tap to see' + (can ? ' or change' : '') : 'Match attendance: tick who turned up for the game',
+      onclick:function(e){ e.stopPropagation(); tgMattOpen(g, iso, inCol); }}, h('span', {'aria-hidden':'true', text:'✓ '}), n ? n + ' here' : 'Attendance');
+  }
+  function tgMattOpen(g, iso, inCol){
+    const can = tgMdCanEdit(g), rec = tgMattGet(iso, g), here = {};
+    ((rec && rec.here) || []).forEach(function(n){ here[gtKey(n)] = clean(n); });
+    /* the matchday squad first, then the rest of the team's players */
+    const seen = {}, ps = [];
+    inCol.forEach(function(p){ if(!seen[p.key]){ seen[p.key] = 1; ps.push({key:p.key, name:p.name, num:p.num, tag:p.squad !== g ? (tgRank(p.squad) < tgRank(g) ? '↑ ' : '↓ ') + p.squad : '', md:true}); } });
+    tgPlayers().filter(function(p){ return p.squad === g && !seen[p.key]; }).sort(function(a, b){ return ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || a.name.localeCompare(b.name); })
+      .forEach(function(p){ seen[p.key] = 1; ps.push({key:p.key, name:p.name, num:p.num, tag:'', md:false}); });
+    Object.keys(here).forEach(function(k){ if(!seen[k]){ seen[k] = 1; ps.push({key:k, name:here[k], num:'', tag:'', md:false}); } });
+    const count = h('span', {class:'att-count'});
+    const list = h('div', {class:'att-list', role:'group', 'aria-label':'Players'});
+    const paint = function(){ count.textContent = ps.filter(function(p){ return here[p.key]; }).length + ' here'; };
+    const render = function(){
+      list.innerHTML = ''; let sub = '';
+      ps.forEach(function(p){
+        const head = p.md ? 'Matchday squad' : 'Rest of ' + g;
+        if(head !== sub){ sub = head; list.append(h('div', {class:'tg-sub', text:head})); }
+        const cb = h('input', {type:'checkbox', 'aria-label':p.name + ' turned up', disabled:!can}); cb.checked = !!here[p.key];
+        const row = h('label', {class:'att-row' + (here[p.key] ? ' is-here' : '')}, cb, h('span', {class:'att-num', text:p.num || ''}),
+          h('span', {class:'att-name'}, h('span', {class:'att-nm', text:p.name}), p.tag ? h('span', {class:'att-note', text:'Playing ' + (p.tag.charAt(0) === '↑' ? 'up' : 'down') + ' from ' + p.tag.slice(2)}) : null));
+        cb.addEventListener('change', function(){ if(cb.checked) here[p.key] = p.name; else delete here[p.key]; row.classList.toggle('is-here', cb.checked); paint(); });
+        list.append(row);
+      });
+      if(!ps.length) list.append(h('p', {class:'set-sub', text:'No players for ' + g + ' yet.'}));
+      paint();
+    };
+    const body = h('div', {class:'se-form-body att-body'},
+      h('p', {class:'set-sub att-day', text:g + ' · ' + avFmt(iso) + ' — match attendance (separate from training). Each player ticked counts as a game in squad.'}),
+      can ? h('div', {class:'att-tools'},
+        h('button', {type:'button', class:'text-btn', text:'Everyone in the matchday squad', onclick:function(){ ps.forEach(function(p){ if(p.md) here[p.key] = p.name; }); render(); }}),
+        h('span', {text:' · '}),
+        h('button', {type:'button', class:'text-btn', text:'Clear', onclick:function(){ Object.keys(here).forEach(function(k){ delete here[k]; }); render(); }})) : null,
+      list);
+    render();
+    seForm('Match attendance · ' + g, body, function(close){
+      return [count, h('span', {class:'se-sp'}),
+        can ? h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}) : h('button', {type:'button', class:'btn btn-primary', text:'Close', onclick:close}),
+        can ? h('button', {type:'button', class:'btn btn-primary', text:'Save', onclick:function(){
+          const names = ps.filter(function(p){ return here[p.key]; }).map(function(p){ return p.name; });
+          close();
+          if(JSON.stringify(names) === JSON.stringify((rec && rec.here) || [])) return;
+          tgMattSave(iso, g, names); tgRender();
+          showToast(names.length ? names.length + (names.length === 1 ? ' player' : ' players') + ' at the ' + g + ' game' : 'Match attendance cleared');
+        }}) : null];
+    }, true);
   }
   function tgMdCard(p, g, can, iso){
     const dir = p.squad === g ? '' : tgRank(g) > tgRank(p.squad) ? 'up' : 'down';
