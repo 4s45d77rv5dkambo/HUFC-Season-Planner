@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261106125950">
+<meta name="hufc-build" content="20261109093029">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2222,7 +2222,7 @@ body.doc-pregame .collab-btn{display:none !important;}   /* collaborators are fo
 .att-link:hover{border-color:var(--black);}
 .att-link.on{border-style:solid; border-color:var(--yellow); background:#fffbe8;}
 .att-link[hidden]{display:none;}
-.att-link-i{width:18px; height:18px; border-radius:50%; background:var(--yellow); color:var(--black); display:grid; place-items:center; font-size:11px; font-weight:800;}
+.att-link-i{flex:none; width:18px; height:18px; min-width:18px; aspect-ratio:1; box-sizing:border-box; padding:0; line-height:1; border-radius:50%; background:var(--yellow); color:var(--black); display:grid; place-items:center; font-size:11px; font-weight:800;}
 .att-link-out{padding:1px 6px; border-radius:8px; background:#d62828; color:#fff; font-size:11px;}
 
 /* status chips: Available / Injured / Unavailable */
@@ -4010,7 +4010,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 6 Nov 2026, 12:59pm</p>
+  <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 9:30am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15424,6 +15424,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.98', d:'9 Nov 2026', t:'Round attendance tick', n:['The ✓ on a session’s Take attendance button stays a round circle (it could be squeezed thin)']},
     {v:'3.97', d:'6 Nov 2026', t:'Match attendance', n:['Squads → Matchday squads: press Attendance on a team to tick who turned up for the game — separate from training attendance','Each player ticked counts as a game in squad in Game time & player stats and their IDP. A game with a lineup counts from the lineup instead, so it’s never counted twice']},
     {v:'3.96', d:'6 Nov 2026', t:'Attendance without a session', n:['Squads → Training groups: press Attendance on a team to tick who turned up that day — no session needed','It’s the same attendance as a session for that team on that day: tick in either place and the other shows it, and the day is only counted once in the stats and IDPs']},
     {v:'3.95', d:'6 Nov 2026', t:'Simpler IDP list', n:['Player IDPs list: the Goals column of coloured bubbles is gone — open a player to see their goals']},
