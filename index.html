@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261109093029">
+<meta name="hufc-build" content="20261109111246">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -793,6 +793,14 @@ button{cursor:pointer;}
 .dur input::-webkit-outer-spin-button, .dur input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
 .dur input:focus{outline:none;}
 .dur:focus-within{border-color:var(--black);}
+.dur-split{display:inline-flex; align-items:center; border:1px solid var(--black); border-radius:11px; padding:0 7px; line-height:1.35; font-size:12px; color:var(--black);}
+.dur-split:focus-within{border-color:var(--black);}
+.dur-split .dur-split-in{border:none; background:transparent; padding:0; line-height:1.35; color:var(--ink); outline:none; width:auto; min-width:3ch; text-align:center; font-weight:600; font-size:14px; letter-spacing:.02em; font-variant-numeric:tabular-nums;}
+.dur-split .dur-split-in::placeholder{color:var(--muted); font-weight:500; font-size:12px; letter-spacing:0;}
+.dur-split.is-empty{border-style:dashed; border-color:var(--line);}
+.dur-split.is-empty:focus-within{border-style:solid; border-color:var(--black);}
+.dur-split.dur-split-off{border-color:#d08a00; background:#fff6e0;}
+@media print{ .dur-split.is-empty{display:none !important;} .dur-split.dur-split-off{border-color:var(--black); background:none;} }
 .drill-actions{display:flex; align-items:center;}
 
 .drill-sub{display:flex; align-items:flex-end; gap:16px; margin-top:12px;}
@@ -2690,7 +2698,7 @@ html.idp-open, html.idp-open body{overflow:hidden;}
 /* ---------- Pre-game plan (a session with doc:'pregame') ---------- */
 body:not(.doc-pregame) .pregame-only{display:none !important;}
 body.view-lineup .pregame-only{display:none !important;}
-body.doc-pregame .drill-head .dur{display:none;}
+body.doc-pregame .drill-head .dur, body.doc-pregame .drill-head .dur-split{display:none;}
 body.doc-pregame #addRunsheetBtn{display:none !important;}
 .pg-shape{display:flex; align-items:center; flex-wrap:nowrap; gap:8px 18px; padding:0 16px 10px;}
 .pg-shape .lbl{margin-right:2px;}
@@ -4010,7 +4018,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 9:30am</p>
+  <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 11:12am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -7957,6 +7965,35 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return String(n);
   }
   /* the minutes box is just as wide as the number in it */
+  /* how a practice's minutes are split, e.g. a 12 minute practice as 3×4 (3 games of 4 minutes) — any text works ("2×5 + 2") */
+  function splitNorm(v){ return clean(v).replace(/(\d+(?:[.,]\d+)?)\s*[x×*X]\s*(\d+(?:[.,]\d+)?)/g, '$1×$2'); }
+  function splitTotal(v){   /* 3×4 → 12, 2×5 + 2 → 12; null when it isn't all sums */
+    const t = splitNorm(v).replace(/\s*(min(ute)?s?|’|′|')\s*/gi, ' ').trim(); if(!t || !/^[\d.,×+\s]+$/.test(t)) return null;
+    let sum = 0, ok = true;
+    t.split('+').forEach(function(part){ const f = part.trim().split('×').map(function(n){ return parseFloat(n.replace(',', '.')); }); if(!f.length || f.some(isNaN)) ok = false; else sum += f.reduce(function(a, b){ return a * b; }, 1); });
+    return ok ? Math.round(sum * 100) / 100 : null;
+  }
+  function durSplitBubble(d){
+    const inp = h('input', {type:'text', class:'dur-split-in', maxlength:'24', value:d.split || '', placeholder:'split', 'aria-label':'How the minutes are split, e.g. 3×4', spellcheck:'false', 'data-nocap':'1'});
+    const box = h('label', {class:'dur-split', title:'How the minutes are split — e.g. 3x4 for 3 games of 4 minutes'}, inp);
+    const fit = function(){ inp.style.width = durWidth(inp.value || inp.placeholder); box.classList.toggle('is-empty', !clean(inp.value)); };
+    const check = function(){   /* a gentle flag when the split doesn't add up to the practice's minutes */
+      const tot = splitTotal(inp.value), m = dur(d), off = tot != null && m > 0 && Math.abs(tot - m) > 0.01;
+      box.classList.toggle('dur-split-off', off);
+      box.title = off ? splitNorm(inp.value) + ' adds up to ' + fmtMin(tot) + ' min — the practice is ' + fmtMin(m) + ' min' : 'How the minutes are split — e.g. 3x4 for 3 games of 4 minutes';
+    };
+    inp.addEventListener('input', function(){ d.split = inp.value; fit(); check(); scheduleSave(); });
+    inp.addEventListener('blur', function(){
+      const v = splitNorm(inp.value); if(v !== inp.value){ inp.value = v; d.split = v; scheduleSave(); }
+      /* no minutes yet: the split fills them in */
+      const tot = splitTotal(v); if(tot != null && tot > 0 && !dur(d)){ d.duration = tot; const di = box.parentNode && box.parentNode.querySelector('.dur input'); if(di){ di.value = tot; di.dispatchEvent(new Event('input', {bubbles:true})); } }
+      fit(); check();
+    });
+    box.addEventListener('dur-check', check);
+    fit(); setTimeout(check, 0);
+    if(readOnly) inp.readOnly = true;
+    return box;
+  }
   function durWidth(v){ return (Math.max(1, String(v == null ? '' : v).length) + 0.15) + 'ch'; }
   function dur(d){ const n = parseFloat(String(d.duration == null ? '' : d.duration).replace(',', '.')); return isNaN(n) || n < 0 ? 0 : Math.round(n * 100) / 100; }   /* (half minutes count: 7.5) */
 
@@ -7996,7 +8033,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
             h('a', {href:'#drill-' + d.id, text:(i+1) + '. ' + (d.name || 'Untitled practice')}),
             d.focus ? h('span', {class:'rs-focus', text:d.focus}) : null
           ),
-          h('td', {class:'rs-dur', text:fmtMin(dur(d)) + ' min'})
+          h('td', {class:'rs-dur', text:fmtMin(dur(d)) + ' min' + (clean(d.split) ? ' · ' + splitNorm(d.split) : '')})
         ));
       });
       if(!state.drills.length) tbody.appendChild(h('tr', {class:'muted'}, h('td', {colspan:'4', class:'muted', text:'Add a practice below and it will appear here.'})));
@@ -8165,11 +8202,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       nameInput,
       h('label', {class:'dur', title:'Length in minutes'},
         h('input', {type:'number', min:'0', max:'240', step:'any', inputmode:'decimal', value:d.duration, 'aria-label':'Length in minutes', style:'width:' + durWidth(d.duration),
-          oninput:function(e){ d.duration = e.target.value; e.target.style.width = durWidth(e.target.value); refreshComputed(); scheduleSave(); },
+          oninput:function(e){ d.duration = e.target.value; e.target.style.width = durWidth(e.target.value); refreshComputed(); scheduleSave(); const sp = e.target.closest('.drill-head') && e.target.closest('.drill-head').querySelector('.dur-split'); if(sp) sp.dispatchEvent(new Event('dur-check')); },
           /* the arrow keys still go up and down in 5s (any number can be typed, e.g. 7.5) */
           onkeydown:function(e){ if(e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return; e.preventDefault(); const t = e.target, v = dur({duration:t.value}), step = e.key === 'ArrowUp' ? 5 : -5;
             const nv = Math.max(0, Math.min(240, step > 0 ? Math.floor(v / 5) * 5 + 5 : Math.ceil(v / 5) * 5 - 5)); t.value = nv; t.dispatchEvent(new Event('input', {bubbles:true})); }}),
         h('span', {class:'dur-unit', text:'min'})),
+      durSplitBubble(d),
       h('div', {class:'drill-actions'},
         h('button', {type:'button', class:'icon-btn reveal', title:'Move up', 'aria-label':'Move up', text:'↑', disabled:idx === 0, onclick:function(){ move(-1); }}),
         h('button', {type:'button', class:'icon-btn reveal', title:'Move down', 'aria-label':'Move down', text:'↓', disabled:idx === n - 1, onclick:function(){ move(1); }}),
@@ -8988,7 +9026,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         ownerTag(e),
         h('div', {class:'lib-name'}, clean(p.name) || 'Untitled practice'),
         h('div', {class:'lib-chips'},
-          h('span', {class:'chip', text:fmtMin(dur(p)) + ' min'}),
+          h('span', {class:'chip', text:fmtMin(dur(p)) + ' min' + (clean(p.split) ? ' · ' + splitNorm(p.split) : '')}),
           opts.picker && inSession ? h('span', {class:'chip chip-in', text:'In this session'}) : null),
         clean(p.focus) ? h('div', {class:'lib-focus', text:clean(p.focus)}) : null,
         desc ? h('div', {class:'lib-desc', text:desc}) : null,
@@ -15424,6 +15462,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'3.99', d:'9 Nov 2026', t:'Practice split times', n:['Beside a practice’s minutes there’s a split box: type how the time is split, e.g. 3x4 for 3 games of 4 minutes (2x5 + 2 works too)','If the minutes are empty the split fills them in; if they don’t match it turns amber','The split shows in the run sheet, the library, the PDF and printouts']},
     {v:'3.98', d:'9 Nov 2026', t:'Round attendance tick', n:['The ✓ on a session’s Take attendance button stays a round circle (it could be squeezed thin)']},
     {v:'3.97', d:'6 Nov 2026', t:'Match attendance', n:['Squads → Matchday squads: press Attendance on a team to tick who turned up for the game — separate from training attendance','Each player ticked counts as a game in squad in Game time & player stats and their IDP. A game with a lineup counts from the lineup instead, so it’s never counted twice']},
     {v:'3.96', d:'6 Nov 2026', t:'Attendance without a session', n:['Squads → Training groups: press Attendance on a team to tick who turned up that day — no session needed','It’s the same attendance as a session for that team on that day: tick in either place and the other shows it, and the day is only counted once in the stats and IDPs']},
