@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261109131342">
+<meta name="hufc-build" content="20261109150345">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -4027,7 +4027,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 1:13pm</p>
+  <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 3:03pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -7903,6 +7903,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const set = function(v){
         state.meta[m[0]] = v;
         if(m[0] === 'time' || m[0] === 'coach' || m[0] === 'date') refreshComputed();
+        if(m[0] === 'squad' || m[0] === 'date'){ try{ renderAttendBtn(); }catch(e){} try{ renderTgNote(); }catch(e){} }   /* (attendance follows the ticked age groups) */
         scheduleSave();
       };
       let field;
@@ -15471,6 +15472,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'4.03', d:'9 Nov 2026', t:'Sessions only show the ticked age groups', n:['A session’s attendance and training-group note only show the age groups ticked in its Squad / Group box — tick U20 and U23 and you won’t see the U18s. With nothing ticked, it’s the session’s own team']},
     {v:'4.02', d:'9 Nov 2026', t:'Tidier printouts', n:['The split bubble sits beside the minutes on paper, and isn’t printed when there’s no split','A practice without a diagram spreads its boxes across the whole width (no more squashed columns)','An empty session review is left off the printout']},
     {v:'4.01', d:'9 Nov 2026', t:'White split bubbles', n:['The split bubble beside a practice’s minutes is plain white like the minutes, whether or not it adds up']},
     {v:'4.00', d:'9 Nov 2026', t:'The coach faces the ball too', n:['With Face ball ticked, coaches on the pitch turn to face the ball as well — as you move it and when the animation plays']},
@@ -18748,11 +18750,20 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
 
   /* ---------- attendance on a session ---------- */
+  /* the teams a session is for: exactly the age groups ticked in its Squad / Group box ("U20/U23", "U18, U20") —
+     a coach who ticked only the 20s and 23s isn't shown the 18s. Nothing ticked: the session's own team. */
   function attTeams(x){
-    const g = groupOf(x), out = [g];
-    String((x && x.meta && x.meta.squad) || '').split(/\s*,\s*/).forEach(function(t){ t = clean(t); if(AGE_GROUPS.indexOf(t) !== -1 && out.indexOf(t) === -1) out.push(t); });
+    const g = groupOf(x), out = [];
+    (String((x && x.meta && x.meta.squad) || '').match(/\b(u\s?\d{1,2}s?|seniors?)\b/gi) || []).forEach(function(t){
+      const a = /^s/i.test(t) ? 'Seniors' : 'U' + t.replace(/\D/g, '');
+      if(AGE_GROUPS.indexOf(a) !== -1 && out.indexOf(a) === -1) out.push(a);
+    });
+    if(!out.length) return [g];
+    const i = out.indexOf(g); if(i > 0){ out.splice(i, 1); out.unshift(g); }   /* (its own team first, when ticked) */
     return out;
   }
+  /* the team a session's attendance is for: the one it was taken for (if still ticked), else the first ticked */
+  function attTeamOf(x){ const ts = attTeams(x), t = x && x.attend && x.attend.team; return t && ts.indexOf(t) !== -1 ? t : ts[0]; }
   /* the link under the session's Players box: "Take attendance", then "12 here · 2 out" */
   function renderAttendBtn(){
     const b = document.getElementById('attendBtn'); if(!b) return;
@@ -18760,7 +18771,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const x = typeof state !== 'undefined' ? state : null;
     if(!x || isPre(x)){ b.hidden = true; return; }
     b.hidden = false;
-    const team0 = (x.attend && x.attend.team) || groupOf(x), rec = attDayRec(team0, attSessionDay(x), x);
+    const team0 = attTeamOf(x), rec = attDayRec(team0, attSessionDay(x), x);
     const at = rec && rec.here.length ? rec : null, n = at ? at.here.length : 0;
     const team = team0, sq = sqFor(team);
     const out = sq ? sq.players.filter(function(r){ return avOf(team, r.name); }).length : 0;
@@ -18787,7 +18798,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const ro = opts ? !tgMdCanEdit(opts.team) : (readOnly || (typeof canEdit === 'function' && !canEdit(x)));
     const teams = opts ? [opts.team] : attTeams(x);
     const day = opts ? opts.day : attSessionDay(x);
-    let team = opts ? opts.team : ((x.attend && x.attend.team) || teams[0]);
+    let team = opts ? opts.team : attTeamOf(x);
     /* one attendance a team a day: whatever was ticked last — here, or in Training groups — is what you start from */
     const here = {};
     const loadHere = function(){ Object.keys(here).forEach(function(k){ delete here[k]; }); const rec = attDayRec(team, day, x); ((rec && rec.here) || []).forEach(function(n){ here[gtKey(n)] = clean(n); }); };
@@ -19507,7 +19518,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const b = document.getElementById('attendBtn'); if(!b || !b.parentNode) return;
     let n = document.getElementById('tgNote');
     const x = typeof state !== 'undefined' ? state : null;
-    const info = x && !isPre(x) ? tgFor(groupOf(x), tgSessionDay(x)) : null;
+    const info = x && !isPre(x) ? tgFor(attTeamOf(x), tgSessionDay(x)) : null;   /* (for the team the session is ticked for) */
     if(!info){ if(n) n.hidden = true; return; }
     if(!n){ n = h('button', {type:'button', class:'tg-note-link no-print', id:'tgNote'}); b.parentNode.insertBefore(n, b.nextSibling); n.addEventListener('click', function(){ const i = n.dataset.date; tgOpen('day', i); }); }
     n.hidden = false; n.dataset.date = info.date; n.innerHTML = '';
