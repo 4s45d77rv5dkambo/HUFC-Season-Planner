@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261109111246">
+<meta name="hufc-build" content="20261109114942">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -4018,7 +4018,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 11:12am</p>
+  <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 11:49am</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -4490,7 +4490,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         <select class="js-grass"><option value="stripes">Stripes</option><option value="checks">Chequered</option><option value="plain">Plain</option></select>
       </label>
       <label class="cfg cfg-check" title="Show the club crest faintly on the pitch"><input type="checkbox" class="js-watermark"><span class="lbl">Crest</span></label>
-      <label class="cfg cfg-check" title="Players and keepers turn to face the ball — as you move it, and when the animation plays"><input type="checkbox" class="js-faceball"><span class="lbl">Face ball</span></label>
+      <label class="cfg cfg-check" title="Players, keepers and coaches turn to face the ball — as you move it, and when the animation plays"><input type="checkbox" class="js-faceball"><span class="lbl">Face ball</span></label>
       <span class="cfg-break" aria-hidden="true"></span>
       <span class="cfg" title="Flat pitch, or tilted back in 3D with the players standing up"><span class="lbl">View</span><span class="seg js-view"><button type="button" data-v="2d">2D</button><button type="button" data-v="3d">3D</button></span></span>
       <span class="cfg" title="What's around the pitch"><span class="lbl">Around</span><span class="seg js-around"><button type="button" data-v="grass">Grass</button><button type="button" data-v="stadium">Stadium</button></span></span>
@@ -5104,7 +5104,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   /* "Face ball": which icons turn, and the angle that faces (bx, by) from (x, y).
      A player's front is the side with the arms, which points down the pitch at 0 — so 180 faces up (clockwise) */
-  const FACE_TYPES = {'player-a':1, 'player-b':1, 'player-c':1, 'gk-a':1, 'gk-b':1};
+  const FACE_TYPES = {'player-a':1, 'player-b':1, 'player-c':1, 'gk-a':1, 'gk-b':1, 'coach':1};   /* (the coach too) */
   function faceAngle(x, y, bx, by){ let r = Math.round(Math.atan2(bx - x, -(by - y)) * 180 / Math.PI) + 180; if(r > 180) r -= 360; return r; }
   function nearestOf(list, x, y){ let best = null, bd = Infinity; list.forEach(function(b){ const dd = (b.x - x) * (b.x - x) + (b.y - y) * (b.y - y); if(dd < bd){ bd = dd; best = b; } }); return bd < 4 ? null : best; }
   function setTransform(g, x, y, rot, scale){
@@ -15462,6 +15462,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'4.00', d:'9 Nov 2026', t:'The coach faces the ball too', n:['With Face ball ticked, coaches on the pitch turn to face the ball as well — as you move it and when the animation plays']},
     {v:'3.99', d:'9 Nov 2026', t:'Practice split times', n:['Beside a practice’s minutes there’s a split box: type how the time is split, e.g. 3x4 for 3 games of 4 minutes (2x5 + 2 works too)','If the minutes are empty the split fills them in; if they don’t match it turns amber','The split shows in the run sheet, the library, the PDF and printouts']},
     {v:'3.98', d:'9 Nov 2026', t:'Round attendance tick', n:['The ✓ on a session’s Take attendance button stays a round circle (it could be squeezed thin)']},
     {v:'3.97', d:'6 Nov 2026', t:'Match attendance', n:['Squads → Matchday squads: press Attendance on a team to tick who turned up for the game — separate from training attendance','Each player ticked counts as a game in squad in Game time & player stats and their IDP. A game with a lineup counts from the lineup instead, so it’s never counted twice']},
