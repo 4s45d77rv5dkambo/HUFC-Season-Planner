@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261109114942">
+<meta name="hufc-build" content="20261109130114">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -793,14 +793,11 @@ button{cursor:pointer;}
 .dur input::-webkit-outer-spin-button, .dur input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
 .dur input:focus{outline:none;}
 .dur:focus-within{border-color:var(--black);}
-.dur-split{display:inline-flex; align-items:center; border:1px solid var(--black); border-radius:11px; padding:0 7px; line-height:1.35; font-size:12px; color:var(--black);}
+.dur-split{display:inline-flex; align-items:center; background:var(--white); border:1px solid var(--black); border-radius:11px; padding:0 7px; line-height:1.35; font-size:12px; color:var(--black);}
 .dur-split:focus-within{border-color:var(--black);}
 .dur-split .dur-split-in{border:none; background:transparent; padding:0; line-height:1.35; color:var(--ink); outline:none; width:auto; min-width:3ch; text-align:center; font-weight:600; font-size:14px; letter-spacing:.02em; font-variant-numeric:tabular-nums;}
 .dur-split .dur-split-in::placeholder{color:var(--muted); font-weight:500; font-size:12px; letter-spacing:0;}
-.dur-split.is-empty{border-style:dashed; border-color:var(--line);}
-.dur-split.is-empty:focus-within{border-style:solid; border-color:var(--black);}
-.dur-split.dur-split-off{border-color:#d08a00; background:#fff6e0;}
-@media print{ .dur-split.is-empty{display:none !important;} .dur-split.dur-split-off{border-color:var(--black); background:none;} }
+@media print{ .dur-split.is-empty{display:none !important;} }
 .drill-actions{display:flex; align-items:center;}
 
 .drill-sub{display:flex; align-items:flex-end; gap:16px; margin-top:12px;}
@@ -4018,7 +4015,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 11:49am</p>
+  <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 1:01pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15462,8 +15459,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'4.01', d:'9 Nov 2026', t:'White split bubbles', n:['The split bubble beside a practice’s minutes is plain white like the minutes, whether or not it adds up']},
     {v:'4.00', d:'9 Nov 2026', t:'The coach faces the ball too', n:['With Face ball ticked, coaches on the pitch turn to face the ball as well — as you move it and when the animation plays']},
-    {v:'3.99', d:'9 Nov 2026', t:'Practice split times', n:['Beside a practice’s minutes there’s a split box: type how the time is split, e.g. 3x4 for 3 games of 4 minutes (2x5 + 2 works too)','If the minutes are empty the split fills them in; if they don’t match it turns amber','The split shows in the run sheet, the library, the PDF and printouts']},
+    {v:'3.99', d:'9 Nov 2026', t:'Practice split times', n:['Beside a practice’s minutes there’s a split box: type how the time is split, e.g. 3x4 for 3 games of 4 minutes (2x5 + 2 works too)','If the minutes are empty the split fills them in (hover the split to see if it adds up)','The split shows in the run sheet, the library, the PDF and printouts']},
     {v:'3.98', d:'9 Nov 2026', t:'Round attendance tick', n:['The ✓ on a session’s Take attendance button stays a round circle (it could be squeezed thin)']},
     {v:'3.97', d:'6 Nov 2026', t:'Match attendance', n:['Squads → Matchday squads: press Attendance on a team to tick who turned up for the game — separate from training attendance','Each player ticked counts as a game in squad in Game time & player stats and their IDP. A game with a lineup counts from the lineup instead, so it’s never counted twice']},
     {v:'3.96', d:'6 Nov 2026', t:'Attendance without a session', n:['Squads → Training groups: press Attendance on a team to tick who turned up that day — no session needed','It’s the same attendance as a session for that team on that day: tick in either place and the other shows it, and the day is only counted once in the stats and IDPs']},
