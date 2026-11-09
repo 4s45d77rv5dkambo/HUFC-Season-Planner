@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261109130114">
+<meta name="hufc-build" content="20261109131342">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3509,11 +3509,19 @@ html.has-selbar .home{padding-bottom:70px;}
   .drill > .drill-sub .drill-focus .txt-wrap{flex:1; min-width:0;}
   .drill > .drill-body{grid-column:1 / -1;}
   /* a practice without a diagram puts all its boxes in one row */
-  .drill-body.no-diagram .notes{--cols:4;}
-  .drill-body.no-diagram .notes:has(> .fitem:nth-child(5):last-child){--cols:5;}
+  /* a practice without a diagram: its boxes share the width evenly (one box uses the whole line) */
+  .drill-body.no-diagram .notes{grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); column-gap:18px;}
   .drill-body.no-diagram .notes .fitem-desc{grid-column:auto;}
+  /* name, minutes and split stay on one line */
+  .drill-head{flex-wrap:nowrap; gap:8px;}
+  .drill-head .drill-name{flex:1 1 auto; min-width:0;}
+  .drill-head .dur, .drill-head .dur-split{flex:none;}
+  /* the diagram's key: tidy rows under the pitch */
+  .pitch-key{max-width:var(--print-w, 174px);}
   /* equipment prints like every other box: heading, then the writing underneath */
   .kind-review{break-inside:avoid;}
+  /* nothing written in the session review: leave it off the paper */
+  .section.kind-review:not(:has(.txt-wrap.filled)){display:none !important;}
   /* session review on paper: a line only under what has been written — no empty lines */
   .kind-review .mirror{min-height:0 !important;}
   .kind-review .txt-wrap:not(.filled) .mirror{display:none;}
@@ -3666,10 +3674,14 @@ html.print-sim{--rule:21px;}
 :where(html.print-sim) .drill > .drill-sub .drill-focus .lbl{flex:none; margin:0; padding-top:4px;}
 :where(html.print-sim) .drill > .drill-sub .drill-focus .txt-wrap{flex:1; min-width:0;}
 :where(html.print-sim) .drill > .drill-body{grid-column:1 / -1;}
-:where(html.print-sim) .drill-body.no-diagram .notes{--cols:4;}
-:where(html.print-sim) .drill-body.no-diagram .notes:has(> .fitem:nth-child(5):last-child){--cols:5;}
+:where(html.print-sim) .drill-body.no-diagram .notes{grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); column-gap:18px;}
 :where(html.print-sim) .drill-body.no-diagram .notes .fitem-desc{grid-column:auto;}
+:where(html.print-sim) .drill-head{flex-wrap:nowrap; gap:8px;}
+:where(html.print-sim) .drill-head .drill-name{flex:1 1 auto; min-width:0;}
+:where(html.print-sim) .drill-head .dur,:where(html.print-sim) .drill-head .dur-split{flex:none;}
+:where(html.print-sim) .pitch-key{max-width:var(--print-w, 174px);}
 :where(html.print-sim) .kind-review{break-inside:avoid;}
+:where(html.print-sim) .section.kind-review:not(:has(.txt-wrap.filled)){display:none !important;}
 :where(html.print-sim) .kind-review .mirror{min-height:0 !important;}
 :where(html.print-sim) .kind-review .txt-wrap:not(.filled) .mirror{display:none;}
 :where(html.print-sim) .legend{break-inside:avoid; margin-top:6px !important; padding-top:6px; display:flex; align-items:center; gap:12px;}
@@ -4015,7 +4027,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 1:01pm</p>
+  <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 1:13pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -15459,6 +15471,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'4.02', d:'9 Nov 2026', t:'Tidier printouts', n:['The split bubble sits beside the minutes on paper, and isn’t printed when there’s no split','A practice without a diagram spreads its boxes across the whole width (no more squashed columns)','An empty session review is left off the printout']},
     {v:'4.01', d:'9 Nov 2026', t:'White split bubbles', n:['The split bubble beside a practice’s minutes is plain white like the minutes, whether or not it adds up']},
     {v:'4.00', d:'9 Nov 2026', t:'The coach faces the ball too', n:['With Face ball ticked, coaches on the pitch turn to face the ball as well — as you move it and when the animation plays']},
     {v:'3.99', d:'9 Nov 2026', t:'Practice split times', n:['Beside a practice’s minutes there’s a split box: type how the time is split, e.g. 3x4 for 3 games of 4 minutes (2x5 + 2 works too)','If the minutes are empty the split fills them in (hover the split to see if it adds up)','The split shows in the run sheet, the library, the PDF and printouts']},
