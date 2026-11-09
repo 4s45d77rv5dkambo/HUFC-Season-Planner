@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261109150345">
+<meta name="hufc-build" content="20261109151153">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -778,6 +778,7 @@ button{cursor:pointer;}
   padding:1px 0 2px;
 }
 .drill-name:focus{outline:none; border-bottom-color:var(--yellow);}
+.drill-name-print{display:none;}
 .dur{
   display:inline-flex; align-items:center; gap:4px;
   border:1px solid var(--black); border-radius:11px; padding:0 7px; line-height:1.35;
@@ -3514,7 +3515,9 @@ html.has-selbar .home{padding-bottom:70px;}
   .drill-body.no-diagram .notes .fitem-desc{grid-column:auto;}
   /* name, minutes and split stay on one line */
   .drill-head{flex-wrap:nowrap; gap:8px;}
-  .drill-head .drill-name{flex:1 1 auto; min-width:0;}
+  .drill-head .drill-name{display:none !important;}
+  .drill-head .drill-name-print{display:block; flex:1 1 auto; min-width:0; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:17px; line-height:1.15; padding:1px 0 3px; border-bottom:2.5px solid var(--black); overflow-wrap:anywhere;}
+  .drill-head{align-items:flex-end;}
   .drill-head .dur, .drill-head .dur-split{flex:none;}
   /* the diagram's key: tidy rows under the pitch */
   .pitch-key{max-width:var(--print-w, 174px);}
@@ -3677,7 +3680,9 @@ html.print-sim{--rule:21px;}
 :where(html.print-sim) .drill-body.no-diagram .notes{grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); column-gap:18px;}
 :where(html.print-sim) .drill-body.no-diagram .notes .fitem-desc{grid-column:auto;}
 :where(html.print-sim) .drill-head{flex-wrap:nowrap; gap:8px;}
-:where(html.print-sim) .drill-head .drill-name{flex:1 1 auto; min-width:0;}
+:where(html.print-sim) .drill-head .drill-name{display:none !important;}
+:where(html.print-sim) .drill-head .drill-name-print{display:block; flex:1 1 auto; min-width:0; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:17px; line-height:1.15; padding:1px 0 3px; border-bottom:2.5px solid var(--black); overflow-wrap:anywhere;}
+:where(html.print-sim) .drill-head{align-items:flex-end;}
 :where(html.print-sim) .drill-head .dur,:where(html.print-sim) .drill-head .dur-split{flex:none;}
 :where(html.print-sim) .pitch-key{max-width:var(--print-w, 174px);}
 :where(html.print-sim) .kind-review{break-inside:avoid;}
@@ -4027,7 +4032,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <p class="home-help">Every practice you build is kept here automatically. <strong>Select</strong> practices in the order you want them, then <strong>Create session</strong> to start a session from them, or use <strong>+ From saved practices</strong> inside a session.</p>
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
-  <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 3:03pm</p>
+  <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 3:11pm</p>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -8200,7 +8205,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const n = state.drills.length;
     const pre = isPre();
     const nameInput = h('input', {class:'drill-name', type:'text', value:d.name, placeholder:pre ? 'Board name' : 'Practice name', 'aria-label':pre ? 'Board name' : 'Practice name',
-      oninput:function(e){ d.name = e.target.value; refreshComputed(); scheduleSave(); }});
+      oninput:function(e){ d.name = e.target.value; namePrint.textContent = d.name; refreshComputed(); scheduleSave(); }});
+    /* on paper the name is plain text, so a long one goes onto a second line instead of being cut off */
+    const namePrint = h('span', {class:'drill-name-print', 'aria-hidden':'true', text:d.name || ''});
     function move(delta){
       syncBoards();
       const j = idx + delta;
@@ -8209,7 +8216,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }
     const head = h('div', {class:'drill-head'},
       h('span', {class:'drill-no', text:idx + 1}),
-      nameInput,
+      nameInput, namePrint,
       h('label', {class:'dur', title:'Length in minutes'},
         h('input', {type:'number', min:'0', max:'240', step:'any', inputmode:'decimal', value:d.duration, 'aria-label':'Length in minutes', style:'width:' + durWidth(d.duration),
           oninput:function(e){ d.duration = e.target.value; e.target.style.width = durWidth(e.target.value); refreshComputed(); scheduleSave(); const sp = e.target.closest('.drill-head') && e.target.closest('.drill-head').querySelector('.dur-split'); if(sp) sp.dispatchEvent(new Event('dur-check')); },
@@ -15472,6 +15479,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'4.04', d:'9 Nov 2026', t:'Full practice names on paper', n:['Fixed: long practice names (like “Moving boxes and possession practice”) were cut off when printed — they now print in full, going onto a second line if needed']},
     {v:'4.03', d:'9 Nov 2026', t:'Sessions only show the ticked age groups', n:['A session’s attendance and training-group note only show the age groups ticked in its Squad / Group box — tick U20 and U23 and you won’t see the U18s. With nothing ticked, it’s the session’s own team']},
     {v:'4.02', d:'9 Nov 2026', t:'Tidier printouts', n:['The split bubble sits beside the minutes on paper, and isn’t printed when there’s no split','A practice without a diagram spreads its boxes across the whole width (no more squashed columns)','An empty session review is left off the printout']},
     {v:'4.01', d:'9 Nov 2026', t:'White split bubbles', n:['The split bubble beside a practice’s minutes is plain white like the minutes, whether or not it adds up']},
