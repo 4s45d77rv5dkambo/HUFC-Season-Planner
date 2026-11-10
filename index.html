@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261109151314">
+<meta name="hufc-build" content="20261111100943">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1135,6 +1135,10 @@ html.view-home .lu-sheet{display:none !important;}
 .lu-bench-list{flex:1; min-width:0;}
 .lu-bench-list{color:var(--ink);}
 .lu-bench-list.none{color:var(--muted); font-style:italic;}
+.lu-unavail{margin-top:3px;}
+.lu-unavail .lbl{color:#b3261e;}
+.lu-unavail-list{flex:1; min-width:0; color:#b3261e;}
+.lu-unavail[hidden]{display:none !important;}
 .lu-squad-table{font-size:14px;}
 .lu-squad-table td{padding:3px 4px; vertical-align:middle;}
 .lu-squad-table th{padding:0 4px 6px;}
@@ -4709,7 +4713,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     'gk-a':'#6a3d9a', 'gk-b':'#4f7cff',   /* HUFC keepers wear purple */
     'cone':'#ffd400', 'ball':'#0d0e0f', 'balls':'#0d0e0f', 'flat':'#ffd400', 'mannequin':'#2b2c2e',
     'goal-big':'#ffffff', 'goal-small':'#ffffff',
-    'coach':'#0d0e0f', 'text':'#0d0e0f', 'area':'#ffd400'
+    'coach':'#ffffff', 'text':'#0d0e0f', 'area':'#ffd400'   /* (the coach is white) */
   };
   const DEFAULT_SHAPE = {
     'player-a':'cap','player-b':'cap','player-c':'cap','gk-a':'cap','gk-b':'cap',
@@ -4837,10 +4841,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const tpl = document.getElementById('boardTpl'), b = tpl && tpl.content.querySelector('[data-tool="coach"]');
     /* drawn the same way (and the same size) as the player buttons beside it */
     if(b) b.innerHTML = '<svg viewBox="0 0 24 24">' +
-      '<ellipse cx="3.5" cy="15" rx="4" ry="2" transform="rotate(-30 3.5 15)" fill="#0d0e0f" stroke="#ffffff" stroke-width="0.8"/>' +
-      '<ellipse cx="20.5" cy="15" rx="4" ry="2" transform="rotate(30 20.5 15)" fill="#0d0e0f" stroke="#ffffff" stroke-width="0.8"/>' +
-      '<circle cx="12" cy="12" r="9" fill="#0d0e0f" stroke="#ffffff" stroke-width="1"/>' +
-      '<g transform="translate(12 12)"><text class="player-num" text-anchor="middle" dy="2.9" font-size="8" fill="#ffffff">C</text>' + coachDecoration() + '</g></svg>';
+      '<ellipse cx="3.5" cy="15" rx="4" ry="2" transform="rotate(-30 3.5 15)" fill="#ffffff" stroke="#0d0e0f" stroke-width="0.8"/>' +
+      '<ellipse cx="20.5" cy="15" rx="4" ry="2" transform="rotate(30 20.5 15)" fill="#ffffff" stroke="#0d0e0f" stroke-width="0.8"/>' +
+      '<circle cx="12" cy="12" r="9" fill="#ffffff" stroke="#0d0e0f" stroke-width="1"/>' +
+      '<g transform="translate(12 12)"><text class="player-num" text-anchor="middle" dy="2.9" font-size="8" fill="#0d0e0f">C</text>' + coachDecoration() + '</g></svg>';   /* (white, like the coach on the pitch) */
   })();
   /* mannequin, seen from the front: head, shoulders, pole and base */
   const MANNEQUIN = ['M-4.6,10.4 A4.6,1.5 0 1,0 4.6,10.4 A4.6,1.5 0 1,0 -4.6,10.4 Z','M-0.95,3.6 L0.95,3.6 L0.95,10 L-0.95,10 Z','M-5.7,-3.2 Q-5.7,-4.7 -4.3,-4.7 L4.3,-4.7 Q5.7,-4.7 5.7,-3.2 L4.2,4.3 L-4.2,4.3 Z','M-3.2,-8.2 A3.2,3.2 0 1,0 3.2,-8.2 A3.2,3.2 0 1,0 -3.2,-8.2 Z'];
@@ -6179,7 +6183,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       g.classList.add('token','token-' + type);
       g.dataset.type = type;
       g.dataset.uid = props.uid || newId();      /* who's who, for the animation steps */
-      g.dataset.color = props.color || DEFAULT_COLOR[type] || '#0d0e0f';
+      g.dataset.color = (type === 'coach' && /^#0d0e0f$/i.test(props.color || '') ? '' : props.color) || DEFAULT_COLOR[type] || '#0d0e0f';   /* (coaches placed when they were black are white now) */
       g.dataset.shape = fixedShape(type, props.shape || DEFAULT_SHAPE[type] || 'circle');
       if(props.label != null) g.dataset.label = props.label;
       if(props.w != null){ g.dataset.w = props.w; g.dataset.h = props.h; }
@@ -8176,7 +8180,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     (items || []).forEach(function(it){
       let t = it.type; if(t === 'goal-big' || t === 'goal-small') t = 'goal';
       if(t === 'text') return;
-      const c = String(it.color || DEFAULT_COLOR[t] || '').toLowerCase();
+      const c = String((t === 'coach' && /^#0d0e0f$/i.test(it.color || '') ? '' : it.color) || DEFAULT_COLOR[t] || '').toLowerCase();
       const g = groups[t] = groups[t] || {order:[], by:{}};
       if(!g.by[c]){ g.by[c] = {n:0, gk:0}; g.order.push(c); }
       g.by[c].n++;
@@ -10887,11 +10891,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     });
     return s;
   }
-  function luBenchText(period){
+  function luBenchText(period, out){
     const on = {}; period.slots.forEach(function(s){ if(s.pid) on[s.pid] = 1; });
     const came = {}; luTimeline(period, Math.max(0, lu.periods.indexOf(period))).chain.forEach(function(c){ c.slice(1).forEach(function(x){ if(!(x.pid in came)) came[x.pid] = x.at; }); });
-    return lu.squad.filter(function(p){ return !on[p.id] && (clean(p.name) || clean(p.num)); })
-      .map(function(p){ return [clean(p.num), luShort(p.name) || clean(p.name)].filter(Boolean).join(' ') + (p.id in came ? ' (on ' + came[p.id] + "')" : ''); });
+    const team = groupOf(lu), st = function(p){ try{ return clean(p.name) ? avOf(team, p.name) : null; }catch(e){ return null; } };
+    /* injured / unavailable players aren't on the bench: they have their own line (out = true gives that line) */
+    return lu.squad.filter(function(p){ return !on[p.id] && (clean(p.name) || clean(p.num)) && (!!st(p) === !!out); })
+      .map(function(p){ const a = out ? st(p) : null; return [clean(p.num), luShort(p.name) || clean(p.name)].filter(Boolean).join(' ') + (a ? ' (' + AV_ST[a.st].short.toLowerCase() + ')' : '') + (!out && p.id in came ? ' (on ' + came[p.id] + "')" : ''); });
   }
   /* opponent shortened for the scoreboard: first letter of each word, short capital words kept whole, at most 5 letters (Northcote City FC -> NCFC) */
   function luOppShort(opp){
@@ -11052,7 +11058,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       ),
       p3.el,
       luSubsBox(period, idx),
-      h('div', {class:'lu-bench'}, h('span', {class:'lbl', text:'Bench'}), h('span', {class:'lu-bench-list' + (bench.length ? '' : ' none'), text:bench.length ? bench.join(' · ') : 'Nobody named yet'}))
+      h('div', {class:'lu-bench'}, h('span', {class:'lbl', text:'Bench'}), h('span', {class:'lu-bench-list' + (bench.length ? '' : ' none'), text:bench.length ? bench.join(' · ') : 'Nobody named yet'})),
+      (function(){ const un = luBenchText(period, true); const d = h('div', {class:'lu-bench lu-unavail'}, h('span', {class:'lbl', text:'Unavailable'}), h('span', {class:'lu-unavail-list', text:un.join(' · ')})); d.hidden = !un.length; return d; })()
     );
   }
   /* empty positions take the next squad players not already on the pitch in that half (in squad order) */
@@ -11234,6 +11241,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
             if(a) showToast('Heads up: ' + clean(p.name) + ' is ' + avText(a).toLowerCase());
             if(ch || a || tr.classList.contains('av-row-out')){ luRenderSquad(); luRefresh(); luSchedule(); }
           });
+        } else if(key === 'pos'){
+          el.addEventListener('change', function(){
+            const v = tgPos(el.value); if(v !== el.value){ el.value = v; p.pos = v; luSchedule(); }
+            sqKeep([p]);
+            /* ...and Squads shows it too (everyone's lineups for this player pick it up) */
+            try{
+              const k = gtKey(p.name), tp = k && v && !readOnly && canEdit(lu) ? tgPlayers().find(function(x){ return x.key === k; }) : null;
+              if(tp && tgPos(tp.pos) !== v) tgSetPlayer(k, Object.assign({pos:v}, tp.added ? {} : {fix:1}));
+            }catch(e){}
+          });
         } else {
           el.addEventListener('change', function(){ sqKeep([p]); });
         }
@@ -11250,6 +11267,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('td', {class:'lu-c-x no-print'}, h('button', {type:'button', class:'icon-btn danger', title:'Remove from the squad', 'aria-label':'Remove player ' + (i + 1), text:'✕', onclick:function(){
           const before = luJSON();
           lu.squad.splice(i, 1);
+          { const k = gtKey(p.name); if(k){ lu.dropped = (lu.dropped || []).filter(function(x){ return x !== k; }); lu.dropped.push(k); } }
           /* the next bench player takes their place, so nobody is left as an empty shirt */
           lu.periods.forEach(function(pr){
             const had = pr.slots.some(function(s){ return s.pid === p.id; });
@@ -11274,6 +11292,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(!luDrag) svg.innerHTML = luPitchMarkup(period);
       const bench = luBenchText(period), bl = card.querySelector('.lu-bench-list');
       bl.textContent = bench.length ? bench.join(' · ') : 'Nobody named yet'; bl.classList.toggle('none', !bench.length);
+      const un = luBenchText(period, true), ul = card.querySelector('.lu-unavail-list');
+      if(ul){ ul.textContent = un.join(' · '); ul.parentNode.hidden = !un.length; }
     });
     luSheet.querySelectorAll('[data-min]').forEach(function(td){ td.textContent = String(luMinutes(td.getAttribute('data-min'))); });
     luSheet.querySelectorAll('[data-pct]').forEach(function(td){ const v = luPct(td.getAttribute('data-pct')); td.textContent = v + '%'; td.className = 'lu-c-pct ' + gtBand(v); });
@@ -11620,6 +11640,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     setReadOnly(!canEdit(lu), 'lineup', groupOf(lu));
     setStatus('Opened “' + (luName() || 'Untitled lineup') + '”');
     luMatchSquad();
+    luSquadsSync();
   }
   /* Squads → Matchday squads: a lineup for that team and date takes its squad from there — once each time that squad changes
      (whatever the coach changes in the lineup afterwards stays) */
@@ -11636,6 +11657,38 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       lu.mdAt = md.savedAt;
       luRender(); luSaveNow();
       showToast('Squad from Squads → Matchday squads (' + team + ', ' + md.players.length + ' players)');
+      return true;
+    }catch(e){ return false; }
+  }
+  /* Squads → a lineup (today's or a future one; a past lineup never changes):
+     each player's position (and a missing shirt number) comes from Squads, and a player new to the team
+     takes an empty row — never one the coach took out of this lineup */
+  function luSquadsSync(){
+    try{
+      if(!lu || readOnly || !canEdit(lu)) return false;
+      const iso = luDateToIso(clean(lu.meta.date));
+      const now = new Date(), today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      if(iso && iso < today) return false;
+      const team = groupOf(lu), sq = sqFor(team); if(!sq || !sq.players.length) return false;
+      const by = {}; sq.players.forEach(function(r){ const k = gtKey(r.name); if(k) by[k] = r; });
+      let ch = false, added = [];
+      lu.squad.forEach(function(p){
+        const r = by[gtKey(p.name)]; if(!r) return;
+        const pos = tgPos(r.pos); if(pos && pos !== tgPos(p.pos)){ p.pos = pos; ch = true; }
+        if(!clean(p.num) && clean(r.num)){ p.num = clean(r.num); ch = true; }
+      });
+      if(lu.squad.some(function(p){ return clean(p.name); })){
+        const have = {}, dropped = {}; lu.squad.forEach(function(p){ const k = gtKey(p.name); if(k) have[k] = 1; });
+        (lu.dropped || []).forEach(function(k){ dropped[k] = 1; });
+        const empty = lu.squad.filter(function(p){ return !clean(p.name) && !clean(p.num); });
+        sqSorted(sq.players).forEach(function(r){
+          const k = gtKey(r.name); if(!empty.length || !k || have[k] || dropped[k] || avOf(team, r.name)) return;
+          const row = empty.shift(); row.name = clean(r.name); row.num = clean(r.num); row.pos = tgPos(r.pos); have[k] = 1; added.push(row.name); ch = true;
+        });
+      }
+      if(!ch) return false;
+      luRender(); luSaveNow();
+      if(added.length) showToast(added.join(', ') + (added.length === 1 ? ' is' : ' are') + ' in the ' + team + ' squad now — added to this lineup');
       return true;
     }catch(e){ return false; }
   }
@@ -11994,8 +12047,23 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         });
       }
     }catch(e){ extra = []; }
-    const out = !extra.length ? own
-      : own ? Object.assign({}, own, {players:own.players.concat(extra)})
+    /* the saved squad's players show the number and position Squads has for them (whoever changed it there) */
+    let base = own;
+    try{
+      if(own && team && typeof tgPlayers === 'function'){
+        const tp = {}; tgPlayers().forEach(function(p){ tp[p.key] = p; });
+        let diff = false;
+        const ps = own.players.map(function(r){
+          const p = tp[gtKey(r.name)]; if(!p) return r;
+          const num = clean(p.num) || clean(r.num), pos = clean(p.pos) || clean(r.pos);
+          if(num === clean(r.num) && pos === clean(r.pos)) return r;
+          diff = true; return Object.assign({}, r, {num:num, pos:pos});
+        });
+        if(diff) base = Object.assign({}, own, {players:ps});
+      }
+    }catch(e){ base = own; }
+    const out = !extra.length ? base
+      : base ? Object.assign({}, base, {players:base.players.concat(extra)})
       : {kind:'squad', group:team || undefined, players:extra, virtual:true, seeded:false};   /* (no saved squad here yet: just the Squads players) */
     sqCache[team] = out;
     return out;
@@ -15480,6 +15548,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'4.05', d:'11 Nov 2026', t:'White coach · lineups follow Squads', n:['The coach on the pitch is white','Lineups take each player’s position from Squads (today’s and future games — past lineups don’t change), and a position changed in a lineup goes into Squads','A player who joins a team in Squads (e.g. moved up to the U18s) fills an empty row in that team’s upcoming lineups, and is always in the lineup’s Squad list','Injured and unavailable players are no longer listed on the bench — they’re on their own Unavailable line underneath (in red)']},
     {v:'4.04', d:'9 Nov 2026', t:'Full practice names on paper', n:['Fixed: long practice names (like “Moving boxes and possession practice”) were cut off when printed — they now print in full, going onto a second line if needed','Fixed: an empty split bubble showed in PDFs — with no split, there’s no bubble on paper or in the PDF']},
     {v:'4.03', d:'9 Nov 2026', t:'Sessions only show the ticked age groups', n:['A session’s attendance and training-group note only show the age groups ticked in its Squad / Group box — tick U20 and U23 and you won’t see the U18s. With nothing ticked, it’s the session’s own team']},
     {v:'4.02', d:'9 Nov 2026', t:'Tidier printouts', n:['The split bubble sits beside the minutes on paper, and isn’t printed when there’s no split','A practice without a diagram spreads its boxes across the whole width (no more squashed columns)','An empty session review is left off the printout']},
@@ -19555,7 +19624,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function tgSynced(){
     const sig = tgDataSig(), same = sig === tgSyncSig; tgSyncSig = sig;
-    try{ if(isLineupView()) luMatchSquad(); }catch(e){}   /* (an open lineup takes a matchday squad that just came in) */
+    try{ if(isLineupView()){ luMatchSquad(); luSquadsSync(); } }catch(e){}   /* (an open lineup takes a matchday squad that just came in, and Squads' positions) */
     if(same) return;
     if(!tgPage.hidden && !tgMenu && !tgDrag && !(document.activeElement && tgPage.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName))) tgRender();
     try{ renderTgNote(); }catch(e){}
