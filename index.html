@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261111102048">
+<meta name="hufc-build" content="20261111102552">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1135,6 +1135,9 @@ html.view-home .lu-sheet{display:none !important;}
 .lu-bench-list{flex:1; min-width:0;}
 .lu-bench-list{color:var(--ink);}
 .lu-bench-list.none{color:var(--muted); font-style:italic;}
+.se-move .se-move-in{width:100%; max-width:240px; height:40px; font-size:16px;}
+.se-move-note{min-height:1.2em;}
+.se-move-note.warn{color:#b3261e; font-weight:600;}
 .lu-unavail{margin-top:3px;}
 .lu-unavail .lbl{color:#b3261e;}
 .lu-unavail-list{flex:1; min-width:0; color:#b3261e;}
@@ -15550,6 +15553,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'4.07', d:'11 Nov 2026', t:'Move a game or training', n:['Season calendar: on a day’s ⋯ menu, Move this game (or training) to another day… — pick the new date and its opponent, colour, sessions, lineups and pre-games go with it (Undo straight after)']},
     {v:'4.06', d:'11 Nov 2026', t:'Defensive and attacking transition', n:['The transition phases are now Defensive transition (IP > OP) and Attacking transition (OP > IP) — in sessions, pre-games, the season calendar and the reports. Ones already saved show the new names']},
     {v:'4.05', d:'11 Nov 2026', t:'White coach · lineups follow Squads', n:['The coach on the pitch is white','Lineups take each player’s position from Squads (today’s and future games — past lineups don’t change), and a position changed in a lineup goes into Squads','A player who joins a team in Squads (e.g. moved up to the U18s) fills an empty row in that team’s upcoming lineups, and is always in the lineup’s Squad list','Injured and unavailable players are no longer listed on the bench — they’re on their own Unavailable line underneath (in red)']},
     {v:'4.04', d:'9 Nov 2026', t:'Full practice names on paper', n:['Fixed: long practice names (like “Moving boxes and possession practice”) were cut off when printed — they now print in full, going onto a second line if needed','Fixed: an empty split bubble showed in PDFs — with no split, there’s no bubble on paper or in the PDF']},
@@ -18191,7 +18195,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       seMenu(menuBtn, [
         {head:seDayName(info.iso)},
         info.off ? {label:match ? 'The game is back on' : 'Training is back on', fn:function(){ setDay({off:null}); }}
-          : {label:match ? 'Remove this game (bye, washed out…)' : 'Remove this training', fn:function(){ seRemoveDay(s, info); }},
+          : {label:match ? 'Move this game to another day…' : 'Move this training to another day…', fn:function(){ seMoveDay(s, info); }},
+        info.off ? null : {label:match ? 'Remove this game (bye, washed out…)' : 'Remove this training', fn:function(){ seRemoveDay(s, info); }},
         {head:'Colour'},
         {node:(function(){
           const cur = info.o.color || '', row = h('div', {class:'se-menu-sw'});
@@ -18270,6 +18275,69 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     else delete s.days[info.iso];
     seSave(s); seRefresh();
     showToast('Removed the ' + (info.type === 'match' ? 'game' : 'training') + ' on ' + seDayName(info.iso), function(){ if(was) s.days[info.iso] = was; else delete s.days[info.iso]; seSave(s); seRefresh(); });
+  }
+  /* move one game or training to another date — the opponent, home/away, colour and everything planned for it go too
+     (its sessions, lineups and pre-games get the new date) */
+  function seMoveDay(s, info){
+    const g = s.group, match = info.type === 'match', what = match ? 'game' : 'training';
+    const inp = h('input', {type:'date', class:'set-input se-move-in', value:info.iso, min:s.start, max:s.end, 'aria-label':'New date'});
+    inp.addEventListener('click', function(){ try{ if(inp.showPicker) inp.showPicker(); }catch(e){} });
+    const note = h('p', {class:'set-sub se-move-note'});
+    const items = [].concat(info.it.session, info.it.lineup, info.it.pregame);
+    const body = h('div', {class:'se-form-body se-move'},
+      h('p', {class:'set-sub', text:'The ' + what + ' on ' + seDayName(info.iso) + ' moves to:'}), inp,
+      items.length ? h('p', {class:'set-sub', text:'Its ' + [info.it.session.length ? 'session' : '', info.it.lineup.length ? 'lineup' : '', info.it.pregame.length ? 'pre-game' : ''].filter(Boolean).join(', ') + ' get' + (items.length === 1 ? 's' : '') + ' the new date too.'}) : null,
+      note);
+    const check = function(){
+      const to = inp.value; note.textContent = ''; note.classList.remove('warn');
+      if(!to || to === info.iso) return null;
+      if(to < s.start || to > s.end){ note.textContent = 'That’s outside this season (' + seDayName(s.start) + ' – ' + seDayName(s.end) + ').'; note.classList.add('warn'); return null; }
+      const there = seDayInfo(s, to, seIndex(g));
+      if(there.type && !there.off){ note.textContent = seDayName(to) + ' already has ' + (there.type === 'match' ? 'a game' : 'training') + ' — move or remove that one first.'; note.classList.add('warn'); return null; }
+      return to;
+    };
+    inp.addEventListener('input', check); inp.addEventListener('change', check);
+    seForm('Move the ' + what, body, function(close){
+      return [h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}),
+        h('button', {type:'button', class:'btn btn-primary', text:'Move', onclick:function(){
+          const to = check(); if(!to){ if(!inp.value || inp.value === info.iso) inp.focus(); return; }
+          close(); seMoveDayTo(s, info, to);
+        }})];
+    });
+    setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 60);
+  }
+  function seMoveDayTo(s, info, to){
+    const from = info.iso, snap = {from:s.days[from] ? JSON.parse(JSON.stringify(s.days[from])) : null, to:s.days[to] ? JSON.parse(JSON.stringify(s.days[to])) : null};
+    /* the new day: what this one had (not "removed"), as a training / match day if that day isn't one already */
+    const o = Object.assign({}, s.days[to] || {}, JSON.parse(JSON.stringify(info.o || {}))); delete o.off;
+    const dow = seDate(to).getDay(), reg = s.match.indexOf(dow) !== -1 ? 'match' : s.train.indexOf(dow) !== -1 ? 'train' : '';
+    if(info.type === reg) delete o.type; else o.type = info.type;
+    s.days[to] = o;
+    /* the old day: off the plan (a regular day stays marked as moved away) */
+    if(info.regular) s.days[from] = {off:true, moved:to}; else delete s.days[from];
+    /* what was planned for it follows (the ones you can change) */
+    const p = to.split('-'), txt = p[2] + '/' + p[1] + '/' + p[0].slice(2), changed = [];
+    const redate = function(key, doc){
+      try{
+        if(!doc || !doc.meta || !canEdit(doc)) return;
+        const raw = hufcStore.getItem(key); if(!raw) return;
+        const cur = JSON.parse(raw); changed.push({key:key, raw:raw});
+        cur.meta = cur.meta || {}; cur.meta.date = txt; cur.savedAt = Date.now();
+        hufcStore.setItem(key, JSON.stringify(cur));
+        if(typeof state !== 'undefined' && state && state.planId && state.planId === cur.planId && state.meta) state.meta.date = txt;   /* (open right now: keeps the new date) */
+        if(typeof lu !== 'undefined' && lu && lu.id && lu.id === cur.id && cur.kind === 'lineup' && lu.meta) lu.meta.date = txt;
+      }catch(e){}
+    };
+    info.it.session.forEach(function(x){ redate(x.key, x.plan); });
+    info.it.pregame.forEach(function(x){ redate(x.key, x.plan); });
+    info.it.lineup.forEach(function(x){ redate(x.key, x.lu); });
+    seSave(s); clubSyncSoon(); seRefresh();
+    showToast('Moved the ' + (info.type === 'match' ? 'game' : 'training') + ' to ' + seDayName(to), function(){
+      if(snap.from) s.days[from] = snap.from; else delete s.days[from];
+      if(snap.to) s.days[to] = snap.to; else delete s.days[to];
+      changed.forEach(function(c){ try{ const back = JSON.parse(c.raw); back.savedAt = Date.now(); hufcStore.setItem(c.key, JSON.stringify(back)); }catch(e){} });
+      seSave(s); clubSyncSoon(); seRefresh();
+    });
   }
   function seFixLogo(name){ const src = luLogoFor(name); return src ? h('img', {class:'se-fix-logo', src:src, alt:''}) : null; }
 
