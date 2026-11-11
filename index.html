@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261111102552">
+<meta name="hufc-build" content="20261111125357">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1135,6 +1135,204 @@ html.view-home .lu-sheet{display:none !important;}
 .lu-bench-list{flex:1; min-width:0;}
 .lu-bench-list{color:var(--ink);}
 .lu-bench-list.none{color:var(--muted); font-style:italic;}
+/* v4.08 the classic Home page (Settings → Account → Home page) */
+.hs-back{display:none !important;}
+html.view-home #home.hs-classic{display:block; max-width:1100px; margin:16px auto 56px; padding:0 16px;}
+#home.hs-classic .hs-side, #home.hs-classic .hs-scrim, #home.hs-classic .hs-mtop, #home.hs-classic .hs-recent{display:none !important;}
+#home.hs-classic .hs-main{padding:0; max-width:none;}
+#home.hs-classic[data-hpage="home"] .home-hero{display:flex !important;}
+#home.hs-classic[data-hpage="home"] .hs-top{display:none;}
+#home.hs-classic .hs-back{display:inline-flex !important;}
+#home.hs-classic[data-hpage="home"] .home-block[data-hb]:not([data-hb="videos"]){display:block;}
+#home.hs-classic[data-hpage="home"] .home-block[data-hb] .home-head h2{display:block;}
+#home.hs-classic[data-hpage="home"] .home-block[data-hb] .home-more:not([hidden]){display:block;}
+#home.hs-classic .home-block[data-hb], #home.hs-classic .home-week, #home.hs-classic .home-shared{margin-top:30px; padding-top:22px; border-top:1px solid var(--line);}
+#home.hs-classic .folder-bar + .folder-note + .home-block, #home.hs-classic .folder-bar + .folder-note[hidden] + .home-block{border-top:none; padding-top:0;}
+#home.hs-classic[data-hpage="videos"] .home-block[data-hb="videos"]{border-top:none; padding-top:0; margin-top:14px;}
+#home.hs-classic[data-hpage="videos"] .folder-note{display:none;}
+.home-actions .home-vlib-btn{grid-row:1 / span 2; border-color:var(--yellow); color:var(--yellow); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px;}
+.home-actions .home-vlib-btn svg{flex:none;}
+#home:not(.hs-classic) .home-vlib-btn{display:none;}
+@media (max-width:760px){ .home-actions .home-vlib-btn{grid-row:auto; grid-column:1 / -1; flex-direction:row;} }
+
+/* v4.08 the Video library */
+#home[data-hpage="videos"] .home-block[data-hb]:not([data-hb="videos"]){display:none;}
+.vl-intro{color:#5b5d61; margin:0 0 14px; max-width:760px;}
+.vl-tools{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
+.vl-tools .vl-search{flex:1 1 280px; max-width:none; margin:0;}
+.vl-sel{font:inherit; font-size:15px; padding:8px 30px 8px 12px; border:1.5px solid var(--line); border-radius:8px; background:#fff; color:#1c1d1f; min-height:40px;}
+.vl-phases{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;}
+.vl-pc{display:inline-flex; align-items:center; gap:7px; border:1.5px solid var(--line); background:#fff; color:#1c1d1f; border-radius:999px; padding:6px 13px; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:15px; letter-spacing:.03em; cursor:pointer; white-space:nowrap;}
+.vl-pc i{width:9px; height:9px; border-radius:50%; background:var(--c, #8a8d91); flex:none;}
+.vl-pc small{font-family:'Barlow', sans-serif; font-weight:600; font-size:12px; color:#8a8d91;}
+.vl-pc.on{background:#0d0e0f; border-color:#0d0e0f; color:var(--yellow);}
+.vl-pc.on small{color:#cfcfcb;}
+.vl-pc.zero{opacity:.45;}
+.vl-tags{display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:12px; font-size:14px;}
+.vl-tags > span{color:#8a8d91; margin-right:2px;}
+.vl-tc{border:1.5px dashed #c9cbc6; background:none; border-radius:999px; padding:3px 11px; font:inherit; font-size:14px; color:#1c1d1f; cursor:pointer;}
+.vl-tc.on{border-style:solid; border-color:#0d0e0f; background:#0d0e0f; color:#fff;}
+.vl-count{color:#5b5d61; font-size:14px; margin:4px 0 12px;}
+.vl-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:16px;}
+.vl-card{background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; cursor:pointer; display:flex; flex-direction:column; text-align:left; padding:0; font:inherit; color:inherit;}
+.vl-card:hover{border-color:#0d0e0f; box-shadow:0 4px 16px rgba(0,0,0,.08);}
+.vl-card:focus-visible{outline:3px solid var(--yellow); outline-offset:2px;}
+.vl-thumb{position:relative; aspect-ratio:16 / 9; background:repeating-linear-gradient(90deg, #1b6b3c 0 22px, #1e7442 22px 44px); overflow:hidden;}
+.vl-thumb img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+.vl-thumb::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.18), transparent 40%, rgba(0,0,0,.25));}
+.vl-play{position:absolute; left:50%; top:50%; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%; background:rgba(13,14,15,.72); color:#fff; display:grid; place-items:center; z-index:1;}
+.vl-play svg{margin-left:3px;}
+.vl-ph{position:absolute; left:8px; top:8px; z-index:1; background:var(--c, #5b5d61); color:#fff; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:12px; letter-spacing:.05em; text-transform:uppercase; padding:2px 7px; border-radius:4px;}
+.vl-src{position:absolute; right:8px; top:8px; z-index:1; background:#fff; color:#0d0e0f; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:12px; padding:1px 7px; border-radius:4px;}
+.vl-dur{position:absolute; right:8px; bottom:8px; z-index:1; background:rgba(13,14,15,.8); color:#fff; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:13px; padding:1px 6px; border-radius:4px;}
+.vl-body{padding:12px 14px 13px; display:flex; flex-direction:column; gap:6px; flex:1;}
+.vl-t{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:19px; line-height:1.15; letter-spacing:.01em;}
+.vl-t.untitled{color:#8a8d91;}
+.vl-ctags{display:flex; gap:5px; flex-wrap:wrap;}
+.vl-ctags span{background:#f4f4f1; border-radius:999px; padding:1px 9px; font-size:13px; color:#3b3d40;}
+.vl-from{color:#5b5d61; font-size:13.5px;}
+.vl-by{color:#8a8d91; font-size:13px; margin-top:auto;}
+.vl-wait{color:#8a6d00; font-size:13px; font-weight:600;}
+.vl-empty{grid-column:1 / -1;}
+/* a clip, open */
+.vl-modal .vl-view{background:#fff; display:grid; grid-template-columns:minmax(0, 1.55fr) minmax(280px, 1fr); width:min(1120px, calc(100vw - 32px)); max-width:none; max-height:calc(100vh - 40px); padding:0; overflow:hidden; position:relative;}
+.vl-player{background:#0d0e0f; display:flex; align-items:center; justify-content:center; min-height:300px;}
+.vl-player > *{width:100%;}
+.vl-player .pg-clip-missing{color:#e8e8e6; padding:24px; background:none;}
+.vl-player .pg-clip-missing a{color:var(--yellow);}
+.vl-info{padding:24px 24px 20px; overflow-y:auto; display:flex; flex-direction:column; gap:12px;}
+.vl-info h3{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:28px; line-height:1.08; margin:0 34px 0 0;}
+.vl-chip{align-self:flex-start; display:inline-flex; align-items:center; gap:7px; border:1.5px solid var(--line); border-radius:999px; padding:4px 12px; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:15px;}
+.vl-chip i{width:9px; height:9px; border-radius:50%; background:var(--c);}
+.vl-lbl{font-family:'Barlow Condensed', sans-serif; font-weight:700; letter-spacing:.12em; font-size:13px; color:#5b5d61; text-transform:uppercase; margin-bottom:3px;}
+.vl-look{background:#f4f4f1; border-radius:10px; padding:10px 12px; white-space:pre-wrap;}
+.vl-acts{display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; padding-top:6px;}
+.vl-x{position:absolute; right:12px; top:12px; z-index:2; width:36px; height:36px; border-radius:50%; border:1px solid var(--line); background:#fff; font-size:16px; cursor:pointer;}
+/* adding clips */
+.vl-form .se-form-box{width:min(760px, calc(100vw - 24px)); max-width:none;}
+.vl-drop{display:flex; flex-direction:column; align-items:center; gap:6px; border:2px dashed #c9cbc6; border-radius:12px; padding:20px 14px; text-align:center; background:#fafaf8; cursor:pointer;}
+.vl-drop.over{border-color:var(--yellow); background:#fffbe6;}
+.vl-drop b{font-family:'Barlow Condensed', sans-serif; font-size:19px; letter-spacing:.03em; text-transform:uppercase;}
+.vl-drop small{color:#5b5d61;}
+.vl-or{display:flex; gap:8px; margin:10px 0 2px;}
+.vl-or input{flex:1; min-width:0;}
+.vl-rows{display:flex; flex-direction:column; gap:6px; margin:12px 0;}
+.vl-row{display:grid; grid-template-columns:28px minmax(0, 1fr) 190px 34px; gap:8px; align-items:center; background:#f4f4f1; border-radius:10px; padding:6px 8px;}
+.vl-row .vl-ri{color:#5b5d61; display:grid; place-items:center;}
+.vl-row input, .vl-row select, .vl-all input, .vl-all select, .vl-edit input, .vl-edit select, .vl-edit textarea{font:inherit; font-size:15px; padding:7px 9px; border:1.5px solid var(--line); border-radius:8px; background:#fff; width:100%; min-width:0;}
+.vl-row button{border:0; background:none; font-size:16px; cursor:pointer; color:#5b5d61;}
+.vl-all{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px;}
+.vl-all .se-field, .vl-edit .se-field{margin:0;}
+.vl-all-h{grid-column:1 / -1; font-family:'Barlow Condensed', sans-serif; font-weight:700; letter-spacing:.1em; font-size:13px; color:#5b5d61; text-transform:uppercase;}
+.vl-edit{display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;}
+.vl-edit .vl-wide{grid-column:1 / -1;}
+.vl-pick{display:flex; flex-direction:column; gap:10px;}
+@media (max-width:760px){
+  .vl-grid{grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;}
+  .vl-body{padding:9px 10px 10px;}
+  .vl-t{font-size:16px;}
+  .vl-ctags span:nth-child(n+3){display:none;}
+  .vl-sel{flex:1 1 30%; min-width:0;}
+  .vl-phases{flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; scrollbar-width:none;}
+  .vl-modal .vl-view{grid-template-columns:1fr; max-height:calc(100vh - 20px); overflow-y:auto;}
+  .vl-player{min-height:200px;}
+  .vl-info{padding:16px;}
+  .vl-row{grid-template-columns:22px minmax(0, 1fr) 30px;}
+  .vl-row select{grid-column:2 / 3;}
+  .vl-all, .vl-edit{grid-template-columns:1fr;}
+}
+
+/* v4.08 Home: a side menu */
+#home{max-width:none; margin:0; padding:0;}
+html.view-home #home{display:grid; grid-template-columns:248px minmax(0, 1fr); align-items:start; min-height:100vh;}
+#home .home-hero{display:none !important;}
+.hs-side{position:sticky; top:0; height:calc(100vh - var(--hs-off, 0px)); overflow-y:auto; background:var(--white, #fff); border-right:1px solid var(--line); padding:18px 12px 14px; display:flex; flex-direction:column; gap:2px; z-index:30;}
+.hs-brand{display:flex; align-items:center; gap:10px; padding:0 6px 14px; margin-bottom:10px; border-bottom:1px solid var(--line);}
+.hs-crest{width:40px; height:40px; border-radius:50%; background:#0d0e0f; padding:4px; flex:none; object-fit:contain;}
+.hs-brand b{display:block; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:17px; letter-spacing:.03em; text-transform:uppercase; line-height:1;}
+.hs-brand small{display:block; font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#8a6d00; margin-top:3px;}
+.hs-x{display:none; margin-left:auto; width:34px; height:34px; border:1px solid var(--line); border-radius:8px; background:none; font-size:16px; cursor:pointer; place-items:center;}
+.hs-new-wrap{position:relative; margin-bottom:8px;}
+.hs-new{width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:var(--yellow); color:#0d0e0f; border:0; border-radius:10px; padding:11px; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:17px; letter-spacing:.06em; text-transform:uppercase; cursor:pointer;}
+.hs-new:hover{filter:brightness(.96);}
+.hs-menu{position:absolute; left:0; right:0; top:calc(100% + 6px); background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,.18); padding:6px; z-index:40;}
+.hs-menu button, .hs-nv{display:flex; align-items:center; gap:12px; width:100%; padding:9px 10px; border:0; background:none; border-radius:8px; font:inherit; font-size:15px; font-weight:500; color:#1c1d1f; text-align:left; cursor:pointer;}
+.hs-menu button:hover, .hs-nv:hover{background:#f4f4f1;}
+.hs-nv svg, .hs-menu svg{flex:none;}
+.hs-nv.on, .hs-nv.on:hover{background:#0d0e0f; color:var(--yellow); font-weight:600;}
+.hs-n{margin-left:auto; font-size:12px; color:#8a8d91; font-weight:500;}
+.hs-nv.on .hs-n{color:#cfcfcb;}
+.hs-sec{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:#8a8d91; padding:14px 10px 4px;}
+.hs-foot{margin-top:auto; padding-top:12px;}
+.hs-foot .home-set-btn{position:relative; top:auto; right:auto; display:flex; width:100%; justify-content:flex-start; gap:12px; padding:9px 10px; border:0; border-radius:8px; background:none; color:#1c1d1f; font-family:inherit; font-size:15px; font-weight:500; letter-spacing:0; text-transform:none;}
+.hs-foot .home-set-btn:hover{background:#f4f4f1; color:#1c1d1f;}
+.hs-foot .home-set-btn span{display:inline !important;}
+.hs-foot .home-set-btn svg{width:18px; height:18px;}
+.hs-main{min-width:0; width:100%; max-width:1180px; padding:22px 32px 56px;}
+.hs-mtop, .hs-scrim{display:none;}
+.hs-top{position:relative; display:flex; align-items:center; gap:14px; background:#0d0e0f; color:#fff; border-radius:16px; padding:22px 26px; margin-bottom:6px;}
+.hs-bg{position:absolute; inset:0; border-radius:16px; overflow:hidden; pointer-events:none;}
+.hs-bg img{position:absolute; right:-30px; top:-60px; width:250px; height:250px; opacity:.13; background:none; padding:0;}
+.hs-tt{position:relative; flex:1; min-width:0;}
+.hs-hello{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:34px; letter-spacing:.02em; text-transform:uppercase; line-height:1; margin:0; color:#fff;}
+.hs-sub{color:#a9abaf; margin:7px 0 0; font-size:15px;}
+.hs-ptitle{display:none; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:34px; letter-spacing:.02em; text-transform:uppercase; line-height:1.05; margin:0;}
+.hs-fold-wrap{position:relative; margin:6px 0 2px;}
+.hs-fold{display:flex; width:100%; align-items:center; gap:10px; border:1.5px solid var(--line); background:#fff; color:#1c1d1f; border-radius:10px; padding:9px 10px; font:inherit; font-size:15px; font-weight:600; cursor:pointer; white-space:nowrap; text-align:left;}
+.hs-fold > svg:last-child{margin-left:auto; transition:transform .15s;}
+.hs-fold[aria-expanded="true"] > svg:last-child{transform:rotate(180deg);}
+.hs-fold b{font-family:'Barlow Condensed', sans-serif; font-weight:700; background:var(--yellow); color:#0d0e0f; border-radius:999px; padding:0 8px; font-size:13px; letter-spacing:.03em;}
+.hs-fold:hover, .hs-fold[aria-expanded="true"]{border-color:#0d0e0f;}
+.hs-pop{margin-top:6px; background:#f4f4f1; border-radius:10px; padding:6px;}
+.hs-pop .folder-bar{margin:0; padding:0; border:0; background:none; box-shadow:none;}
+.hs-pop .folder-chips{display:grid !important; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:5px; overflow:visible; flex-wrap:wrap;}
+.hs-pop .folder-chip{min-width:0; width:100%; margin:0; min-height:34px; padding:5px 4px; font-size:14px;}
+.hs-pop .folder-chip:nth-child(1), .hs-pop .folder-chip:nth-child(2){grid-column:1 / -1;}
+.hs-pop .folder-sep{display:none;}
+.hs-padd{flex:none; white-space:nowrap;}
+#home:not([data-hpage="home"]) .hs-top{background:none; color:#1c1d1f; padding:2px 0 4px; border-radius:0;}
+#home:not([data-hpage="home"]) .hs-bg, #home:not([data-hpage="home"]) .hs-hello, #home:not([data-hpage="home"]) .hs-sub{display:none;}
+#home:not([data-hpage="home"]) .hs-ptitle{display:block;}
+#home:not([data-hpage="home"]) .home-week, #home:not([data-hpage="home"]) .home-shared, #home:not([data-hpage="home"]) .hs-recent{display:none !important;}
+#home[data-hpage="home"] .home-block[data-hb]{display:none;}
+#home[data-hpage="sessions"] .home-block[data-hb]:not([data-hb="sessions"]),
+#home[data-hpage="library"] .home-block[data-hb]:not([data-hb="library"]),
+#home[data-hpage="lineups"] .home-block[data-hb]:not([data-hb="lineups"]),
+#home[data-hpage="pregames"] .home-block[data-hb]:not([data-hb="pregames"]),
+#home[data-hpage="matches"] .home-block[data-hb]:not([data-hb="matches"]){display:none;}
+#home .home-block[data-hb]{margin-top:14px; padding-top:0; border-top:none;}
+#home .home-block[data-hb] .home-head h2{display:none;}
+#home .home-block[data-hb] .home-more{display:none;}
+#home .folder-note{margin:10px 0 0;}
+#home .home-week, #home .home-shared, #home .hs-recent{margin-top:26px; padding-top:0; border-top:none;}
+/* + New, Home and the folder: three boxes the same size, words in the middle */
+.hs-new, .hs-nv[data-page="home"], .hs-fold{height:48px; padding:0 40px; justify-content:center; gap:8px; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:17px; letter-spacing:.06em; text-transform:uppercase; border-radius:10px; line-height:1;}
+.hs-nv[data-page="home"]{border:1.5px solid var(--line);}
+.hs-nv[data-page="home"].on{border-color:#0d0e0f;}
+.hs-fold{position:relative;}
+.hs-fold > svg:last-child{position:absolute; right:12px; top:50%; margin:-8px 0 0;}
+.hs-fold[aria-expanded="true"] > svg:last-child{transform:rotate(180deg);}
+.hs-fold b{font-size:14px; padding:1px 8px;}
+.hs-new-wrap{margin-bottom:8px;}
+.hs-fold-wrap{margin:8px 0 2px;}
+@media (max-width:760px){
+  html.view-home #home{display:block;}
+  .hs-side{position:fixed; left:0; top:0; bottom:0; height:auto; width:min(290px, 84vw); transform:translateX(-104%); transition:transform .22s ease; box-shadow:0 0 40px rgba(0,0,0,.25); padding-top:calc(18px + env(safe-area-inset-top, 0px)); padding-bottom:calc(14px + env(safe-area-inset-bottom, 0px)); z-index:60;}
+  #home.hs-open .hs-side{transform:none;}
+  .hs-scrim{display:block; position:fixed; inset:0; background:rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:opacity .2s; z-index:59;}
+  #home.hs-open .hs-scrim{opacity:1; pointer-events:auto;}
+  .hs-x{display:grid;}
+  .hs-main{padding:0 14px 70px;}
+  .hs-mtop{display:flex; position:sticky; top:0; z-index:20; align-items:center; gap:10px; background:#0d0e0f; color:#fff; margin:0 -14px 14px; padding:10px 14px; border-bottom:3px solid var(--yellow);}
+  .hs-mtop .hs-crest{width:34px; height:34px; padding:3px;}
+  .hs-mtop b{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:18px; letter-spacing:.03em; text-transform:uppercase; flex:1;}
+  .hs-burger{width:38px; height:38px; border-radius:8px; border:1px solid #3a3c40; background:none; color:#fff; display:grid; place-items:center; cursor:pointer;}
+  .hs-top{flex-wrap:wrap; padding:18px; border-radius:12px; gap:12px;}
+  .hs-tt{flex:1 1 100%;}
+  .hs-hello{font-size:27px;}
+  .hs-ptitle{font-size:28px;}
+}
+
 .se-move .se-move-in{width:100%; max-width:240px; height:40px; font-size:16px;}
 .se-move-note{min-height:1.2em;}
 .se-move-note.warn{color:#b3261e; font-weight:600;}
@@ -3949,7 +4147,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <button type="button" class="btn btn-primary btn-small" id="roCopy">Copy to my folder</button></div>
 </div>
 
-<main class="home" id="home">
+<main class="home" id="home" data-hpage="home">
+  <aside class="hs-side" id="hsSide" aria-label="Menu"><div class="hs-brand"><img class="hs-crest" alt="" src="data:,"><div><b>Heidelberg United</b><small>Season Planner</small></div><button type="button" class="hs-x" id="hsClose" aria-label="Close the menu">✕</button></div><div class="hs-new-wrap"><button type="button" class="hs-new" id="hsNew" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New</button><div class="hs-menu" id="hsNewMenu" hidden><button type="button" data-click="homeNewBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6v3H9z"/><path d="M8 4.5H6a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1h-2"/><path d="M9 12h6M9 16h4"/></svg>Training session</button><button type="button" data-click="homeLineupBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 12h18"/><circle cx="12" cy="12" r="3"/><circle cx="8" cy="7" r="1"/><circle cx="16" cy="7" r="1"/><circle cx="8" cy="17" r="1"/><circle cx="16" cy="17" r="1"/></svg>Matchday lineup</button><button type="button" data-click="homePgNewBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>Pre-game plan</button><button type="button" data-click="homeMvNewBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="M17 10l5-3v10l-5-3"/></svg>Match video</button><button type="button" data-click="vlAddBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Clips for the video library</button></div></div><nav class="hs-nav" id="hsNav"><button type="button" class="hs-nv" data-page="home"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>Home</span></button><div class="hs-fold-wrap"><button type="button" class="hs-fold" id="hsFoldBtn" aria-haspopup="true" aria-expanded="false"></button><div class="hs-pop" id="hsFoldPop" hidden></div></div><div class="hs-sec">Training</div><button type="button" class="hs-nv" data-page="sessions"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6v3H9z"/><path d="M8 4.5H6a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1h-2"/><path d="M9 12h6M9 16h4"/></svg><span>Sessions</span><span class="hs-n" id="hsNSessions"></span></button><button type="button" class="hs-nv" data-page="library"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M12 4v16"/><circle cx="12" cy="12" r="3"/></svg><span>Saved practices</span><span class="hs-n" id="hsNLibrary"></span></button><button type="button" class="hs-nv" data-click="homeSeasonBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Season calendar</span></button><div class="hs-sec">Matchday</div><button type="button" class="hs-nv" data-page="lineups"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 12h18"/><circle cx="12" cy="12" r="3"/><circle cx="8" cy="7" r="1"/><circle cx="16" cy="7" r="1"/><circle cx="8" cy="17" r="1"/><circle cx="16" cy="17" r="1"/></svg><span>Lineups</span><span class="hs-n" id="hsNLineups"></span></button><button type="button" class="hs-nv" data-page="pregames"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg><span>Pre-games</span><span class="hs-n" id="hsNPregames"></span></button><div class="hs-sec">Video</div><button type="button" class="hs-nv" data-page="matches"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="M17 10l5-3v10l-5-3"/></svg><span>Match videos</span><span class="hs-n" id="hsNMatches"></span></button><button type="button" class="hs-nv" data-page="videos"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg><span>Video library</span><span class="hs-n" id="hsNVideos"></span></button><div class="hs-sec">Players</div><button type="button" class="hs-nv" data-click="homeSquadsBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14.5c2.4.2 4 1.8 4.5 4.5"/></svg><span>Squads</span></button><button type="button" class="hs-nv" data-click="homeIdpBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v2h6V3"/><path d="M9 13l2 2 4-4"/></svg><span>Player IDPs</span></button><button type="button" class="hs-nv" data-click="homeGtBigBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Game time &amp; stats</span></button></nav><div class="hs-foot" id="hsFoot"></div></aside>
+  <div class="hs-scrim" id="hsScrim"></div>
+  <div class="hs-main">
+  <div class="hs-mtop"><button type="button" class="hs-burger" id="hsBurger" aria-label="Menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><img class="hs-crest" alt="" src="data:,"><b>Heidelberg United</b></div>
+  <section class="hs-top" id="hsTop"><button type="button" class="btn hs-back" data-page="home">⌂ Home</button><div class="hs-bg" aria-hidden="true"><img class="hs-crest-bg" alt="" src="data:,"></div><div class="hs-tt"><h2 class="hs-hello" id="hsHello">Good morning</h2><p class="hs-sub" id="hsSub"></p><h1 class="hs-ptitle" id="hsPTitle"></h1></div><button type="button" class="btn btn-primary hs-padd" id="hsPAdd" hidden></button></section>
+
   <section class="home-hero">
     <button type="button" class="home-set-btn" id="homeSetBtn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></button>
     <img class="home-crest" alt="Heidelberg United crest" src="data:,">
@@ -3971,6 +4175,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       <button type="button" class="btn btn-big btn-dark home-gt-btn" id="homeGtBigBtn" title="Every player's minutes, goals, assists and cards across all your lineups">Game time <span class="nowrap">&amp; player stats</span></button>
       <button type="button" class="btn btn-big btn-dark home-squads-btn" id="homeSquadsBtn" title="Every team's players, and the training groups for each day"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2c3 .2 5.5 2.6 5.5 5.8"/></svg>Squads</button>
       <button type="button" class="btn btn-big btn-dark home-idp-btn" id="homeIdpBtn" title="Every player's individual development plan"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="18" rx="2"/><path d="M9 3.5h6v3H9z"/><path d="M8.5 11.5l2 2 4-4M8.5 17h7"/></svg>Player IDPs</button>
+      <button type="button" class="btn btn-big btn-dark home-vlib-btn" id="homeVlBtn" data-page="videos" title="The club’s short clips from any game or year"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Video library</button>
     </div>
   </section>
 
@@ -3986,7 +4191,28 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <div class="shared-list" id="sharedList"></div>
   </section>
 
-  <section class="home-block">
+  <section class="home-block hs-recent" id="hsRecent">
+    <div class="home-head"><h2>Recent</h2><span class="home-count">What you worked on last</span></div>
+    <div class="session-list" id="hsRecentList"></div>
+  </section>
+
+  <section class="home-block vl-block" data-hb="videos">
+    <div class="home-head"><h2>Video library</h2></div>
+    <p class="vl-intro">Short clips from any game, any year — build-up solutions, passing combinations, pressing triggers… Every coach at the club can watch them and add their own.</p>
+    <div class="vl-tools">
+      <input type="search" class="lib-search vl-search" id="vlSearch" placeholder="Search clips, tags, opponents, coaches…" aria-label="Search the video library">
+      <select class="vl-sel" id="vlTeam" aria-label="Team"></select>
+      <select class="vl-sel" id="vlYear" aria-label="Year"></select>
+      <select class="vl-sel" id="vlSort" aria-label="Sort"><option value="new">Newest added</option><option value="game">Newest game</option><option value="az">A – Z</option></select>
+    </div>
+    <div class="vl-phases" id="vlPhases"></div>
+    <div class="vl-tags" id="vlTags"></div>
+    <div class="vl-count" id="vlCount"></div>
+    <div class="vl-grid" id="vlGrid"></div>
+    <button type="button" id="vlAddBtn" hidden></button>
+  </section>
+
+  <section class="home-block" data-hb="sessions">
     <div class="home-head">
       <h2>Sessions</h2><span class="home-count" id="sessionsCount"></span>
       <span class="home-head-spacer"></span>
@@ -3996,7 +4222,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <div class="home-more" id="sessionsMore" hidden></div>
   </section>
 
-  <section class="home-block">
+  <section class="home-block" data-hb="lineups">
     <div class="home-head">
       <h2>Matchday lineups</h2><span class="home-count" id="lineupsCount"></span>
       <span class="home-head-spacer"></span>
@@ -4006,7 +4232,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <div class="home-more" id="lineupsMore" hidden></div>
   </section>
 
-  <section class="home-block">
+  <section class="home-block" data-hb="pregames">
     <div class="home-head">
       <h2>Pre-game plans</h2><span class="home-count" id="pregameCount"></span>
       <span class="home-head-spacer"></span>
@@ -4016,7 +4242,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <div class="home-more" id="pregamesMore" hidden></div>
   </section>
 
-  <section class="home-block">
+  <section class="home-block" data-hb="matches">
     <div class="home-head">
       <h2>Match videos</h2><span class="home-count" id="matchesCount"></span>
       <span class="home-head-spacer"></span>
@@ -4026,7 +4252,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <div class="home-more" id="matchesMore" hidden></div>
   </section>
 
-  <section class="home-block">
+  <section class="home-block" data-hb="library">
     <div class="home-head">
       <h2>Saved practices</h2><span class="home-count" id="libCount"></span>
       <span class="home-head-spacer"></span>
@@ -4041,6 +4267,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <div class="lib-grid" id="homeLibrary"></div>
   </section>
   <p class="home-version">HUFC Session Planner · updated 9 Nov 2026, 3:13pm</p>
+  </div>
 </main>
 
 <div class="sel-bar" id="selBar" hidden>
@@ -9145,6 +9372,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function homeQuery(id){ const el = document.getElementById(id); return el ? clean(el.value).toLowerCase() : ''; }
   function renderHome(){
+    try{ hsApplyStyle(); }catch(e){ console.warn(e); }
     renderFolderBar();
     renderShared(); sharesRefresh();
     const allPlans = listSessions().filter(function(x){ return inView(x.plan); });
@@ -9160,9 +9388,471 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     try{ renderMatchCards(); }catch(e){ console.warn(e); }
     try{ seRenderHomeWeek(); seRefreshIfOpen(); }catch(e){ console.warn(e); }
     renderLibraryGrid();
+    try{ hsRender(); }catch(e){ console.warn(e); }
   }
   document.getElementById('sessionSearch').addEventListener('input', renderHome);
   document.getElementById('pregameSearch').addEventListener('input', renderHome);
+
+  /* ---------- v4.08: Home with a side menu — + New, the lists as their own pages, Recent ---------- */
+  const HS_TITLES = {sessions:'Sessions', library:'Saved practices', lineups:'Matchday lineups', pregames:'Pre-game plans', matches:'Match videos'};
+  const HS_ADD = {sessions:['+ New session', 'homeNewBtn'], lineups:['+ New lineup', 'homeLineupBtn'], pregames:['+ New pre-game', 'homePgNewBtn'], matches:['+ Match video', 'homeMvNewBtn']};
+  let hsPage = 'home';
+  function hsMenus(keep){
+    [['hsNewMenu', 'hsNew'], ['hsFoldPop', 'hsFoldBtn']].forEach(function(p){
+      if(p[0] === keep) return;
+      const m = document.getElementById(p[0]), b = document.getElementById(p[1]);
+      if(m) m.hidden = true; if(b) b.setAttribute('aria-expanded', 'false');
+    });
+  }
+  function hsDrawer(open){ const home = document.getElementById('home'); if(home) home.classList.toggle('hs-open', !!open); }
+  function hsGo(p){
+    hsPage = HS_TITLES[p] ? p : 'home';
+    const home = document.getElementById('home'); if(!home) return;
+    home.dataset.hpage = hsPage;
+    hsMenus(); hsDrawer(false);
+    hsRender();
+    try{ window.scrollTo(0, 0); }catch(e){}
+  }
+  function hsRender(){
+    const home = document.getElementById('home'), box = document.getElementById('hsRecentList'); if(!home || !box) return;
+    home.dataset.hpage = hsPage;
+    const crest = (document.querySelector('.header .crest') || document.querySelector('.home-crest') || {}).src || '';
+    if(crest && crest.length > 10) home.querySelectorAll('.hs-crest, .hs-crest-bg').forEach(function(i){ if(i.src !== crest) i.src = crest; });
+    document.querySelectorAll('#hsNav .hs-nv[data-page]').forEach(function(b){ b.classList.toggle('on', b.dataset.page === hsPage); });
+    let ses = [], pgs = [], lus = [], mvs = [];
+    try{ const all = listSessions().filter(function(x){ return inView(x.plan); }); ses = all.filter(function(x){ return !isPre(x.plan); }); pgs = all.filter(function(x){ return isPre(x.plan); }); }catch(e){}
+    try{ lus = luList().filter(function(x){ return inView(x.lu); }); }catch(e){}
+    try{ mvs = mvList().filter(function(x){ return inView(x.m) && mvIsReal(x.m); }); }catch(e){}
+    const cnt = function(id, n){ const el = document.getElementById(id); if(el) el.textContent = n ? String(n) : ''; };
+    cnt('hsNSessions', ses.length); cnt('hsNPregames', pgs.length); cnt('hsNLineups', lus.length); cnt('hsNMatches', mvs.length);
+    const lc = document.getElementById('libCount'); cnt('hsNLibrary', lc ? parseInt(lc.textContent, 10) || 0 : 0);
+    /* Recent: the newest few of everything in this folder */
+    const items = [].concat(
+      ses.concat(pgs).map(function(x){ return {t:+x.plan.savedAt || 0, f:function(){ return sessionCard(x, renderHome); }}; }),
+      lus.map(function(x){ return {t:+x.lu.savedAt || 0, f:function(){ return lineupCard(x, renderHome); }}; }),
+      mvs.map(function(x){ return {t:+x.m.savedAt || 0, f:function(){ return mvCard(x); }}; }));
+    items.sort(function(a, b){ return b.t - a.t; });
+    box.innerHTML = '';
+    if(!items.length) box.appendChild(h('div', {class:'home-empty', text:'Nothing here yet. Start something with + New.'}));
+    items.slice(0, 6).forEach(function(it){ try{ box.appendChild(it.f()); }catch(e){ console.warn(e); } });
+    /* the greeting, and which folder you're looking at */
+    const hr = new Date().getHours();
+    let nm = ''; try{ if(CLOUD && CLOUD.user && CLOUD.user()) nm = clean(CLOUD.name() || '').split(/\s+/)[0] || ''; }catch(e){}
+    const hello = document.getElementById('hsHello');
+    if(hello) hello.textContent = (hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening') + (nm ? ', ' + nm : '');
+    const v = folderView(); let ms = []; try{ ms = myGroups(); }catch(e){}
+    const fname = v === 'mine' ? 'My folder' : v === 'all' ? 'Club library' : v, fsub = v === 'mine' && ms.length ? folderSub(ms) : '';
+    const fb = document.getElementById('hsFoldBtn');
+    if(fb){ fb.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>'; fb.append(h('span', {text:fname}), fsub ? h('b', {text:fsub}) : null); fb.insertAdjacentHTML('beforeend', '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'); }
+    const sub = document.getElementById('hsSub');
+    if(sub) sub.textContent = new Date().toLocaleDateString('en-AU', {weekday:'long', day:'numeric', month:'long'}) + ' · ' + (fsub ? fname + ' ' + fsub : fname);
+    try{ vlCount(); if(hsPage === 'videos') vlRender(); }catch(e){ console.warn(e); }
+    const t = document.getElementById('hsPTitle'); if(t) t.textContent = HS_TITLES[hsPage] || '';
+    const add = document.getElementById('hsPAdd'), a = HS_ADD[hsPage];
+    if(add){ add.hidden = !a; if(a){ add.textContent = a[0]; add.dataset.click = a[1]; } }
+  }
+  (function hsInit(){
+    const home = document.getElementById('home'); if(!home || !document.getElementById('hsSide')) return;
+    const crest = (document.querySelector('.header .crest') || document.querySelector('.home-crest') || {}).src || '';
+    home.querySelectorAll('.hs-crest, .hs-crest-bg').forEach(function(i){ if(crest) i.src = crest; });
+    const set = document.getElementById('homeSetBtn'), foot = document.getElementById('hsFoot');
+    if(set && foot) foot.appendChild(set);
+    const fb = document.getElementById('folderBar'), pop = document.getElementById('hsFoldPop');
+    if(fb && pop) pop.appendChild(fb);
+    ['sessions', 'pregames', 'lineups', 'matches'].forEach(function(k){ homeShowAll[k] = true; });   /* (each list is its own page now: all of it) */
+    home.dataset.hpage = 'home';
+    home.addEventListener('click', function(ev){
+      const b = ev.target.closest('[data-page], [data-click]');
+      if(b && home.contains(b)){
+        if(b.dataset.page){ hsGo(b.dataset.page); return; }
+        const t = document.getElementById(b.dataset.click);
+        hsMenus(); hsDrawer(false);
+        if(t) t.click();
+        return;
+      }
+      if(ev.target.closest('#hsNew')){ const m = document.getElementById('hsNewMenu'); hsMenus('hsNewMenu'); m.hidden = !m.hidden; ev.target.closest('#hsNew').setAttribute('aria-expanded', String(!m.hidden)); return; }
+      if(ev.target.closest('#hsFoldBtn')){ const m = document.getElementById('hsFoldPop'); hsMenus('hsFoldPop'); m.hidden = !m.hidden; ev.target.closest('#hsFoldBtn').setAttribute('aria-expanded', String(!m.hidden)); return; }
+      if(ev.target.closest('#hsFoldPop .folder-chip')){ setTimeout(function(){ hsMenus(); }, 0); return; }
+      if(ev.target.closest('#hsBurger')){ hsMenus(); hsDrawer(true); return; }
+      if(ev.target.closest('#hsClose') || ev.target.closest('#hsScrim')){ hsDrawer(false); return; }
+      if(!ev.target.closest('.hs-menu, .hs-pop')) hsMenus();
+    });
+    document.addEventListener('click', function(ev){ if(!home.contains(ev.target)) hsMenus(); });
+    document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape'){ hsMenus(); hsDrawer(false); } });
+    /* the menu fills the window below anything above the page */
+    const off = function(){ const t = Math.max(0, home.getBoundingClientRect().top); home.style.setProperty('--hs-off', Math.round(t) + 'px'); };
+    window.addEventListener('scroll', off, {passive:true}); window.addEventListener('resize', off); setTimeout(off, 0); setTimeout(off, 800);
+    try{ hsRender(); }catch(e){}
+  })();
+
+  /* ---------- v4.08: the club's Video library — short clips from any game or year; every coach watches them and adds their own ----------
+     Each clip is a club file (like Squads and IDPs) so it reaches every coach; its video is a link, or a video file that goes onto
+     Google Drive from the coach's device that added it (like pre-game clips). The coach who added a clip (or the admin) changes or removes it. */
+  var VL_PHASES = [
+    ['ip1', 'Possession (IP1)', 'Possession (IP – 1st phase)', '#1f9d55'],
+    ['ip2', 'Progression (IP2)', 'Progression (IP – 2nd phase)', '#0f8b8d'],
+    ['ip3', 'Penetration (IP3)', 'Penetration (IP – 3rd phase)', '#2563eb'],
+    ['press', 'Pressure (OP1)', 'Pressure (OP – 1st phase)', '#d97706'],
+    ['mid', 'Prevention (OP2)', 'Prevention (OP – 2nd phase)', '#b45309'],
+    ['low', 'Protection (OP3)', 'Protection (OP – 3rd phase)', '#92400e'],
+    ['lose', 'Def. transition', 'Defensive transition (IP > OP)', '#d64545'],
+    ['win', 'Att. transition', 'Attacking transition (OP > IP)', '#7c3aed'],
+    ['sp', 'Set pieces', 'Set pieces', '#5b5d61'],
+    ['other', 'Other', 'Other', '#8a8d91']];
+  var vlState = {phase:'', tags:[], q:'', team:'', year:'', sort:'new', allTags:false};
+  HS_TITLES.videos = 'Video library';
+  HS_ADD.videos = ['+ Add clips', 'vlAddBtn'];
+  function vlPhase(k){ return VL_PHASES.find(function(p){ return p[0] === k; }) || VL_PHASES[VL_PHASES.length - 1]; }
+  function vlKey(id){ return TG_PRE + 'clip-' + id; }
+  function vlAll(){ const out = []; try{ tgAll().forEach(function(o){ if(o.tg === 'clip' && o.id && o.v) out.push(o); }); }catch(e){} return out; }
+  function vlAdmin(){ try{ if(CLOUD && CLOUD.user && CLOUD.user() && CLOUD.user().admin) return true; }catch(e){} return !!(who && who.admin); }
+  function vlCanManage(o){ return vlAdmin() || !o.owner || o.owner === tgMe(); }
+  function vlCount(){ const el = document.getElementById('hsNVideos'); if(el){ const n = vlAll().length; el.textContent = n ? String(n) : ''; } }
+  function vlDate(iso){ if(!iso || !/^\d{4}-\d\d-\d\d$/.test(iso)) return clean(iso || ''); const p = iso.split('-'); try{ return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('en-AU', {day:'numeric', month:'short', year:'numeric'}); }catch(e){ return iso; } }
+  function vlAgo(t){
+    if(!t) return ''; const d = Math.floor((Date.now() - t) / 864e5);
+    return d <= 0 ? 'today' : d === 1 ? 'yesterday' : d < 7 ? d + ' days ago' : d < 14 ? 'last week' : d < 60 ? Math.floor(d / 7) + ' weeks ago' : new Date(t).toLocaleDateString('en-AU', {month:'short', year:'numeric'});
+  }
+  function vlDur(s){ s = Math.round(+s || 0); return s ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : ''; }
+  function vlSource(o){ const v = o.v || {}; return v.kind === 'link' ? pgSource(v.url) : ''; }
+  function vlYtThumb(url){ try{ const e = pgEmbed(url); const m = e && /youtube-nocookie\.com\/embed\/([\w-]+)/.exec(e.src); return m ? 'https://i.ytimg.com/vi/' + m[1] + '/mqdefault.jpg' : ''; }catch(e){ return ''; } }
+  function vlFrom(o){ return [o.team, clean(o.opp) ? 'vs ' + clean(o.opp) : '', vlDate(o.date), clean(o.min) ? clean(o.min) + (/\d$/.test(clean(o.min)) ? '′' : '') : ''].filter(Boolean).join(' · '); }
+  function vlHay(o){ return [o.title, (o.tags || []).join(' '), o.opp, o.note, o.by, o.team, vlPhase(o.phase)[2], (o.v || {}).name].map(function(x){ return clean(x || ''); }).join(' ').toLowerCase(); }
+  function vlTagList(t){ return String(t || '').split(/[,;\n]/).map(function(x){ return clean(x).toLowerCase(); }).filter(Boolean).filter(function(x, i, a){ return a.indexOf(x) === i; }).slice(0, 12); }
+  function vlFillSel(id, opts, val){
+    const sel = document.getElementById(id); if(!sel) return;
+    const sig = JSON.stringify(opts); if(sel.dataset.sig !== sig){ sel.innerHTML = ''; opts.forEach(function(o){ sel.appendChild(h('option', {value:o[0], text:o[1]})); }); sel.dataset.sig = sig; }
+    sel.value = val;
+  }
+  function vlWaitText(o){
+    const v = o.v || {};
+    if(v.kind !== 'file' || v.drive) return '';
+    if(o.owner && o.owner !== tgMe()) return 'Waiting for ' + (clean(o.by) || 'the coach who added it') + ' to put it on Google Drive';
+    return 'On this device · it goes onto Google Drive so every coach can watch it';
+  }
+  function vlRender(){
+    const grid = document.getElementById('vlGrid'); if(!grid) return;
+    const all = vlAll();
+    vlCount();
+    vlFillSel('vlTeam', [['', 'All teams']].concat(AGE_GROUPS.map(function(g){ return [g, g]; })), vlState.team);
+    const years = all.map(function(o){ return String(o.date || '').slice(0, 4); }).filter(function(y){ return /^\d{4}$/.test(y); }).filter(function(y, i, a){ return a.indexOf(y) === i; }).sort().reverse();
+    if(vlState.year && years.indexOf(vlState.year) === -1) years.unshift(vlState.year);
+    vlFillSel('vlYear', [['', 'Any year']].concat(years.map(function(y){ return [y, y]; })), vlState.year);
+    const sortSel = document.getElementById('vlSort'); if(sortSel) sortSel.value = vlState.sort;
+    const words = clean(vlState.q).toLowerCase().split(/\s+/).filter(Boolean);
+    const base = all.filter(function(o){
+      if(vlState.team && o.team !== vlState.team) return false;
+      if(vlState.year && String(o.date || '').slice(0, 4) !== vlState.year) return false;
+      if(words.length){ const hay = vlHay(o); if(!words.every(function(w){ return hay.indexOf(w) !== -1; })) return false; }
+      return true;
+    });
+    const tagged = base.filter(function(o){ return vlState.tags.every(function(t){ return (o.tags || []).indexOf(t) !== -1; }); });
+    /* the phases, with how many clips each */
+    const pb = document.getElementById('vlPhases'); pb.innerHTML = '';
+    const pc = function(key, label, n, c){
+      const b = h('button', {type:'button', class:'vl-pc' + (vlState.phase === key ? ' on' : '') + (!n && key && vlState.phase !== key ? ' zero' : ''), 'aria-pressed':String(vlState.phase === key), style:c ? '--c:' + c : ''},
+        c ? h('i') : null, h('span', {text:label}), h('small', {text:String(n)}));
+      b.addEventListener('click', function(){ vlState.phase = vlState.phase === key && key ? '' : key; vlRender(); });
+      pb.appendChild(b);
+    };
+    pc('', 'All', tagged.length, '');
+    VL_PHASES.forEach(function(p){ pc(p[0], p[1], tagged.filter(function(o){ return (o.phase || 'other') === p[0]; }).length, p[3]); });
+    const list = tagged.filter(function(o){ return !vlState.phase || (o.phase || 'other') === vlState.phase; });
+    /* tags: the most used first */
+    const tb = document.getElementById('vlTags'); tb.innerHTML = '';
+    const freq = {};
+    base.filter(function(o){ return !vlState.phase || (o.phase || 'other') === vlState.phase; }).forEach(function(o){ (o.tags || []).forEach(function(t){ freq[t] = (freq[t] || 0) + 1; }); });
+    vlState.tags.forEach(function(t){ if(!freq[t]) freq[t] = 0; });
+    const tags = Object.keys(freq).sort(function(a, b){ return freq[b] - freq[a] || a.localeCompare(b); });
+    if(tags.length){
+      tb.appendChild(h('span', {text:'Tags:'}));
+      const shown = vlState.allTags ? tags : tags.slice(0, 12);
+      shown.forEach(function(t){
+        const on = vlState.tags.indexOf(t) !== -1;
+        tb.appendChild(h('button', {type:'button', class:'vl-tc' + (on ? ' on' : ''), 'aria-pressed':String(on), text:t, onclick:function(){ if(on) vlState.tags = vlState.tags.filter(function(x){ return x !== t; }); else vlState.tags.push(t); vlRender(); }}));
+      });
+      if(tags.length > 12) tb.appendChild(h('button', {type:'button', class:'vl-tc', text:vlState.allTags ? 'Fewer' : '+ ' + (tags.length - 12) + ' more', onclick:function(){ vlState.allTags = !vlState.allTags; vlRender(); }}));
+    }
+    list.sort(function(a, b){
+      if(vlState.sort === 'az') return clean(a.title).localeCompare(clean(b.title));
+      if(vlState.sort === 'game') return String(b.date || '').localeCompare(String(a.date || '')) || (b.at || 0) - (a.at || 0);
+      return (b.at || b.savedAt || 0) - (a.at || a.savedAt || 0);
+    });
+    const filt = vlState.phase || vlState.tags.length || words.length || vlState.team || vlState.year;
+    document.getElementById('vlCount').textContent = !all.length ? '' : list.length + (list.length === 1 ? ' clip' : ' clips') + (filt ? ' · of ' + all.length : ' · showing all');
+    grid.innerHTML = '';
+    if(!all.length) grid.appendChild(h('div', {class:'home-empty vl-empty', text:'No clips yet. Press + Add clips to put in the first ones — videos from your phone or computer, or links from YouTube, Vimeo or Google Drive.'}));
+    else if(!list.length) grid.appendChild(h('div', {class:'home-empty vl-empty', text:'No clips match. Try another phase or tag, or clear the search.'}));
+    list.forEach(function(o){ grid.appendChild(vlCard(o)); });
+  }
+  function vlCard(o){
+    const ph = vlPhase(o.phase), v = o.v || {};
+    const thumb = h('div', {class:'vl-thumb'});
+    const img = o.thumb || (v.kind === 'link' ? vlYtThumb(v.url) : '');
+    if(img){ const im = h('img', {alt:'', loading:'lazy', src:img}); im.addEventListener('error', function(){ im.remove(); }); thumb.appendChild(im); }
+    const play = h('span', {class:'vl-play'}); play.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5.5 L19 12 L8 18.5 Z" fill="currentColor"/></svg>';
+    thumb.append(h('span', {class:'vl-ph', style:'--c:' + ph[3], text:ph[1]}), vlSource(o) ? h('span', {class:'vl-src', text:vlSource(o)}) : null, play, vlDur(o.dur) ? h('span', {class:'vl-dur', text:vlDur(o.dur)}) : null);
+    const wait = vlWaitText(o);
+    const card = h('button', {type:'button', class:'vl-card', title:'Watch this clip'}, thumb,
+      h('div', {class:'vl-body'},
+        h('div', {class:'vl-t' + (clean(o.title) ? '' : ' untitled'), text:clean(o.title) || 'Untitled clip'}),
+        (o.tags || []).length ? h('div', {class:'vl-ctags'}, (o.tags || []).slice(0, 4).map(function(t){ return h('span', {text:t}); })) : null,
+        vlFrom(o) ? h('div', {class:'vl-from', text:vlFrom(o)}) : null,
+        wait ? h('div', {class:'vl-wait', text:wait}) : null,
+        h('div', {class:'vl-by', text:'Added by ' + (clean(o.by) || 'a coach') + ' · ' + vlAgo(o.at || o.savedAt)})));
+    card.addEventListener('click', function(){ vlOpen(o.id); });
+    return card;
+  }
+  function vlClip(o){ return Object.assign({}, o.v, {title:clean(o.title)}); }
+  /* a clip, open: the video, what to look for, where it's from */
+  function vlOpen(id){
+    const o = vlAll().find(function(x){ return x.id === id; }); if(!o) return;
+    const ph = vlPhase(o.phase), v = o.v || {};
+    const player = h('div', {class:'vl-player'});
+    const box = h('div', {class:'modal-box vl-view', role:'dialog', 'aria-modal':'true', 'aria-label':clean(o.title) || 'Clip'});
+    const wrap = h('div', {class:'modal vl-modal'}, box);
+    const close = function(){ try{ player.querySelectorAll('video').forEach(function(x){ x.pause(); }); }catch(e){} player.innerHTML = ''; closeModal(wrap); setTimeout(function(){ wrap.remove(); }, 200); document.removeEventListener('keydown', esc, true); };
+    const esc = function(e){ if(e.key === 'Escape'){ e.stopPropagation(); close(); } };
+    const info = h('div', {class:'vl-info'},
+      h('h3', {text:clean(o.title) || 'Untitled clip'}),
+      h('span', {class:'vl-chip', style:'--c:' + ph[3]}, h('i'), ph[2]),
+      (o.tags || []).length ? h('div', null, h('div', {class:'vl-lbl', text:'Tags'}), h('div', {class:'vl-ctags'}, (o.tags || []).map(function(t){ return h('span', {text:t}); }))) : null,
+      clean(o.note) ? h('div', null, h('div', {class:'vl-lbl', text:'What to look for'}), h('div', {class:'vl-look', text:o.note})) : null,
+      vlFrom(o) ? h('div', null, h('div', {class:'vl-lbl', text:'From'}), h('div', {text:vlFrom(o)})) : null,
+      h('div', null, h('div', {class:'vl-lbl', text:'Added by'}), h('div', {text:(clean(o.by) || 'A coach') + ' · ' + vlAgo(o.at || o.savedAt)})),
+      vlWaitText(o) ? h('div', {class:'vl-wait', text:vlWaitText(o)}) : null,
+      h('div', {class:'vl-acts'},
+        h('button', {type:'button', class:'btn btn-primary', text:'Add to a pre-game', onclick:function(){ vlToPregame(o); }}),
+        v.kind === 'link' ? h('a', {class:'btn', href:v.url, target:'_blank', rel:'noopener noreferrer', text:'Open the link'}) : null,
+        vlCanManage(o) ? h('button', {type:'button', class:'btn', text:'✎ Edit', onclick:function(){ close(); vlEdit(o); }}) : null,
+        vlCanManage(o) ? h('button', {type:'button', class:'btn btn-danger', text:'Delete', onclick:async function(){
+          if(!(await askDelete('clip', clean(o.title) || 'Untitled clip', 'It goes from the video library for every coach.'))) return;
+          close(); vlDelete(o);
+        }}) : null));
+    box.append(h('button', {type:'button', class:'vl-x', 'aria-label':'Close', text:'✕', onclick:close}), player, info);
+    wrap.addEventListener('click', function(e){ if(e.target === wrap) close(); });
+    document.addEventListener('keydown', esc, true);
+    document.body.appendChild(wrap); openModal(wrap);
+    try{ pgMountClip(vlClip(o), player, true); }catch(e){ player.appendChild(h('div', {class:'pg-clip-missing', text:'This clip can’t play here.'})); }
+  }
+  function vlDelete(o){
+    const back = JSON.parse(JSON.stringify(o));
+    tgWrite(vlKey(o.id), {kind:'tgroups', tg:'clip', id:o.id, group:o.group || 'U13', deleted:true, savedAt:Date.now(), by:tgMeName()});
+    vlRender();
+    showToast('Removed “' + (clean(o.title) || 'the clip') + '” from the video library', function(){ back.savedAt = Date.now(); tgWrite(vlKey(o.id), back); vlRender(); });
+  }
+  /* into one of your pre-game plans (onto the board for its phase, when there is one) */
+  function vlToPregame(o){
+    const plans = listSessions().filter(function(x){ return isPre(x.plan) && canEdit(x.plan); });
+    if(!plans.length){ showToast('Make a pre-game plan first (+ New → Pre-game plan), then add clips to it'); return; }
+    const pSel = h('select', {class:'set-input'}), bSel = h('select', {class:'set-input'});
+    plans.forEach(function(x){ pSel.appendChild(h('option', {value:x.key, text:(sessionName(x.plan) || 'Untitled pre-game') + (clean(x.plan.meta.date) ? ' · ' + clean(x.plan.meta.date) : '')})); });
+    const boards = function(){
+      const x = plans.find(function(p){ return p.key === pSel.value; }); bSel.innerHTML = '';
+      (x ? x.plan.drills : []).forEach(function(d){ const op = h('option', {value:d.id, text:clean(d.name) || 'Board'}); if(d.phase && d.phase === o.phase) op.selected = true; bSel.appendChild(op); });
+    };
+    pSel.addEventListener('change', boards); boards();
+    seForm('Add to a pre-game', h('div', {class:'se-form-body vl-pick'}, seField('Pre-game plan', pSel), seField('Board', bSel)), function(close){
+      return [h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}),
+        h('button', {type:'button', class:'btn btn-primary', text:'Add the clip', onclick:async function(){
+          const key = pSel.value, did = bSel.value; let s = null;
+          try{ s = JSON.parse(hufcStore.getItem(key)); }catch(e){}
+          const d = s && (s.drills || []).find(function(x){ return x.id === did; });
+          if(!d){ showToast('That pre-game has changed · try again'); return; }
+          const nid = newId(), v = o.v || {}, c = {id:nid, kind:v.kind, title:clean(o.title) || 'Clip'};
+          ['url', 'asset', 'name', 'size', 'local', 'drive'].forEach(function(f){ if(v[f] != null) c[f] = v[f]; });
+          if(v.kind === 'file'){ try{ const b = await pgMedia.get(v.id); if(b) await pgMedia.put(nid, b); }catch(e){} }
+          d.clips = Array.isArray(d.clips) ? d.clips : []; d.clips.push(c);
+          s.savedAt = Date.now();
+          try{ hufcStore.setItem(key, JSON.stringify(s)); }catch(e){ showToast('This device is out of space'); return; }
+          clubSyncSoon(); close();
+          showToast('Added to “' + (sessionName(s) || 'your pre-game') + '” · ' + (clean(d.name) || 'board'));
+        }})];
+    });
+  }
+  /* a still from the video for its card, and how long it is */
+  function vlFrame(f){
+    return new Promise(function(res){
+      let done = false, u = '';
+      const fin = function(r){ if(done) return; done = true; try{ if(u) URL.revokeObjectURL(u); }catch(e){} res(r || {}); };
+      try{
+        u = URL.createObjectURL(f);
+        const v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.playsInline = true;
+        v.addEventListener('loadedmetadata', function(){ const d = v.duration; try{ v.currentTime = Math.min(1, (isFinite(d) && d > 0 ? d : 3) / 3); }catch(e){ fin({dur:Math.round(d || 0)}); } });
+        v.addEventListener('seeked', function(){
+          try{
+            const w = 320, hh = Math.round(w * (v.videoHeight || 9) / (v.videoWidth || 16)), c = document.createElement('canvas');
+            c.width = w; c.height = hh; c.getContext('2d').drawImage(v, 0, 0, w, hh);
+            fin({thumb:c.toDataURL('image/jpeg', 0.62), dur:Math.round(v.duration || 0)});
+          }catch(e){ fin({dur:Math.round(v.duration || 0)}); }
+        });
+        v.addEventListener('error', function(){ fin({}); });
+        v.src = u;
+        setTimeout(function(){ fin({}); }, 8000);
+      }catch(e){ fin({}); }
+    });
+  }
+  /* keep the video: online (the planner's own store), the computer program's Videos folder, or this device — then Google Drive */
+  async function vlStoreFile(f, fpath, id, title){
+    const assets = window.__HUFC_ASSETS ? await window.__HUFC_ASSETS : null;
+    if(assets && f.size <= 20 * 1024 * 1024){
+      try{ const r = await assets.upload(f); return {id:id, kind:'asset', asset:r.id, name:f.name, size:r.sizeBytes || f.size}; }catch(e){}
+    }
+    if(window.hufcDesktop && window.hufcDesktop.saveVideo){
+      try{ const r = await window.hufcDesktop.saveVideo(fpath || '', id, title, f); if(r && r.file) return {id:id, kind:'file', name:f.name, size:f.size, local:r.file}; }catch(e){}
+    }
+    await pgMedia.put(id, f);
+    return {id:id, kind:'file', name:f.name, size:f.size};
+  }
+  function vlPhaseSel(val, first){
+    const sel = h('select', null);
+    if(first) sel.appendChild(h('option', {value:'', text:first}));
+    VL_PHASES.forEach(function(p){ sel.appendChild(h('option', {value:p[0], text:p[2]})); });
+    sel.value = val || ''; return sel;
+  }
+  function vlTeamSel(val){
+    const sel = h('select', null);
+    sel.appendChild(h('option', {value:'', text:'—'}));
+    AGE_GROUPS.forEach(function(g){ sel.appendChild(h('option', {value:g, text:g})); });
+    sel.value = val || ''; return sel;
+  }
+  function vlGroupFor(team){ try{ if(team && isMine(team)) return team; }catch(e){} try{ return primaryGroup() || team || 'U13'; }catch(e){ return team || 'U13'; } }
+  /* + Add clips: several videos (or links) at once, with what they all share filled in once */
+  function vlAdd(){
+    const rows = [];
+    const list = h('div', {class:'vl-rows'});
+    const fileIn = h('input', {type:'file', accept:'video/*', multiple:true, hidden:true});
+    const allPhase = vlPhaseSel('ip1'), allTags = h('input', {type:'text', placeholder:'e.g. build-up solutions, bounce pass'}), allTeam = vlTeamSel((function(){ try{ return primaryGroup() || ''; }catch(e){ return ''; } })());
+    const allOpp = h('input', {type:'text', placeholder:'e.g. Northcote City'}), allDate = h('input', {type:'date'});
+    let saveBtn = null;
+    const label = function(){ if(saveBtn){ saveBtn.textContent = rows.length ? 'Add ' + rows.length + (rows.length === 1 ? ' clip' : ' clips') : 'Add clips'; saveBtn.disabled = !rows.length; } };
+    const addRow = function(r){
+      r.title = h('input', {type:'text', value:r.name, 'aria-label':'Clip name'});
+      r.phase = vlPhaseSel('', 'Same phase as below');
+      const ico = h('span', {class:'vl-ri'}); ico.innerHTML = r.file ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>' : '🔗';
+      r.el = h('div', {class:'vl-row'}, ico, r.title, r.phase, h('button', {type:'button', 'aria-label':'Leave this one out', text:'✕', onclick:function(){ rows.splice(rows.indexOf(r), 1); r.el.remove(); label(); }}));
+      rows.push(r); list.appendChild(r.el); label();
+    };
+    const takeFiles = function(files){
+      Array.from(files || []).forEach(function(f){
+        if(f.type && f.type.indexOf('video/') !== 0){ showToast('“' + f.name + '” isn’t a video'); return; }
+        const fpath = window.hufcDesktop && window.hufcDesktop.pathOf ? window.hufcDesktop.pathOf(f) : '';
+        addRow({file:f, fpath:fpath, name:f.name.replace(/\.[a-z0-9]+$/i, '').replace(/[_]+/g, ' ')});
+      });
+    };
+    fileIn.addEventListener('change', function(){ takeFiles(fileIn.files); fileIn.value = ''; });
+    const drop = h('div', {class:'vl-drop', role:'button', tabindex:'0'},
+      h('b', {text:'Drop videos here, or tap to choose'}),
+      h('small', {text:'Several at once is fine. They go onto your Google Drive (Settings → Google Drive) so every coach can watch them.'}));
+    drop.addEventListener('click', function(){ fileIn.click(); });
+    drop.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fileIn.click(); } });
+    drop.addEventListener('dragover', function(e){ e.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', function(){ drop.classList.remove('over'); });
+    drop.addEventListener('drop', function(e){ e.preventDefault(); drop.classList.remove('over'); takeFiles(e.dataTransfer && e.dataTransfer.files); });
+    const linkIn = h('input', {type:'url', class:'set-input', placeholder:'…or paste a link (YouTube, Vimeo, Google Drive, Veo, Hudl)'});
+    const addLink = function(){
+      const url = pgNormUrl(linkIn.value); if(!url){ linkIn.focus(); return; }
+      linkIn.value = ''; addRow({url:url, name:pgSource(url) + ' clip'});
+    };
+    linkIn.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); addLink(); } });
+    const body = h('div', {class:'se-form-body'}, drop, fileIn,
+      h('div', {class:'vl-or'}, linkIn, h('button', {type:'button', class:'btn', text:'Add link', onclick:addLink})),
+      list,
+      h('div', {class:'vl-all'}, h('div', {class:'vl-all-h', text:'For all of them'}),
+        seField('Phase', allPhase), seField('Team', allTeam), seField('Game date', allDate),
+        seField('Opponent', allOpp), h('label', {class:'se-field', style:'grid-column:span 2'}, h('span', {class:'se-field-l', text:'Tags'}), allTags, h('span', {class:'se-field-help', text:'Separate them with commas'}))));
+    const closeIt = seForm('Add clips to the video library', body, function(close){
+      saveBtn = h('button', {type:'button', class:'btn btn-primary', text:'Add clips', disabled:true, onclick:async function(){
+        if(!rows.length) return;
+        saveBtn.disabled = true; saveBtn.textContent = 'Adding…';
+        const team = allTeam.value, tags = vlTagList(allTags.value), by = tgMeName() || (who && who.name) || '';
+        let n = 0;
+        for(const r of rows.slice()){
+          const id = newId(), title = clean(r.title.value) || r.name;
+          let v = null, meta = {};
+          try{
+            if(r.file){ meta = await vlFrame(r.file); v = await vlStoreFile(r.file, r.fpath, id, title); }
+            else v = {id:id, kind:'link', url:r.url};
+          }catch(e){ console.warn(e); showToast('Couldn’t keep “' + title + '” on this device — try a smaller clip'); continue; }
+          const now = Date.now();
+          const o = {kind:'tgroups', tg:'clip', id:id, group:vlGroupFor(team), team:team, title:title, phase:r.phase.value || allPhase.value || 'other', tags:tags,
+            opp:clean(allOpp.value), date:allDate.value || '', min:'', note:'', v:v, owner:tgMe(), by:by, at:now + n, savedAt:now + n};
+          if(meta.thumb && meta.thumb.length < 60000) o.thumb = meta.thumb;
+          if(meta.dur) o.dur = meta.dur;
+          tgWrite(vlKey(id), o); n++;
+        }
+        close();
+        if(n){ try{ driveSoon(); driveSuggest(); }catch(e){} showToast(n + (n === 1 ? ' clip' : ' clips') + ' added to the video library'); }
+        if(hsPage !== 'videos') hsGo('videos'); else vlRender();
+      }});
+      return [h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}), saveBtn];
+    }, true);
+    label();
+    return closeIt;
+  }
+  /* change a clip: its name, phase, tags, where it's from, and what to look for */
+  function vlEdit(o){
+    const title = h('input', {type:'text', value:clean(o.title)}), phase = vlPhaseSel(o.phase || 'other'), team = vlTeamSel(o.team);
+    const opp = h('input', {type:'text', value:clean(o.opp)}), date = h('input', {type:'date', value:/^\d{4}-\d\d-\d\d$/.test(o.date || '') ? o.date : ''}), min = h('input', {type:'text', value:clean(o.min), placeholder:'e.g. 23'});
+    const tags = h('input', {type:'text', value:(o.tags || []).join(', ')}), note = h('textarea', {rows:'3', placeholder:'e.g. 6 drops between the centre-backs; the keeper plays into the 8, who bounces it back to the 6 facing forward'});
+    note.value = o.note || '';
+    const body = h('div', {class:'se-form-body vl-edit'},
+      h('label', {class:'se-field vl-wide'}, h('span', {class:'se-field-l', text:'Name'}), title),
+      seField('Phase', phase), seField('Team', team), seField('Opponent', opp), seField('Game date', date), seField('Minute', min),
+      h('label', {class:'se-field vl-wide'}, h('span', {class:'se-field-l', text:'Tags'}), tags, h('span', {class:'se-field-help', text:'Separate them with commas'})),
+      h('label', {class:'se-field vl-wide'}, h('span', {class:'se-field-l', text:'What to look for'}), note));
+    seForm('Change this clip', body, function(close){
+      return [h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}),
+        h('button', {type:'button', class:'btn btn-primary', text:'Save', onclick:function(){
+          const cur = vlAll().find(function(x){ return x.id === o.id; }) || o;
+          const n = Object.assign({}, cur, {title:clean(title.value) || cur.title, phase:phase.value, team:team.value, group:cur.group || vlGroupFor(team.value), opp:clean(opp.value), date:date.value, min:clean(min.value), tags:vlTagList(tags.value), note:String(note.value || '').trim(), savedAt:Date.now()});
+          tgWrite(vlKey(o.id), n); close(); vlRender(); vlOpen(o.id);
+        }})];
+    });
+  }
+
+  /* ---------- the classic Home page: the big buttons at the top and every list underneath (Settings → Account → Home page) ---------- */
+  function hsClassic(){ try{ return getSettings().home === 'classic'; }catch(e){ return false; } }
+  function hsApplyStyle(){
+    const home = document.getElementById('home'); if(!home || !document.getElementById('hsSide')) return;
+    const classic = hsClassic();
+    home.classList.toggle('hs-classic', classic);
+    const fb = document.getElementById('folderBar'), note = document.getElementById('folderNote'), pop = document.getElementById('hsFoldPop');
+    const set = document.getElementById('homeSetBtn'), foot = document.getElementById('hsFoot'), hero = document.querySelector('#home .home-hero');
+    if(classic){
+      if(fb && note && fb.nextElementSibling !== note) note.parentNode.insertBefore(fb, note);
+      if(set && hero && set.parentNode !== hero) hero.insertBefore(set, hero.firstChild);
+      ['sessions', 'pregames', 'lineups', 'matches'].forEach(function(k){ if(homeShowAll[k] === true && !homeShowAll['_c' + k]){ homeShowAll[k] = false; } homeShowAll['_c' + k] = 1; });
+      if(hsPage !== 'home' && hsPage !== 'videos') hsPage = 'home';
+    } else {
+      if(fb && pop && fb.parentNode !== pop) pop.appendChild(fb);
+      if(set && foot && set.parentNode !== foot) foot.appendChild(set);
+      ['sessions', 'pregames', 'lineups', 'matches'].forEach(function(k){ homeShowAll[k] = true; delete homeShowAll['_c' + k]; });
+    }
+  }
+  function hsHomeCard(){
+    const c = setCard('Home page', 'How the Home page looks on this device.');
+    const cur = hsClassic() ? 'classic' : 'new';
+    const seg = h('div', {class:'seg set-seg'}, [['new', 'Menu down the side'], ['classic', 'Classic: big buttons']].map(function(o){
+      return h('button', {type:'button', class:cur === o[0] ? 'active' : '', text:o[1], onclick:function(){
+        if(cur === o[0]) return;
+        setSettings({home:o[0] === 'classic' ? 'classic' : ''}); setSaved();
+        hsPage = 'home'; try{ renderHome(); }catch(e){}
+        renderSettings();
+      }});
+    }));
+    c.append(setRow('Layout', 'The new Home has a menu down the side; the classic one has the big buttons at the top and every list underneath', seg));
+    return c;
+  }
+  (function vlInit(){
+    const q = document.getElementById('vlSearch'); if(!q) return;
+    q.addEventListener('input', function(){ vlState.q = q.value; vlRender(); });
+    document.getElementById('vlTeam').addEventListener('change', function(){ vlState.team = this.value; vlRender(); });
+    document.getElementById('vlYear').addEventListener('change', function(){ vlState.year = this.value; vlRender(); });
+    document.getElementById('vlSort').addEventListener('change', function(){ vlState.sort = this.value; vlRender(); });
+    document.getElementById('vlAddBtn').addEventListener('click', function(){ vlAdd(); });
+    try{ vlCount(); }catch(e){}
+  })();
 
   /* ---------- Open…: pick one of the saved sessions, inside the app ---------- */
   const sessPicker = document.getElementById('sessPicker');
@@ -15553,6 +16243,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'4.08', d:'11 Nov 2026', t:'A new Home page', n:['Home has a menu down the side: + New (session, lineup, pre-game, match video), Home, Sessions, Saved practices, Season calendar, Lineups, Pre-games, Match videos, Squads, Player IDPs, Game time & stats and Settings','Home shows this week, anything shared with you and what you worked on last — each list has its own page','The folder picker (My folder, Club library, U13…) is in the menu, under Home','Prefer the big buttons? Settings → Account → Home page → Classic','Video library (in the menu): the club’s short clips from any game or year — build-up solutions, passing combinations, pressing… Filter by phase, tag, team and year; any coach can watch them and add their own (several videos at once, or links), and put one into a pre-game','On a phone the menu opens from ☰ at the top']},
     {v:'4.07', d:'11 Nov 2026', t:'Move a game or training', n:['Season calendar: on a day’s ⋯ menu, Move this game (or training) to another day… — pick the new date and its opponent, colour, sessions, lineups and pre-games go with it (Undo straight after)']},
     {v:'4.06', d:'11 Nov 2026', t:'Defensive and attacking transition', n:['The transition phases are now Defensive transition (IP > OP) and Attacking transition (OP > IP) — in sessions, pre-games, the season calendar and the reports. Ones already saved show the new names']},
     {v:'4.05', d:'11 Nov 2026', t:'White coach · lineups follow Squads', n:['The coach on the pitch is white','Lineups take each player’s position from Squads (today’s and future games — past lineups don’t change), and a position changed in a lineup goes into Squads','A player who joins a team in Squads (e.g. moved up to the U18s) fills an empty row in that team’s upcoming lineups, and is always in the lineup’s Squad list','Injured and unavailable players are no longer listed on the bench — they’re on their own Unavailable line underneath (in red)']},
@@ -15746,6 +16437,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const pane = document.getElementById('setPane'); pane.innerHTML = '';
     const fn = {guide:setGuide, account:setAccount, teams:setTeams, drive:setDrive, sessions:setSessions, lineups:setLineups, data:setData, club:setClub, about:setAbout}[setTab];
     fn(pane);
+    if(setTab === 'account'){ try{ pane.appendChild(hsHomeCard()); }catch(e){ console.warn(e); } }
     pane.scrollTop = 0;
     const on = nav.querySelector('.set-tab.on'); if(on && on.scrollIntoView && nav.scrollWidth > nav.clientWidth) on.scrollIntoView({block:'nearest', inline:'center'});
   }
@@ -17661,10 +18353,23 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(!isPre(s) || !canEdit(s)) return;
       (s.drills || []).forEach(function(d){ (d.clips || []).forEach(function(c){ if(c && c.kind === 'file' && !c.drive && !driveTried[c.id]) out.push({key:x.key, did:d.id, c:c}); }); });
     });
+    /* (and the Video library clips this device added) */
+    try{
+      for(let i = 0; i < hufcStore.length; i++){
+        const k = hufcStore.key(i); if(!k || k.indexOf('hufc-tgroups:clip-') !== 0) continue;
+        const o = JSON.parse(hufcStore.getItem(k) || 'null');
+        if(o && !o.deleted && o.v && o.v.kind === 'file' && !o.v.drive && !driveTried[o.v.id] && (!o.owner || o.owner === tgMe())) out.push({key:k, did:'', c:Object.assign({title:o.title}, o.v)});
+      }
+    }catch(e){}
     return out;
   }
   /* write the Drive link onto the clip in its plan (the open plan, or the saved copy), so it syncs to every device */
   function driveMark(key, cid, drive){
+    if(String(key).indexOf('hufc-tgroups:clip-') === 0){
+      try{ const o = JSON.parse(hufcStore.getItem(key) || 'null'); if(o && o.v && o.v.id === cid){ o.v.drive = drive; o.savedAt = Date.now(); hufcStore.setItem(key, JSON.stringify(o)); clubSyncSoon(); } }catch(e){}
+      try{ if(document.documentElement.classList.contains('view-home')) renderHome(); }catch(e){}
+      return;
+    }
     if(driveOpenPlan(key)){
       (state.drills || []).forEach(function(d){ (d.clips || []).forEach(function(c){ if(c.id === cid) c.drive = drive; }); });
       scheduleSave(); return;
