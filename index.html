@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261111131605">
+<meta name="hufc-build" content="20261111132000">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1257,7 +1257,8 @@ html.view-home #home{display:grid; grid-template-columns:248px minmax(0, 1fr); a
 .hs-new:hover{filter:brightness(.96);}
 .hs-menu{position:absolute; left:0; right:0; top:calc(100% + 6px); background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,.18); padding:6px; z-index:40;}
 .hs-menu button, .hs-nv{display:flex; align-items:center; gap:12px; width:100%; padding:9px 10px; border:0; background:none; border-radius:8px; font:inherit; font-size:15px; font-weight:500; color:#1c1d1f; text-align:left; cursor:pointer;}
-.hs-menu button:hover, .hs-nv:hover{background:#f4f4f1;}
+.hs-menu button:hover, .hs-menu button:active, .hs-nv:hover, .hs-nv:active{background:#0d0e0f; color:var(--yellow);}
+.hs-nv:hover .hs-n, .hs-nv:active .hs-n{color:#cfcfcb;}
 .hs-nv svg, .hs-menu svg{flex:none;}
 .hs-nv.on, .hs-nv.on:hover{background:#0d0e0f; color:var(--yellow); font-weight:600;}
 .hs-n{margin-left:auto; font-size:12px; color:#8a8d91; font-weight:500;}
@@ -1265,7 +1266,14 @@ html.view-home #home{display:grid; grid-template-columns:248px minmax(0, 1fr); a
 .hs-sec{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:#8a8d91; padding:14px 10px 4px;}
 .hs-foot{margin-top:auto; padding-top:12px;}
 .hs-foot .home-set-btn{position:relative; top:auto; right:auto; display:flex; width:100%; justify-content:flex-start; gap:12px; padding:9px 10px; border:0; border-radius:8px; background:none; color:#1c1d1f; font-family:inherit; font-size:15px; font-weight:500; letter-spacing:0; text-transform:none;}
-.hs-foot .home-set-btn:hover{background:#f4f4f1; color:#1c1d1f;}
+.hs-foot .home-set-btn:hover, .hs-foot .home-set-btn:active, body:has(#setModal:not([hidden])) .hs-foot .home-set-btn{background:#0d0e0f; color:var(--yellow);}
+/* the menu's scrollbar: the club's yellow pill */
+.hs-side{scrollbar-color:#ffd400 #ffffff; scrollbar-width:thin;}
+.hs-side::-webkit-scrollbar{width:12px;}
+.hs-side::-webkit-scrollbar-track{background:#ffffff; border-radius:999px; margin:3px;}
+.hs-side::-webkit-scrollbar-thumb{background:#ffd400; border-radius:999px; border:2px solid #ffffff; min-height:36px;}
+.hs-side::-webkit-scrollbar-thumb:hover{background:#f2c700;}
+.hs-side::-webkit-scrollbar-button{display:none; width:0; height:0;}
 .hs-foot .home-set-btn span{display:inline !important;}
 .hs-foot .home-set-btn svg{width:18px; height:18px;}
 .hs-main{min-width:0; width:100%; max-width:1180px; padding:22px 32px 56px;}
@@ -1282,7 +1290,7 @@ html.view-home #home{display:grid; grid-template-columns:248px minmax(0, 1fr); a
 .hs-fold > svg:last-child{margin-left:auto; transition:transform .15s;}
 .hs-fold[aria-expanded="true"] > svg:last-child{transform:rotate(180deg);}
 .hs-fold b{font-family:'Barlow Condensed', sans-serif; font-weight:700; background:var(--yellow); color:#0d0e0f; border-radius:999px; padding:0 8px; font-size:13px; letter-spacing:.03em;}
-.hs-fold:hover, .hs-fold[aria-expanded="true"]{border-color:#0d0e0f;}
+.hs-fold:hover, .hs-fold:active, .hs-fold[aria-expanded="true"]{border-color:#0d0e0f; background:#0d0e0f; color:var(--yellow);}
 .hs-pop{margin-top:6px; background:#f4f4f1; border-radius:10px; padding:6px;}
 .hs-pop .folder-bar{margin:0; padding:0; border:0; background:none; box-shadow:none;}
 .hs-pop .folder-chips{display:grid !important; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:5px; overflow:visible; flex-wrap:wrap;}
