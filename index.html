@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261111135217">
+<meta name="hufc-build" content="20261111144148">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -9527,7 +9527,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function vlDur(s){ s = Math.round(+s || 0); return s ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : ''; }
   function vlSource(o){ const v = o.v || {}; return v.kind === 'link' ? pgSource(v.url) : ''; }
   function vlYtThumb(url){ try{ const e = pgEmbed(url); const m = e && /youtube-nocookie\.com\/embed\/([\w-]+)/.exec(e.src); return m ? 'https://i.ytimg.com/vi/' + m[1] + '/mqdefault.jpg' : ''; }catch(e){ return ''; } }
-  function vlFrom(o){ return [o.team, clean(o.opp) ? 'vs ' + clean(o.opp) : '', vlDate(o.date), clean(o.min) ? clean(o.min) + (/\d$/.test(clean(o.min)) ? '′' : '') : ''].filter(Boolean).join(' · '); }
+  function vlFrom(o){ return [!o.team || o.team === 'all' ? 'All teams' : o.team, clean(o.opp) ? 'vs ' + clean(o.opp) : '', vlDate(o.date), clean(o.min) ? clean(o.min) + (/\d$/.test(clean(o.min)) ? '′' : '') : ''].filter(Boolean).join(' · '); }
   function vlHay(o){ return [o.title, (o.tags || []).join(' '), o.opp, o.note, o.by, o.team, vlPhase(o.phase)[2], (o.v || {}).name].map(function(x){ return clean(x || ''); }).join(' ').toLowerCase(); }
   function vlTagList(t){ return String(t || '').split(/[,;\n]/).map(function(x){ return clean(x).toLowerCase(); }).filter(Boolean).filter(function(x, i, a){ return a.indexOf(x) === i; }).slice(0, 12); }
   function vlFillSel(id, opts, val){
@@ -9552,7 +9552,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const sortSel = document.getElementById('vlSort'); if(sortSel) sortSel.value = vlState.sort;
     const words = clean(vlState.q).toLowerCase().split(/\s+/).filter(Boolean);
     const base = all.filter(function(o){
-      if(vlState.team && o.team !== vlState.team) return false;
+      if(vlState.team && o.team !== vlState.team && o.team && o.team !== 'all') return false;   /* (a clip for all teams shows under every team) */
       if(vlState.year && String(o.date || '').slice(0, 4) !== vlState.year) return false;
       if(words.length){ const hay = vlHay(o); if(!words.every(function(w){ return hay.indexOf(w) !== -1; })) return false; }
       return true;
@@ -9724,11 +9724,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function vlTeamSel(val){
     const sel = h('select', null);
-    sel.appendChild(h('option', {value:'', text:'—'}));
+    sel.appendChild(h('option', {value:'all', text:'All teams'}));
     AGE_GROUPS.forEach(function(g){ sel.appendChild(h('option', {value:g, text:g})); });
-    sel.value = val || ''; return sel;
+    sel.value = val && val !== '' ? val : 'all'; return sel;
   }
-  function vlGroupFor(team){ try{ if(team && isMine(team)) return team; }catch(e){} try{ return primaryGroup() || team || 'U13'; }catch(e){ return team || 'U13'; } }
+  function vlGroupFor(team){ try{ if(team && team !== 'all' && isMine(team)) return team; }catch(e){} try{ return primaryGroup() || team || 'U13'; }catch(e){ return team || 'U13'; } }
   /* + Add clips: several videos (or links) at once, with what they all share filled in once */
   function vlAdd(){
     const rows = [];
