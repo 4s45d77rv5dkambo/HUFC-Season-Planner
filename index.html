@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261112130201">
+<meta name="hufc-build" content="20261112130913">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1258,9 +1258,12 @@ html.view-home #home.hs-classic{display:block; max-width:1100px; margin:16px aut
 .vl-card{background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; cursor:pointer; display:flex; flex-direction:column; text-align:left; padding:0; font:inherit; color:inherit;}
 .vl-card:hover{border-color:#0d0e0f; box-shadow:0 4px 16px rgba(0,0,0,.08);}
 .vl-card:focus-visible{outline:3px solid var(--yellow); outline-offset:2px;}
-.vl-thumb{position:relative; aspect-ratio:16 / 9; background:repeating-linear-gradient(90deg, #1b6b3c 0 22px, #1e7442 22px 44px); overflow:hidden;}
-.vl-thumb img, .vl-thumb video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none;}
-.vl-thumb::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.18), transparent 40%, rgba(0,0,0,.25));}
+.vl-thumb{position:relative; display:block; width:100%; flex:none; background:repeating-linear-gradient(90deg, #1b6b3c 0 22px, #1e7442 22px 44px); overflow:hidden;}
+.vl-thumb::before{content:""; display:block; padding-top:56.25%;}
+.vl-thumb .vl-hov{z-index:0; background:#0d0e0f;}
+.vl-thumb.hov .vl-play{opacity:0;}
+.vl-thumb img, .vl-thumb video{position:absolute; top:0; left:0; right:0; bottom:0; width:100%; height:100%; object-fit:cover; pointer-events:none;}
+.vl-thumb::after{content:""; position:absolute; top:0; left:0; right:0; bottom:0; pointer-events:none; background:linear-gradient(180deg, rgba(0,0,0,.18), transparent 40%, rgba(0,0,0,.25));}
 .vl-play{position:absolute; left:50%; top:50%; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%; background:rgba(13,14,15,.72); color:#fff; display:grid; place-items:center; z-index:1;}
 .vl-play svg{margin-left:3px;}
 .vl-ph{position:absolute; left:8px; top:8px; z-index:1; background:var(--c, #5b5d61); color:#fff; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:12px; letter-spacing:.05em; text-transform:uppercase; padding:2px 7px; border-radius:4px;}
@@ -2748,6 +2751,7 @@ html.tg-open, html.tg-open body{overflow:hidden;}
 .tg-edit{border:1px solid var(--line); border-radius:6px; background:var(--white);}   /* (a clear little box, black and yellow when you point at it) */
 .tg-table .tg-c-pos{width:auto; min-width:60px; white-space:nowrap;}
 .tg-edrow td{background:#fffbe8 !important;}
+.tg-ed .tg-rm{margin-left:auto;}
 .tg-ed{display:flex; flex-wrap:wrap; align-items:center; gap:6px;}
 .tg-ed .set-input{height:32px;}
 @media (hover:none){ .tg-edit{opacity:.8;} }
@@ -9696,6 +9700,24 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         wait ? h('div', {class:'vl-wait', text:wait}) : null,
         h('div', {class:'vl-by', text:'Added by ' + (clean(o.by) || 'a coach') + ' · ' + vlAgo(o.at || o.savedAt)})));
     card.addEventListener('click', function(){ vlOpen(o.id); });
+    /* on a computer: rest the mouse on the card and the clip plays in it, silently */
+    if(v.kind !== 'link' || (pgEmbed(v.url) || {}).kind === 'video'){
+      let hv = null, ht = 0;
+      card.addEventListener('mouseenter', function(){
+        clearTimeout(ht);
+        ht = setTimeout(function(){
+          vlSrcUrl(o).then(function(url){
+            if(!url || hv || !card.matches(':hover')) return;
+            hv = h('video', {class:'vl-hov', src:url, playsinline:true, loop:true, preload:'auto'}); hv.muted = true;
+            const pic = thumb.querySelector('img');
+            thumb.insertBefore(hv, pic ? pic.nextSibling : thumb.firstChild);
+            thumb.classList.add('hov');
+            hv.play().catch(function(){});
+          });
+        }, 300);
+      });
+      card.addEventListener('mouseleave', function(){ clearTimeout(ht); thumb.classList.remove('hov'); if(hv){ try{ hv.pause(); hv.removeAttribute('src'); hv.load(); }catch(e){} hv.remove(); hv = null; } });
+    }
     return card;
   }
   function vlClip(o){ return Object.assign({}, o.v, {title:clean(o.title)}); }
@@ -12933,8 +12955,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const out = !extra.length ? base
       : base ? Object.assign({}, base, {players:base.players.concat(extra)})
       : {kind:'squad', group:team || undefined, players:extra, virtual:true, seeded:false};   /* (no saved squad here yet: just the Squads players) */
-    sqCache[team] = out;
-    return out;
+    let res = out;
+    try{
+      const g = tgGoneKeys();
+      if(res && Object.keys(g).length && res.players.some(function(r){ return g[gtKey(r.name)]; })) res = Object.assign({}, res, {players:res.players.filter(function(r){ return !g[gtKey(r.name)]; })});
+    }catch(e){}
+    sqCache[team] = res;
+    return res;
   }
   /* the team's saved squad on this device: your own copy first, then the newest */
   function sqForOwn(team){
@@ -20096,7 +20123,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     tgAll().filter(function(o){ return o.tg === 'club'; }).forEach(function(o){
       Object.keys(o.players || {}).forEach(function(k){
         const src = o.players[k], cur = m.players[k] || (m.players[k] = {});
-        ['name', 'squad', 'usual', 'pos', 'num', 'foot', 'dob', 'fix'].forEach(function(f){
+        ['name', 'squad', 'usual', 'pos', 'num', 'foot', 'dob', 'fix', 'gone'].forEach(function(f){
           if(!(f in src)) return;
           const at = +((src.at || {})[f] || o.savedAt || 0);
           if(!cur.__at) Object.defineProperty(cur, '__at', {value:{}, enumerable:false});
@@ -20121,6 +20148,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(o.fix){ if(clean(o.name)) p.name = clean(o.name); ['num', 'pos', 'foot', 'dob'].forEach(function(f){ if(f in o) p[f] = clean(o[f]); }); } }
       else if(o.name && o.squad) out.set(k, {key:k, name:o.name, num:o.num || '', pos:o.pos || '', foot:o.foot || '', dob:o.dob || '', squad:o.squad, usual:o.usual || '', av:null, added:true});
     });
+    Object.keys(club.players || {}).forEach(function(k){ if(club.players[k].gone) out.delete(k); });
     return Array.from(out.values());
   }
   function tgSetPlayer(k, ch){
@@ -20416,7 +20444,35 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return h('tr', {class:'tg-edrow'}, h('td', {colspan:'10'}, h('div', {class:'tg-ed'},
       h('span', {class:'tg-lbl', text:'Change player'}), f.list,
       h('button', {type:'button', class:'btn btn-small', text:'Cancel', onclick:close}),
-      h('button', {type:'button', class:'btn btn-small btn-primary', text:'Save', onclick:save}))));
+      h('button', {type:'button', class:'btn btn-small btn-primary', text:'Save', onclick:save}),
+      h('button', {type:'button', class:'btn btn-small btn-danger tg-rm', title:'For a player who has left the club or the team', text:'Remove from squad', onclick:function(){ tgRemovePlayer(p); }}))));
+  }
+  /* who has been taken off the squads (left the club or the team) */
+  function tgGoneKeys(){
+    const g = {};
+    try{ const c = tgClub().players; Object.keys(c).forEach(function(k){ if(c[k].gone) g[k] = 1; }); }catch(e){}
+    return g;
+  }
+  /* take a player off: on the club list (so every coach's Squads and lineups leave them out), and out of your own team's My squad */
+  async function tgRemovePlayer(p){
+    const yes = document.getElementById('confirmYes');
+    const ask = askDelete('player', p.name, '', {title:'Remove ' + p.name + ' from the squad?', text:'For a player who has left. They come off the ' + p.squad + ' squad and the Squads list for every coach, and won’t be offered for lineups. Their old lineups, game time and IDP are kept. You can add them back any time with + Add player.', yes:'Remove player'});
+    try{ if(yes.dataset.cls) yes.className = yes.dataset.cls; }catch(e){}
+    if(!(await ask)) return;
+    const td = !!(CLOUD && CLOUD.isTD && CLOUD.isTD());
+    let before = null;
+    const own = sqForOwn(p.squad);
+    if(own && isMine(p.squad) && !td && canEdit(own) && own.players.some(function(r){ return gtKey(r.name) === p.key; })){
+      before = own.players.map(function(r){ return Object.assign({}, r); });
+      sqStore(p.squad, own.players.filter(function(r){ return gtKey(r.name) !== p.key; }));
+    }
+    tgSetPlayer(p.key, {gone:Date.now(), name:p.name});
+    tgEditing = ''; sqBust(); tgRender();
+    showToast(p.name + ' removed from the ' + p.squad + ' squad', function(){
+      tgSetPlayer(p.key, {gone:0, name:p.name});
+      if(before) sqStore(p.squad, before);
+      sqBust(); tgRender();
+    });
   }
   /* a coach's own team: fixed in its My squad (the list lineups, attendance and stats use), keeping their status.
      Otherwise (a TD or the admin, or a player on the club list): a correction on the club list, which every coach's Squads page shows */
@@ -20471,6 +20527,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         const o = {name:n, num:d.num, pos:d.pos}; if(d.foot) o.foot = d.foot; if(d.dob) o.dob = d.dob;
         sqStore(team, (sq ? sq.players : []).concat([o]));
       } else tgSetPlayer(k, Object.assign({name:n, squad:team}, d));   /* (the admin / a TD adding to a team they don't coach: on the club list) */
+      try{ const c = tgClub().players[k]; if(c && c.gone) tgSetPlayer(k, {gone:0, name:n}); }catch(e){}
       tgRender(); showToast(n + ' added to ' + team);
       const ni = tgPage.querySelector('.tg-add .tg-f-first'); if(ni) ni.focus();
     }});
