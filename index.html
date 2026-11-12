@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261112125616">
+<meta name="hufc-build" content="20261112130201">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1259,7 +1259,7 @@ html.view-home #home.hs-classic{display:block; max-width:1100px; margin:16px aut
 .vl-card:hover{border-color:#0d0e0f; box-shadow:0 4px 16px rgba(0,0,0,.08);}
 .vl-card:focus-visible{outline:3px solid var(--yellow); outline-offset:2px;}
 .vl-thumb{position:relative; aspect-ratio:16 / 9; background:repeating-linear-gradient(90deg, #1b6b3c 0 22px, #1e7442 22px 44px); overflow:hidden;}
-.vl-thumb img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+.vl-thumb img, .vl-thumb video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none;}
 .vl-thumb::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.18), transparent 40%, rgba(0,0,0,.25));}
 .vl-play{position:absolute; left:50%; top:50%; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%; background:rgba(13,14,15,.72); color:#fff; display:grid; place-items:center; z-index:1;}
 .vl-play svg{margin-left:3px;}
@@ -9681,8 +9681,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function vlCard(o){
     const ph = vlPhase(o.phase), v = o.v || {};
     const thumb = h('div', {class:'vl-thumb'});
-    const img = o.thumb || (v.kind === 'link' ? vlYtThumb(v.url) : '');
-    if(img){ const im = h('img', {alt:'', loading:'lazy', src:img}); im.addEventListener('error', function(){ im.remove(); }); thumb.appendChild(im); }
+    const img = vlPicOf(o);
+    if(img){ const im = h('img', {alt:'', loading:'lazy', src:img}); im.addEventListener('error', function(){ im.remove(); try{ localStorage.removeItem('hufc-vlpic:' + o.id); }catch(e){} delete vlPics[o.id]; }); thumb.appendChild(im); }
+    else vlThumbLater(o, thumb);
     const play = h('span', {class:'vl-play'}); play.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5.5 L19 12 L8 18.5 Z" fill="currentColor"/></svg>';
     thumb.append(h('span', {class:'vl-ph', style:'--c:' + ph[3], text:ph[1]}), vlSource(o) ? h('span', {class:'vl-src', text:vlSource(o)}) : null, play, vlDur(o.dur) ? h('span', {class:'vl-dur', text:vlDur(o.dur)}) : null);
     const wait = vlWaitText(o);
@@ -9728,6 +9729,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     document.addEventListener('keydown', esc, true);
     document.body.appendChild(wrap); openModal(wrap);
     try{ pgMountClip(vlClip(o), player, true); }catch(e){ player.appendChild(h('div', {class:'pg-clip-missing', text:'This clip can’t play here.'})); }
+    const pic = vlPicOf(o);
+    if(pic){ [0, 300, 1200].forEach(function(ms){ setTimeout(function(){ const pv = player.querySelector('video'); if(pv && !pv.getAttribute('poster')) pv.setAttribute('poster', pic); }, ms); }); }
   }
   function vlDelete(o){
     const back = JSON.parse(JSON.stringify(o));
@@ -9766,25 +9769,99 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   /* a still from the video for its card, and how long it is */
   function vlFrame(f){
+    let u = ''; try{ u = URL.createObjectURL(f); }catch(e){ return Promise.resolve({}); }
+    return vlGrab(u).then(function(r){ try{ URL.revokeObjectURL(u); }catch(e){} return r; });
+  }
+  /* a still from a video (by its address): a third of the way in, not a black one, small enough to keep with the clip */
+  function vlGrab(url){
     return new Promise(function(res){
-      let done = false, u = '';
-      const fin = function(r){ if(done) return; done = true; try{ if(u) URL.revokeObjectURL(u); }catch(e){} res(r || {}); };
-      try{
-        u = URL.createObjectURL(f);
-        const v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.playsInline = true;
-        v.addEventListener('loadedmetadata', function(){ const d = v.duration; try{ v.currentTime = Math.min(1, (isFinite(d) && d > 0 ? d : 3) / 3); }catch(e){ fin({dur:Math.round(d || 0)}); } });
-        v.addEventListener('seeked', function(){
-          try{
-            const w = 320, hh = Math.round(w * (v.videoHeight || 9) / (v.videoWidth || 16)), c = document.createElement('canvas');
-            c.width = w; c.height = hh; c.getContext('2d').drawImage(v, 0, 0, w, hh);
-            fin({thumb:c.toDataURL('image/jpeg', 0.62), dur:Math.round(v.duration || 0)});
-          }catch(e){ fin({dur:Math.round(v.duration || 0)}); }
+      let done = false, tries = [], k = 0;
+      const v = document.createElement('video');
+      const fin = function(r){ if(done) return; done = true; try{ v.removeAttribute('src'); v.load(); }catch(e){} res(r || {}); };
+      const shot = function(){
+        const w0 = v.videoWidth || 16, h0 = v.videoHeight || 9;
+        /* too dark (a fade, the camera starting)? try another moment */
+        try{
+          const t = document.createElement('canvas'); t.width = 16; t.height = 9; const tc = t.getContext('2d'); tc.drawImage(v, 0, 0, 16, 9);
+          const px = tc.getImageData(0, 0, 16, 9).data; let sum = 0; for(let i = 0; i < px.length; i += 4) sum += px[i] + px[i + 1] + px[i + 2];
+          if(sum / (px.length / 4) / 3 < 16 && k < tries.length - 1){ k++; v.currentTime = tries[k]; return; }
+        }catch(e){ fin({dur:Math.round(v.duration || 0), blocked:true}); return; }
+        let out = '';
+        [[320, 0.62], [320, 0.5], [256, 0.45], [200, 0.4]].some(function(o){
+          const c = document.createElement('canvas'); c.width = o[0]; c.height = Math.round(o[0] * h0 / w0);
+          c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+          out = c.toDataURL('image/jpeg', o[1]); return out.length < 60000;
         });
+        fin({thumb:out.length < 60000 ? out : '', dur:Math.round(v.duration || 0)});
+      };
+      try{
+        v.muted = true; v.preload = 'auto'; v.playsInline = true;
+        v.addEventListener('loadedmetadata', function(){
+          const d = isFinite(v.duration) && v.duration > 0 ? v.duration : 3;
+          tries = [Math.min(3, d / 3), d / 2, d * 0.15, d * 0.75];
+          try{ v.currentTime = tries[0]; }catch(e){ fin({dur:Math.round(d)}); }
+        });
+        v.addEventListener('seeked', shot);
         v.addEventListener('error', function(){ fin({}); });
-        v.src = u;
-        setTimeout(function(){ fin({}); }, 8000);
+        v.src = url;
+        setTimeout(function(){ fin({}); }, 15000);
       }catch(e){ fin({}); }
     });
+  }
+  /* the picture Google Drive or Vimeo make for a link */
+  function vlLinkThumb(url){
+    const yt = vlYtThumb(url); if(yt) return yt;
+    try{
+      const u = new URL(url), host = u.hostname.replace(/^www\.|^m\./, ''); let m;
+      if(host === 'drive.google.com'){ const id = (m = u.pathname.match(/\/file\/d\/([\w-]{10,})/)) ? m[1] : u.searchParams.get('id'); if(id) return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w640'; }
+      if(/(^|\.)vimeo\.com$/.test(host) && (m = u.pathname.match(/\/(?:video\/)?(\d{5,})/))) return 'https://vumbnail.com/' + m[1] + '.jpg';
+    }catch(e){}
+    return '';
+  }
+  /* where this device can play a clip from */
+  function vlSrcUrl(o){
+    const v = o.v || {};
+    if(v.kind === 'asset') return Promise.resolve(pgOnline() ? '/_blob/' + v.asset : '');
+    if(v.kind === 'link'){ const e = pgEmbed(v.url); return Promise.resolve(e && e.kind === 'video' ? e.src : ''); }
+    return pgClipUrl(v).then(function(u){ return u || ''; }).catch(function(){ return ''; });
+  }
+  /* a card with no picture yet: make one (one clip at a time), keep it here, and on the clip when it's yours */
+  const vlPics = {};
+  let vlPicQ = Promise.resolve();
+  function vlPicOf(o){
+    if(o.thumb) return o.thumb;
+    if(vlPics[o.id]) return vlPics[o.id];
+    try{ const c = localStorage.getItem('hufc-vlpic:' + o.id); if(c){ vlPics[o.id] = c; return c; } }catch(e){}
+    return '';
+  }
+  function vlThumbLater(o, box){
+    const v = o.v || {};
+    const put = function(src){
+      if(!src || box.querySelector('img, video')) return;
+      const im = h('img', {alt:'', src:src}); im.addEventListener('error', function(){ im.remove(); }); box.insertBefore(im, box.firstChild);
+    };
+    if(v.kind === 'link'){ const lt = vlLinkThumb(v.url); if(lt){ put(lt); return; } }
+    vlPicQ = vlPicQ.then(function(){
+      if(!box.isConnected) return;
+      return vlSrcUrl(o).then(function(url){
+        if(!url){ if(v.drive && v.drive.url) put(vlLinkThumb(v.drive.url)); return; }
+        return vlGrab(url).then(function(r){
+          if(r.thumb){
+            vlPics[o.id] = r.thumb; try{ localStorage.setItem('hufc-vlpic:' + o.id, r.thumb); }catch(e){}
+            put(r.thumb);
+            if(vlCanManage(o)){
+              try{
+                const cur = JSON.parse(hufcStore.getItem(vlKey(o.id)) || 'null');
+                if(cur && !cur.deleted && !cur.thumb){ cur.thumb = r.thumb; if(!cur.dur && r.dur) cur.dur = r.dur; cur.savedAt = Date.now(); tgWrite(vlKey(o.id), cur); }
+              }catch(e){}
+            }
+          } else if(r.blocked && !box.querySelector('img, video')){
+            /* the picture can't be copied out of this video: show the video itself, still, a moment in */
+            const vid = h('video', {preload:'metadata', playsinline:true, src:url + '#t=2'}); vid.muted = true; box.insertBefore(vid, box.firstChild);
+          }
+        });
+      });
+    }).catch(function(){});
   }
   /* keep the video: online (the planner's own store), the computer program's Videos folder, or this device — then Google Drive */
   async function vlStoreFile(f, fpath, id, title){
