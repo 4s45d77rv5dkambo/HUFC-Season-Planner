@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261113141942">
+<meta name="hufc-build" content="20261113142543">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3060,6 +3060,18 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 .pg-show-video .pg-clip-missing{color:#9a9da1;}
 .pg-show-foot{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 22px 16px;}
 .pg-show-theme{flex:1; text-align:center; font-size:15px; line-height:1.4; color:#c3c5c8; white-space:pre-wrap; overflow:visible;}
+/* the title slide */
+.pg-show .pg-show-body.pg-ts{display:flex !important; flex-direction:column; align-items:center; justify-content:center; gap:clamp(14px, 3.2vh, 34px); text-align:center; padding:12px 24px; overflow:hidden;}
+.pg-ts-logos{display:flex; align-items:center; justify-content:center; gap:clamp(20px, 5vw, 80px);}
+.pg-ts-logo{width:clamp(110px, 30vh, 280px); height:clamp(110px, 30vh, 280px); display:grid; place-items:center;}
+.pg-ts-logo img{max-width:100%; max-height:100%; object-fit:contain; filter:drop-shadow(0 8px 24px rgba(0,0,0,.45));}
+.pg-ts-none span{display:grid; place-items:center; width:86%; height:86%; border-radius:50%; border:3px solid rgba(255,255,255,.4); background:rgba(255,255,255,.06); color:#fff; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:clamp(34px, 8vh, 80px); letter-spacing:.04em;}
+.pg-ts-v{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:clamp(28px, 6vh, 56px); color:var(--yellow); text-transform:uppercase; letter-spacing:.06em;}
+.pg-ts-name{margin:0; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:clamp(34px, min(7.5vw, 10vh), 92px); line-height:1.02; text-transform:uppercase; letter-spacing:.02em; color:#fff;}
+.pg-ts-vs{color:var(--yellow); font-size:.62em; vertical-align:.18em; letter-spacing:.08em;}
+.pg-ts-plan{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:clamp(18px, 3vh, 28px); letter-spacing:.14em; text-transform:uppercase; color:var(--yellow);}
+.pg-ts-info{font-size:clamp(16px, 2.6vh, 24px); color:#c3c5c8;}
+@media (max-width:760px){ .pg-ts-logos{gap:16px;} .pg-ts-logo{width:min(34vw, 150px); height:min(34vw, 150px);} .pg-show .pg-show-body.pg-ts{min-height:60vh;} }
 .pg-show-nav{border:none; background:var(--yellow); color:var(--black); font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:20px; letter-spacing:.04em;
   text-transform:uppercase; padding:10px 22px; border-radius:10px; cursor:pointer; min-width:110px;}
 .pg-show-nav:disabled{opacity:.25; cursor:default;}
@@ -18239,7 +18251,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function pgPresent(i){
     syncBoards();
     if(!state.drills.length) return;
-    pgShowAt = Math.max(0, Math.min(state.drills.length - 1, i || 0));
+    pgShowAt = i ? Math.max(0, Math.min(state.drills.length - 1, i)) : -1;   /* -1: the title slide */
     if(!pgShowEl){
       pgShowEl = h('div', {class:'pg-show', role:'dialog', 'aria-modal':'true', 'aria-label':'Present to players'});
       document.body.appendChild(pgShowEl);
@@ -18371,10 +18383,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   let pgShowT = 0;
   function pgShowGo(step){
     const n = state.drills.length, j = pgShowAt + step;
-    if(j < 0 || j >= n) return;
+    if(j < -1 || j >= n) return;
     pgShowAt = j;
     clearTimeout(pgShowT);
-    const parts = pgShowEl.querySelectorAll('.pg-show-body, .pg-show-names, .pg-show-no, .pg-show-count, .pg-show-theme');
+    const parts = pgShowEl.querySelectorAll('.pg-show-body, .pg-show-names, .pg-show-no, .pg-show-count, .pg-show-theme, .pg-ts-head');
     pgShowEl.style.setProperty('--pg-dir', step > 0 ? 1 : -1);
     if(!parts.length || pgShowEl.classList.contains('pg-leaving')){ pgShowEl.classList.remove('pg-leaving'); pgShowRender(); pgShowEnter(); return; }
     pgShowEl.querySelectorAll('video').forEach(function(v){ try{ v.pause(); }catch(e){} });
@@ -18389,6 +18401,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   function pgShowRender(){
     if(pgShowAnim){ pgShowAnim.stop(); pgShowAnim = null; }
+    if(pgShowAt < 0){ pgShowTitle(); return; }
     const d = state.drills[pgShowAt], n = state.drills.length;
     pgShowEl.querySelectorAll('video').forEach(function(v){ try{ v.pause(); }catch(e){} });
     pgShowEl.innerHTML = '';
@@ -18425,12 +18438,57 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         pitchBox,
         side),
       h('div', {class:'pg-show-foot'},
-        h('button', {type:'button', class:'pg-show-nav', text:'‹ Back', disabled:pgShowAt === 0, onclick:function(){ pgShowGo(-1); }}),
+        h('button', {type:'button', class:'pg-show-nav', text:'‹ Back', disabled:pgShowAt < 0, onclick:function(){ pgShowGo(-1); }}),
         theme ? h('div', {class:'pg-show-theme', text:theme}) : h('div'),
         h('button', {type:'button', class:'pg-show-nav', text:'Next ›', disabled:pgShowAt === n - 1, onclick:function(){ pgShowGo(1); }}))
     );
   }
 
+  /* the title slide: our crest and theirs, "HEIDELBERG vs PORT MELBOURNE", and the game's details */
+  function pgShortClub(name){
+    return clean(name).replace(/\b(football|soccer)\s+club\b/ig, '').replace(/\b(f\.?c|s\.?c)\b\.?/ig, '').replace(/\s{2,}/g, ' ').trim();
+  }
+  function pgShowTitle(){
+    pgShowEl.querySelectorAll('video').forEach(function(v){ try{ v.pause(); }catch(e){} });
+    pgShowEl.innerHTML = '';
+    const n = state.drills.length;
+    const opp = clean(state.meta.opponent), oppName = pgShortClub(opp);
+    const big = document.querySelector('img.crest');
+    const crest = (big && big.src) || luLogoFor('Heidelberg United');
+    const oppLogo = opp ? luLogoFor(opp) : null;
+    const badge = function(src, name, cls){
+      if(src) return h('div', {class:'pg-ts-logo ' + cls}, h('img', {src:src, alt:name}));
+      /* no logo for them yet: their initials in a badge */
+      const ini = (name.match(/\b[A-Za-z]/g) || ['?']).slice(0, 3).join('').toUpperCase();
+      return h('div', {class:'pg-ts-logo pg-ts-none ' + cls}, h('span', {text:ini}));
+    };
+    let when = '';
+    try{ when = clean(state.meta.date) ? luDateShow(state.meta.date) : ''; }catch(e){ when = clean(state.meta.date); }
+    const bits = [clean(state.meta.squad), when, clean(state.meta.time) ? 'Kick-off ' + clean(state.meta.time) : '', clean(state.meta.venue)].filter(Boolean);
+    const named = sessionName(state), auto = pgAutoName();
+    const theme = String(clean(state.focus.theme) || '').split(/\r?\n/).map(function(t){ return t.replace(/^\s*(?:[-–—•*·]+|\d+[.)])\s*/, '').trim(); }).filter(Boolean).join('  –  ');
+    pgShowEl.append(
+      h('div', {class:'pg-show-top pg-ts-top'},
+        h('div', {class:'pg-show-title'}, h('span', {class:'pg-show-names'}, h('span', {class:'pg-show-plan pg-ts-head', text:'Pre-game'}))),
+        h('div', {class:'pg-show-count', text:n + (n === 1 ? ' board' : ' boards')}),
+        h('button', {type:'button', class:'pg-show-x', title:'Close (Esc)', 'aria-label':'Close', text:'✕', onclick:pgShowClose})),
+      h('div', {class:'pg-show-body pg-ts'},
+        h('div', {class:'pg-ts-logos'},
+          badge(crest, 'Heidelberg United', 'pg-ts-us'),
+          opp ? h('span', {class:'pg-ts-v', text:'vs'}) : null,
+          opp ? badge(oppLogo, oppName || opp, 'pg-ts-them') : null),
+        h('h1', {class:'pg-ts-name'},
+          h('span', {text:'Heidelberg'}),
+          opp ? h('span', {class:'pg-ts-vs', text:' vs '}) : (named && named !== auto ? h('span', {class:'pg-ts-vs', text:' · '}) : null),
+          opp ? h('span', {text:oppName || opp}) : (named && named !== auto ? h('span', {text:named}) : null)),
+        named && named !== auto && opp ? h('div', {class:'pg-ts-plan', text:named}) : null,
+        bits.length ? h('div', {class:'pg-ts-info', text:bits.join('  ·  ')}) : null),
+      h('div', {class:'pg-show-foot'},
+        h('button', {type:'button', class:'pg-show-nav', text:'‹ Back', disabled:true}),
+        theme ? h('div', {class:'pg-show-theme', text:theme}) : h('div'),
+        h('button', {type:'button', class:'pg-show-nav', text:'Start ›', disabled:!n, onclick:function(){ pgShowGo(1); }}))
+    );
+  }
   /* ---------- 3D stadium view (Present mode): the board tilted back, players standing up, a stadium all round ---------- */
   function pgBoard3d(d){ return d.view === '3d' || d.around === 'stadium'; }
   /* ---------- new pre-game ---------- */
