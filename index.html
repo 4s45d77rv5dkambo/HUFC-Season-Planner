@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261113143716">
+<meta name="hufc-build" content="20261113143941">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1260,6 +1260,21 @@ html.view-home #home.hs-classic{display:block; max-width:1100px; margin:16px aut
 .vl-card:focus-visible{outline:3px solid var(--yellow); outline-offset:2px;}
 .vl-thumb{position:relative; display:block; width:100%; flex:none; background:repeating-linear-gradient(90deg, #1b6b3c 0 22px, #1e7442 22px 44px); overflow:hidden;}
 .vl-thumb::before{content:""; display:block; padding-top:56.25%;}
+/* + From video library (pre-game boards) */
+.modal .modal-box.se-form-box:has(.vl-pk){width:min(920px, calc(100vw - 32px)) !important; max-width:none !important;}
+.vl-pk-tools{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+.vl-pk-tools .vl-pk-q{flex:1 1 260px; margin:0;}
+.vl-pk-tools .vl-pk-ph{flex:0 1 240px; margin:0;}
+.vl-pk-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:12px; max-height:min(58vh, 560px); overflow:auto; padding:2px;}
+.vl-pk-card{display:flex; flex-direction:column; text-align:left; padding:0; border:1.5px solid var(--line); border-radius:10px; overflow:hidden; background:#fff; font:inherit; color:inherit; cursor:pointer;}
+.vl-pk-card:hover{border-color:#0d0e0f;}
+.vl-pk-card.on{border-color:var(--yellow); box-shadow:0 0 0 2px var(--yellow) inset; cursor:default;}
+.vl-pk-t{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:17px; line-height:1.15; padding:8px 10px 2px;}
+.vl-pk-from{color:#5b5d61; font-size:12.5px; padding:0 10px;}
+.vl-pk-tick{margin:6px 10px 9px; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px; letter-spacing:.04em; text-transform:uppercase; color:#0d0e0f;}
+.vl-pk-card.on .vl-pk-tick{color:#8a6d00;}
+.vl-pk-none{grid-column:1 / -1; color:#8a8d91; padding:24px; text-align:center;}
+.vl-pk-n{margin-right:auto; align-self:center; color:#5b5d61; font-size:14px;}
 .vl-thumb .vl-hov{z-index:0; background:#0d0e0f;}
 .vl-thumb.hov .vl-play{opacity:0;}
 .vl-thumb img, .vl-thumb video{position:absolute; top:0; left:0; right:0; bottom:0; width:100%; height:100%; object-fit:cover; pointer-events:none;}
@@ -9826,6 +9841,62 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         }})];
     });
   }
+  /* a pre-game board's "+ From video library": the library's clips to pick from (this board's phase first) */
+  function vlBoardPhase(ph){ return !ph ? '' : VL_PHASES.some(function(p){ return p[0] === ph; }) ? ph : /^(cor|sp|pen)/.test(ph) ? 'sp' : ''; }
+  function vlPickForBoard(d){
+    const all = vlAll().sort(function(a, b){ return (b.at || b.savedAt || 0) - (a.at || a.savedAt || 0); });
+    if(!all.length){ showToast('The video library is empty · add clips to it first (menu → Video library)'); return; }
+    const mine = vlBoardPhase(d.phase);
+    const had = {}; (d.clips || []).forEach(function(c){ had[(c.kind || '') + '|' + (c.url || c.asset || c.local || c.name || '')] = 1; });
+    const sig = function(o){ const v = o.v || {}; return (v.kind || '') + '|' + (v.url || v.asset || v.local || v.name || ''); };
+    const q = h('input', {type:'search', class:'set-input vl-pk-q', placeholder:'Search titles, tags, opponents…', 'aria-label':'Search the video library'});
+    const ph = h('select', {class:'set-input vl-pk-ph', 'aria-label':'Phase'});
+    ph.appendChild(h('option', {value:'', text:'Every phase'}));
+    VL_PHASES.forEach(function(p){ const n = all.filter(function(o){ return o.phase === p[0]; }).length; if(n) ph.appendChild(h('option', {value:p[0], text:p[1] + ' · ' + n})); });
+    ph.value = mine && all.some(function(o){ return o.phase === mine; }) ? mine : '';
+    const grid = h('div', {class:'vl-pk-grid'});
+    const count = h('div', {class:'vl-pk-n'});
+    let added = 0;
+    const add = async function(o, card){
+      if(card.classList.contains('on')) return;
+      const v = o.v || {}, c = {id:newId(), kind:v.kind, title:clean(o.title) || 'Clip'};
+      ['url', 'asset', 'name', 'size', 'local', 'drive'].forEach(function(f){ if(v[f] != null) c[f] = v[f]; });
+      if(v.kind === 'file' && v.id){ try{ const b = await pgMedia.get(v.id); if(b) await pgMedia.put(c.id, b); }catch(e){} }
+      syncBoards();
+      d.clips = Array.isArray(d.clips) ? d.clips : []; d.clips.push(c);
+      rerender(); saveLocal();
+      had[sig(o)] = 1; added++;
+      card.classList.add('on'); card.querySelector('.vl-pk-tick').textContent = '✓ On the board';
+      count.textContent = added + (added === 1 ? ' clip added' : ' clips added') + ' to ' + (clean(d.name) || 'this board');
+    };
+    const draw = function(){
+      grid.innerHTML = '';
+      const words = clean(q.value).toLowerCase().split(/\s+/).filter(Boolean);
+      const list = all.filter(function(o){ if(ph.value && o.phase !== ph.value) return false; const hay = vlHay(o); return words.every(function(w){ return hay.indexOf(w) >= 0; }); });
+      if(!list.length){ grid.appendChild(h('div', {class:'vl-pk-none', text:'No clips match'})); return; }
+      list.forEach(function(o){
+        const p = vlPhase(o.phase), v = o.v || {};
+        const thumb = h('div', {class:'vl-thumb'}, h('span', {class:'vl-ph', style:'--c:' + p[3], text:p[1]}), o.dur ? h('span', {class:'vl-dur', text:vlDur(o.dur)}) : null);
+        const img = vlPicOf(o) || (v.kind === 'link' ? vlLinkThumb(v.url) : '');
+        if(img){ const im = h('img', {alt:'', loading:'lazy', src:img}); im.addEventListener('error', function(){ im.remove(); }); thumb.insertBefore(im, thumb.firstChild); }
+        else vlThumbLater(o, thumb);
+        const on = !!had[sig(o)];
+        const card = h('button', {type:'button', class:'vl-pk-card' + (on ? ' on' : ''), title:on ? 'Already on this board' : 'Put this clip on the board'},
+          thumb,
+          h('div', {class:'vl-pk-t', text:clean(o.title) || 'Untitled clip'}),
+          h('div', {class:'vl-pk-from', text:vlFrom(o)}),
+          h('div', {class:'vl-pk-tick', text:on ? '✓ On the board' : '+ Add'}));
+        card.addEventListener('click', function(){ add(o, card); });
+        grid.appendChild(card);
+      });
+    };
+    q.addEventListener('input', draw); ph.addEventListener('change', draw);
+    const body = h('div', {class:'se-form-body vl-pk'}, h('div', {class:'vl-pk-tools'}, q, ph), grid);
+    seForm('Add clips from the video library', body, function(close){
+      return [count, h('button', {type:'button', class:'btn btn-primary', text:'Done', onclick:close})];
+    });
+    draw();
+  }
   /* a still from the video for its card, and how long it is */
   function vlFrame(f){
     let u = ''; try{ u = URL.createObjectURL(f); }catch(e){ return Promise.resolve({}); }
@@ -18054,6 +18125,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           setStatus('Clip added to this board');
         });
       }}),
+      h('button', {type:'button', class:'add-link', style:'margin-top:0', text:'+ From video library', title:'Pick clips from the club’s video library', onclick:function(){ vlPickForBoard(d); }}),
       fileIn));
     wrap.appendChild(linkRow);
     return wrap;
