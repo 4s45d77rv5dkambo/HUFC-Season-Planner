@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261113211158">
+<meta name="hufc-build" content="20261113212444">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -9927,6 +9927,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     });
     draw();
   }
+  /* a pop-up closes on a click outside it — but not when the mouse went down inside it (selecting text, dragging) and came up outside */
+  (function(){
+    let downOn = null;
+    document.addEventListener('pointerdown', function(e){ downOn = e.target; }, true);
+    document.addEventListener('click', function(e){
+      const t = e.target, from = downOn; downOn = null;
+      if(!t || !t.classList || !from || from === t) return;
+      if((t.classList.contains('modal') || t.classList.contains('guide-vid-wrap') || t.classList.contains('modal-backdrop')) && t.contains(from)){ e.stopPropagation(); e.preventDefault(); }
+    }, true);
+  })();
   /* a still from the video for its card, and how long it is */
   function vlFrame(f){
     let u = ''; try{ u = URL.createObjectURL(f); }catch(e){ return Promise.resolve({}); }
@@ -10128,17 +10138,35 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const opp = h('input', {type:'text', value:clean(o.opp)}), date = h('input', {type:'date', value:/^\d{4}-\d\d-\d\d$/.test(o.date || '') ? o.date : ''}), min = h('input', {type:'text', value:clean(o.min), placeholder:'e.g. 23'});
     const tags = h('input', {type:'text', value:(o.tags || []).join(', ')}), note = h('textarea', {rows:'4', placeholder:'What should the coaches look for? e.g. 6 drops between the centre-backs; the keeper plays into the 8, who bounces it back to the 6 facing forward'});
     note.value = o.note || '';
+    /* the video itself: pick the file again (e.g. when its copy was lost) */
+    let newFile = null, newPath = '';
+    const vIn = h('input', {type:'file', accept:'video/*', hidden:true});
+    const vName = h('span', {class:'se-field-help', text:o.v && o.v.kind === 'link' ? 'A link: ' + clean(o.v.url) : (o.v && o.v.name ? o.v.name : '')});
+    vIn.addEventListener('change', function(){ const f = vIn.files && vIn.files[0]; if(!f) return; newFile = f; newPath = window.hufcDesktop && window.hufcDesktop.pathOf ? window.hufcDesktop.pathOf(f) : ''; vName.textContent = 'New video: ' + f.name + ' (kept when you press Save)'; });
+    const vBtn = h('button', {type:'button', class:'btn btn-small', text:'Replace the video…', onclick:function(){ vIn.click(); }});
     const body = h('div', {class:'se-form-body vl-edit'},
       h('label', {class:'se-field vl-wide'}, h('span', {class:'se-field-l', text:'Name'}), title),
       seField('Phase', phase), seField('Team', team), seField('Opponent', opp), seField('Game date', date), seField('Minute', min),
       h('label', {class:'se-field vl-wide'}, h('span', {class:'se-field-l', text:'Tags'}), tags, h('span', {class:'se-field-help', text:'Separate them with commas'})),
-      h('label', {class:'se-field vl-wide'}, h('span', {class:'se-field-l', text:'Description'}), note));
+      h('label', {class:'se-field vl-wide'}, h('span', {class:'se-field-l', text:'Description'}), note),
+      h('div', {class:'se-field vl-wide'}, h('span', {class:'se-field-l', text:'Video'}), h('div', null, vBtn, vIn), vName));
     seForm('Change this clip', body, function(close){
       return [h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}),
-        h('button', {type:'button', class:'btn btn-primary', text:'Save', onclick:function(){
+        h('button', {type:'button', class:'btn btn-primary', text:'Save', onclick:async function(ev){
           const cur = vlAll().find(function(x){ return x.id === o.id; }) || o;
           const n = Object.assign({}, cur, {title:clean(title.value) || cur.title, phase:phase.value, team:team.value, group:cur.group || vlGroupFor(team.value), opp:clean(opp.value), date:date.value, min:clean(min.value), tags:vlTagList(tags.value), note:String(note.value || '').trim(), savedAt:Date.now()});
+          if(newFile){
+            const btn = ev && ev.currentTarget; if(btn){ btn.disabled = true; btn.textContent = 'Saving the video…'; }
+            try{
+              const meta = await vlFrame(newFile);
+              n.v = await vlStoreFile(newFile, newPath, newId(), n.title);
+              delete n.thumb; if(meta.thumb && meta.thumb.length < 60000) n.thumb = meta.thumb; if(meta.dur) n.dur = meta.dur;
+              try{ localStorage.removeItem('hufc-vlpic:' + o.id); }catch(e){} delete vlPics[o.id];
+            }catch(e){ console.warn(e); showToast('Couldn’t keep that video on this device — try a smaller clip'); if(btn){ btn.disabled = false; btn.textContent = 'Save'; } return; }
+          }
+          n.savedAt = Date.now();
           tgWrite(vlKey(o.id), n); close(); vlRender(); vlOpen(o.id);
+          if(newFile){ try{ driveSoon(); }catch(e){} showToast('New video saved for “' + n.title + '”'); }
         }})];
     });
   }
@@ -17747,7 +17775,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         try{
           for(let i = 0; i < hufcStore.length; i++){
             const k = hufcStore.key(i);
-            if(k && k.indexOf(LS_PREFIX) === 0 && (hufcStore.getItem(k) || '').indexOf(local) !== -1) return;
+            if(k && (k.indexOf(LS_PREFIX) === 0 || k.indexOf(TG_PRE + 'clip-') === 0) && (hufcStore.getItem(k) || '').indexOf(local) !== -1) return;
           }
         }catch(e){ return; }
         if(window.hufcDesktop && window.hufcDesktop.deleteVideo) window.hufcDesktop.deleteVideo(local);
@@ -17758,7 +17786,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       try{
         for(let i = 0; i < hufcStore.length; i++){
           const k = hufcStore.key(i);
-          if(k && k.indexOf(LS_PREFIX) === 0 && (hufcStore.getItem(k) || '').indexOf(id) !== -1) return;
+          if(k && (k.indexOf(LS_PREFIX) === 0 || k.indexOf(TG_PRE + 'clip-') === 0) && (hufcStore.getItem(k) || '').indexOf(id) !== -1) return;
         }
       }catch(e){ return; }
       pgMedia.del(id).catch(function(){});
@@ -18068,7 +18096,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       try{
         for(let i = 0; i < hufcStore.length; i++){
           const k = hufcStore.key(i);
-          if(k && k.indexOf(LS_PREFIX) === 0 && (hufcStore.getItem(k) || '').indexOf(aid) !== -1) return;
+          if(k && (k.indexOf(LS_PREFIX) === 0 || k.indexOf(TG_PRE + 'clip-') === 0) && (hufcStore.getItem(k) || '').indexOf(aid) !== -1) return;
         }
         const assets = window.__HUFC_ASSETS ? await window.__HUFC_ASSETS : null;
         if(assets) await assets.delete(aid);
@@ -18186,7 +18214,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       try{
         for(let i = 0; i < hufcStore.length; i++){
           const k = hufcStore.key(i);
-          if(k && k.indexOf(LS_PREFIX) === 0 && (hufcStore.getItem(k) || '').indexOf(local) !== -1) return;
+          if(k && (k.indexOf(LS_PREFIX) === 0 || k.indexOf(TG_PRE + 'clip-') === 0) && (hufcStore.getItem(k) || '').indexOf(local) !== -1) return;
         }
       }catch(e){ return; }
       if(window.hufcDesktop && window.hufcDesktop.deletePicture) window.hufcDesktop.deletePicture(local);
@@ -19066,7 +19094,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       try{
         for(let i = 0; i < hufcStore.length; i++){
           const k = hufcStore.key(i);
-          if(k && k.indexOf(LS_PREFIX) === 0 && (hufcStore.getItem(k) || '').indexOf(drive.id) !== -1) return;
+          if(k && (k.indexOf(LS_PREFIX) === 0 || k.indexOf(TG_PRE + 'clip-') === 0) && (hufcStore.getItem(k) || '').indexOf(drive.id) !== -1) return;
         }
       }catch(e){ return; }
       if(driveDesk()){ try{ await window.hufcDesktop.gdrive.remove(drive.id); }catch(e){} }
