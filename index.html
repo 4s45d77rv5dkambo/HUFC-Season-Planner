@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261113132407">
+<meta name="hufc-build" content="20261113140538">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -17229,18 +17229,47 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const id = side === 'us' ? (pgFormationId(d.fUs) || pgFormationId(s.focus.ours) || '4-3-3') : (pgFormationId(d.fThem) || pgFormationId(s.focus.theirs) || '4-4-2');
     const types = side === 'us' ? ['player-a', 'gk-a'] : ['player-b', 'gk-b'];
     d.items = (d.items || []).filter(function(it){ return types.indexOf(it.type) === -1; });
+    const half = pgHalfFit(d);
     luSlots('11', id).forEach(function(sl){
       const gk = sl.pos === 'GK';
       let x = sl.x, y = gk ? P.gk : P.band[0] + (sl.y - 112) / (362 - 112) * (P.band[1] - P.band[0]);
       if(side !== 'us'){ x = 300 - x; y = 460 - y; }
+      let rot = side === 'us' ? 180 : 0;   /* our team faces up the pitch, the opposition face down it */
+      if(half){
+        const q = half.put(x, y, gk);
+        if(!q) return;   /* the keeper at the far end, off this half */
+        x = q.x; y = q.y; if(half.far) rot = (rot + 180) % 360;
+      }
       const type = gk ? types[1] : types[0];
-      d.items.push({k:'t', type:type, color:DEFAULT_COLOR[type], x:+x.toFixed(1), y:+y.toFixed(1), rot:side === 'us' ? 180 : 0, scale:1, label:gk ? 'GK' : sl.pos});   /* our team faces up the pitch, the opposition face down it */
+      d.items.push({k:'t', type:type, color:DEFAULT_COLOR[type], x:+x.toFixed(1), y:+y.toFixed(1), rot:rot, scale:1, label:gk ? 'GK' : sl.pos});
     });
-    pgSpread(d.items, types);
+    pgSpread(d.items, types, boardDims(d.layout));
+  }
+  /* a half-pitch board: where a spot on the full pitch (300×460, our goal at the bottom) goes on the half that's drawn */
+  const PG_FAR_HALF = {ip3:1, press:1};   /* these show their goal (we attack down towards it) */
+  function pgHalfFit(d){
+    const L = d.layout;
+    let gx, gy, sy;   /* half pitch: metres across → x, metres out from the goal → y */
+    if(L === 'half-wide'){ const H = HALFW; gx = function(mx){ return 10 + mx * H.s; }; gy = function(m){ return H.gl - m * H.s; }; }
+    else if(L === 'half' || L === 'half-zoom'){ gx = function(mx){ return 10 + mx * 280 / 68; }; gy = function(m){ return 450 - m * 440 / 52.5; }; }
+    else return null;
+    const far = !!PG_FAR_HALF[d.phase];
+    const ph = PG_PHASES[d.phase] || PG_PHASES.mid, op = PG_PHASES[ph.opp] || PG_PHASES.mid;
+    const fromGoal = function(y){ const m = (450 - y) / 440 * 105; return far ? 105 - m : m; };   /* metres out from the goal that's drawn */
+    /* how far up the two teams reach (the same for both, so they line up): squeeze to fit if that's past halfway */
+    const reach = Math.max(fromGoal(ph.band[0]), fromGoal(ph.band[1]), fromGoal(460 - op.band[0]), fromGoal(460 - op.band[1]));
+    const k = Math.min(1, 49 / reach);
+    return {far:far, put:function(x, y, gk){
+      const m = fromGoal(y);
+      if(gk && m > 52.5) return null;
+      let mx = (x - 10) / 280 * 68; if(far) mx = 68 - mx;
+      return {x:gx(Math.max(1.5, Math.min(66.5, mx))), y:gy(Math.max(0.8, m * k))};
+    }};
   }
   /* the team just placed steps clear of anyone already standing there (no player sits on top of another) */
   const PG_PEOPLE = {'player-a':1, 'gk-a':1, 'player-b':1, 'gk-b':1, 'player-c':1, 'coach':1};
-  function pgSpread(items, moving){
+  function pgSpread(items, moving, D){
+    D = D || BOARD_TALL;
     const clash = function(x, y, others){ return others.some(function(o){ const dx = (o.x - x) / 24, dy = (o.y - y) / 22; return dx * dx + dy * dy < 1; }); };
     const fixed = items.filter(function(it){ return PG_PEOPLE[it.type] && moving.indexOf(it.type) === -1; });
     const done = [];
@@ -17250,7 +17279,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(moving.indexOf(it.type) === -1) return;
       const others = fixed.concat(done);
       for(let i = 0; i < steps.length; i++){
-        const x = Math.max(18, Math.min(282, it.x + steps[i][0])), y = Math.max(18, Math.min(442, it.y + steps[i][1]));
+        const x = Math.max(18, Math.min(D.w - 18, it.x + steps[i][0])), y = Math.max(18, Math.min(D.h - 18, it.y + steps[i][1]));
         if(!clash(x, y, others)){ it.x = +x.toFixed(1); it.y = +y.toFixed(1); break; }
       }
       done.push(it);
