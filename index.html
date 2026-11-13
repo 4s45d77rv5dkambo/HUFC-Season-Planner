@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261112130913">
+<meta name="hufc-build" content="20261113132407">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3101,6 +3101,12 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
   font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:18px; letter-spacing:.05em; text-transform:uppercase; cursor:pointer;}
 .pg-show-loop svg{display:block; width:15px; height:15px;}
 .pg-show-loop.on{background:var(--yellow); border-color:var(--yellow); color:var(--black);}
+.pg-show-speed{display:inline-flex; border:1px solid rgba(255,255,255,.35); border-radius:999px; overflow:hidden;}
+.pg-show-speed button{border:none; background:transparent; color:#fff; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:16px; letter-spacing:.05em; text-transform:uppercase; padding:9px 13px; cursor:pointer;}
+.pg-show-speed button + button{border-left:1px solid rgba(255,255,255,.2);}
+.pg-show-speed button:hover:not(.on){background:rgba(255,255,255,.12);}
+.pg-show-speed button.on{background:var(--yellow); color:var(--black);}
+@media (max-width:760px){ .pg-show-speed button{font-size:14px; padding:8px 9px;} }
 /* pause / step / stop while the animation is going */
 .pg-show-play.is-paused{background:#fff;}
 .pg-show-ctl{display:inline-grid; place-items:center; width:42px; height:42px; padding:0; border:1px solid rgba(255,255,255,.35); border-radius:50%; background:rgba(255,255,255,.06); color:#fff; cursor:pointer; transition:background .15s, opacity .15s;}
@@ -7043,7 +7049,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
             renderAnimBar(live ? curPlayAt : undefined);
           }}));
         const sp = h('select', {class:'anim-speed', 'aria-label':'Animation speed', title:'Speed', disabled:live, onchange:function(){ d.anim.speed = +sp.value; onStepOuter(); }});
-        [['0.5','Slow'], ['1','Normal'], ['1.6','Fast']].forEach(function(o){ sp.appendChild(h('option', {value:o[0], text:o[1]})); });
+        [['0.3','Slow-mo'], ['0.5','Slow'], ['1','Normal'], ['1.6','Fast']].forEach(function(o){ sp.appendChild(h('option', {value:o[0], text:o[1]})); });
         sp.value = String(d.anim.speed || 1);
         if(sp.value === '') sp.value = '1';
         animBar.appendChild(sp);
@@ -9316,8 +9322,20 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       g.querySelectorAll('.player-num, .tok-light').forEach(function(e){ e.setAttribute('transform', 'rotate(' + (-q.rot) + ')'); }); }); };
     /* on: started (playing or paused) · held: paused part-way, to explain — Resume carries on from the same spot */
     let raf = 0, on = false, held = false, heldAt = 0, seg = 0, t0 = null, fresh = false;
-    const sp = +((p.anim && p.anim.speed) || 1), dur = 1100 / sp, pause = 260 / sp;
+    let sp = +((p.anim && p.anim.speed) || 1), dur = 1100 / sp, pause = 260 / sp;
     const now = function(){ return (window.performance && performance.now) ? performance.now() : Date.now(); };
+    /* a new speed, part-way through: carry on from the same spot in the step */
+    function setSpeed(v){
+      v = +v || 1; if(v === sp) return;
+      const nd = 1100 / v, np = 260 / v;
+      if(on && t0 != null && !fresh){
+        const at = held ? heldAt : now(), pz = seg === 0 ? pause : 0, npz = seg === 0 ? np : 0;
+        const e = (at - t0 - pz) / dur;
+        if(e < 0) t0 = at - (pz ? (at - t0) / pz : 0) * npz;
+        else t0 = at - npz - e * nd;
+      }
+      sp = v; dur = nd; pause = np;
+    }
     const tick = function(at){ if(onTick) onTick(at); };
     function cancel(){ cancelAnimationFrame(raf); clearTimeout(raf); raf = 0; }
     function frame(ts){
@@ -9363,7 +9381,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       seg = k; put(P[k]); fresh = true; t0 = null;
       tick(k);
     }
-    return {play:play, stop:stop, pause:pauseIt, resume:resume, stepTo:stepTo, steps:P.length,
+    return {play:play, stop:stop, pause:pauseIt, resume:resume, stepTo:stepTo, steps:P.length, setSpeed:setSpeed, speed:function(){ return sp; },
       playing:function(){ return on; }, paused:function(){ return on && held; }, step:function(){ return seg; }};
   }
 
@@ -18208,6 +18226,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           e.preventDefault();
           if(!pgShowAnim.playing()) pgShowAnim.play(); else if(pgShowAnim.paused()) pgShowAnim.resume(); else pgShowAnim.pause();
         }
+        else if((e.key === '-' || e.key === '_' || e.key === '+' || e.key === '=') && pgShowEl.querySelector('.pg-show-speed')){
+          e.preventDefault();
+          const on = pgShowEl.querySelector('.pg-show-speed button.on'), to = on && ((e.key === '-' || e.key === '_') ? on.previousElementSibling : on.nextElementSibling);
+          if(to) to.click();
+        }
         else if(e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' '){ e.preventDefault(); pgShowGo(1); }
         else if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); pgShowGo(-1); }
       }, true);
@@ -18284,7 +18307,22 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       rep.classList.toggle('on', !!d.anim.loop); rep.setAttribute('aria-pressed', d.anim.loop ? 'true' : 'false');
       try{ scheduleSave(); }catch(e){}
     });
-    box._play = h('div', {class:'pg-show-plays'}, btn, prevB, nextB, stopB, stepT, rep);
+    /* Speed: change it any time, even while it plays (kept with the board, like Repeat) */
+    const spd = h('div', {class:'pg-show-speed', role:'group', 'aria-label':'Animation speed', title:'Animation speed (− and + keys)'});
+    const curSp = String(+(d.anim.speed || 1));
+    [['0.3', 'Slow-mo'], ['0.5', 'Slow'], ['1', 'Normal'], ['1.6', 'Fast']].forEach(function(o){
+      const b = h('button', {type:'button', class:o[0] === curSp ? 'on' : '', 'aria-pressed':o[0] === curSp ? 'true' : 'false', 'data-sp':o[0], text:o[1]});
+      b.addEventListener('click', function(){
+        const v = +o[0];
+        if(v === 1) delete d.anim.speed; else d.anim.speed = v;
+        anim.setSpeed(v);
+        spd.querySelectorAll('button').forEach(function(x){ const me = x === b; x.classList.toggle('on', me); x.setAttribute('aria-pressed', me ? 'true' : 'false'); });
+        try{ scheduleSave(); }catch(e){}
+      });
+      spd.appendChild(b);
+    });
+    if(!spd.querySelector('.on')) spd.querySelector('[data-sp="1"]').classList.add('on');
+    box._play = h('div', {class:'pg-show-plays'}, btn, prevB, nextB, stopB, stepT, rep, spd);
     return box;
   }
   function pgShowClose(){
