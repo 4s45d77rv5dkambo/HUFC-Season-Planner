@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261113144920">
+<meta name="hufc-build" content="20261113205550">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -19152,7 +19152,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const ix = {}, luDate = {}, pgDate = {};
     const slot = function(iso){ return ix[iso] || (ix[iso] = {session:[], pregame:[], lineup:[], video:[]}); };
     listSessions().forEach(function(x){
-      if(groupOf(x.plan) !== g) return;
+      if(attTeams(x.plan).indexOf(g) === -1) return;   /* the teams ticked in its Squad / Group box (else its own team) */
       const iso = luDateToIso(x.plan.meta && x.plan.meta.date);
       if(isPre(x.plan) && iso) pgDate[anPgId(x)] = iso;
       if(iso) slot(iso)[isPre(x.plan) ? 'pregame' : 'session'].push(x);
@@ -19286,7 +19286,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const g = s.group;
     let all = kind === 'lineup' ? luList().map(function(x){ return {x:x, o:x.lu, date:x.lu.meta.date}; })
       : listSessions().filter(function(x){ return isPre(x.plan) === (kind === 'pregame'); }).map(function(x){ return {x:x, o:x.plan, date:x.plan.meta.date}; });
-    all = all.filter(function(r){ return groupOf(r.o) === g && canEdit(r.o) && luDateToIso(r.date) !== info.iso; });
+    all = all.filter(function(r){ return (kind === 'lineup' ? groupOf(r.o) === g : attTeams(r.o).indexOf(g) !== -1) && canEdit(r.o) && luDateToIso(r.date) !== info.iso; });
     all.sort(function(a, b){ return (luDateToIso(a.date) ? 1 : 0) - (luDateToIso(b.date) ? 1 : 0) || (b.o.savedAt || 0) - (a.o.savedAt || 0); });
     const box = h('div', {class:'modal-box confirm-box se-pick-box', role:'dialog', 'aria-modal':'true', 'aria-label':'Add to this day'});
     const wrap = h('div', {class:'modal confirm-modal se-pick'}, box);
