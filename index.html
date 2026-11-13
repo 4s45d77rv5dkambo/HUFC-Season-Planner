@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261113142543">
+<meta name="hufc-build" content="20261113143716">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3031,7 +3031,7 @@ body.doc-pregame #addRunsheetBtn{display:none !important;}
 
 /* ---------- Present: full screen, one board at a time ---------- */
 html.pg-showing, html.pg-showing body{overflow:hidden;}
-.pg-show{position:fixed; inset:0; z-index:2000; background:#0d0e0f; color:#fff; display:grid; grid-template-rows:auto minmax(0,1fr) auto;}
+.pg-show{position:fixed; inset:0; z-index:2000; background:#0d0e0f; color:#fff; display:grid; grid-template-rows:auto minmax(0,1fr) auto; overflow:hidden;}
 .pg-show[hidden]{display:none;}
 .pg-show-top{display:flex; align-items:center; gap:14px; padding:14px 22px; border-bottom:3px solid var(--yellow);}
 .pg-show-title{display:flex; align-items:center; gap:12px; min-width:0; flex:1; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:30px; letter-spacing:.02em; text-transform:uppercase; line-height:1.1;}
@@ -3162,18 +3162,25 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 
 /* Present mode: slides ease out and in (a gentle fade only, if Windows is set to reduce motion) */
 .pg-show .pg-show-body, .pg-show .pg-show-names, .pg-show .pg-show-no, .pg-show .pg-show-count, .pg-show .pg-show-theme{transition:opacity .17s ease-in, transform .17s ease-in;}
-.pg-show.pg-leaving .pg-show-body{opacity:0; transform:translateX(calc(var(--pg-dir, 1) * -28px));}
+.pg-show.pg-leaving .pg-show-body{opacity:0; transform:translate3d(-28px, 0, 0);}
+.pg-show.pg-leaving.pg-back .pg-show-body{transform:translate3d(28px, 0, 0);}
 .pg-show.pg-leaving .pg-show-names, .pg-show.pg-leaving .pg-show-no, .pg-show.pg-leaving .pg-show-count, .pg-show.pg-leaving .pg-show-theme{opacity:0;}
-@keyframes pgSlideIn{from{opacity:0; transform:translateX(calc(var(--pg-dir, 1) * 36px));} to{opacity:1; transform:none;}}
+@keyframes pgSlideIn{from{opacity:0; transform:translate3d(calc(var(--pg-dir, 1) * 36px), 0, 0);} to{opacity:1; transform:translate3d(0, 0, 0);}}
+@keyframes pgSlideInR{from{opacity:0; transform:translate3d(36px, 0, 0);} to{opacity:1; transform:translate3d(0, 0, 0);}}
+@keyframes pgSlideInL{from{opacity:0; transform:translate3d(-36px, 0, 0);} to{opacity:1; transform:translate3d(0, 0, 0);}}
+.pg-show.pg-pre .pg-show-body, .pg-show.pg-pre .pg-show-names, .pg-show.pg-pre .pg-show-no, .pg-show.pg-pre .pg-show-count, .pg-show.pg-pre .pg-show-theme{opacity:0; transition:none;}
+.pg-show .pg-show-body{will-change:transform, opacity; backface-visibility:hidden;}
 @keyframes pgFadeIn{from{opacity:0;} to{opacity:1;}}
-.pg-show.pg-entering .pg-show-body{animation:pgSlideIn .42s cubic-bezier(.22,.8,.24,1) both;}
+.pg-show.pg-entering .pg-show-body{animation:pgSlideInR .42s cubic-bezier(.22,.8,.24,1) both;}
+.pg-show.pg-entering.pg-back .pg-show-body{animation-name:pgSlideInL;}
 .pg-show.pg-entering .pg-show-names, .pg-show.pg-entering .pg-show-no, .pg-show.pg-entering .pg-show-count, .pg-show.pg-entering .pg-show-theme{animation:pgFadeIn .36s ease-out both;}
 /* opening and closing Present mode */
 .pg-show.pg-opening{animation:pgFadeIn .4s ease-out both;}
 .pg-show.pg-closing{opacity:0; transition:opacity .3s ease-in; pointer-events:none;}
 @media (prefers-reduced-motion: reduce){
   .pg-show.pg-leaving .pg-show-body{transform:none;}
-  .pg-show.pg-entering .pg-show-body{animation:pgFadeIn .3s ease-out both;}
+  .pg-show.pg-entering .pg-show-body, .pg-show.pg-entering.pg-back .pg-show-body{animation:pgFadeIn .3s ease-out both;}
+  .pg-show.pg-leaving.pg-back .pg-show-body{transform:none;}
 }
 
 /* video clips: the planner's own controls (yellow pill seek bar, like the scrollbar) */
@@ -18282,7 +18289,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     try{ if(document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(function(){}); }catch(e){}
     pgShowRender();
     /* opening eases in, the same way slides move from one to the next */
-    pgShowEl.style.setProperty('--pg-dir', 1);
+    pgShowEl.style.setProperty('--pg-dir', 1); pgShowEl.classList.remove('pg-back');
     pgShowEl.classList.remove('pg-opening'); void pgShowEl.offsetWidth; pgShowEl.classList.add('pg-opening');
     clearTimeout(pgShowEl._openT); pgShowEl._openT = setTimeout(function(){ pgShowEl.classList.remove('pg-opening'); }, 520);
     pgShowEnter();
@@ -18387,11 +18394,24 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     pgShowAt = j;
     clearTimeout(pgShowT);
     const parts = pgShowEl.querySelectorAll('.pg-show-body, .pg-show-names, .pg-show-no, .pg-show-count, .pg-show-theme, .pg-ts-head');
-    pgShowEl.style.setProperty('--pg-dir', step > 0 ? 1 : -1);
-    if(!parts.length || pgShowEl.classList.contains('pg-leaving')){ pgShowEl.classList.remove('pg-leaving'); pgShowRender(); pgShowEnter(); return; }
+    pgShowEl.style.setProperty('--pg-dir', step > 0 ? 1 : -1); pgShowEl.classList.toggle('pg-back', step < 0);
+    if(!parts.length || pgShowEl.classList.contains('pg-leaving')){ pgShowEl.classList.remove('pg-leaving'); pgShowRenderThenEnter(); return; }
     pgShowEl.querySelectorAll('video').forEach(function(v){ try{ v.pause(); }catch(e){} });
     pgShowEl.classList.add('pg-leaving');
-    pgShowT = setTimeout(function(){ pgShowEl.classList.remove('pg-leaving'); pgShowRender(); pgShowEnter(); }, 170);
+    pgShowT = setTimeout(function(){ pgShowEl.classList.remove('pg-leaving'); pgShowRenderThenEnter(); }, 170);
+  }
+  /* build the next slide unseen, let it draw (and its pictures decode), then slide it in */
+  let pgShowSeq = 0;
+  function pgShowRenderThenEnter(){
+    const my = ++pgShowSeq;
+    pgShowEl.classList.add('pg-pre');
+    pgShowRender();
+    const go = function(){ if(my !== pgShowSeq) return; pgShowEl.classList.remove('pg-pre'); pgShowEnter(); };
+    const imgs = Array.prototype.slice.call(pgShowEl.querySelectorAll('img')).filter(function(im){ return im.decode; });
+    let done = false;
+    const after = function(){ if(done) return; done = true; requestAnimationFrame(function(){ requestAnimationFrame(go); }); };
+    if(imgs.length){ Promise.all(imgs.map(function(im){ return im.decode().catch(function(){}); })).then(after); setTimeout(after, 220); }
+    else after();
   }
   function pgShowEnter(){
     pgShowEl.classList.remove('pg-entering'); void pgShowEl.offsetWidth;
