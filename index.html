@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261113143941">
+<meta name="hufc-build" content="20261113144920">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3184,7 +3184,25 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 @keyframes pgSlideInR{from{opacity:0; transform:translate3d(36px, 0, 0);} to{opacity:1; transform:translate3d(0, 0, 0);}}
 @keyframes pgSlideInL{from{opacity:0; transform:translate3d(-36px, 0, 0);} to{opacity:1; transform:translate3d(0, 0, 0);}}
 .pg-show.pg-pre .pg-show-body, .pg-show.pg-pre .pg-show-names, .pg-show.pg-pre .pg-show-no, .pg-show.pg-pre .pg-show-count, .pg-show.pg-pre .pg-show-theme{opacity:0; transition:none;}
-.pg-show .pg-show-body{will-change:transform, opacity; backface-visibility:hidden;}
+.pg-show .pg-show-body{backface-visibility:hidden;}
+/* slides: old and new sit in the same place while one moves out and the other in */
+.pg-show > .pg-show-top{grid-row:1; grid-column:1;}
+.pg-show > .pg-show-body{grid-row:2; grid-column:1;}
+.pg-show > .pg-show-foot{grid-row:3; grid-column:1;}
+.pg-show.pg-wait{opacity:0;}
+.pg-show > .pg-out{pointer-events:none;}
+.pg-show > .pg-in, .pg-show > .pg-out{will-change:transform, opacity;}
+.pg-show > .pg-in{opacity:0; transition:none;}
+/* the boards push across like slides: both stay solid, the old one goes off one side as the new one comes in the other */
+.pg-show > .pg-show-body.pg-in{opacity:1; transform:translate3d(100%, 0, 0);}
+.pg-show.pg-back > .pg-show-body.pg-in{transform:translate3d(-100%, 0, 0);}
+.pg-show > .pg-show-body.pg-in.pg-in-go{transform:translate3d(0, 0, 0); transition:transform .5s cubic-bezier(.45, 0, .2, 1);}
+.pg-show > .pg-show-body.pg-out.pg-out-go{transform:translate3d(-100%, 0, 0); transition:transform .5s cubic-bezier(.45, 0, .2, 1);}
+.pg-show.pg-back > .pg-show-body.pg-out.pg-out-go{transform:translate3d(100%, 0, 0);}
+/* the board's name at the top: the old one fades, then the new one */
+.pg-show > .pg-show-top.pg-out.pg-out-go{opacity:0; transition:opacity .16s ease-in;}
+.pg-show > .pg-show-top.pg-in.pg-in-go{opacity:1; transition:opacity .24s ease-out .16s;}
+@media (prefers-reduced-motion: reduce){ .pg-show > .pg-show-body.pg-in, .pg-show.pg-back > .pg-show-body.pg-in{transform:none; opacity:0;} .pg-show > .pg-show-body.pg-in.pg-in-go{opacity:1; transition:opacity .3s;} .pg-show > .pg-show-body.pg-out.pg-out-go, .pg-show.pg-back > .pg-show-body.pg-out.pg-out-go{transform:none; opacity:0; transition:opacity .2s;} }
 @keyframes pgFadeIn{from{opacity:0;} to{opacity:1;}}
 .pg-show.pg-entering .pg-show-body{animation:pgSlideInR .42s cubic-bezier(.22,.8,.24,1) both;}
 .pg-show.pg-entering.pg-back .pg-show-body{animation-name:pgSlideInL;}
@@ -18358,13 +18376,23 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     clearTimeout(pgShowEl._closeT); pgShowEl.classList.remove('pg-closing');
     pgShowEl.hidden = false;
     document.documentElement.classList.add('pg-showing');
-    try{ if(document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(function(){}); }catch(e){}
+    pgShowSeq++;
+    pgShowEl.style.setProperty('--pg-dir', 1); pgShowEl.classList.remove('pg-back', 'pg-opening', 'pg-entering', 'pg-leaving', 'pg-pre');
+    pgShowEl.classList.add('pg-wait');   /* unseen until the screen has gone full size */
     pgShowRender();
-    /* opening eases in, the same way slides move from one to the next */
-    pgShowEl.style.setProperty('--pg-dir', 1); pgShowEl.classList.remove('pg-back');
-    pgShowEl.classList.remove('pg-opening'); void pgShowEl.offsetWidth; pgShowEl.classList.add('pg-opening');
-    clearTimeout(pgShowEl._openT); pgShowEl._openT = setTimeout(function(){ pgShowEl.classList.remove('pg-opening'); }, 520);
-    pgShowEnter();
+    const el = pgShowEl, seq = pgShowSeq;
+    let shown = false;
+    const show = function(){
+      if(shown || seq !== pgShowSeq) return; shown = true;
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){
+        el.classList.remove('pg-wait'); void el.offsetWidth; el.classList.add('pg-opening');
+        clearTimeout(el._openT); el._openT = setTimeout(function(){ el.classList.remove('pg-opening'); }, 520);
+      }); });
+    };
+    let fs = null;
+    try{ if(document.documentElement.requestFullscreen && !document.fullscreenElement) fs = document.documentElement.requestFullscreen(); }catch(e){}
+    if(fs && fs.then){ fs.then(function(){ setTimeout(show, 140); }, show); setTimeout(show, 700); }
+    else show();
   }
   /* the pitch in Present mode, with ▶ Play when the board has animation steps */
   let pgShowAnim = null;
@@ -18464,26 +18492,44 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const n = state.drills.length, j = pgShowAt + step;
     if(j < -1 || j >= n) return;
     pgShowAt = j;
-    clearTimeout(pgShowT);
-    const parts = pgShowEl.querySelectorAll('.pg-show-body, .pg-show-names, .pg-show-no, .pg-show-count, .pg-show-theme, .pg-ts-head');
-    pgShowEl.style.setProperty('--pg-dir', step > 0 ? 1 : -1); pgShowEl.classList.toggle('pg-back', step < 0);
-    if(!parts.length || pgShowEl.classList.contains('pg-leaving')){ pgShowEl.classList.remove('pg-leaving'); pgShowRenderThenEnter(); return; }
-    pgShowEl.querySelectorAll('video').forEach(function(v){ try{ v.pause(); }catch(e){} });
-    pgShowEl.classList.add('pg-leaving');
-    pgShowT = setTimeout(function(){ pgShowEl.classList.remove('pg-leaving'); pgShowRenderThenEnter(); }, 170);
+    pgShowSwap(step > 0 ? 1 : -1);
   }
-  /* build the next slide unseen, let it draw (and its pictures decode), then slide it in */
+  /* the new slide is built unseen, then old and new move together (old out, new in) */
   let pgShowSeq = 0;
-  function pgShowRenderThenEnter(){
-    const my = ++pgShowSeq;
-    pgShowEl.classList.add('pg-pre');
-    pgShowRender();
-    const go = function(){ if(my !== pgShowSeq) return; pgShowEl.classList.remove('pg-pre'); pgShowEnter(); };
-    const imgs = Array.prototype.slice.call(pgShowEl.querySelectorAll('img')).filter(function(im){ return im.decode; });
-    let done = false;
-    const after = function(){ if(done) return; done = true; requestAnimationFrame(function(){ requestAnimationFrame(go); }); };
-    if(imgs.length){ Promise.all(imgs.map(function(im){ return im.decode().catch(function(){}); })).then(after); setTimeout(after, 220); }
-    else after();
+  function pgShowSwap(dir){
+    const my = ++pgShowSeq, real = pgShowEl;
+    clearTimeout(real._swapT);
+    real.querySelectorAll(':scope > .pg-out').forEach(function(e){ e.remove(); });
+    real.querySelectorAll(':scope > .pg-in').forEach(function(e){ e.classList.remove('pg-in', 'pg-in-go'); });
+    real.classList.remove('pg-leaving', 'pg-entering', 'pg-pre', 'pg-opening');
+    const old = Array.prototype.slice.call(real.children);
+    real.querySelectorAll('video').forEach(function(v){ try{ v.pause(); }catch(e){} });
+    const tmp = h('div');
+    pgShowEl = tmp;
+    try{ pgShowRender(); } finally { pgShowEl = real; }
+    const fresh = Array.prototype.slice.call(tmp.children);
+    real.style.setProperty('--pg-dir', dir); real.classList.toggle('pg-back', dir < 0);
+    old.forEach(function(e){
+      if(e.classList.contains('pg-show-foot')){ e.remove(); return; }   /* the same buttons: swapped straight away */
+      e.classList.add('pg-out');
+    });
+    fresh.forEach(function(e){ if(!e.classList.contains('pg-show-foot')) e.classList.add('pg-in'); real.appendChild(e); });
+    const go = function(){
+      if(my !== pgShowSeq) return;
+      old.forEach(function(e){ if(e.isConnected) e.classList.add('pg-out-go'); });
+      fresh.forEach(function(e){ if(e.classList.contains('pg-in')) e.classList.add('pg-in-go'); });
+      real._swapT = setTimeout(function(){
+        if(my !== pgShowSeq) return;
+        old.forEach(function(e){ e.remove(); });
+        fresh.forEach(function(e){ e.classList.remove('pg-in', 'pg-in-go'); });
+      }, 560);
+    };
+    /* give the new slide a frame or two to lay out and draw (and its pictures to decode) while it's still unseen */
+    const imgs = Array.prototype.slice.call(real.querySelectorAll('.pg-in img')).filter(function(im){ return im.decode && !im.complete; });
+    let started = false;
+    const start = function(){ if(started) return; started = true; requestAnimationFrame(function(){ requestAnimationFrame(go); }); };
+    if(imgs.length){ Promise.all(imgs.map(function(im){ return im.decode().catch(function(){}); })).then(start); setTimeout(start, 120); }
+    else start();
   }
   function pgShowEnter(){
     pgShowEl.classList.remove('pg-entering'); void pgShowEl.offsetWidth;
