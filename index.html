@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261113140538">
+<meta name="hufc-build" content="20261113141942">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3059,7 +3059,7 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 .pg-show-video video{display:block; width:100%; max-height:52vh; background:#000;}
 .pg-show-video .pg-clip-missing{color:#9a9da1;}
 .pg-show-foot{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 22px 16px;}
-.pg-show-theme{flex:1; text-align:center; font-size:15px; color:#c3c5c8; white-space:pre-wrap; overflow:hidden; max-height:3.2em;}
+.pg-show-theme{flex:1; text-align:center; font-size:15px; line-height:1.4; color:#c3c5c8; white-space:pre-wrap; overflow:visible;}
 .pg-show-nav{border:none; background:var(--yellow); color:var(--black); font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:20px; letter-spacing:.04em;
   text-transform:uppercase; padding:10px 22px; border-radius:10px; cursor:pointer; min-width:110px;}
 .pg-show-nav:disabled{opacity:.25; cursor:default;}
@@ -18413,7 +18413,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       return h('figure', {class:'pg-show-pic'}, im, clean(p.title) ? h('figcaption', {class:'pg-show-lbl', text:clean(p.title)}) : null);
     })));
     if(pitchBox && pitchBox._play) side.insertBefore(pitchBox._play, side.firstChild);
-    const theme = clean(state.focus.theme);
+    /* one message per line in the editor: side by side here, a dash between each (any bullet or number in front dropped) */
+    const theme = String(clean(state.focus.theme) || '').split(/\r?\n/).map(function(t){ return t.replace(/^\s*(?:[-–—•*·]+|\d+[.)])\s*/, '').trim(); }).filter(Boolean).join('  –  ');
     pgShowEl.append(
       h('div', {class:'pg-show-top'},
         h('div', {class:'pg-show-title'}, h('span', {class:'pg-show-no', text:String(pgShowAt + 1)}),
