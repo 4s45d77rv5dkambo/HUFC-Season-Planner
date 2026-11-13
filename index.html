@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261113212444">
+<meta name="hufc-build" content="20261113221127">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1260,6 +1260,7 @@ html.view-home #home.hs-classic{display:block; max-width:1100px; margin:16px aut
 .vl-card:focus-visible{outline:3px solid var(--yellow); outline-offset:2px;}
 .vl-thumb{position:relative; display:block; width:100%; flex:none; background:repeating-linear-gradient(90deg, #1b6b3c 0 22px, #1e7442 22px 44px); overflow:hidden;}
 .vl-thumb::before{content:""; display:block; padding-top:56.25%;}
+@media (max-width:900px){ .gt-table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%;} }
 /* + From video library (pre-game boards) */
 .modal .modal-box.se-form-box:has(.vl-pk){width:min(920px, calc(100vw - 32px)) !important; max-width:none !important;}
 .vl-pk-tools{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
@@ -9697,6 +9698,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function vlYtThumb(url){ try{ const e = pgEmbed(url); const m = e && /youtube-nocookie\.com\/embed\/([\w-]+)/.exec(e.src); return m ? 'https://i.ytimg.com/vi/' + m[1] + '/mqdefault.jpg' : ''; }catch(e){ return ''; } }
   function vlFrom(o){ return [!o.team || o.team === 'all' ? 'All teams' : o.team, clean(o.opp) ? 'vs ' + clean(o.opp) : '', vlDate(o.date), clean(o.min) ? clean(o.min) + (/\d$/.test(clean(o.min)) ? '′' : '') : ''].filter(Boolean).join(' · '); }
   function vlHay(o){ return [o.title, (o.tags || []).join(' '), o.opp, o.note, o.by, o.team, vlPhase(o.phase)[2], (o.v || {}).name].map(function(x){ return clean(x || ''); }).join(' ').toLowerCase(); }
+  function vlCap(t){ t = String(t || ''); return t.charAt(0).toUpperCase() + t.slice(1); }
   function vlTagList(t){ return String(t || '').split(/[,;\n]/).map(function(x){ return clean(x).toLowerCase(); }).filter(Boolean).filter(function(x, i, a){ return a.indexOf(x) === i; }).slice(0, 12); }
   function vlFillSel(id, opts, val){
     const sel = document.getElementById(id); if(!sel) return;
@@ -9748,7 +9750,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const shown = vlState.allTags ? tags : tags.slice(0, 12);
       shown.forEach(function(t){
         const on = vlState.tags.indexOf(t) !== -1;
-        tb.appendChild(h('button', {type:'button', class:'vl-tc' + (on ? ' on' : ''), 'aria-pressed':String(on), text:t, onclick:function(){ if(on) vlState.tags = vlState.tags.filter(function(x){ return x !== t; }); else vlState.tags.push(t); vlRender(); }}));
+        tb.appendChild(h('button', {type:'button', class:'vl-tc' + (on ? ' on' : ''), 'aria-pressed':String(on), text:vlCap(t), onclick:function(){ if(on) vlState.tags = vlState.tags.filter(function(x){ return x !== t; }); else vlState.tags.push(t); vlRender(); }}));
       });
       if(tags.length > 12) tb.appendChild(h('button', {type:'button', class:'vl-tc', text:vlState.allTags ? 'Fewer' : '+ ' + (tags.length - 12) + ' more', onclick:function(){ vlState.allTags = !vlState.allTags; vlRender(); }}));
     }
@@ -9776,7 +9778,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const card = h('button', {type:'button', class:'vl-card', title:'Watch this clip'}, thumb,
       h('div', {class:'vl-body'},
         h('div', {class:'vl-t' + (clean(o.title) ? '' : ' untitled'), text:clean(o.title) || 'Untitled clip'}),
-        (o.tags || []).length ? h('div', {class:'vl-ctags'}, (o.tags || []).slice(0, 4).map(function(t){ return h('span', {text:t}); })) : null,
+        (o.tags || []).length ? h('div', {class:'vl-ctags'}, (o.tags || []).slice(0, 4).map(function(t){ return h('span', {text:vlCap(t)}); })) : null,
         clean(o.note) ? h('div', {class:'vl-desc', text:o.note}) : null,
         vlFrom(o) ? h('div', {class:'vl-from', text:vlFrom(o)}) : null,
         wait ? h('div', {class:'vl-wait', text:wait}) : null,
@@ -9815,7 +9817,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const info = h('div', {class:'vl-info'},
       h('h3', {text:clean(o.title) || 'Untitled clip'}),
       h('span', {class:'vl-chip', style:'--c:' + ph[3]}, h('i'), ph[2]),
-      (o.tags || []).length ? h('div', null, h('div', {class:'vl-lbl', text:'Tags'}), h('div', {class:'vl-ctags'}, (o.tags || []).map(function(t){ return h('span', {text:t}); }))) : null,
+      (o.tags || []).length ? h('div', null, h('div', {class:'vl-lbl', text:'Tags'}), h('div', {class:'vl-ctags'}, (o.tags || []).map(function(t){ return h('span', {text:vlCap(t)}); }))) : null,
       clean(o.note) ? h('div', null, h('div', {class:'vl-lbl', text:'Description'}), h('div', {class:'vl-look', text:o.note})) : null,
       vlFrom(o) ? h('div', null, h('div', {class:'vl-lbl', text:'From'}), h('div', {text:vlFrom(o)})) : null,
       h('div', null, h('div', {class:'vl-lbl', text:'Added by'}), h('div', {text:(clean(o.by) || 'A coach') + ' · ' + vlAgo(o.at || o.savedAt)})),
@@ -10136,7 +10138,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function vlEdit(o){
     const title = h('input', {type:'text', value:clean(o.title)}), phase = vlPhaseSel(o.phase || 'other'), team = vlTeamSel(o.team);
     const opp = h('input', {type:'text', value:clean(o.opp)}), date = h('input', {type:'date', value:/^\d{4}-\d\d-\d\d$/.test(o.date || '') ? o.date : ''}), min = h('input', {type:'text', value:clean(o.min), placeholder:'e.g. 23'});
-    const tags = h('input', {type:'text', value:(o.tags || []).join(', ')}), note = h('textarea', {rows:'4', placeholder:'What should the coaches look for? e.g. 6 drops between the centre-backs; the keeper plays into the 8, who bounces it back to the 6 facing forward'});
+    const tags = h('input', {type:'text', value:(o.tags || []).map(vlCap).join(', ')}), note = h('textarea', {rows:'4', placeholder:'What should the coaches look for? e.g. 6 drops between the centre-backs; the keeper plays into the 8, who bounces it back to the 6 facing forward'});
     note.value = o.note || '';
     /* the video itself: pick the file again (e.g. when its copy was lost) */
     let newFile = null, newPath = '';
@@ -12865,9 +12867,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return seen.sort(function(a, b){ return (a ? AGE_GROUPS.indexOf(a) : 99) - (b ? AGE_GROUPS.indexOf(b) : 99); });
   }
   function gtCompute(group, onlyScored){
+    const todayIso = (function(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
     const games = luList().map(function(x){ return x.lu; }).filter(function(L){
       /* (a lineup with nobody on the pitch in any half — not filled in yet, or cleared — isn't a game played) */
       const used = (L.periods || []).some(function(pr){ return (pr.slots || []).some(function(sl){ return sl.pid; }); });
+      /* (nor is one for a game still to come) */
+      const iso = luDateToIso(clean(L.meta && L.meta.date)); if(iso && iso > todayIso) return false;
       return used && gtTeam(L) === group && (!onlyScored || (clean(L.result.us) !== '' && clean(L.result.them) !== ''));
     });
     const rows = {}, anBy = {};
@@ -17162,6 +17167,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
 
   /* ---------- About ---------- */
+  /* the version line: when this version was made (from the build stamp) */
+  (function(){
+    try{
+      const m = document.querySelector('meta[name="hufc-build"]'), el = document.querySelector('.home-version');
+      const b = m && m.content || ''; if(!el || !/^\d{12}/.test(b)) return;
+      const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      let hh = +b.slice(8, 10); const mm = b.slice(10, 12), ap = hh >= 12 ? 'pm' : 'am'; hh = hh % 12 || 12;
+      el.textContent = 'HUFC Session Planner · updated ' + (+b.slice(6, 8)) + ' ' + MON[+b.slice(4, 6) - 1] + ' ' + b.slice(0, 4) + ', ' + hh + ':' + mm + ap;
+    }catch(e){}
+  })();
   function setAbout(p){
     const ver = (document.querySelector('.home-version') || {}).textContent || '';
     const where = window.hufcDesktop ? 'Windows program' : (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) ? 'iPhone / iPad app' : CLOUD ? 'In the browser' : 'Online planner';
