@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261113210814">
+<meta name="hufc-build" content="20261113211158">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -12698,7 +12698,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(iso && iso < today) return false;
       const team = groupOf(lu), sq = sqFor(team); if(!sq || !sq.players.length) return false;
       const by = {}; sq.players.forEach(function(r){ const k = gtKey(r.name); if(k) by[k] = r; });
-      let ch = false, added = [];
+      let ch = false, added = [], left = [];
+      try{
+        const gone = tgGoneKeys();
+        lu.squad.forEach(function(p){
+          if(!clean(p.name) || !gone[gtKey(p.name)]) return;
+          (lu.periods || []).forEach(function(pr){ (pr.slots || []).forEach(function(sl){ if(sl.pid === p.id) sl.pid = null; }); });
+          left.push(clean(p.name)); p.name = ''; p.num = ''; p.pos = ''; p.ev = {}; ch = true;
+        });
+      }catch(e){}
       lu.squad.forEach(function(p){
         const r = by[gtKey(p.name)]; if(!r) return;
         const pos = tgPos(r.pos); if(pos && pos !== tgPos(p.pos)){ p.pos = pos; ch = true; }
@@ -12716,6 +12724,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(!ch) return false;
       luRender(); luSaveNow();
       if(added.length) showToast(added.join(', ') + (added.length === 1 ? ' is' : ' are') + ' in the ' + team + ' squad now — added to this lineup');
+      else if(left.length) showToast(left.join(', ') + (left.length === 1 ? ' has' : ' have') + ' left the ' + team + ' squad — taken off this lineup');
       return true;
     }catch(e){ return false; }
   }
@@ -12876,6 +12885,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         });
       }catch(e){}
     }
+    try{ const gone = tgGoneKeys(); Object.keys(gone).forEach(function(k){ delete rows[k]; }); }catch(e){}   /* (players who have left: off the tables) */
     return {games:games, extra:extra, rows:Object.keys(rows).map(function(k){
       const r = rows[k]; r.pct = r.avail ? r.min / r.avail * 100 : 0;
       if(!r.pos) r.pos = Object.keys(r.played).sort(function(a, b){ return r.played[b] - r.played[a]; }).slice(0, 2).join(' / ');
@@ -20150,8 +20160,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const players = function(){
       const sq = sqFor(team), seen = {}, out = [];
       const joiners = tg ? tg.joining.map(function(p){ return {name:p.name, num:p.num, pos:p.pos}; }) : [];
-      (sq ? sqSorted(sq.players) : []).concat(extra, joiners).forEach(function(r){ const k = gtKey(r.name); if(k && !seen[k]){ seen[k] = 1; out.push(r); } });
-      Object.keys(here).forEach(function(k){ if(!seen[k]){ seen[k] = 1; out.push({name:here[k], num:'', pos:''}); } });   /* (ticked before, since taken off the squad) */
+      let gone = {}; try{ gone = tgGoneKeys(); }catch(e){}
+      (sq ? sqSorted(sq.players) : []).concat(extra, joiners).forEach(function(r){ const k = gtKey(r.name); if(k && !seen[k] && !gone[k]){ seen[k] = 1; out.push(r); } });
+      Object.keys(here).forEach(function(k){ if(!seen[k] && !gone[k]){ seen[k] = 1; out.push({name:here[k], num:'', pos:''}); } });   /* (ticked before, since taken off the squad) */
       return out;
     };
     const paintCount = function(){
@@ -20299,6 +20310,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       r.total = sess.length; r.pct = sess.length ? r.n / sess.length * 100 : 0;
       r.out = avOf(team, r.name);
     });
+    try{ const gone = tgGoneKeys(); Object.keys(gone).forEach(function(k){ delete rows[k]; }); }catch(e){}
     return {sessions:sess, rows:Object.keys(rows).map(function(k){ return rows[k]; })};
   }
   function attRenderTraining(team, sort){
@@ -20732,7 +20744,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* take a player off: on the club list (so every coach's Squads and lineups leave them out), and out of your own team's My squad */
   async function tgRemovePlayer(p){
     const yes = document.getElementById('confirmYes');
-    const ask = askDelete('player', p.name, '', {title:'Remove ' + p.name + ' from the squad?', text:'For a player who has left. They come off the ' + p.squad + ' squad and the Squads list for every coach, and won’t be offered for lineups. Their old lineups, game time and IDP are kept. You can add them back any time with + Add player.', yes:'Remove player'});
+    const ask = askDelete('player', p.name, '', {title:'Remove ' + p.name + ' from the squad?', text:'For a player who has left. They come off everywhere, for every coach: the ' + p.squad + ' squad, Squads, Stats & game time, training attendance, IDPs and lineups still to be played. Lineups of games already played stay as they were. Nothing is deleted — add them back any time with + Add player and it all comes back.', yes:'Remove player'});
     try{ if(yes.dataset.cls) yes.className = yes.dataset.cls; }catch(e){}
     if(!(await ask)) return;
     const td = !!(CLOUD && CLOUD.isTD && CLOUD.isTD());
