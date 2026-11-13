@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261113205550">
+<meta name="hufc-build" content="20261113210814">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -8328,6 +8328,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('div', {class:'total-val', id:'totalVal'}),
       h('div', {class:'total-sub', id:'totalSub'})
     ));
+    try{ fillTotal(); }catch(e){}
   }
 
   /* sessions, pre-games and seasons saved with the old transition names show the new ones */
@@ -8404,6 +8405,17 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function durWidth(v){ return (Math.max(1, String(v == null ? '' : v).length) + 0.15) + 'ch'; }
   function dur(d){ const n = parseFloat(String(d.duration == null ? '' : d.duration).replace(',', '.')); return isNaN(n) || n < 0 ? 0 : Math.round(n * 100) / 100; }   /* (half minutes count: 7.5) */
 
+  /* Total time (and the start – finish times) at the top of a session */
+  function fillTotal(){
+    if(isPre()) return;
+    const start = parseTime(state.meta.time);
+    const total = state.drills.reduce(function(a, d){ return a + dur(d); }, 0);
+    const tv = document.getElementById('totalVal'), ts = document.getElementById('totalSub');
+    if(!tv || !ts) return;
+    tv.textContent = fmtMin(total) + ' min';
+    ts.textContent = start ? fmtTime(start.min, start.twelve) + ' – ' + fmtTime(start.min + total, start.twelve)
+      : ((state.meta.time || '').trim() ? 'Start time not recognised — try 4:30pm' : (state.drills.length ? 'Add a start time to see the finish' : ''));
+  }
   function refreshComputed(){
     if(isPre()){ pgRefresh(); return; }
     const start = parseTime(state.meta.time);
