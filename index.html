@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261114211416">
+<meta name="hufc-build" content="20261114211803">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3290,6 +3290,14 @@ html.pg-vid-open, html.pg-vid-open body{overflow:hidden;}
 /* Present mode: the lineup big on its own slide, or beside a drawing */
 .pg-show-body.lu-slide{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);}
 .pg-show-lu{flex-direction:column; gap:6px;}
+.pg-show-lu-svg .lu-pitch.lu-wide{width:100%; height:100%; border-radius:0; display:block;}
+.pg-show-lu-svg .lu-pitch.lu-tall{display:none;}
+.pg-show-body:has(.lu-wide){grid-template-columns:minmax(0,2fr) minmax(0,1fr);}
+@media (max-width:760px), (orientation:portrait){
+  .pg-show-lu-svg .lu-pitch.lu-wide{display:none;}
+  .pg-show-lu-svg .lu-pitch.lu-tall{display:block;}
+  .pg-show-body:has(.lu-wide){grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);}
+}
 .pg-show-lu-svg.two{gap:22px; align-items:stretch;}
 .pg-show-body:has(.pg-show-lu-svg.two){grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);}
 .pg-show-lu-svg.two .pg-show-lu-half{max-width:calc(50% - 11px);}
@@ -17884,6 +17892,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       return '<svg class="lu-pitch ' + (cls || '') + '" viewBox="0 0 300 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + escapeXml((luName(L) || 'Lineup') + ' — ' + luFormLabel(p.formation)) + '">' + luPitchMarkup(p) + '</svg>';
     });
   }
+  /* the same pitch lying on its side (for a wide screen): turned a quarter, our goal on the left; each player turned back upright */
+  function pgLineupSvgWide(L, ref){
+    const tall = pgLineupSvg(L, ref, 'lu-wide');
+    const a = tall.indexOf('>') + 1, b = tall.lastIndexOf('</svg>');
+    if(a <= 0 || b < a) return '';
+    const head = tall.slice(0, a).replace('viewBox="0 0 300 460"', 'viewBox="0 0 460 300"');
+    const inner = tall.slice(a, b).replace(/(<g class="lu-man"[^>]*?transform=")([^"]*)"/g, function(m, p, t){ return p + t + ' rotate(-90)"'; });
+    return head + '<g transform="translate(460,0) rotate(90)">' + inner + '</g></svg>';
+  }
   function pgLuBoth(L, ref){ return !!(ref && ref.half === 'both' && L && L.periods && L.periods.length > 1); }
   /* Present mode's key messages: each point, with a thin line between */
   function pgKmNode(theme){
@@ -17943,7 +17960,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* on the board, where the drawing would be: the lineup, which half, and change it */
   function pgLineupCol(d){
     const both0 = !!(d.lineup && d.lineup.half === 'both');
-    const col = h('div', {class:'pg-lu-col' + (both0 ? ' two' : ''), style:'width:' + (both0 ? 520 : Math.max(420, PITCH_SIZES[d.pitchSizeIdx])) + 'px'});     /* as wide as the pitch (or two): long names and the bench wrap underneath */
+    const col = h('div', {class:'pg-lu-col' + (both0 ? ' two' : ''), style:'width:' + (both0 ? 520 : PITCH_SIZES[d.pitchSizeIdx]) + 'px'});     /* as wide as the pitch (or two): long names and the bench wrap underneath */
     const redo = function(){ syncBoards(); rerender(); saveLocal(); };
     const L = pgLineupGet(d.lineup);
     if(!L){
@@ -17980,7 +17997,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           return h('figure', {class:'pg-show-lu-half'}, h('div', {class:'pg-show-lu-one', html:pgLineupSvg(L, {half:i})}), h('figcaption', {class:'pg-show-lu-form', text:(clean(q.name) || ('Period ' + (i + 1))) + ' · ' + luFormLabel(q.formation)})); })));
     }
     return h('div', {class:'pg-show-pitch pg-show-lu'},
-      h('div', {class:'pg-show-lu-svg', html:pgLineupSvg(L, d.lineup)}),
+      h('div', {class:'pg-show-lu-svg', html:pgLineupSvgWide(L, d.lineup) + pgLineupSvg(L, d.lineup, 'lu-tall')}),
       h('div', {class:'pg-show-lu-cap'},
         h('span', {class:'pg-show-lu-form', text:(L.periods.length > 1 ? (clean(p.name) || '') + ' · ' : '') + luFormLabel(p.formation)}),
         null));
