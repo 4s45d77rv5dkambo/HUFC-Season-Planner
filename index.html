@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261114181736">
+<meta name="hufc-build" content="20261114182736">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -4426,7 +4426,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       <span class="home-head-spacer"></span>
       <input type="search" class="lib-search" id="pgbSearch" placeholder="Search boards" aria-label="Search saved boards">
     </div>
-    <p class="home-help">Pre-game boards kept to use again in other games. Press <strong>☆</strong> on any board in a pre-game to save it here, then <strong>Use in a pre-game</strong> — or <strong>+ From saved boards</strong> inside a pre-game.</p>
+    <p class="home-help">Every board you build in a pre-game is kept here automatically, to use again in other games. <strong>Use in a pre-game</strong> puts one into a game — or press <strong>+ From saved boards</strong> inside a pre-game.</p>
     <div class="lib-grid" id="pgbGrid"></div>
   </section>
   <section class="home-block" data-hb="library">
@@ -8655,7 +8655,6 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('div', {class:'drill-actions'},
         h('button', {type:'button', class:'icon-btn reveal', title:'Move up', 'aria-label':'Move up', text:'↑', disabled:idx === 0, onclick:function(){ move(-1); }}),
         h('button', {type:'button', class:'icon-btn reveal', title:'Move down', 'aria-label':'Move down', text:'↓', disabled:idx === n - 1, onclick:function(){ move(1); }}),
-        pre ? h('button', {type:'button', class:'icon-btn reveal pgb-star' + (pgbSaved(d) ? ' on' : ''), title:pgbSaved(d) ? 'Saved for other games · press to update the saved board' : 'Save this board to use in other games (menu → Saved boards)', 'aria-label':'Save board', text:pgbSaved(d) ? '★' : '☆', onclick:function(){ pgbSave(d); }}) : null,
         h('button', {type:'button', class:'icon-btn reveal', title:'Duplicate', 'aria-label':'Duplicate practice', text:'⧉', onclick:function(){
           syncBoards();
           const copy = JSON.parse(JSON.stringify(d));
@@ -8807,7 +8806,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
      into another session and changed there becomes a NEW practice, so the original — and every other session using it — stays as it was. */
   function libraryUpsert(plan, lib){
     let n = 0;
-    if(isPre(plan)) return 0;
+    if(isPre(plan)) return pgbUpsert(plan, lib);   /* pre-game boards: kept in Saved boards */
     const src = {theme:sessionName(plan), date:clean(plan.meta && plan.meta.date)}, pid = plan.planId || '';
     (plan.drills || []).forEach(function(d){
       if(!practiceHasContent(d)) return;
@@ -10289,6 +10288,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return card;
   }
   function pgbRender(){
+    try{ const hm = document.getElementById('home'); if(hm && hm.dataset.hpage === 'pgboards') pgbBackfill(); }catch(e){}
     const all = pgbList('');
     const n = document.getElementById('hsNPgboards'); if(n) n.textContent = all.length ? String(all.length) : '';
     const grid = document.getElementById('pgbGrid'); if(!grid) return;
@@ -10297,7 +10297,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const qEl = document.getElementById('pgbSearch'), list = pgbList(qEl ? qEl.value : '');
     document.getElementById('pgbCount').textContent = all.length ? all.length + (all.length === 1 ? ' board' : ' boards') : '';
     grid.innerHTML = '';
-    if(!all.length){ grid.appendChild(h('div', {class:'home-empty', text:'No saved boards yet. Open a pre-game and press ☆ on a board to keep it here — then use it in any other game.'})); return; }
+    if(!all.length){ grid.appendChild(h('div', {class:'home-empty', text:'No boards yet. Every board you build in a pre-game is kept here automatically — then use it in any other game.'})); return; }
     if(!list.length){ grid.appendChild(h('div', {class:'home-empty', text:'No boards match that search.'})); return; }
     list.forEach(function(e){
       grid.appendChild(pgbCard(e, [
@@ -10305,10 +10305,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         !canEdit(e) ? null : h('button', {type:'button', class:'icon-btn danger', title:'Remove from saved boards', 'aria-label':'Remove from saved boards', text:'✕', onclick:async function(){
           if(!(await askDelete('board', clean(e.practice.name) || 'Untitled board', 'Pre-games that already use it keep their copy.'))) return;
           const lib = readLibrary(), keep = lib.items[e.libId];
-          delete lib.items[e.libId]; lib.removed[e.libId] = true; writeLibrary(lib);
+          const kk = e.k || pgbKey(e.practice);
+          delete lib.items[e.libId]; lib.removed[e.libId] = true; lib.removedK = lib.removedK || {}; lib.removedK[kk] = 1; writeLibrary(lib);
           pgbRender();
           showToast('Removed “' + (clean(e.practice.name) || 'board') + '” from saved boards', function(){
-            const l2 = readLibrary(); l2.items[e.libId] = keep; delete l2.removed[e.libId]; writeLibrary(l2); pgbRender();
+            const l2 = readLibrary(); l2.items[e.libId] = keep; delete l2.removed[e.libId]; if(l2.removedK) delete l2.removedK[kk]; writeLibrary(l2); pgbRender();
           });
         }})
       ]));
@@ -10346,7 +10347,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* inside a pre-game: + From saved boards */
   function pgbPick(){
     const all = pgbList('');
-    if(!all.length){ showToast('No saved boards yet · press ☆ on a board to keep it for other games'); return; }
+    if(!all.length){ showToast('No saved boards yet · the boards you build in pre-games are kept there automatically'); return; }
     const q = h('input', {type:'search', class:'set-input', placeholder:'Search saved boards', 'aria-label':'Search saved boards'});
     const grid = h('div', {class:'lib-grid'});
     const count = h('div', {class:'vl-pk-n'});
@@ -10373,8 +10374,66 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     });
     draw();
   }
+
+  /* every pre-game board is kept in Saved boards (like practices in Saved practices) */
+  function pgbKey(d){ const c = JSON.parse(JSON.stringify(d || {})); delete c.pgbId; delete c.clips; delete c.lineup; return practiceKey(c); }
+  function pgbHasContent(d){
+    if(!d || (d.lineup && !d.showDiagram)) return false;
+    return practiceHasContent(d) || !!(d.anim && d.anim.steps && d.anim.steps.length > 1);
+  }
+  function pgbUpsert(plan, lib){
+    let n = 0, byKey = null; const seen = {};
+    const pid = plan.planId || '', g = groupOf(plan), src = {theme:sessionName(plan), date:clean(plan.meta && plan.meta.date)};
+    const index = function(){
+      if(byKey) return byKey; byKey = {};
+      Object.keys(lib.items).forEach(function(id){ const e = lib.items[id]; if(e && e.pgb && e.practice) byKey[e.k || pgbKey(e.practice)] = id; });
+      return byKey;
+    };
+    (plan.drills || []).forEach(function(d){
+      if(!pgbHasContent(d)) return;
+      const key = pgbKey(d);
+      let id = d.pgbId, cur = id ? lib.items[id] : null;
+      if(id && seen[id]){ id = null; cur = null; }           /* a second copy of a saved board in the same pre-game: its own board once changed */
+      else if(id) seen[id] = 1;
+      if(id && lib.removed[id] && !cur) return;              /* taken off Saved boards: stays off */
+      if(cur){
+        if((cur.k || pgbKey(cur.practice)) === key) return;  /* no change */
+        /* brought in from another game (or someone else's) and changed here: a new saved board, the original stays */
+        if(cur.plan !== pid || !canEdit(cur)){ id = null; cur = null; }
+      }
+      if(!cur){
+        if(lib.removedK && lib.removedK[key]) return;          /* this exact board was taken off Saved boards */
+        const same = index()[key];
+        if(same){ d.pgbId = same; return; }                    /* the same board is kept already */
+        id = newId();
+      }
+      const snap = practiceSnapshot(d);
+      snap.clips = []; delete snap.lineup; delete snap.pgbId; delete snap.libId; delete snap.libHash;
+      const e = {libId:id, practice:snap, k:key, updatedAt:Date.now(), source:src, group:g, plan:pid, pgb:1};
+      try{ if(cur && cur.owner) e.owner = cur.owner; else if(typeof who !== 'undefined' && who && who.uid) e.owner = who.uid; }catch(x){}
+      lib.items[id] = e; delete lib.removed[id]; d.pgbId = id;
+      if(byKey) byKey[key] = id;
+      n++;
+    });
+    return n;
+  }
+  /* the boards already in your pre-games, the first time (and whenever one was missed) */
+  function pgbBackfill(){
+    try{
+      const lib = readLibrary(); let n = 0;
+      listSessions().forEach(function(x){
+        if(!isPre(x.plan) || !canEdit(x.plan)) return;
+        if(typeof storageKey !== 'undefined' && x.key === storageKey) return;   /* the open one saves itself */
+        const was = (x.plan.drills || []).map(function(d){ return d.pgbId || ''; }).join('|');
+        n += pgbUpsert(x.plan, lib);
+        if((x.plan.drills || []).map(function(d){ return d.pgbId || ''; }).join('|') !== was){ try{ hufcStore.setItem(x.key, JSON.stringify(x.plan)); }catch(e){} }
+      });
+      if(n) writeLibrary(lib);
+    }catch(e){ console.warn(e); }
+  }
   (function pgbInit(){
     const q = document.getElementById('pgbSearch'); if(q) q.addEventListener('input', function(){ pgbRender(); });
+    pgbBackfill();
     try{ pgbRender(); }catch(e){}
   })();
   (function vlInit(){
@@ -16795,7 +16854,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.08', d:'11 Nov 2026', t:'A new Home page', n:['Home has a menu down the side: + New (session, lineup, pre-game, match video), Home, Sessions, Saved practices, Season calendar, Lineups, Pre-games, Match videos, Squads, Player IDPs, Game time & stats and Settings','Home shows this week, anything shared with you and what you worked on last — each list has its own page','The folder picker (My folder, Club library, U13…) is in the menu, under Home','Prefer the big buttons? Settings → Account → Home page → Classic','Saved boards (menu → Matchday): press ☆ on a pre-game board to keep it, then use it in any other game — Use in a pre-game, or + From saved boards inside one','Stats & game time (it was Game time & player stats) opens as its own page','Video library (in the menu): the club’s short clips from any game or year — build-up solutions, passing combinations, pressing… Filter by phase, tag, team and year; any coach can watch them and add their own (several videos at once, or links, each with a description), and put one into a pre-game','On a phone the menu opens from ☰ at the top']},
+    {v:'4.08', d:'11 Nov 2026', t:'A new Home page', n:['Home has a menu down the side: + New (session, lineup, pre-game, match video), Home, Sessions, Saved practices, Season calendar, Lineups, Pre-games, Match videos, Squads, Player IDPs, Game time & stats and Settings','Home shows this week, anything shared with you and what you worked on last — each list has its own page','The folder picker (My folder, Club library, U13…) is in the menu, under Home','Prefer the big buttons? Settings → Account → Home page → Classic','Saved boards (menu → Matchday): every pre-game board is kept there automatically, like saved practices — use one in any other game with Use in a pre-game, or + From saved boards inside one','Stats & game time (it was Game time & player stats) opens as its own page','Video library (in the menu): the club’s short clips from any game or year — build-up solutions, passing combinations, pressing… Filter by phase, tag, team and year; any coach can watch them and add their own (several videos at once, or links, each with a description), and put one into a pre-game','On a phone the menu opens from ☰ at the top']},
     {v:'4.07', d:'11 Nov 2026', t:'Move a game or training', n:['Season calendar: on a day’s ⋯ menu, Move this game (or training) to another day… — pick the new date and its opponent, colour, sessions, lineups and pre-games go with it (Undo straight after)']},
     {v:'4.06', d:'11 Nov 2026', t:'Defensive and attacking transition', n:['The transition phases are now Defensive transition (IP > OP) and Attacking transition (OP > IP) — in sessions, pre-games, the season calendar and the reports. Ones already saved show the new names']},
     {v:'4.05', d:'11 Nov 2026', t:'White coach · lineups follow Squads', n:['The coach on the pitch is white','Lineups take each player’s position from Squads (today’s and future games — past lineups don’t change), and a position changed in a lineup goes into Squads','A player who joins a team in Squads (e.g. moved up to the U18s) fills an empty row in that team’s upcoming lineups, and is always in the lineup’s Squad list','Injured and unavailable players are no longer listed on the bench — they’re on their own Unavailable line underneath (in red)']},
