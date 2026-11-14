@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261113221127">
+<meta name="hufc-build" content="20261114181736">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1135,6 +1135,19 @@ html.view-home .lu-sheet{display:none !important;}
 .lu-bench-list{flex:1; min-width:0;}
 .lu-bench-list{color:var(--ink);}
 .lu-bench-list.none{color:var(--muted); font-style:italic;}
+/* v4.08 Saved boards */
+#home[data-hpage="pgboards"] .home-block[data-hb]:not([data-hb="pgboards"]){display:none;}
+#home:not(.hs-classic):not([data-hpage="pgboards"]) .home-block[data-hb="pgboards"]{display:none;}
+.drill-actions .pgb-star{font-size:17px; line-height:1;}
+.drill-actions .pgb-star.on{color:#b88a00; opacity:1;}
+.modal .modal-box.se-form-box:has(.pgb-pk){width:min(980px, calc(100vw - 32px)) !important; max-width:none !important;}
+.pgb-pk .lib-grid{max-height:min(60vh, 600px); overflow:auto; padding:2px;}
+.pgb-pk .lib-card.on{outline:3px solid var(--yellow); outline-offset:-3px;}
+.pgb-pk-tools{display:flex; gap:10px; margin-bottom:12px;}
+.pgb-pk-tools input{flex:1; margin:0;}
+@keyframes hm-rib{0%{transform:translateY(-3px); opacity:.2} 30%{transform:translateY(1px); opacity:1} 42%{transform:translateY(-.5px)} 52%,100%{transform:none}}
+:is(.hs-nv, .hs-menu button):is(:hover, :active) .mi-rib{animation:hm-rib 1.2s ease 1;}
+
 /* v4.08 Game time & player stats: its own page */
 #gtModal{background:var(--paper); padding:0; align-items:stretch; justify-content:stretch; overflow-y:auto; overscroll-behavior:contain; z-index:85;}
 #gtModal .gt-box{width:100%; max-width:none; max-height:none; min-height:100%; border-radius:0; box-shadow:none; background:var(--paper); animation:none;}
@@ -4303,7 +4316,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 </div>
 
 <main class="home" id="home" data-hpage="home">
-  <aside class="hs-side" id="hsSide" aria-label="Menu"><div class="hs-brand"><img class="hs-crest" alt="" src="data:,"><div><b>Heidelberg United</b><small>Season Planner</small></div><button type="button" class="hs-x" id="hsClose" aria-label="Close the menu">✕</button></div><div class="hs-new-wrap"><button type="button" class="hs-new" id="hsNew" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mi-plus" d="M12 5v14M5 12h14"/></svg>New</button><div class="hs-menu" id="hsNewMenu" hidden><button type="button" data-click="homeNewBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mi-clip" d="M9 3h6v3H9z"/><path d="M8 4.5H6a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1h-2"/><path class="mi-draw mi-d1" pathLength="1" d="M9 12h6"/><path class="mi-draw mi-d2" pathLength="1" d="M9 16h4"/></svg>Training session</button><button type="button" data-click="homeLineupBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.6" width="14" height="16.8" rx="1"/><path d="M5 12h14"/><circle cx="12" cy="12" r="2.4"/><path d="M8.8 3.6v3.2h6.4V3.6M8.8 20.4v-3.2h6.4v3.2"/><path d="M10.4 3.6V1.8h3.2v1.8M10.4 20.4v1.8h3.2v-1.8"/><circle class="mi-dot" cx="7.6" cy="15.6" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.00s"/><circle class="mi-dot" cx="16.4" cy="15.6" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.10s"/><circle class="mi-dot" cx="12" cy="12" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.20s"/><circle class="mi-dot" cx="7.6" cy="8.4" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.30s"/><circle class="mi-dot" cx="16.4" cy="8.4" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.40s"/></svg>Matchday lineup</button><button type="button" data-click="homePgNewBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="19" height="13" rx="1.5"/><path d="M8 20.5l2-4M16 20.5l-2-4"/><path class="mi-x" d="M5.5 7l2 2M7.5 7l-2 2"/><circle class="mi-o" cx="17.8" cy="10.6" r="1.4"/><path class="mi-draw mi-run" pathLength="1" d="M8.5 11.5c2 1.5 4 1.5 6-1"/><path class="mi-head" d="M13.6 9.6l1.3.5-.3 1.3"/></svg>Pre-game plan</button><button type="button" data-click="homeMvNewBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="15" height="14" rx="2"/><path class="mi-lens" d="M17 10l5-3v10l-5-3"/><circle class="mi-rec" cx="6" cy="9" r="1.5" fill="#ff4b4b" stroke="none"/></svg>Match video</button><button type="button" data-click="vlAddBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path class="mi-play" d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Clips for the video library</button></div></div><nav class="hs-nav" id="hsNav"><button type="button" class="hs-nv" data-page="home"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mi-roof" d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>Home</span></button><div class="hs-fold-wrap"><button type="button" class="hs-fold" id="hsFoldBtn" aria-haspopup="true" aria-expanded="false"></button><div class="hs-pop" id="hsFoldPop" hidden></div></div><div class="hs-sec">Training</div><button type="button" class="hs-nv" data-page="sessions"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mi-clip" d="M9 3h6v3H9z"/><path d="M8 4.5H6a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1h-2"/><path class="mi-draw mi-d1" pathLength="1" d="M9 12h6"/><path class="mi-draw mi-d2" pathLength="1" d="M9 16h4"/></svg><span>Sessions</span><span class="hs-n" id="hsNSessions"></span></button><button type="button" class="hs-nv" data-page="library"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M12 4v16"/><path class="mi-draw mi-circ" pathLength="1" d="M12 9a3 3 0 1 1 0 6a3 3 0 1 1 0-6"/></svg><span>Saved practices</span><span class="hs-n" id="hsNLibrary"></span></button><button type="button" class="hs-nv" data-click="homeSeasonBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path class="mi-ring1" d="M8 3v4"/><path class="mi-ring2" d="M16 3v4"/><circle class="mi-today" cx="12" cy="15.5" r="1.6" fill="currentColor" stroke="none"/></svg><span>Season calendar</span></button><div class="hs-sec">Matchday</div><button type="button" class="hs-nv" data-page="lineups"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.6" width="14" height="16.8" rx="1"/><path d="M5 12h14"/><circle cx="12" cy="12" r="2.4"/><path d="M8.8 3.6v3.2h6.4V3.6M8.8 20.4v-3.2h6.4v3.2"/><path d="M10.4 3.6V1.8h3.2v1.8M10.4 20.4v1.8h3.2v-1.8"/><circle class="mi-dot" cx="7.6" cy="15.6" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.00s"/><circle class="mi-dot" cx="16.4" cy="15.6" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.10s"/><circle class="mi-dot" cx="12" cy="12" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.20s"/><circle class="mi-dot" cx="7.6" cy="8.4" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.30s"/><circle class="mi-dot" cx="16.4" cy="8.4" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.40s"/></svg><span>Lineups</span><span class="hs-n" id="hsNLineups"></span></button><button type="button" class="hs-nv" data-page="pregames"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="19" height="13" rx="1.5"/><path d="M8 20.5l2-4M16 20.5l-2-4"/><path class="mi-x" d="M5.5 7l2 2M7.5 7l-2 2"/><circle class="mi-o" cx="17.8" cy="10.6" r="1.4"/><path class="mi-draw mi-run" pathLength="1" d="M8.5 11.5c2 1.5 4 1.5 6-1"/><path class="mi-head" d="M13.6 9.6l1.3.5-.3 1.3"/></svg><span>Pre-games</span><span class="hs-n" id="hsNPregames"></span></button><div class="hs-sec">Video</div><button type="button" class="hs-nv" data-page="matches"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="15" height="14" rx="2"/><path class="mi-lens" d="M17 10l5-3v10l-5-3"/><circle class="mi-rec" cx="6" cy="9" r="1.5" fill="#ff4b4b" stroke="none"/></svg><span>Match videos</span><span class="hs-n" id="hsNMatches"></span></button><button type="button" class="hs-nv" data-page="videos"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path class="mi-play" d="M10 9l5 3-5 3z" fill="currentColor"/></svg><span>Video library</span><span class="hs-n" id="hsNVideos"></span></button><div class="hs-sec">Players</div><button type="button" class="hs-nv" data-click="homeSquadsBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="mi-p1"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/></g><g class="mi-p2"><circle cx="17" cy="9" r="2.5"/><path d="M17 14.5c2.4.2 4 1.8 4.5 4.5"/></g></svg><span>Squads</span></button><button type="button" class="hs-nv" data-click="homeIdpBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="mi-board"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v2h6V3"/><path class="mi-draw mi-tick" pathLength="1" d="M9 13l2 2 4-4"/></g></svg><span>Player IDPs</span></button><button type="button" class="hs-nv" data-click="homeGtBigBtn"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin:-2.5px"><path class="mi-bar mi-b1" d="M2.5 20v-3.5"/><path class="mi-bar mi-b2" d="M5.5 20v-7"/><path class="mi-bar mi-b3" d="M8.5 20V9"/><path d="M1.5 20h8.5"/><circle cx="16.5" cy="14.5" r="5.2"/><path class="mi-crown" d="M16.5 9.3V7.2M14.8 6h3.4"/><path d="M20.3 10.7l1.1-1.1"/><path class="mi-hand" d="M16.5 14.5v-3"/><path class="mi-hand2" d="M16.5 14.5h2.3"/></svg><span>Stats &amp; game time</span></button></nav><div class="hs-foot" id="hsFoot"></div></aside>
+  <aside class="hs-side" id="hsSide" aria-label="Menu"><div class="hs-brand"><img class="hs-crest" alt="" src="data:,"><div><b>Heidelberg United</b><small>Season Planner</small></div><button type="button" class="hs-x" id="hsClose" aria-label="Close the menu">✕</button></div><div class="hs-new-wrap"><button type="button" class="hs-new" id="hsNew" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mi-plus" d="M12 5v14M5 12h14"/></svg>New</button><div class="hs-menu" id="hsNewMenu" hidden><button type="button" data-click="homeNewBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mi-clip" d="M9 3h6v3H9z"/><path d="M8 4.5H6a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1h-2"/><path class="mi-draw mi-d1" pathLength="1" d="M9 12h6"/><path class="mi-draw mi-d2" pathLength="1" d="M9 16h4"/></svg>Training session</button><button type="button" data-click="homeLineupBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.6" width="14" height="16.8" rx="1"/><path d="M5 12h14"/><circle cx="12" cy="12" r="2.4"/><path d="M8.8 3.6v3.2h6.4V3.6M8.8 20.4v-3.2h6.4v3.2"/><path d="M10.4 3.6V1.8h3.2v1.8M10.4 20.4v1.8h3.2v-1.8"/><circle class="mi-dot" cx="7.6" cy="15.6" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.00s"/><circle class="mi-dot" cx="16.4" cy="15.6" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.10s"/><circle class="mi-dot" cx="12" cy="12" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.20s"/><circle class="mi-dot" cx="7.6" cy="8.4" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.30s"/><circle class="mi-dot" cx="16.4" cy="8.4" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.40s"/></svg>Matchday lineup</button><button type="button" data-click="homePgNewBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="19" height="13" rx="1.5"/><path d="M8 20.5l2-4M16 20.5l-2-4"/><path class="mi-x" d="M5.5 7l2 2M7.5 7l-2 2"/><circle class="mi-o" cx="17.8" cy="10.6" r="1.4"/><path class="mi-draw mi-run" pathLength="1" d="M8.5 11.5c2 1.5 4 1.5 6-1"/><path class="mi-head" d="M13.6 9.6l1.3.5-.3 1.3"/></svg>Pre-game plan</button><button type="button" data-click="homeMvNewBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="15" height="14" rx="2"/><path class="mi-lens" d="M17 10l5-3v10l-5-3"/><circle class="mi-rec" cx="6" cy="9" r="1.5" fill="#ff4b4b" stroke="none"/></svg>Match video</button><button type="button" data-click="vlAddBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path class="mi-play" d="M10 9l5 3-5 3z" fill="currentColor"/></svg>Clips for the video library</button></div></div><nav class="hs-nav" id="hsNav"><button type="button" class="hs-nv" data-page="home"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mi-roof" d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>Home</span></button><div class="hs-fold-wrap"><button type="button" class="hs-fold" id="hsFoldBtn" aria-haspopup="true" aria-expanded="false"></button><div class="hs-pop" id="hsFoldPop" hidden></div></div><div class="hs-sec">Training</div><button type="button" class="hs-nv" data-page="sessions"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="mi-clip" d="M9 3h6v3H9z"/><path d="M8 4.5H6a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1h-2"/><path class="mi-draw mi-d1" pathLength="1" d="M9 12h6"/><path class="mi-draw mi-d2" pathLength="1" d="M9 16h4"/></svg><span>Sessions</span><span class="hs-n" id="hsNSessions"></span></button><button type="button" class="hs-nv" data-page="library"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M12 4v16"/><path class="mi-draw mi-circ" pathLength="1" d="M12 9a3 3 0 1 1 0 6a3 3 0 1 1 0-6"/></svg><span>Saved practices</span><span class="hs-n" id="hsNLibrary"></span></button><button type="button" class="hs-nv" data-click="homeSeasonBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path class="mi-ring1" d="M8 3v4"/><path class="mi-ring2" d="M16 3v4"/><circle class="mi-today" cx="12" cy="15.5" r="1.6" fill="currentColor" stroke="none"/></svg><span>Season calendar</span></button><div class="hs-sec">Matchday</div><button type="button" class="hs-nv" data-page="lineups"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.6" width="14" height="16.8" rx="1"/><path d="M5 12h14"/><circle cx="12" cy="12" r="2.4"/><path d="M8.8 3.6v3.2h6.4V3.6M8.8 20.4v-3.2h6.4v3.2"/><path d="M10.4 3.6V1.8h3.2v1.8M10.4 20.4v1.8h3.2v-1.8"/><circle class="mi-dot" cx="7.6" cy="15.6" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.00s"/><circle class="mi-dot" cx="16.4" cy="15.6" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.10s"/><circle class="mi-dot" cx="12" cy="12" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.20s"/><circle class="mi-dot" cx="7.6" cy="8.4" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.30s"/><circle class="mi-dot" cx="16.4" cy="8.4" r="1.15" fill="currentColor" stroke="none" style="animation-delay:0.40s"/></svg><span>Lineups</span><span class="hs-n" id="hsNLineups"></span></button><button type="button" class="hs-nv" data-page="pregames"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="19" height="13" rx="1.5"/><path d="M8 20.5l2-4M16 20.5l-2-4"/><path class="mi-x" d="M5.5 7l2 2M7.5 7l-2 2"/><circle class="mi-o" cx="17.8" cy="10.6" r="1.4"/><path class="mi-draw mi-run" pathLength="1" d="M8.5 11.5c2 1.5 4 1.5 6-1"/><path class="mi-head" d="M13.6 9.6l1.3.5-.3 1.3"/></svg><span>Pre-games</span><span class="hs-n" id="hsNPregames"></span></button><button type="button" class="hs-nv" data-page="pgboards"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="19" height="13" rx="1.5"/><path d="M8 20.5l2-4M16 20.5l-2-4"/><path d="M5.5 7l2 2M7.5 7l-2 2"/><path class="mi-rib" d="M13.5 3.5v6.2l2.25-1.6 2.25 1.6V3.5" fill="currentColor" stroke-width="1.6"/></svg><span>Saved boards</span><span class="hs-n" id="hsNPgboards"></span></button><div class="hs-sec">Video</div><button type="button" class="hs-nv" data-page="matches"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="15" height="14" rx="2"/><path class="mi-lens" d="M17 10l5-3v10l-5-3"/><circle class="mi-rec" cx="6" cy="9" r="1.5" fill="#ff4b4b" stroke="none"/></svg><span>Match videos</span><span class="hs-n" id="hsNMatches"></span></button><button type="button" class="hs-nv" data-page="videos"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path class="mi-play" d="M10 9l5 3-5 3z" fill="currentColor"/></svg><span>Video library</span><span class="hs-n" id="hsNVideos"></span></button><div class="hs-sec">Players</div><button type="button" class="hs-nv" data-click="homeSquadsBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="mi-p1"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/></g><g class="mi-p2"><circle cx="17" cy="9" r="2.5"/><path d="M17 14.5c2.4.2 4 1.8 4.5 4.5"/></g></svg><span>Squads</span></button><button type="button" class="hs-nv" data-click="homeIdpBtn"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="mi-board"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v2h6V3"/><path class="mi-draw mi-tick" pathLength="1" d="M9 13l2 2 4-4"/></g></svg><span>Player IDPs</span></button><button type="button" class="hs-nv" data-click="homeGtBigBtn"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin:-2.5px"><path class="mi-bar mi-b1" d="M2.5 20v-3.5"/><path class="mi-bar mi-b2" d="M5.5 20v-7"/><path class="mi-bar mi-b3" d="M8.5 20V9"/><path d="M1.5 20h8.5"/><circle cx="16.5" cy="14.5" r="5.2"/><path class="mi-crown" d="M16.5 9.3V7.2M14.8 6h3.4"/><path d="M20.3 10.7l1.1-1.1"/><path class="mi-hand" d="M16.5 14.5v-3"/><path class="mi-hand2" d="M16.5 14.5h2.3"/></svg><span>Stats &amp; game time</span></button></nav><div class="hs-foot" id="hsFoot"></div></aside>
   <div class="hs-scrim" id="hsScrim"></div>
   <div class="hs-main">
   <div class="hs-mtop"><button type="button" class="hs-burger" id="hsBurger" aria-label="Menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><img class="hs-crest" alt="" src="data:,"><b>Heidelberg United</b></div>
@@ -4407,6 +4420,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <div class="home-more" id="matchesMore" hidden></div>
   </section>
 
+  <section class="home-block pgb-block" data-hb="pgboards">
+    <div class="home-head">
+      <h2>Saved boards</h2><span class="home-count" id="pgbCount"></span>
+      <span class="home-head-spacer"></span>
+      <input type="search" class="lib-search" id="pgbSearch" placeholder="Search boards" aria-label="Search saved boards">
+    </div>
+    <p class="home-help">Pre-game boards kept to use again in other games. Press <strong>☆</strong> on any board in a pre-game to save it here, then <strong>Use in a pre-game</strong> — or <strong>+ From saved boards</strong> inside a pre-game.</p>
+    <div class="lib-grid" id="pgbGrid"></div>
+  </section>
   <section class="home-block" data-hb="library">
     <div class="home-head">
       <h2>Saved practices</h2><span class="home-count" id="libCount"></span>
@@ -8633,6 +8655,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('div', {class:'drill-actions'},
         h('button', {type:'button', class:'icon-btn reveal', title:'Move up', 'aria-label':'Move up', text:'↑', disabled:idx === 0, onclick:function(){ move(-1); }}),
         h('button', {type:'button', class:'icon-btn reveal', title:'Move down', 'aria-label':'Move down', text:'↓', disabled:idx === n - 1, onclick:function(){ move(1); }}),
+        pre ? h('button', {type:'button', class:'icon-btn reveal pgb-star' + (pgbSaved(d) ? ' on' : ''), title:pgbSaved(d) ? 'Saved for other games · press to update the saved board' : 'Save this board to use in other games (menu → Saved boards)', 'aria-label':'Save board', text:pgbSaved(d) ? '★' : '☆', onclick:function(){ pgbSave(d); }}) : null,
         h('button', {type:'button', class:'icon-btn reveal', title:'Duplicate', 'aria-label':'Duplicate practice', text:'⧉', onclick:function(){
           syncBoards();
           const copy = JSON.parse(JSON.stringify(d));
@@ -8820,6 +8843,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const q = (query || '').trim().toLowerCase();
     return Object.keys(lib.items).map(function(k){ return lib.items[k]; })
       .filter(function(e){
+        if(e.pgb) return false;   /* (saved pre-game boards have their own page) */
         if(!q) return true;
         const p = e.practice;
         const hay = [p.name, p.focus].concat((p.notes || []).map(function(f){ return f.label + ' ' + f.value; })).join(' ').toLowerCase();
@@ -9627,6 +9651,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const sub = document.getElementById('hsSub');
     if(sub) sub.textContent = new Date().toLocaleDateString('en-AU', {weekday:'long', day:'numeric', month:'long'}) + ' · ' + (fsub ? fname + ' ' + fsub : fname);
     try{ vlCount(); if(hsPage === 'videos') vlRender(); }catch(e){ console.warn(e); }
+    try{ pgbRender(); }catch(e){ console.warn(e); }
     const t = document.getElementById('hsPTitle'); if(t) t.textContent = HS_TITLES[hsPage] || '';
     const add = document.getElementById('hsPAdd'), a = HS_ADD[hsPage];
     if(add){ add.hidden = !a; if(a){ add.textContent = a[0]; add.dataset.click = a[1]; } }
@@ -10206,6 +10231,152 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     c.append(setRow('Layout', 'The new Home has a menu down the side; the classic one has the big buttons at the top and every list underneath', seg));
     return c;
   }
+
+  /* ---------- Saved boards (Matchday): pre-game boards kept to use again in other games ---------- */
+  HS_TITLES.pgboards = 'Saved boards';
+  function pgbAll(){ const lib = readLibrary(); return Object.keys(lib.items).map(function(k){ return lib.items[k]; }).filter(function(e){ return e && e.pgb && e.practice; }); }
+  function pgbList(q){
+    q = String(q || '').trim().toLowerCase();
+    return pgbAll().filter(inView).filter(function(e){
+      if(!q) return true;
+      const p = e.practice;
+      const hay = [p.name, p.focus, e.source && e.source.theme].concat((p.notes || []).map(function(f){ return f.label + ' ' + f.value; })).join(' ').toLowerCase();
+      return q.split(/\s+/).every(function(w){ return hay.indexOf(w) !== -1; });
+    }).sort(function(a, b){ return (b.updatedAt || 0) - (a.updatedAt || 0); });
+  }
+  function pgbPhaseName(ph){ const b = PG_BOARDS.find(function(x){ return x[0] === ph; }) || (typeof PG_EXTRA !== 'undefined' ? PG_EXTRA.find(function(x){ return x[0] === ph; }) : null); return b ? b[1] : ''; }
+  /* a copy of a saved board for a pre-game */
+  function pgbCopy(e){
+    const c = JSON.parse(JSON.stringify(e.practice));
+    c.id = newId(); c.pgbId = e.libId; c.clips = []; delete c.lineup; delete c.libId; delete c.libHash;
+    (c.notes || []).forEach(function(f){ f.id = newId(); });
+    if(c.lineup === undefined && c.showDiagram === undefined) c.showDiagram = true;
+    return c;
+  }
+  /* ☆ on a pre-game board: save it (or update the saved one) */
+  function pgbSave(d){
+    syncBoards();
+    const lib = readLibrary();
+    let id = d.pgbId, cur = id ? lib.items[id] : null;
+    if(cur && !canEdit(cur)) cur = null;
+    if(!cur) id = newId();
+    const before = cur ? JSON.parse(JSON.stringify(cur)) : null;
+    const snap = practiceSnapshot(d);
+    snap.clips = []; delete snap.lineup; delete snap.pgbId; delete snap.libId; delete snap.libHash;
+    if(snap.lineup === undefined && d.lineup){ snap.showDiagram = true; }
+    const now = Date.now();
+    const entry = {libId:id, practice:snap, updatedAt:now, savedAt:now, source:{theme:sessionName(state), date:clean(state.meta && state.meta.date)}, group:groupOf(state), plan:state.planId, pgb:1};
+    try{ if(typeof who !== 'undefined' && who && who.uid) entry.owner = (cur && cur.owner) || who.uid; }catch(e){}
+    lib.items[id] = entry; delete lib.removed[id];
+    writeLibrary(lib);
+    d.pgbId = id; saveLocal(); rerender();
+    try{ pgbRender(); }catch(e){}
+    showToast((before ? 'Updated' : 'Saved') + ' “' + (clean(d.name) || 'board') + '” in Saved boards (menu → Matchday)', function(){
+      const l2 = readLibrary();
+      if(before) l2.items[id] = before; else { delete l2.items[id]; l2.removed[id] = true; }
+      writeLibrary(l2);
+      if(!before){ d.pgbId = undefined; delete d.pgbId; saveLocal(); rerender(); }
+      try{ pgbRender(); }catch(e){}
+    });
+  }
+  function pgbSaved(d){ if(!d || !d.pgbId) return false; try{ return !!readLibrary().items[d.pgbId]; }catch(e){ return false; } }
+  /* the Saved boards page */
+  function pgbCard(e, actions){
+    const card = libraryCard(e, {actions:actions});
+    const chip = card.querySelector('.lib-chips .chip');
+    if(chip) chip.textContent = pgbPhaseName(e.practice.phase) || 'Board';
+    const nm = card.querySelector('.lib-name'); if(nm && !clean(e.practice.name)) nm.textContent = 'Untitled board';
+    return card;
+  }
+  function pgbRender(){
+    const all = pgbList('');
+    const n = document.getElementById('hsNPgboards'); if(n) n.textContent = all.length ? String(all.length) : '';
+    const grid = document.getElementById('pgbGrid'); if(!grid) return;
+    const home = document.getElementById('home');
+    if(home && home.dataset.hpage !== 'pgboards' && !home.classList.contains('hs-classic')) return;
+    const qEl = document.getElementById('pgbSearch'), list = pgbList(qEl ? qEl.value : '');
+    document.getElementById('pgbCount').textContent = all.length ? all.length + (all.length === 1 ? ' board' : ' boards') : '';
+    grid.innerHTML = '';
+    if(!all.length){ grid.appendChild(h('div', {class:'home-empty', text:'No saved boards yet. Open a pre-game and press ☆ on a board to keep it here — then use it in any other game.'})); return; }
+    if(!list.length){ grid.appendChild(h('div', {class:'home-empty', text:'No boards match that search.'})); return; }
+    list.forEach(function(e){
+      grid.appendChild(pgbCard(e, [
+        h('button', {type:'button', class:'btn btn-small btn-primary', text:'Use in a pre-game', onclick:function(){ pgbUse(e); }}),
+        !canEdit(e) ? null : h('button', {type:'button', class:'icon-btn danger', title:'Remove from saved boards', 'aria-label':'Remove from saved boards', text:'✕', onclick:async function(){
+          if(!(await askDelete('board', clean(e.practice.name) || 'Untitled board', 'Pre-games that already use it keep their copy.'))) return;
+          const lib = readLibrary(), keep = lib.items[e.libId];
+          delete lib.items[e.libId]; lib.removed[e.libId] = true; writeLibrary(lib);
+          pgbRender();
+          showToast('Removed “' + (clean(e.practice.name) || 'board') + '” from saved boards', function(){
+            const l2 = readLibrary(); l2.items[e.libId] = keep; delete l2.removed[e.libId]; writeLibrary(l2); pgbRender();
+          });
+        }})
+      ]));
+    });
+  }
+  /* Use in a pre-game: one of yours, or a new one */
+  function pgbUse(e){
+    const plans = listSessions().filter(function(x){ return isPre(x.plan) && canEdit(x.plan); });
+    const pSel = h('select', {class:'set-input'});
+    pSel.appendChild(h('option', {value:'__new', text:'A new pre-game'}));
+    plans.forEach(function(x){ pSel.appendChild(h('option', {value:x.key, text:(sessionName(x.plan) || 'Untitled pre-game') + (clean(x.plan.meta.date) ? ' · ' + clean(x.plan.meta.date) : '')})); });
+    if(plans.length) pSel.value = plans[0].key;
+    seForm('Use “' + (clean(e.practice.name) || 'this board') + '” in a pre-game', h('div', {class:'se-form-body vl-pick'}, seField('Pre-game plan', pSel)), function(close){
+      return [h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}),
+        h('button', {type:'button', class:'btn btn-primary', text:'Add the board', onclick:function(){
+          const copy = pgbCopy(e), key = pSel.value;
+          close();
+          const show = function(){ setTimeout(function(){ const el = document.getElementById('drill-' + copy.id); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 350); };
+          if(key === '__new'){
+            swap(function(){ startNewPregame(); syncBoards(); state.drills.push(copy); rerender(); saveLocal(); setStatus('New pre-game with “' + (clean(copy.name) || 'your board') + '” at the end · add the opponent at the top'); show(); });
+            return;
+          }
+          if(typeof storageKey !== 'undefined' && key === storageKey && state && Array.isArray(state.drills)){ syncBoards(); state.drills.push(copy); saveLocal(); }
+          else {
+            let s = null; try{ s = JSON.parse(hufcStore.getItem(key)); }catch(x){}
+            if(!s || !Array.isArray(s.drills)){ showToast('That pre-game has changed · try again'); return; }
+            s.drills.push(copy); s.savedAt = Date.now();
+            try{ hufcStore.setItem(key, JSON.stringify(s)); }catch(x){ showToast('This device is out of space'); return; }
+            clubSyncSoon();
+          }
+          swap(function(){ openSession(key); show(); });
+        }})];
+    });
+  }
+  /* inside a pre-game: + From saved boards */
+  function pgbPick(){
+    const all = pgbList('');
+    if(!all.length){ showToast('No saved boards yet · press ☆ on a board to keep it for other games'); return; }
+    const q = h('input', {type:'search', class:'set-input', placeholder:'Search saved boards', 'aria-label':'Search saved boards'});
+    const grid = h('div', {class:'lib-grid'});
+    const count = h('div', {class:'vl-pk-n'});
+    let added = 0;
+    const draw = function(){
+      grid.innerHTML = '';
+      const list = pgbList(q.value);
+      if(!list.length){ grid.appendChild(h('div', {class:'home-empty', text:'No boards match that search.'})); return; }
+      list.forEach(function(e){
+        let card = null;
+        const btn = h('button', {type:'button', class:'btn btn-small btn-primary', text:'+ Add', onclick:function(){
+          syncBoards();
+          const copy = pgbCopy(e); state.drills.push(copy); rerender(); saveLocal();
+          added++; card.classList.add('on'); btn.textContent = '✓ Added'; btn.disabled = false;
+          count.textContent = added + (added === 1 ? ' board added' : ' boards added') + ' at the end';
+        }});
+        card = pgbCard(e, [btn]);
+        grid.appendChild(card);
+      });
+    };
+    q.addEventListener('input', draw);
+    seForm('Add saved boards', h('div', {class:'se-form-body pgb-pk'}, h('div', {class:'pgb-pk-tools'}, q), grid), function(close){
+      return [count, h('button', {type:'button', class:'btn btn-primary', text:'Done', onclick:close})];
+    });
+    draw();
+  }
+  (function pgbInit(){
+    const q = document.getElementById('pgbSearch'); if(q) q.addEventListener('input', function(){ pgbRender(); });
+    try{ pgbRender(); }catch(e){}
+  })();
   (function vlInit(){
     const q = document.getElementById('vlSearch'); if(!q) return;
     q.addEventListener('input', function(){ vlState.q = q.value; vlRender(); });
@@ -16624,7 +16795,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.08', d:'11 Nov 2026', t:'A new Home page', n:['Home has a menu down the side: + New (session, lineup, pre-game, match video), Home, Sessions, Saved practices, Season calendar, Lineups, Pre-games, Match videos, Squads, Player IDPs, Game time & stats and Settings','Home shows this week, anything shared with you and what you worked on last — each list has its own page','The folder picker (My folder, Club library, U13…) is in the menu, under Home','Prefer the big buttons? Settings → Account → Home page → Classic','Stats & game time (it was Game time & player stats) opens as its own page','Video library (in the menu): the club’s short clips from any game or year — build-up solutions, passing combinations, pressing… Filter by phase, tag, team and year; any coach can watch them and add their own (several videos at once, or links, each with a description), and put one into a pre-game','On a phone the menu opens from ☰ at the top']},
+    {v:'4.08', d:'11 Nov 2026', t:'A new Home page', n:['Home has a menu down the side: + New (session, lineup, pre-game, match video), Home, Sessions, Saved practices, Season calendar, Lineups, Pre-games, Match videos, Squads, Player IDPs, Game time & stats and Settings','Home shows this week, anything shared with you and what you worked on last — each list has its own page','The folder picker (My folder, Club library, U13…) is in the menu, under Home','Prefer the big buttons? Settings → Account → Home page → Classic','Saved boards (menu → Matchday): press ☆ on a pre-game board to keep it, then use it in any other game — Use in a pre-game, or + From saved boards inside one','Stats & game time (it was Game time & player stats) opens as its own page','Video library (in the menu): the club’s short clips from any game or year — build-up solutions, passing combinations, pressing… Filter by phase, tag, team and year; any coach can watch them and add their own (several videos at once, or links, each with a description), and put one into a pre-game','On a phone the menu opens from ☰ at the top']},
     {v:'4.07', d:'11 Nov 2026', t:'Move a game or training', n:['Season calendar: on a day’s ⋯ menu, Move this game (or training) to another day… — pick the new date and its opponent, colour, sessions, lineups and pre-games go with it (Undo straight after)']},
     {v:'4.06', d:'11 Nov 2026', t:'Defensive and attacking transition', n:['The transition phases are now Defensive transition (IP > OP) and Attacking transition (OP > IP) — in sessions, pre-games, the season calendar and the reports. Ones already saved show the new names']},
     {v:'4.05', d:'11 Nov 2026', t:'White coach · lineups follow Squads', n:['The coach on the pitch is white','Lineups take each player’s position from Squads (today’s and future games — past lineups don’t change), and a position changed in a lineup goes into Squads','A player who joins a team in Squads (e.g. moved up to the U18s) fills an empty row in that team’s upcoming lineups, and is always in the lineup’s Squad list','Injured and unavailable players are no longer listed on the bench — they’re on their own Unavailable line underneath (in red)']},
@@ -17600,6 +17771,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return h('div', {class:'drill-add-row no-print'},
       h('button', {type:'button', class:'btn btn-primary', text:'+ Add board', onclick:function(){ add('', 'Board ' + (state.drills.length + 1)); }}),
       more,
+      h('button', {type:'button', class:'btn', text:'+ From saved boards', title:'Add boards you saved from other games', onclick:function(){ pgbPick(); }}),
       /* a lineup slide: a board with your matchday lineup on it, at the start of the presentation */
       h('button', {type:'button', class:'btn', text:'+ Add lineup', title:'Add a board showing one of your saved matchday lineups', onclick:function(){
         pgLineupPick(function(ref){
