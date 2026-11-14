@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261114211803">
+<meta name="hufc-build" content="20261115082005">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -361,7 +361,7 @@ This typically indicates that your device does not have a healthy Internet conne
         const f = find(key(path)); if(!f) throw nf();
         let text = f.src.body(key(path)); if(text == null) throw nf();
         /* say whose it is, so the planner can tell what this coach may change */
-        try{ const o = JSON.parse(text); o.owner = o.author || f.src.uid; text = JSON.stringify(o); }catch(e){}
+        try{ const o = JSON.parse(text); o.owner = (o.author && sources.has(o.author)) ? o.author : f.src.uid; text = JSON.stringify(o); }catch(e){}
         return {text:async function(){ return text; }, lastModified:+f.d.at || 0};
       },
       async createWritable(){
@@ -15754,6 +15754,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const me = CLOUD.user();
       if(!x.owner || x.owner === me.uid) return CLOUD.name() || x.madeBy || '';
       if(CLOUD.knows && CLOUD.knows(x.owner)) return CLOUD.coachName(x.owner) || x.madeBy || '';
+      if(CLOUD.knows && !CLOUD.knows(x.owner)) return x.madeBy || CLOUD.name() || '';   /* an account the club doesn't know: it's kept with you */
     }
     return x.madeBy || '';
   }
