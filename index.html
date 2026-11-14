@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261114210445">
+<meta name="hufc-build" content="20261114210943">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3096,7 +3096,7 @@ html.pg-showing, html.pg-showing body{overflow:hidden;}
 .pg-ts-logo img{max-width:100%; max-height:100%; object-fit:contain; filter:drop-shadow(0 8px 24px rgba(0,0,0,.45));}
 .pg-ts-none span{display:grid; place-items:center; width:86%; height:86%; border-radius:50%; border:3px solid rgba(255,255,255,.4); background:rgba(255,255,255,.06); color:#fff; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:clamp(34px, 8vh, 80px); letter-spacing:.04em;}
 .pg-ts-v{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:clamp(28px, 6vh, 56px); color:var(--yellow); text-transform:uppercase; letter-spacing:.06em;}
-.pg-ts-name{margin:0; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:clamp(34px, min(7.5vw, 10vh), 92px); line-height:1.02; text-transform:uppercase; letter-spacing:.02em; color:#fff;}
+.pg-ts-name{margin:0; max-width:1200px; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:clamp(30px, min(5.6vw, 9vh), 84px); line-height:1.02; text-transform:uppercase; letter-spacing:.02em; color:#fff;}
 .pg-ts-vs{color:var(--yellow); font-size:.62em; vertical-align:.18em; letter-spacing:.08em;}
 .pg-ts-plan{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:clamp(18px, 3vh, 28px); letter-spacing:.14em; text-transform:uppercase; color:var(--yellow);}
 .pg-ts-info{font-size:clamp(16px, 2.6vh, 24px); color:#c3c5c8;}
@@ -3289,13 +3289,30 @@ html.pg-vid-open, html.pg-vid-open body{overflow:hidden;}
 .pg-lu-pick-info{min-width:0;}
 /* Present mode: the lineup big on its own slide, or beside a drawing */
 .pg-show-body.lu-slide{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);}
-.pg-show-lu{flex-direction:column; gap:10px;}
+.pg-show-lu{flex-direction:column; gap:6px;}
+.pg-show-lu-svg.two{gap:22px; align-items:stretch;}
+.pg-show-body:has(.pg-show-lu-svg.two){grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);}
+.pg-show-lu-svg.two .pg-show-lu-half{max-width:calc(50% - 11px);}
+.pg-show-lu-half{margin:0; display:flex; flex-direction:column; align-items:center; gap:6px; flex:none; height:100%; aspect-ratio:300 / 490;}
+.pg-show-lu-one{flex:1; min-height:0; display:flex; justify-content:center;}
+.pg-show-lu-one .lu-pitch{height:100%; width:auto; max-width:100%; border-radius:8px;}
+.pg-show-lu-half figcaption{font-size:16px;}
+.pg-lu-big.two{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.pg-lu-half{margin:0; min-width:0;}
+.pg-lu-half figcaption{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px; letter-spacing:.04em; text-transform:uppercase; margin:0 0 4px;}
+.pg-lu-half .lu-pitch{display:block; width:100%; height:auto; border-radius:6px;}
+.pg-km{display:inline;}
+.pg-clip-add{flex-wrap:wrap;}
+.pg-km-sep{display:inline-block; width:2px; height:1.1em; background:currentColor; opacity:.6; margin:0 16px; vertical-align:-.2em; border-radius:1px;}
 .pg-show-lu-svg{flex:1; min-height:0; display:flex; justify-content:center; width:100%;}
 .pg-show-lu-svg .lu-pitch{height:100%; width:auto; max-width:100%; border-radius:8px;}
 .pg-show-lu-cap{display:flex; flex-wrap:wrap; justify-content:center; gap:4px 14px; font-size:17px; color:#c3c5c8; text-align:center;}
 .pg-show-lu-form{font-family:'Barlow Condensed', sans-serif; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--yellow);}
 @media screen and (max-width: 760px){
   .pg-show-lu-svg .lu-pitch{height:auto; width:min(100%, calc(52vh * 300 / 460));}
+  .pg-show-lu-svg.two{gap:10px;}
+  .pg-show-lu-half{flex:1;}
+  .pg-show-lu-one .lu-pitch, .pg-show-lu-svg.two .lu-pitch{width:100%; height:auto;}
 }
 .pg-show-bench-list{list-style:none; margin:4px 0 0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:6px 18px; font-size:22px;}
 .pg-show-bench-list li{padding:6px 0; border-bottom:1px solid rgba(255,255,255,.1);}
@@ -17867,6 +17884,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       return '<svg class="lu-pitch ' + (cls || '') + '" viewBox="0 0 300 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + escapeXml((luName(L) || 'Lineup') + ' — ' + luFormLabel(p.formation)) + '">' + luPitchMarkup(p) + '</svg>';
     });
   }
+  function pgLuBoth(L, ref){ return !!(ref && ref.half === 'both' && L && L.periods && L.periods.length > 1); }
+  /* Present mode's key messages: each point, with a thin line between */
+  function pgKmNode(theme){
+    const box = h('div', {class:'pg-show-theme'});
+    String(theme).split('  –  ').forEach(function(t, i){ if(i) box.appendChild(h('span', {class:'pg-km-sep', 'aria-hidden':'true'})); box.appendChild(h('span', {class:'pg-km', text:t})); });
+    return box;
+  }
   function pgLineupBench(L, ref){ return pgWithLineup(L, function(){ return luBenchText(pgLineupHalf(L, ref)); }); }
   /* choose one of your saved lineups (the ones against this opponent first) */
   function pgLineupPick(done){
@@ -17918,21 +17942,25 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   /* on the board, where the drawing would be: the lineup, which half, and change it */
   function pgLineupCol(d){
-    const col = h('div', {class:'pg-lu-col', style:'width:' + PITCH_SIZES[d.pitchSizeIdx] + 'px'});     /* as wide as the pitch: long names and the bench wrap underneath */
+    const both0 = !!(d.lineup && d.lineup.half === 'both');
+    const col = h('div', {class:'pg-lu-col' + (both0 ? ' two' : ''), style:'width:' + (both0 ? 520 : Math.max(420, PITCH_SIZES[d.pitchSizeIdx])) + 'px'});     /* as wide as the pitch (or two): long names and the bench wrap underneath */
     const redo = function(){ syncBoards(); rerender(); saveLocal(); };
     const L = pgLineupGet(d.lineup);
     if(!L){
       col.append(h('div', {class:'pg-clip-missing', text:'This lineup isn’t on this device.'}));
     } else {
       const sel = h('select', {'aria-label':'Which half'});
-      L.periods.forEach(function(p, i){ sel.appendChild(h('option', {value:String(i), text:clean(p.name) || ('Period ' + (i + 1)), selected:i === Math.min(L.periods.length - 1, +d.lineup.half || 0)})); });
-      sel.addEventListener('change', function(){ d.lineup.half = +sel.value; redo(); });
+      const both = pgLuBoth(L, d.lineup);
+      L.periods.forEach(function(p, i){ sel.appendChild(h('option', {value:String(i), text:clean(p.name) || ('Period ' + (i + 1)), selected:!both && i === Math.min(L.periods.length - 1, +d.lineup.half || 0)})); });
+      if(L.periods.length > 1) sel.appendChild(h('option', {value:'both', text:'Both halves', selected:both}));
+      sel.addEventListener('change', function(){ d.lineup.half = sel.value === 'both' ? 'both' : +sel.value; redo(); });
       const bench = pgLineupBench(L, d.lineup);
       col.append(
         h('div', {class:'pg-lu-head'}, h('strong', {text:luName(L) || 'Untitled lineup'}),
-          h('span', {class:'pg-lu-meta', text:LU_FORMATS[L.format].label + ' · ' + luFormLabel(pgLineupHalf(L, d.lineup).formation)})),
+          h('span', {class:'pg-lu-meta', text:LU_FORMATS[L.format].label + ' · ' + (both ? L.periods.slice(0, 2).map(function(p, i){ return (clean(p.name) || ('Period ' + (i + 1))) + ' ' + luFormLabel(p.formation); }).join(' · ') : luFormLabel(pgLineupHalf(L, d.lineup).formation))})),
         avWarnNode(L, 'no-print'),
-        h('div', {class:'pg-lu-big', html:pgLineupSvg(L, d.lineup)}),
+        both ? h('div', {class:'pg-lu-big two'}, [0, 1].map(function(i){ const p = L.periods[i]; return h('figure', {class:'pg-lu-half'}, h('figcaption', {text:(clean(p.name) || ('Period ' + (i + 1))) + ' · ' + luFormLabel(p.formation)}), h('div', {html:pgLineupSvg(L, {half:i})})); }))
+             : h('div', {class:'pg-lu-big', html:pgLineupSvg(L, d.lineup)}),
         bench.length ? h('div', {class:'pg-lu-meta', text:'Bench: ' + bench.join(' · ')}) : null,
         h('div', {class:'pg-lu-tools no-print'},
           h('label', {class:'cfg'}, h('span', {class:'lbl', text:'Show'}), sel),
@@ -17945,6 +17973,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function pgShowLineup(d, big){
     const L = pgLineupGet(d.lineup); if(!L) return null;
     const p = pgLineupHalf(L, d.lineup), bench = pgLineupBench(L, d.lineup);
+    if(pgLuBoth(L, d.lineup)){
+      /* both halves, side by side, each with its formation */
+      return h('div', {class:'pg-show-pitch pg-show-lu'},
+        h('div', {class:'pg-show-lu-svg two'}, [0, 1].map(function(i){ const q = L.periods[i];
+          return h('figure', {class:'pg-show-lu-half'}, h('div', {class:'pg-show-lu-one', html:pgLineupSvg(L, {half:i})}), h('figcaption', {class:'pg-show-lu-form', text:(clean(q.name) || ('Period ' + (i + 1))) + ' · ' + luFormLabel(q.formation)})); })));
+    }
     return h('div', {class:'pg-show-pitch pg-show-lu'},
       h('div', {class:'pg-show-lu-svg', html:pgLineupSvg(L, d.lineup)}),
       h('div', {class:'pg-show-lu-cap'},
@@ -18873,7 +18907,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         side),
       h('div', {class:'pg-show-foot'},
         h('button', {type:'button', class:'pg-show-nav', text:'‹ Back', disabled:pgShowAt < 0, onclick:function(){ pgShowGo(-1); }}),
-        theme ? h('div', {class:'pg-show-theme', text:theme}) : h('div'),
+        theme ? pgKmNode(theme) : h('div'),
         h('button', {type:'button', class:'pg-show-nav', text:'Next ›', disabled:pgShowAt === n - 1, onclick:function(){ pgShowGo(1); }}))
     );
   }
@@ -18912,14 +18946,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           opp ? h('span', {class:'pg-ts-v', text:'vs'}) : null,
           opp ? badge(oppLogo, oppName || opp, 'pg-ts-them') : null),
         h('h1', {class:'pg-ts-name'},
-          h('span', {text:'Heidelberg'}),
+          h('span', {text:'Heidelberg United'}),
           opp ? h('span', {class:'pg-ts-vs', text:' vs '}) : (named && named !== auto ? h('span', {class:'pg-ts-vs', text:' · '}) : null),
-          opp ? h('span', {text:oppName || opp}) : (named && named !== auto ? h('span', {text:named}) : null)),
+          opp ? h('span', {text:opp}) : (named && named !== auto ? h('span', {text:named}) : null)),
         named && named !== auto && opp ? h('div', {class:'pg-ts-plan', text:named}) : null,
         bits.length ? h('div', {class:'pg-ts-info', text:bits.join('  ·  ')}) : null),
       h('div', {class:'pg-show-foot'},
         h('button', {type:'button', class:'pg-show-nav', text:'‹ Back', disabled:true}),
-        theme ? h('div', {class:'pg-show-theme', text:theme}) : h('div'),
+        theme ? pgKmNode(theme) : h('div'),
         h('button', {type:'button', class:'pg-show-nav', text:'Start ›', disabled:!n, onclick:function(){ pgShowGo(1); }}))
     );
   }
