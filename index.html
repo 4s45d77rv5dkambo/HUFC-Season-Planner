@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261116093119">
+<meta name="hufc-build" content="20261116093628">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2409,6 +2409,9 @@ html.view-home .se-page .se-appbar{display:block;}
 .se-row-items{display:flex; flex-wrap:wrap; gap:5px; min-width:0;}
 .se-item{max-width:100%; min-width:0; padding:4px 9px; border:1px solid var(--line); border-radius:7px; background:var(--white); color:var(--ink); font:inherit; font-size:14px; font-weight:600; cursor:pointer; text-align:left;}
 .se-item-t{display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.se-item.has-th{padding:5px 10px 6px;}
+.se-item-th{display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; margin-top:2px; font-size:12.5px; font-weight:500; line-height:1.25; opacity:.72; white-space:normal;}
+.se-item-th::before{content:'Theme · '; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;}
 .se-item:hover, .se-item:focus-visible{background:var(--black); color:var(--yellow); border-color:var(--black);}
 .se-add{padding:4px 9px; border:1px dashed #b9bbb6; border-radius:7px; background:transparent; color:var(--ink); font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:14px; letter-spacing:.03em; text-transform:uppercase; cursor:pointer;}
 .se-add:hover, .se-add:focus-visible{border-style:solid; border-color:var(--black); background:var(--yellow);}
@@ -19863,7 +19866,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         const list = h('div', {class:'se-row-items'});
         items.forEach(function(x){
           const tt = seItemTitle(k, x);
-          list.appendChild(h('button', {type:'button', class:'se-item', title:'Open “' + tt + '”', onclick:function(){ seOpenItem(k, x); }}, h('span', {class:'se-item-t', text:tt})));
+          const th = k === 'session' && x.plan && x.plan.focus ? clean(x.plan.focus.theme) : '';
+          list.appendChild(h('button', {type:'button', class:'se-item' + (th && th !== tt ? ' has-th' : ''), title:'Open “' + tt + '”' + (th && th !== tt ? ' · Theme: ' + th : ''), onclick:function(){ seOpenItem(k, x); }},
+            h('span', {class:'se-item-t', text:tt}), th && th !== tt ? h('span', {class:'se-item-th', text:th}) : null));
         });
         if(!items.length && !ro && !info.off){
           list.appendChild(h('button', {type:'button', class:'se-add', title:'Start a ' + SE_KIND_LBL[k].toLowerCase() + ' for ' + seDayName(info.iso), text:'+ ' + SE_KIND_LBL[k], onclick:function(){ seNewItem(k, s, info); }}));
