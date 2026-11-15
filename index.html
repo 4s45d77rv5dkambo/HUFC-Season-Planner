@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261116093836">
+<meta name="hufc-build" content="20261116095203">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -8615,7 +8615,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       ));
     }
     const fi = document.getElementById('footerInfo');
-    if(fi) fi.textContent = [state.meta.coach && 'Coach: ' + coachShort(state.meta.coach), state.meta.date].filter(Boolean).join(' · ');
+    const fcs = String(state.meta.coach || '').split(/\s*,\s*/).map(function(t){ return t.trim(); }).filter(Boolean);
+    if(fi) fi.textContent = [fcs.length ? (fcs.length > 1 ? 'Coaches: ' : 'Coach: ') + fcs.join(', ') : '', state.meta.date].filter(Boolean).join(' · ');
     const pf = document.getElementById('printFooterInfo');
     if(pf) pf.textContent = [sessionName(state), clean(state.meta.date)].filter(Boolean).join(' · ');
     document.querySelectorAll('.drill-no').forEach(function(n, i){ n.textContent = i + 1; });
