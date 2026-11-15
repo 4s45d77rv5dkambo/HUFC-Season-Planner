@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261115082005">
+<meta name="hufc-build" content="20261116093119">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -7317,6 +7317,102 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(d.anim && Array.isArray(d.anim.steps)) d.anim.steps.forEach(function(st){ Object.keys(st || {}).forEach(function(u){ const p = st[u]; if(Array.isArray(p)){ p[0] = r(p[0] * fx); p[1] = r(p[1] * fy); } }); });
   }
   function syncBoards(){ boards.forEach(function(b){ b.d.items = b.api.serialize(); }); }
+  /* ---------- editing together: bring others' changes into the open session ---------- */
+  var liveBase = null, liveKey = null, liveSeen = 0, liveMine = new Set(), liveWait = null, liveTimer = null, liveBusyAt = 0, liveDown = false;
+  const LIVE_SKIP = ['savedAt', 'owner', 'group', 'planId', 'author', 'collab', 'collabNames', 'collabGroups'];
+  function liveJ(x){ return x === undefined ? '\u0000' : JSON.stringify(x); }
+  function liveStrip(x){ const c = JSON.parse(JSON.stringify(x || {})); LIVE_SKIP.forEach(function(k){ delete c[k]; }); return c; }
+  function liveReset(){
+    try{ liveKey = storageKey; liveBase = state ? liveStrip(state) : null; liveSeen = state ? (+state.savedAt || 0) : 0; liveMine = new Set(); liveWait = null; }catch(e){ liveBase = null; }
+  }
+  ['keydown', 'input', 'pointerdown', 'pointerup', 'compositionstart'].forEach(function(ev){
+    document.addEventListener(ev, function(){ liveBusyAt = Date.now(); if(ev === 'pointerdown') liveDown = true; if(ev === 'pointerup') liveDown = false; }, true);
+  });
+  function liveBusy(){ return liveDown || Date.now() - liveBusyAt < 1500; }
+  function liveIsObj(x){ return x && typeof x === 'object' && !Array.isArray(x); }
+  function liveIds(a){ return Array.isArray(a) && a.length && a.every(function(x){ return liveIsObj(x) && x.id != null; }); }
+  /* three-way: what both started from (b), yours (l), theirs (r); when both changed the same thing, pick(l, r) decides */
+  function liveM3(b, l, r, pick){
+    const jl = liveJ(l), jr = liveJ(r);
+    if(jl === jr) return l;
+    const jb = liveJ(b);
+    if(jl === jb) return r;
+    if(jr === jb) return l;
+    if(liveIsObj(l) && liveIsObj(r)){
+      const out = {}, bb = liveIsObj(b) ? b : {};
+      Object.keys(l).concat(Object.keys(r).filter(function(k){ return !(k in l); })).forEach(function(k){
+        const v = liveM3(bb[k], l[k], r[k], pick); if(v !== undefined) out[k] = v;
+      });
+      return out;
+    }
+    if(Array.isArray(l) && Array.isArray(r) && (liveIds(l) || !l.length) && (liveIds(r) || !r.length)) return liveById(Array.isArray(b) ? b : [], l, r, pick);
+    return pick(l, r);
+  }
+  function liveById(b, l, r, pick){
+    const map = function(a){ const m = {}; a.forEach(function(x){ if(liveIsObj(x) && x.id != null) m[x.id] = x; }); return m; };
+    const bm = map(b), lm = map(l), rm = map(r), ids = function(a){ return a.map(function(x){ return x && x.id; }); };
+    /* the order: theirs if you didn't reorder, else yours; anything new on either side goes in after the one before it */
+    const lo = ids(l), ro = ids(r), theirs = liveJ(lo) === liveJ(ids(b)), order = theirs ? ro.slice() : lo.slice();
+    const other = theirs ? lo : ro;
+    other.forEach(function(id, i){ if(order.indexOf(id) === -1){ const prev = i ? order.indexOf(other[i - 1]) : -1; order.splice(prev + 1, 0, id); } });
+    const out = [];
+    order.forEach(function(id){
+      const inB = id in bm, inL = id in lm, inR = id in rm;
+      if(inL && inR){ out.push(liveM3(bm[id], lm[id], rm[id], pick)); return; }
+      if(inL){ if(inB && liveJ(lm[id]) === liveJ(bm[id])) return; out.push(lm[id]); return; }      /* they took it out (unless you'd changed it) */
+      if(inR){ if(inB && liveJ(rm[id]) === liveJ(bm[id])) return; out.push(rm[id]); }               /* you took it out (unless they'd changed it) */
+    });
+    return out;
+  }
+  /* where the cursor is, so it can go back there after the page is redrawn */
+  function liveCaret(){
+    const a = document.activeElement, sheet = document.querySelector('.sheet:not(.lu-sheet)');
+    if(!a || !sheet || !sheet.contains(a) || !/^(INPUT|TEXTAREA)$/.test(a.tagName)) return null;
+    const box = a.closest('article.drill[id], [data-id]') || sheet, all = Array.prototype.slice.call(box.querySelectorAll('input, textarea'));
+    let s = null, e = null; try{ s = a.selectionStart; e = a.selectionEnd; }catch(x){}
+    const q = box === sheet ? null : box.id ? '#' + (window.CSS && CSS.escape ? CSS.escape(box.id) : box.id) : '[data-id="' + box.getAttribute('data-id') + '"]';
+    return {q:q, i:all.indexOf(a), s:s, e:e};
+  }
+  function liveCaretBack(c){
+    if(!c) return;
+    const sheet = document.querySelector('.sheet:not(.lu-sheet)'); if(!sheet) return;
+    let box = sheet; if(c.q){ box = sheet.querySelector(c.q); if(!box) return; }
+    const el = box.querySelectorAll('input, textarea')[c.i]; if(!el) return;
+    try{ el.focus({preventScroll:true}); if(c.s != null) el.setSelectionRange(c.s, c.e); }catch(x){}
+  }
+  function liveMerge(remote){
+    try{
+      if(!remote || remote.deleted || typeof state === 'undefined' || !state || !storageKey) return;
+      if(liveKey !== storageKey || !liveBase) liveReset();
+      const rs = +remote.savedAt || 0;
+      if(rs <= liveSeen || liveMine.has(rs)) return;           /* seen already, or it's what this device saved */
+      if(liveBusy() || (typeof isLineupView === 'function' && isLineupView())){
+        liveWait = remote; clearTimeout(liveTimer);
+        liveTimer = setTimeout(function(){ const w = liveWait; liveWait = null; if(w) liveMerge(w); }, 1600);
+        return;
+      }
+      syncBoards();
+      let rN; try{ rN = normalize(JSON.parse(JSON.stringify(remote))); }catch(e){ return; }
+      const R = liveStrip(rN), L = liveStrip(state), B = liveBase;
+      liveSeen = rs;
+      if(liveJ(R) === liveJ(L)){ liveBase = R; return; }
+      if(liveJ(R) === liveJ(B)) return;                         /* nothing new from them */
+      const mine = saveTimer ? Date.now() : (+state.savedAt || 0);
+      const M = readOnly ? R : liveM3(B, L, R, function(l, r){ return mine > rs ? l : r; });
+      const keep = {};
+      LIVE_SKIP.forEach(function(k){ if(state[k] !== undefined) keep[k] = state[k]; });
+      const caret = liveCaret(), y = window.scrollY;
+      clearTimeout(saveTimer); saveTimer = null;
+      state = normalize(Object.assign(JSON.parse(JSON.stringify(M)), keep));
+      liveBase = R;
+      renderAll(); window.scrollTo(0, y); liveCaretBack(caret);
+      resetHistory();
+      if(!readOnly && liveJ(liveStrip(state)) !== liveJ(R)) saveLocal();      /* yours and theirs together: save it so they get yours too */
+      else { state.savedAt = rs; try{ hufcStore.setItem(storageKey, JSON.stringify(state)); }catch(e){} }
+      setStatus('Up to date with the latest changes · ' + clock());
+    }catch(e){ console.warn('live merge', e); }
+  }
+
   /* ---------- copy and paste on the pitch: an icon, a group, or a whole diagram, onto any board (any session or pre-game) ---------- */
   const CLIP_KEY = 'hufc-pitch-clip';
   let activeBoardId = null;
@@ -7392,7 +7488,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     syncBoards();
     updateLibrary(state);
     if(!suppressCommit) commitHistory();
-    state.savedAt = Date.now();
+    if(liveKey !== storageKey) liveReset();
+    state.savedAt = Date.now(); liveMine.add(state.savedAt);
     try{
       hufcStore.setItem(storageKey, JSON.stringify(state));
       storageOK = true;
@@ -10672,6 +10769,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     resetHistory();
     showEditor();
     setReadOnly(!canEdit(state), 'session', groupOf(state));
+    liveReset();
     window.scrollTo(0, 0);
     setStatus('Opened “' + (sessionName(state) || 'Untitled session') + '”');
   }
@@ -16673,7 +16771,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         /* bring in what's new or changed in the folder */
         for(const name of Object.keys(files)){
           const id = name.replace(/\.json$/, ''), path = base + name, remote = files[name], rs = +remote[st] || 0;
-          if(openNow(kind, id)){ if(kind === 'sessions') collabLive(remote); continue; }
+          if(openNow(kind, id)){ if(kind === 'sessions'){ collabLive(remote); liveMerge(remote); } continue; }
           const local = localGet(kind, id, lib), ls = local ? (+local[st] || 0) : 0;
           /* deleted on purpose (by its coach or the admin): a "deleted" marker takes it off every device */
           if(remote && remote.deleted){
