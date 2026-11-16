@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261116122624">
+<meta name="hufc-build" content="20261116135541">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -346,10 +346,13 @@ This typically indicates that your device does not have a healthy Internet conne
     const newest = function(list){ return list.reduce(function(a, b){ return (+b.d.at || 0) > (+a.d.at || 0) ? b : a; }); };
     /* the plan's own coach decides: their copy, or a newer one saved by a coach they made a collaborator.
        Anyone else's copy of it is ignored (it isn't theirs to change). Plans with no collaborators: the newest copy wins, as before */
-    const own = cands.filter(function(c){ const m = meta(c.src, k); return !m.author || m.author === c.src.uid; });
+    let own = cands.filter(function(c){ const m = meta(c.src, k); return !m.author || m.author === c.src.uid; });
+    /* (an author id this sign-in doesn't know: the plan's own copy is the one kept by a coach who isn't a collaborator on it) */
+    if(!own.length) own = cands.filter(function(c){ const m = meta(c.src, k); return m.collab.indexOf(c.src.uid) === -1; });
     if(!own.length) return newest(cands);
-    const allow = meta(newest(own).src, k).collab;
-    return newest(cands.filter(function(c){ return own.indexOf(c) !== -1 || allow.indexOf(c.src.uid) !== -1; }));
+    const home = newest(own), allow = meta(home.src, k).collab;
+    const pick = newest(cands.filter(function(c){ return own.indexOf(c) !== -1 || allow.indexOf(c.src.uid) !== -1; }));
+    return {d:pick.d, src:pick.src, home:home.src};
   }
   function allKeys(){ const ks = new Set(); sources.forEach(function(src){ src.docs.forEach(function(v, k){ ks.add(k); }); }); return ks; }
   function hasUnder(prefix){ for(const k of allKeys()){ if(k.indexOf(prefix) === 0) return true; } return false; }
@@ -361,7 +364,7 @@ This typically indicates that your device does not have a healthy Internet conne
         const f = find(key(path)); if(!f) throw nf();
         let text = f.src.body(key(path)); if(text == null) throw nf();
         /* say whose it is, so the planner can tell what this coach may change */
-        try{ const o = JSON.parse(text); o.owner = (o.author && sources.has(o.author)) ? o.author : f.src.uid; text = JSON.stringify(o); }catch(e){}
+        try{ const o = JSON.parse(text); o.owner = (o.author && sources.has(o.author)) ? o.author : (f.home || f.src).uid; text = JSON.stringify(o); }catch(e){}
         return {text:async function(){ return text; }, lastModified:+f.d.at || 0};
       },
       async createWritable(){
@@ -8995,6 +8998,32 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* adds / refreshes the practices of a plan; returns how many changed.
      A practice changed in the session it was made in updates the Practices library. A practice taken from the library
      into another session and changed there becomes a NEW practice, so the original — and every other session using it — stays as it was. */
+
+  /* how alike two practices are, 0..1: their words (name, focus, notes) and their pitch (the same things in about the same places) */
+  function pracWords(p){
+    const t = [p && p.name, p && p.focus].concat(((p && p.notes) || []).map(function(f){ return f && f.value; })).join(' ').toLowerCase();
+    const s = new Set(); t.split(/[^a-z0-9]+/).forEach(function(w){ if(w.length > 1) s.add(w); }); return s;
+  }
+  function pracSim(a, b){
+    if(!a || !b) return 0;
+    const A = pracWords(a), B = pracWords(b); let inter = 0;
+    A.forEach(function(w){ if(B.has(w)) inter++; });
+    const uni = A.size + B.size - inter, ts = uni ? inter / uni : 1;
+    const ia = a.items || [], ib = b.items || [];
+    let ps = 1;
+    if(ia.length || ib.length){
+      const used = new Set(); let m = 0;
+      const px = function(o){ return +(o.x != null ? o.x : o.x1) || 0; }, py = function(o){ return +(o.y != null ? o.y : o.y1) || 0; };
+      ia.forEach(function(x){
+        for(let j = 0; j < ib.length; j++){
+          if(used.has(j)) continue; const y = ib[j];
+          if(y.type === x.type && Math.abs(px(y) - px(x)) < 25 && Math.abs(py(y) - py(x)) < 25){ used.add(j); m++; break; }
+        }
+      });
+      ps = m / Math.max(ia.length, ib.length);
+    }
+    return (ts + ps) / 2;
+  }
   function libraryUpsert(plan, lib){
     let n = 0;
     if(isPre(plan)) return pgbUpsert(plan, lib);   /* pre-game boards: kept in Saved boards */
@@ -9003,7 +9032,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(!practiceHasContent(d)) return;
       if(!d.libId) d.libId = d.id;
       const g = groupOf(plan), key = practiceKey(d);
-      let cur = lib.items[d.libId];
+      let cur = lib.items[d.libId], orig = null;
       const same = cur && practiceKey(cur.practice) === key;
       if(cur && !same){
         /* changed here since it last matched? (an older copy that the library has since moved on from stays as it is) */
@@ -9013,13 +9042,24 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         const owner = cur.plan ? cur.plan === pid : d.libId === d.id;
         /* another age group's, someone else's, or made in another session: a new practice */
         if(groupOf(cur) !== g || !canEdit(cur) || !owner){
-          d.libId = newId(); cur = null;
+          orig = cur; d.libId = newId(); cur = null;
         }
       }
       if(lib.removed[d.libId]) return;
       d.libHash = practiceKey(d);
       if(same) return;
-      lib.items[d.libId] = {libId:d.libId, practice:practiceSnapshot(d), updatedAt:Date.now(), source:src, group:g, plan:pid};
+      const snap = practiceSnapshot(d), ne = {libId:d.libId, practice:snap, updatedAt:Date.now(), source:src, group:g, plan:pid};
+      /* someone else's practice, changed a little: it still shows the coach who made it (until more than half of it is different) */
+      try{
+        const prev = lib.items[d.libId];
+        let by = null, base = null;
+        if(orig){
+          const theirs = orig.by || (orig.owner && orig.owner !== collabMe() && !(who && orig.owner === who.uid) ? {uid:orig.owner, name:coachOf(orig)} : null);
+          if(theirs && theirs.name){ by = theirs; base = orig.base || orig.practice; }
+        } else if(prev && prev.by){ by = prev.by; base = prev.base; }
+        if(by && base && pracSim(base, snap) >= 0.5){ ne.by = by; ne.base = base; }
+      }catch(e){}
+      lib.items[d.libId] = ne;
       n++;
     });
     return n;
@@ -15921,6 +15961,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* ---------- whose it is: "U18 – David Ambelidis" (initials when the name doesn't fit) ---------- */
   function coachOf(x){
     if(!x) return '';
+    if(x.by && x.by.name && x.practice) return x.by.name;   /* a practice changed only a little by another coach: still its maker's */
     if(CLOUD && CLOUD.user()){
       const me = CLOUD.user();
       if(!x.owner || x.owner === me.uid) return CLOUD.name() || x.madeBy || '';
@@ -20539,7 +20580,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('button', {type:'button', class:'btn btn-primary', text:'Save', onclick:function(){
           const before = JSON.stringify(x.collab || []);
           if(sel.length){
-            x.author = x.owner || x.author || collabMe();
+            { const meNow = collabMe(), mine = !x.owner || x.owner === meNow || (who && x.owner === who.uid);
+              x.author = mine ? meNow : (x.author || x.owner); }
             x.collab = sel.slice();
             const nm = {}, gr = {}; sel.forEach(function(uid){ nm[uid] = (CLOUD.coachName && CLOUD.coachName(uid)) || ''; gr[uid] = (CLOUD.coachGroups && CLOUD.coachGroups(uid)) || []; }); x.collabNames = nm; x.collabGroups = gr;
           } else { delete x.collab; delete x.collabNames; delete x.collabGroups; }
