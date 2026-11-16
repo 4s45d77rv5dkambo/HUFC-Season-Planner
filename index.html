@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261116135541">
+<meta name="hufc-build" content="20261116143514">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -4169,6 +4169,9 @@ html.print-sim{--rule:21px;}
 .pw-msg.good{color:#1f8a4c;}
 .pw-forgot{align-self:flex-start; padding:0; border:0; background:none; color:var(--ink); font:inherit; font-size:13.5px; text-decoration:underline; cursor:pointer;}
 .pw-forgot:disabled{opacity:.5;}
+
+.upd-msg.good{color:#1f7a45;}
+.upd-msg.warn{color:#8a5a00;}
 </style>
 <style>
 /* ---------- every line under text: one slim black line, the same thickness everywhere ----------
@@ -17092,6 +17095,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'4.09', d:'16 Nov 2026', t:'Edit together, Check for updates, change password', n:['Collaborators can work on a session at the same time as you — each other’s changes come in within a few seconds and are combined (the later one wins only when you both changed the very same thing)','Settings → About → Check for updates: brings this device up to the newest planner straight away. The Windows program (from version 1.6.7) also keeps itself up to date from the club website — no online planner link needed','Settings → Account → Change password (or email yourself a link if you’ve forgotten it)','Season calendar: each session shows its phase of play; long session names show in full','Session plans (on screen, printed and PDF) name every coach in full','A practice someone else changes a little still shows the coach who made it; once more than half of it is different it counts as theirs. A collaborator’s edits never make your session theirs','Lineups: the player list leaves out the squad list’s empty rows; a session started from the calendar fills in that team','Settings shows the real room for your plans (no 10 MB limit in the app or the Windows program)','Fixes: the save status beside Home, phone video filters, long opponent names on pre-games, Present mode board names on phones, backups bringing in newer practices']},
     {v:'4.08', d:'11 Nov 2026', t:'A new Home page', n:['Home has a menu down the side: + New (session, lineup, pre-game, match video), Home, Sessions, Saved practices, Season calendar, Lineups, Pre-games, Match videos, Squads, Player IDPs, Game time & stats and Settings','Home shows this week, anything shared with you and what you worked on last — each list has its own page','The folder picker (My folder, Club library, U13…) is in the menu, under Home','Prefer the big buttons? Settings → Account → Home page → Classic','Saved boards (menu → Matchday): every pre-game board is kept there automatically, like saved practices — use one in any other game with Use in a pre-game, or + From saved boards inside one','Stats & game time (it was Game time & player stats) opens as its own page','Video library (in the menu): the club’s short clips from any game or year — build-up solutions, passing combinations, pressing… Filter by phase, tag, team and year; any coach can watch them and add their own (several videos at once, or links, each with a description), and put one into a pre-game','On a phone the menu opens from ☰ at the top']},
     {v:'4.07', d:'11 Nov 2026', t:'Move a game or training', n:['Season calendar: on a day’s ⋯ menu, Move this game (or training) to another day… — pick the new date and its opponent, colour, sessions, lineups and pre-games go with it (Undo straight after)']},
     {v:'4.06', d:'11 Nov 2026', t:'Defensive and attacking transition', n:['The transition phases are now Defensive transition (IP > OP) and Attacking transition (OP > IP) — in sessions, pre-games, the season calendar and the reports. Ones already saved show the new names']},
@@ -17699,6 +17703,77 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       el.textContent = 'HUFC Session Planner · updated ' + (+b.slice(6, 8)) + ' ' + MON[+b.slice(4, 6) - 1] + ' ' + b.slice(0, 4) + ', ' + hh + ':' + mm + ap;
     }catch(e){}
   })();
+
+  /* ---------- Settings → About: check for updates ---------- */
+  const WIN_PAGE = 'https://4s45d77rv5dkambo.github.io/HUFC-Season-Planner/windows.html';
+  function updBuildText(b){
+    b = String(b || ''); if(!/^\d{14}$/.test(b)) return '';
+    const d = new Date(+b.slice(0, 4), +b.slice(4, 6) - 1, +b.slice(6, 8), +b.slice(8, 10), +b.slice(10, 12));
+    return d.toLocaleDateString([], {day:'numeric', month:'short', year:'numeric'}) + ', ' + d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+  }
+  function updHere(){ const m = document.querySelector('meta[name="hufc-build"]'); return m ? m.content : ''; }
+  function updReloadNow(){ try{ flush(); }catch(e){} try{ luFlush(); }catch(e){} try{ idpFlush(); }catch(e){} setTimeout(function(){ location.reload(); }, 700); }
+  function updCard(p){
+    const c = setCard('Updates');
+    const msg = h('p', {class:'set-sub upd-msg', text:'Updates arrive by themselves. If this device seems behind the other coaches, check now.'});
+    const acts = h('div', {class:'set-actions'});
+    const say = function(t, kind){ msg.textContent = t; msg.className = 'set-sub upd-msg' + (kind ? ' ' + kind : ''); };
+    const btn = h('button', {type:'button', class:'btn btn-primary', text:'Check for updates', onclick:function(){ updCheck(); }});
+    acts.append(btn);
+    c.append(h('p', {class:'set-sub', text:'This planner: ' + (updBuildText(updHere()) || 'unknown') + (window.hufcDesktop && window.hufcDesktop.version ? ' · Windows program ' + window.hufcDesktop.version : '')}), msg, acts);
+    p.appendChild(c);
+    async function updCheck(){
+      btn.disabled = true; btn.textContent = 'Checking…'; say('Checking the club website for the newest planner…');
+      const done = function(){ btn.disabled = false; btn.textContent = 'Check for updates'; };
+      try{
+        /* the online planner (inside Claude): always the newest */
+        if(window.claude && !window.hufcDesktop){ done(); say('The online planner is always the newest version. If it’s been open a long time, reload the page.', 'good'); acts.append(h('button', {type:'button', class:'btn', text:'Reload', onclick:updReloadNow})); return; }
+        /* the Windows program */
+        if(window.hufcDesktop){
+          if(typeof window.hufcDesktop.checkUpdate !== 'function'){
+            done(); say('This Windows program (' + (window.hufcDesktop.version || 'older version') + ') can only update itself through the online planner. Download the new Windows program once (about 2 minutes) and from then on it keeps itself up to date — your saved work stays as it is.', 'warn');
+            acts.append(h('button', {type:'button', class:'btn', text:'Get the new Windows program', onclick:function(){ try{ window.hufcDesktop.openExternal(WIN_PAGE); }catch(e){ window.open(WIN_PAGE, '_blank'); } }}));
+            return;
+          }
+          const r = await window.hufcDesktop.checkUpdate() || {};
+          const pl = r.planner || {}, pr = r.program || {};
+          done();
+          if(pl.state === 'updated'){
+            say('Found a newer planner (' + updBuildText(pl.build) + ') — switching over now. Your work is saved first.', 'good');
+            closeModal(setModal); if(typeof showHome === 'function'){ try{ flush(); }catch(e){} }
+            return;
+          }
+          if(pr.state === 'updated'){ say('The Windows program was updated to ' + (pr.version || 'the newest version') + ' — restart it to finish (the bar at the top).', 'good'); return; }
+          if(pl.state === 'latest') { say('You’re up to date · ' + (updBuildText(pl.build) || updBuildText(updHere())), 'good'); return; }
+          say(pl.error === 'offline' ? 'Couldn’t reach the club website — check the internet and try again.' : 'Couldn’t check just now' + (pl.error ? ' (' + pl.error + ')' : '') + ' — try again in a minute.', 'warn');
+          return;
+        }
+        /* the iPhone/iPad app and the planner in a browser (the club website) */
+        if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+          const reg = await navigator.serviceWorker.getRegistration();
+          let latest = '';
+          try{ const t = await (await fetch('version.txt?t=' + Date.now(), {cache:'no-store'})).text(); latest = t.trim(); }catch(e){}
+          if(!latest){ done(); say('Couldn’t reach the club website — check the internet and try again.', 'warn'); return; }
+          const keys = await caches.keys();
+          const have = keys.filter(function(k){ return k.indexOf('hufc-') === 0; });
+          if(have.indexOf('hufc-' + latest) !== -1 && have.length === 1){ done(); say('You’re up to date · ' + (updBuildText(updHere()) || latest), 'good'); return; }
+          say('Found a newer planner — downloading it…');
+          let switched = false;
+          const onMsg = function(e){ if(e.data === 'hufc-updated') switched = true; };
+          navigator.serviceWorker.addEventListener('message', onMsg);
+          try{ if(reg) await reg.update(); }catch(e){}
+          for(let i = 0; i < 30 && !switched; i++){ await new Promise(function(r){ setTimeout(r, 500); }); if((await caches.keys()).indexOf('hufc-' + latest) !== -1 && !(reg && (reg.installing || reg.waiting))) break; }
+          navigator.serviceWorker.removeEventListener('message', onMsg);
+          /* still the old one kept? clear it, so the newest is fetched straight from the website */
+          if((await caches.keys()).indexOf('hufc-' + latest) === -1){ try{ for(const k of have) await caches.delete(k); }catch(e){} }
+          say('Switching to the newest planner… your work is saved first.', 'good');
+          updReloadNow();
+          return;
+        }
+        done(); say('This copy of the planner is opened from a file, so it can’t update itself. Use the Windows program or the app.', 'warn');
+      }catch(e){ done(); say('Couldn’t check just now — try again in a minute.', 'warn'); }
+    }
+  }
   function setAbout(p){
     const ver = (document.querySelector('.home-version') || {}).textContent || '';
     const where = window.hufcDesktop ? 'Windows program' : (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) ? 'iPhone / iPad app' : CLOUD ? 'In the browser' : 'Online planner';
@@ -17706,8 +17781,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     c.append(h('div', {class:'set-about'}, h('img', {class:'set-crest', alt:'', src:document.querySelector('.home-crest').src}),
       h('div', null, h('div', {class:'set-who-name', text:'Heidelberg United'}), h('div', {class:'set-club', text:'Football Club · Est. 1958'}),
         h('div', {class:'set-who-mail', text:'Version ' + SET_HISTORY[0].v + ' · ' + where + ' · ' + ver.replace('HUFC Session Planner · ', '')}))),
-      h('p', {class:'set-sub', text:'Updates arrive by themselves within a minute or so — the planner switches over when you’re on the Home page.'}));
+      h('p', {class:'set-sub', text:'Updates arrive by themselves — the planner switches over when you’re on the Home page.'}));
     p.appendChild(c);
+    updCard(p);
     const hc = setCard('Update history');
     const list = h('ol', {class:'set-hist'});
     const SHOW = 4;
