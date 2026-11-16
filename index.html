@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261116143514">
+<meta name="hufc-build" content="20261117093018">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -4172,6 +4172,7 @@ html.print-sim{--rule:21px;}
 
 .upd-msg.good{color:#1f7a45;}
 .upd-msg.warn{color:#8a5a00;}
+.token-area.hold-ready{filter:drop-shadow(0 4px 8px rgba(0,0,0,.45));}
 </style>
 <style>
 /* ---------- every line under text: one slim black line, the same thickness everywhere ----------
@@ -6296,6 +6297,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     svg.addEventListener('pointerdown', function(e){
       if(e.target.closest('.token:not(.preview)')) return;
       canvasClick(svgPoint(e), e);
+      /* a finger on empty grass with no tool picked: scrolls the page */
+      if(e.pointerType === 'touch' && !activeTool && !e.target.closest('.end-handle, .bend-handle, .div-handle, .rot-knob, .rot-handle')){
+        let lastY = e.clientY;
+        try{ svg.setPointerCapture(e.pointerId); }catch(x){}
+        const mv = function(ev){ if(ev.pointerId !== e.pointerId) return; window.scrollBy(0, lastY - ev.clientY); lastY = ev.clientY; };
+        const up = function(ev){ if(ev.pointerId !== e.pointerId) return; svg.removeEventListener('pointermove', mv); svg.removeEventListener('pointerup', up); svg.removeEventListener('pointercancel', up); };
+        svg.addEventListener('pointermove', mv); svg.addEventListener('pointerup', up); svg.addEventListener('pointercancel', up);
+      }
     });
     /* show the guides while hovering with a tool, before clicking */
     svg.addEventListener('pointermove', function(e){
@@ -6637,6 +6646,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         svg.removeEventListener('pointermove', onAreaMove);
         pendingArea = null;
         onStep();
+        setActiveTool(null);   /* one box at a time: the tool lets go */
         selectToken(g);
       }
     }
@@ -6717,7 +6727,17 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         g.setPointerCapture(e.pointerId);
         const sc = {x:e.clientX, y:e.clientY}, start = svgPoint(e), orig = parseTransform(g);
         let moved = false;
+        /* a finger on a box: moving straight away scrolls the page; press and hold first to move the box */
+        const touchBox = e.pointerType === 'touch' && g.dataset.type === 'area';
+        let held = !touchBox, scrolling = false, lastY = e.clientY, holdT = null;
+        if(touchBox) holdT = setTimeout(function(){ if(!scrolling){ held = true; g.classList.add('hold-ready'); try{ if(navigator.vibrate) navigator.vibrate(12); }catch(x){} } }, 300);
         function onMove(ev){
+          if(touchBox && !held){
+            if(!scrolling && Math.abs(ev.clientX-sc.x) + Math.abs(ev.clientY-sc.y) > 4){ scrolling = true; clearTimeout(holdT); }
+            if(scrolling) window.scrollBy(0, lastY - ev.clientY);
+            lastY = ev.clientY;
+            return;
+          }
           if(!moved && Math.abs(ev.clientX-sc.x) + Math.abs(ev.clientY-sc.y) > 4) moved = true;
           if(!moved) return;
           const p = svgPoint(ev);
@@ -6726,12 +6746,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           if(selected === g) positionRotateHandle();
         }
         function onUp(ev){
-          g.removeEventListener('pointermove', onMove); g.removeEventListener('pointerup', onUp);
+          g.removeEventListener('pointermove', onMove); g.removeEventListener('pointerup', onUp); g.removeEventListener('pointercancel', onUp);
+          clearTimeout(holdT); g.classList.remove('hold-ready');
           clearGuides();
+          if(scrolling) return;                       /* (it was a scroll) */
+          if(ev.type === 'pointercancel'){ if(moved) onStep(); return; }
           if(!moved) tapOnItem(g, ev); else onStep();
         }
         g.addEventListener('pointermove', onMove);
         g.addEventListener('pointerup', onUp);
+        g.addEventListener('pointercancel', onUp);
       });
     }
     function removeItem(g, quiet){
