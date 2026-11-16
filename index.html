@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261116114928">
+<meta name="hufc-build" content="20261116121310">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1083,7 +1083,7 @@ svg.th-playing .th-line{display:none;}
 @media print{
   .sheet{padding:10mm 10mm 13mm; -webkit-box-decoration-break:clone; box-decoration-break:clone;}
   .print-footer{
-    display:flex !important; justify-content:space-between; gap:16px;
+    display:flex !important; justify-content:space-between; gap:1mm 16px; flex-wrap:wrap;
     position:fixed; left:10mm; right:10mm; bottom:4.6mm;
     font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:8.5pt; letter-spacing:.06em; color:#5b5d61;
   }
@@ -3753,6 +3753,8 @@ html.has-selbar .home{padding-bottom:70px;}
   margin:0;
 }
 .print-footer{display:none;}
+#printFooterCoach{flex-basis:100%; order:-1;}
+#printFooterCoach:empty, body.view-lineup #printFooterCoach{display:none;}
 @media print{
   :root{--rule:21px;}
   body{background:var(--white); font-size:12.5px;}
@@ -4865,6 +4867,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 <div class="print-footer" aria-hidden="true">
   <span id="printFooterLeft">Heidelberg United FC · Training Session Plan</span>
   <span id="printFooterInfo"></span>
+  <span id="printFooterCoach"></span>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite">
@@ -8645,6 +8648,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(fi) fi.textContent = [fcs.length ? (fcs.length > 1 ? 'Coaches: ' : 'Coach: ') + fcs.join(', ') : '', state.meta.date].filter(Boolean).join(' · ');
     const pf = document.getElementById('printFooterInfo');
     if(pf) pf.textContent = [sessionName(state), clean(state.meta.date)].filter(Boolean).join(' · ');
+    const pfc = document.getElementById('printFooterCoach'); if(pfc) pfc.textContent = fcs.length ? (fcs.length > 1 ? 'Coaches: ' : 'Coach: ') + fcs.join(', ') : '';
     document.querySelectorAll('.drill-no').forEach(function(n, i){ n.textContent = i + 1; });
   }
 
@@ -10863,7 +10867,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           if(k === LIB_KEY){      /* saved practices: each one, the newer copy wins */
             const a = bkParse(cur) || {v:1, items:{}, removed:{}}, o = bkParse(v) || {};
             a.items = a.items || {}; a.removed = a.removed || {};
-            Object.keys(o.items || {}).forEach(function(id){ const x = o.items[id], y = a.items[id]; if(!y || (x.savedAt || 0) > (y.savedAt || 0)){ a.items[id] = x; delete a.removed[id]; n++; } });
+            Object.keys(o.items || {}).forEach(function(id){ const x = o.items[id], y = a.items[id]; if(!y || (x.updatedAt || x.savedAt || 0) > (y.updatedAt || y.savedAt || 0)){ a.items[id] = x; delete a.removed[id]; n++; } });
             hufcStore.setItem(k, JSON.stringify(a)); return;
           }
           const o = bkParse(v), c = bkParse(cur);
@@ -11054,10 +11058,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }
     try{
       if(!canvas && !vec) return;
+      const pdfCs = lineupDoc || isPre() ? [] : String(state.meta.coach || '').split(/\s*,\s*/).map(function(t){ return t.trim(); }).filter(Boolean);
       const footRight = (lineupDoc ? [luName(), clean(lu.meta.date)] : [sessionName(state), clean(state.meta.date)]).filter(Boolean).join(' · ');
+      const footCoach = pdfCs.length ? (pdfCs.length > 1 ? 'Coaches: ' : 'Coach: ') + pdfCs.join(', ') : '';
       let pdf;
       if(vec){
-        try{ pdf = vpdfBuild(vec, starts, sheetH, {left:'Heidelberg United FC · ' + docLabel(), right:footRight}); }
+        try{ pdf = vpdfBuild(vec, starts, sheetH, {left:'Heidelberg United FC · ' + docLabel(), right:footRight, coach:footCoach}); }
         catch(err){ console.warn('real-text PDF failed', err); setStatus('Couldn’t build the PDF — try again', 'warn'); return; }
       } else {
       pdf = new window.jspdf.jsPDF({unit:'in', format:'a4', orientation:'portrait', compress:true});
@@ -11776,6 +11782,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const fy = A4.h - A4.mb / 2;
       pdf.text(footer.left, A4.mx, fy);
       if(footer.right) pdf.text(footer.right, A4.w - A4.mx, fy, {align:'right'});
+      if(footer.coach) pdf.text(pdf.splitTextToSize(footer.coach, A4.w - 2 * A4.mx)[0], A4.mx, fy - 0.15);   /* the coaches, in full, on the line above */
     });
     return pdf;
   }
@@ -12975,6 +12982,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const order = lu.squad.map(function(p, k){ return {p:p, k:k, fit:luPosFit(sl.pos, luPlayerPos(p))}; })
       .sort(function(a, b){ return (a.fit - b.fit) || (a.k - b.k); });
     order.forEach(function(o){ const p = o.p, k = o.k;
+      if(!clean(p.name) && !clean(p.num) && p.id !== sl.pid) return;   /* an empty row in the squad list isn't a player */
       const at = period.slots.findIndex(function(s){ return s.pid === p.id; });
       playerBtns.push(luPick.appendChild(h('button', {type:'button', class:'lu-pick-player' + (p.id === sl.pid ? ' current' : ''), 'data-find':(clean(p.num) + ' ' + (clean(p.name) || 'Player ' + (k + 1))).toLowerCase(), onclick:function(){ choose(p.id); }},
         h('span', {class:'n', text:clean(p.num) || '·'}), h('span', {text:clean(p.name) || 'Player ' + (k + 1)}),
@@ -17918,6 +17926,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(fi) fi.textContent = [state.meta.coach && 'Coach: ' + state.meta.coach, state.meta.date].filter(Boolean).join(' · ');
     const pf = document.getElementById('printFooterInfo');
     if(pf) pf.textContent = [sessionName(state) || pgAutoName(), clean(state.meta.date)].filter(Boolean).join(' · ');
+    const pfc = document.getElementById('printFooterCoach'); if(pfc) pfc.textContent = '';
     document.querySelectorAll('.drill-no').forEach(function(el, i){ el.textContent = i + 1; });
   }
   /* the words on the header, footers and window title for this kind of document */
@@ -19772,6 +19781,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(kind === 'pregame'){ startNewPregame(); if(fx.opp) state.meta.opponent = fx.opp; }
         else { startNewSession(); if(blk && !clean(state.focus.theme)) state.focus.theme = blk.name; }
         state.group = g; state.meta.date = dd;
+        if(!clean(state.meta.squad)) state.meta.squad = g;   /* (it's that team's day) */
         renderAll(); resetHistory(); saveLocal();
       }
       try{ renderOwnerLines(); renderFolderPick(); }catch(e){}
