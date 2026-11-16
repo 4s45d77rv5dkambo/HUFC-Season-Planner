@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261116121310">
+<meta name="hufc-build" content="20261116122624">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -458,6 +458,31 @@ This typically indicates that your device does not have a healthy Internet conne
     signIn:async function(email, pw){ try{ await FB.signInWithEmailAndPassword(auth, String(email).trim(), pw); return null; }catch(e){ return friendly(e); } },
     signUp:async function(email, pw, name){ newName = String(name || '').trim().slice(0, 60); try{ await FB.createUserWithEmailAndPassword(auth, String(email).trim(), pw); return null; }catch(e){ newName = ''; return friendly(e); } },
     reset:async function(email){ try{ await FB.sendPasswordResetEmail(auth, String(email).trim()); return null; }catch(e){ return friendly(e); } },
+    /* change the password: check the current one (by signing in again), then set the new one */
+    changePassword:async function(cur, next){
+      try{
+        const u = auth.currentUser; if(!u || !u.email) return 'Sign in first';
+        next = String(next || '');
+        if(next.length < 6) return 'Use a new password of at least 6 characters';
+        try{ await FB.signInWithEmailAndPassword(auth, u.email, String(cur || '')); }
+        catch(e){ const c = String(e && e.code || ''); return (c.indexOf('invalid-credential') !== -1 || c.indexOf('wrong-password') !== -1 || c.indexOf('missing-password') !== -1) ? 'Your current password isn’t right' : friendly(e); }
+        const tok = await auth.currentUser.getIdToken(true);
+        let r, j = {};
+        try{ r = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:update?key=' + encodeURIComponent(CONFIG.apiKey), {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({idToken:tok, password:next, returnSecureToken:true})}); }
+        catch(e){ return 'No internet connection — try again when you’re online'; }
+        try{ j = await r.json(); }catch(e){}
+        if(!r.ok){
+          const m = String(j && j.error && j.error.message || '');
+          return /WEAK_PASSWORD/.test(m) ? 'Use a new password of at least 6 characters'
+            : /CREDENTIAL_TOO_OLD|TOKEN_EXPIRED|INVALID_ID_TOKEN/.test(m) ? 'Sign out, sign in again, then change it'
+            : /TOO_MANY/.test(m) ? 'Too many tries — wait a few minutes and try again'
+            : 'Couldn’t change it — try again (' + (m || r.status) + ')';
+        }
+        try{ await FB.signInWithEmailAndPassword(auth, u.email, next); }catch(e){}   /* stay signed in here with the new one */
+        return null;
+      }catch(e){ return friendly(e); }
+    },
+    resetMine:async function(){ try{ const u = auth.currentUser; if(!u || !u.email) return 'Sign in first'; await FB.sendPasswordResetEmail(auth, u.email); return null; }catch(e){ return friendly(e); } },
     signOut:async function(){ try{ await FB.signOut(auth); }catch(e){} },
     getSettings:getSettings, saveSettings:saveSettings
   };
@@ -4131,6 +4156,16 @@ html.print-sim{--rule:21px;}
 @media (max-width:760px){
   .pg-show-board{white-space:normal; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-height:1.05;}
 }
+
+.pw-body{display:flex; flex-direction:column; gap:10px; min-width:min(380px, 80vw);}
+.pw-f{display:flex; flex-direction:column; gap:4px;}
+.pw-f .set-input{width:100%;}
+.pw-show{display:flex; align-items:center; gap:8px; font-size:14px; color:var(--grey); cursor:pointer;}
+.pw-msg{margin:0; min-height:1.2em; font-size:14px;}
+.pw-msg.bad{color:var(--danger);}
+.pw-msg.good{color:#1f8a4c;}
+.pw-forgot{align-self:flex-start; padding:0; border:0; background:none; color:var(--ink); font:inherit; font-size:13.5px; text-decoration:underline; cursor:pointer;}
+.pw-forgot:disabled{opacity:.5;}
 </style>
 <style>
 /* ---------- every line under text: one slim black line, the same thickness everywhere ----------
@@ -17255,6 +17290,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       try{ await CLOUD.setName(v); showToast('Saved · coaches will see you as ' + v); renderSettings(); }catch(e){ nameSave.disabled = false; showToast('No internet — try again when you’re online'); }
     }});
     c.append(setRow('Name', 'What other coaches see on your work', h('div', {class:'set-inline'}, nameIn, nameSave)));
+    if(CLOUD.changePassword) c.append(setRow('Password', 'The password you sign in with', h('button', {type:'button', class:'btn btn-small', text:'Change password…', onclick:function(){ pwChange(u.email); }})));
     p.appendChild(c);
     const s = setCard('Sync');
     const off = cloudErr && /No internet/.test(cloudErr);
@@ -17266,6 +17302,46 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('button', {type:'button', class:'btn btn-danger-ghost', text:'Sign out', onclick:function(){ closeModal(setModal, true); cloudSignOut(); }})));
     p.appendChild(s);
     setClubLink(p);
+  }
+
+  /* ---------- change your password ---------- */
+  function pwChange(email){
+    const mk = function(ph, ac){ return h('input', {type:'password', class:'set-input pw-in', placeholder:ph, autocomplete:ac, maxlength:'128', 'aria-label':ph}); };
+    const cur = mk('Current password', 'current-password'), nw = mk('New password (at least 6 characters)', 'new-password'), again = mk('New password again', 'new-password');
+    const msg = h('p', {class:'pw-msg', role:'alert'});
+    const show = h('input', {type:'checkbox'});
+    show.addEventListener('change', function(){ [cur, nw, again].forEach(function(i){ i.type = show.checked ? 'text' : 'password'; }); });
+    const forgot = h('button', {type:'button', class:'pw-forgot', text:'Forgot your current password? Email me a link to set a new one', onclick:async function(){
+      forgot.disabled = true; const e = await CLOUD.resetMine(); forgot.disabled = false;
+      if(e){ msg.textContent = e; msg.className = 'pw-msg bad'; }
+      else { msg.textContent = 'Sent · check ' + (email || 'your email') + ' (and the junk folder) for the link'; msg.className = 'pw-msg good'; }
+    }});
+    const body = h('div', {class:'se-form-body pw-body'},
+      h('p', {class:'set-sub', text:'Signed in as ' + (email || '') + '. You’ll stay signed in here; your other devices ask for the new password next time.'}),
+      h('label', {class:'pw-f'}, h('span', {class:'lbl', text:'Current password'}), cur),
+      h('label', {class:'pw-f'}, h('span', {class:'lbl', text:'New password'}), nw),
+      h('label', {class:'pw-f'}, h('span', {class:'lbl', text:'Type it again'}), again),
+      h('label', {class:'pw-show'}, show, h('span', {text:'Show passwords'})),
+      msg, forgot);
+    let busy = false;
+    seForm('Change password', body, function(close){
+      const go = h('button', {type:'button', class:'btn btn-primary', text:'Change password', onclick:async function(){
+        if(busy) return;
+        const bad = function(t, el){ msg.textContent = t; msg.className = 'pw-msg bad'; if(el) el.focus(); };
+        if(!cur.value) return bad('Type your current password', cur);
+        if(nw.value.length < 6) return bad('Use a new password of at least 6 characters', nw);
+        if(nw.value !== again.value) return bad('The two new passwords don’t match', again);
+        if(nw.value === cur.value) return bad('That’s the same as your current password', nw);
+        busy = true; go.disabled = true; go.textContent = 'Changing…'; msg.textContent = ''; msg.className = 'pw-msg';
+        const e = await CLOUD.changePassword(cur.value, nw.value);
+        busy = false; go.disabled = false; go.textContent = 'Change password';
+        if(e) return bad(e, /current/i.test(e) ? cur : nw);
+        close(); showToast('Password changed · use the new one on your other devices');
+      }});
+      [cur, nw, again].forEach(function(i){ i.addEventListener('keydown', function(ev){ if(ev.key === 'Enter'){ ev.preventDefault(); go.click(); } }); });
+      return [h('span', {class:'se-sp'}), h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}), go];
+    });
+    setTimeout(function(){ try{ cur.focus(); }catch(e){} }, 60);
   }
   /* the club library link (the Windows program's link to the online planner, or a club folder): only when there's something to show */
   function setClubLink(p){
