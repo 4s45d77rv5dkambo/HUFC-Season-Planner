@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261116110941">
+<meta name="hufc-build" content="20261116114928">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -4103,6 +4103,32 @@ html.print-sim{--rule:21px;}
 :where(html.print-sim) .pitch-key .lbl{font-size:8.5px;}
 :where(html.print-sim.measuring) body{background:#fff;margin:0;width:718px;}html.print-sim.measuring .sheet{width:718px;max-width:none;margin:0;padding:0;}
 
+
+/* (p409m) the save status keeps room beside Home */
+@media screen and (min-width:1000px){
+  .appbar:not(.se-appbar) .appbar-inner{max-width:1180px;}
+  .appbar:not(.se-appbar) .status{flex:1 1 auto; min-width:9.5em;}
+}
+@media screen and (min-width:641px) and (max-width:999px){
+  html:not(.app-frame) .appbar:not(.se-appbar) .appbar-inner{flex-wrap:wrap; row-gap:4px; justify-content:center;}
+  html:not(.app-frame) .appbar:not(.se-appbar) .status{flex:1 0 100%; justify-content:center; margin-right:0; order:-1;}
+  /* (the buttons as icons, as on a phone, so they stay on one row) */
+  .appbar .btn-label{display:none;}
+  .appbar .print-btn .btn-label{display:none;}
+  .appbar .print-ico{display:inline-block;}
+}
+/* season plan: the session's whole name */
+.se-item-t{white-space:normal; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;}
+/* phone: the video library's filters fit */
+@media (max-width:760px){
+  .vl-sel{flex:1 1 0; font-size:13.5px; padding:8px 4px 8px 7px; background-position:right 6px center;}
+  #vlSort{flex-grow:1.4;}
+  .vl-tools .vl-search{flex-basis:100%;}
+}
+/* phone, Present mode: a long board name on two lines */
+@media (max-width:760px){
+  .pg-show-board{white-space:normal; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-height:1.05;}
+}
 </style>
 <style>
 /* ---------- every line under text: one slim black line, the same thickness everywhere ----------
@@ -9819,12 +9845,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
      Each clip is a club file (like Squads and IDPs) so it reaches every coach; its video is a link, or a video file that goes onto
      Google Drive from the coach's device that added it (like pre-game clips). The coach who added a clip (or the admin) changes or removes it. */
   var VL_PHASES = [
-    ['ip1', 'Possession (IP1)', 'Possession (IP – 1st phase)', '#1f9d55'],
-    ['ip2', 'Progression (IP2)', 'Progression (IP – 2nd phase)', '#0f8b8d'],
-    ['ip3', 'Penetration (IP3)', 'Penetration (IP – 3rd phase)', '#2563eb'],
-    ['press', 'Pressure (OP1)', 'Pressure (OP – 1st phase)', '#d97706'],
-    ['mid', 'Prevention (OP2)', 'Prevention (OP – 2nd phase)', '#b45309'],
-    ['low', 'Protection (OP3)', 'Protection (OP – 3rd phase)', '#92400e'],
+    ['ip1', 'Possession (IP1)', 'Possession (IP – 1st Phase)', '#1f9d55'],
+    ['ip2', 'Progression (IP2)', 'Progression (IP – 2nd Phase)', '#0f8b8d'],
+    ['ip3', 'Penetration (IP3)', 'Penetration (IP – 3rd Phase)', '#2563eb'],
+    ['press', 'Pressure (OP1)', 'Pressure (OP – 1st Phase)', '#d97706'],
+    ['mid', 'Prevention (OP2)', 'Prevention (OP – 2nd Phase)', '#b45309'],
+    ['low', 'Protection (OP3)', 'Protection (OP – 3rd Phase)', '#92400e'],
     ['lose', 'Def. transition', 'Defensive transition (IP > OP)', '#d64545'],
     ['win', 'Att. transition', 'Attacking transition (OP > IP)', '#7c3aed'],
     ['sp', 'Set pieces', 'Set pieces', '#5b5d61'],
@@ -16369,7 +16395,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const p = document.getElementById('wl-pw'), on = p.type === 'password'; p.type = on ? 'text' : 'password'; eye.textContent = on ? 'Hide' : 'Show'; eye.setAttribute('aria-label', on ? 'Hide password' : 'Show password');
     }});
     const form = h('form', {class:'wl-form', novalidate:true},
-      f('name', 'Your name', 'text', 'name', {maxlength:'60', placeholder:'e.g. David Ambelidis'}),
+      f('name', 'Your name', 'text', 'name', {maxlength:'60', placeholder:'Your first and last name'}),
       f('email', 'Email', 'email', 'username', {inputmode:'email', placeholder:'you@email.com'}),
       f('pw', 'Password', 'password', 'current-password', {placeholder:'At least 6 characters'}),
       h('p', {class:'wl-msg', id:'wl-msg', role:'status'}),
@@ -17844,7 +17870,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const retitle = function(){ const t = tb.querySelector('textarea'); if(t) t.placeholder = pgAutoName() || 'e.g. Round 4 vs Northcote City FC'; };
     const cell = function(label, field){ return h('div', {class:'cell'}, h('span', {class:'lbl', text:label}), field); };
     info.append(
-      cell('Opponent', luCombo({value:clean(state.meta.opponent), ph:'Choose or type', label:'Opponent', options:LU_OPPONENTS, onChange:set('opponent', retitle)})),
+      (function(){
+        /* a long club name gets smaller to fit its box */
+        let box = null; const oc = set('opponent', retitle);
+        const fit = function(){ const i = box && box.querySelector('input'); if(!i) return; i.style.fontSize = ''; if(!i.clientWidth) return; let f = parseFloat(getComputedStyle(i).fontSize) || 15; while(i.scrollWidth > i.clientWidth + 1 && f > 11){ f -= 0.5; i.style.fontSize = f + 'px'; } };
+        box = luCombo({value:clean(state.meta.opponent), ph:'Choose or type', label:'Opponent', options:LU_OPPONENTS, onChange:function(v){ oc(v); fit(); }});
+        const i0 = box.querySelector('input'); if(i0) i0.addEventListener('input', fit);
+        requestAnimationFrame(function(){ fit(); setTimeout(fit, 300); });
+        return cell('Opponent', box);
+      })(),
       cell('Date', luDateBox(state.meta.date, set('date'))),
       cell('Kick-off', luCombo({value:clean(state.meta.time), ph:'e.g. 3:00pm', label:'Kick-off', options:luTimes(), onChange:set('time')})),
       cell('Venue', textField({value:state.meta.venue, ph:'e.g. Olympic Village', label:'Venue', oneline:true, onInput:set('venue')})),
