@@ -451,9 +451,9 @@ async function checkPlannerUpdate(manual) {
   if (out.planner && out.planner.state === 'latest') out.planner.build = currentBuild();
   return out;
 }
-setInterval(() => { checkPlannerUpdate(); }, 3 * 60 * 1000);   /* every 3 minutes */
+setInterval(() => { checkPlannerUpdate(); }, 60 * 1000);   /* every minute: updates come in straight away, as before */
 setTimeout(() => { checkPlannerUpdate(); }, 8000);              /* and soon after opening */
-app.on('browser-window-focus', () => { if (Date.now() - (checkPlannerUpdate.last || 0) > 5 * 60 * 1000) checkPlannerUpdate(); });
+app.on('browser-window-focus', () => { if (Date.now() - (checkPlannerUpdate.last || 0) > 20000) checkPlannerUpdate(); });
 /* Settings → Check for updates */
 ipcMain.handle('update:check', async () => {
   for (let i = 0; i < 40 && updating; i++) await new Promise(r => setTimeout(r, 500));
