@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261116095203">
+<meta name="hufc-build" content="20261116110941">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -17320,6 +17320,19 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('div', {class:'set-meter', title:mb.toFixed(1) + ' MB used'}, h('span', {style:'width:' + Math.min(100, Math.max(2, mb / 10 * 100)).toFixed(1) + '%'})),
       h('p', {class:'set-sub', text:(mb < 0.1 ? Math.max(1, Math.round(n.bytes / 1024)) + ' KB' : mb.toFixed(1) + ' MB') + ' of about 10 MB used by plans. Match videos and clips are stored separately.'}));
     p.appendChild(u);
+    /* the 10 MB is only a plain browser's limit: the app and the Windows program keep plans where there's far more room */
+    if(window.__hufcStore || window.hufcDesktop){
+      const used = mb < 0.1 ? Math.max(1, Math.round(n.bytes / 1024)) + ' KB' : mb.toFixed(1) + ' MB';
+      const bar = u.querySelector('.set-meter span'), txt = u.querySelector('.set-meter + .set-sub');
+      const gb = function(b){ return b >= 1e9 ? (b / 1e9).toFixed(b >= 1e10 ? 0 : 1) + ' GB' : Math.round(b / 1e6) + ' MB'; };
+      if(bar) bar.style.width = '2%';
+      if(txt) txt.textContent = used + ' used by plans · ' + (window.hufcDesktop ? 'kept as files on this computer, so there’s no 10 MB limit — only the computer’s free space' : 'kept in this device’s own storage, so there’s no 10 MB limit') + '. Match videos and clips are stored separately.';
+      if(!window.hufcDesktop && navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(function(e){
+        if(!e || !e.quota || !txt) return;
+        if(bar) bar.style.width = Math.min(100, Math.max(2, n.bytes / e.quota * 100)).toFixed(1) + '%';
+        txt.textContent = used + ' used by plans, of about ' + gb(e.quota) + ' this device lets the planner use (videos and clips included). Plenty of room.';
+      }).catch(function(){});
+    }
   }
   /* ---------- Club (admin) ---------- */
   const APP_URL = 'https://4s45d77rv5dkambo.github.io/HUFC-Season-Planner/';
