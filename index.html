@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261117093018">
+<meta name="hufc-build" content="20261117115655">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -17286,6 +17286,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         return;
       }
       body.append(setRow('Connected', st.email || 'Your Google account', h('button', {type:'button', class:'btn btn-small', text:'Disconnect', onclick:async function(){ await driveDisconnect(); renderSettings(); }})));
+      /* a way into the clips folder on Google Drive */
+      let fid = st.folder || ''; try{ const w = JSON.parse(hufcStore.getItem(DRIVE_WEB_KEY) || '{}'); fid = fid || (w && w.folder) || ''; }catch(e){}
+      const driveUrl = fid ? 'https://drive.google.com/drive/folders/' + encodeURIComponent(fid) : 'https://drive.google.com/drive/search?q=' + encodeURIComponent(DRIVE_FOLDER);
+      body.append(setRow('Your clips folder', '“' + DRIVE_FOLDER + '” in ' + (st.email ? st.email + '’s' : 'your') + ' Google Drive — see, rename or share the videos there', h('button', {type:'button', class:'btn btn-small', text:'Open in Google Drive ↗', onclick:function(){ try{ if(window.hufcDesktop && window.hufcDesktop.openExternal){ window.hufcDesktop.openExternal(driveUrl); return; } }catch(e){} window.open(driveUrl, '_blank', 'noopener'); }})));
       if(driveDesk() || driveWeb()){
         const box = h('input', {type:'checkbox', checked:driveMatchesOn(), 'aria-label':'Full match videos too', onchange:function(){ try{ if(this.checked) hufcStore.setItem(DRIVE_MATCHES_ON, '1'); else hufcStore.removeItem(DRIVE_MATCHES_ON); }catch(e){} if(this.checked) driveSoon(0); }});
         const mw = driveMatchTodo().length;
