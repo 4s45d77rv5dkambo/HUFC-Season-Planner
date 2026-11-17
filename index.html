@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261117132756">
+<meta name="hufc-build" content="20261117141109">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3687,6 +3687,8 @@ html.has-selbar .home{padding-bottom:70px;}
   transition:transform .2s ease, visibility 0s linear .2s;
 }
 .toast.show{transform:translate(-50%, 0); visibility:visible; transition:transform .2s ease;}
+body:has(#anModal:not([hidden])) .toast{top:calc(12px + env(safe-area-inset-top, 0px)); bottom:auto; transform:translate(-50%, -170%);}
+body:has(#anModal:not([hidden])) .toast.show{transform:translate(-50%, 0);}
 .toast-msg{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-right:6px;}
 .toast-undo{
   border:none; border-radius:5px; background:var(--yellow); color:var(--black);
@@ -17689,8 +17691,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* the guide's videos: on the planner's website (iPhone/iPad app, Windows program), or stored with the online planner */
   const GUIDE_WEB = 'https://4s45d77rv5dkambo.github.io/HUFC-Season-Planner/guide/';
   const GUIDE_VIDEOS = {   /* id: {file, blob (the online planner's copy), len} */
-    sessions:{file:'sessions.mp4', blob:'/_blob/d0a42424f9465df43b301e108c6a48e3', len:'1:27'}, lineups:{file:'lineups.mp4', blob:'/_blob/b3ba9ecfd9b8c2d35752794af650c48c', len:'0:58'}, pregames:{file:'pregames.mp4', blob:'/_blob/c01d321f5b8b889b7077b9976e734ff9', len:'1:09'},
-    video:{file:'video.mp4', blob:'/_blob/dc2478c900ad15ecda283665db492649', len:'1:04'}, stats:{file:'stats.mp4', blob:'/_blob/89bdc2a9022236ca3ec5de0739cf3d60', len:'0:41'}, season:{file:'season.mp4', blob:'/_blob/5499e1f08c372ab85b10465c9bd9e50c', len:'1:13'}, squads:{file:'squads.mp4', blob:'/_blob/53e6b51dd6aa0da0311152a3d2fd7624', len:'1:46'}
+    sessions:{file:'sessions.mp4?v=409', blob:'/_blob/d4348301b63516cc976c074c2c91cd91', len:'1:36'}, lineups:{file:'lineups.mp4?v=409', blob:'/_blob/7f2554f07b6912f962d578caa7c07268', len:'1:58'}, pregames:{file:'pregames.mp4?v=409', blob:'/_blob/442df717bb6ae63d09a849ca789cc3fb', len:'1:42'},
+    video:{file:'video.mp4?v=409', blob:'/_blob/77e0c3f33d7b9d142aa35d637f116cd5', len:'1:19'}, stats:{file:'stats.mp4?v=409', blob:'/_blob/0934d74fd45eb88c483a1d8e538b84fe', len:'0:31'}, season:{file:'season.mp4?v=409', blob:'/_blob/da7ba7b38919828ecbcc563486e0c2a3', len:'1:05'}, squads:{file:'squads.mp4?v=409', blob:'/_blob/30527b19508ea2ff25c2287ad2d46b31', len:'1:14'}
   };
   const GUIDE = [
     {id:'basics', title:'The basics', ico:'🏠', open:'', lead:'Everything starts from the Home page.', steps:[
@@ -20258,6 +20260,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           /* (saved as you type; no redraw, so the box keeps its place) */
           const o = Object.assign({}, s.days[info.iso] || {}); if(clean(v)) o.opp = clean(v); else delete o.opp;
           if(Object.keys(o).length) s.days[info.iso] = o; else delete s.days[info.iso];
+          info.o = o;      /* (so + Lineup / + Pre-game / + Match video on this day take it straight away) */
           clearTimeout(card._t); card._t = setTimeout(function(){ seSave(s); }, 400);
         }});
         const ha = h('div', {class:'se-ha', role:'group', 'aria-label':'Home or away'}, ['Home', 'Away'].map(function(x){
