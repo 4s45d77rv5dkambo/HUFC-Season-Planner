@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261117141109">
+<meta name="hufc-build" content="20261118093443">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -9081,10 +9081,37 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }
     return (ts + ps) / 2;
   }
+  /* identical copies of one practice (same team, same content): one entry is enough */
+  function libTwinKey(e){ return (e.group || '') + '|' + practiceKey(e.practice); }
+  function libKeepFirst(a, b){   /* which of two identical copies to keep: one crediting another coach, else the newest */
+    if(!!a.by !== !!b.by) return !!a.by;
+    return (a.updatedAt || 0) > (b.updatedAt || 0);
+  }
+  function libKeyMap(lib){
+    const m = {};
+    Object.keys(lib.items).forEach(function(id){
+      const e = lib.items[id]; if(!e || e.pgb || !e.practice || lib.removed[id]) return;
+      const k = libTwinKey(e), o = m[k]; if(!o || libKeepFirst(e, o)) m[k] = e;
+    });
+    return m;
+  }
+  /* your own extra copies of a practice come off (sessions using them are pointed at the one kept, next time they save) */
+  function libCleanDups(){
+    const lib = readLibrary(), keep = libKeyMap(lib); let n = 0;
+    Object.keys(lib.items).forEach(function(id){
+      const e = lib.items[id]; if(!e || e.pgb || !e.practice || lib.removed[id]) return;
+      const w = keep[libTwinKey(e)];
+      if(w && w !== e && isMineObj(e) && canEdit(e)){ delete lib.items[id]; lib.removed[id] = true; n++; }
+    });
+    if(n) writeLibrary(lib);
+    return n;
+  }
+  setTimeout(function(){ try{ if(libCleanDups()){ try{ renderHome(); }catch(e){} } }catch(e){} }, 2500);
   function libraryUpsert(plan, lib){
     let n = 0;
     if(isPre(plan)) return pgbUpsert(plan, lib);   /* pre-game boards: kept in Saved boards */
     const src = {theme:sessionName(plan), date:clean(plan.meta && plan.meta.date)}, pid = plan.planId || '';
+    let km = null; const kmap = function(){ return km || (km = libKeyMap(lib)); };
     (plan.drills || []).forEach(function(d){
       if(!practiceHasContent(d)) return;
       if(!d.libId) d.libId = d.id;
@@ -9102,6 +9129,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           orig = cur; d.libId = newId(); cur = null;
         }
       }
+      /* not in Saved practices yet (or a changed copy): if the very same practice is already there, use that one */
+      if(!cur || lib.removed[d.libId]){
+        const tw = kmap()[g + '|' + key];
+        if(tw && tw.libId !== d.libId){ d.libId = tw.libId; d.libHash = key; return; }
+      }
       if(lib.removed[d.libId]) return;
       d.libHash = practiceKey(d);
       if(same) return;
@@ -9117,6 +9149,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(by && base && pracSim(base, snap) >= 0.5){ ne.by = by; ne.base = base; }
       }catch(e){}
       lib.items[d.libId] = ne;
+      if(km) km[g + '|' + key] = ne;
       n++;
     });
     return n;
@@ -9126,11 +9159,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(libraryUpsert(plan, lib)) writeLibrary(lib);
   }
   function libraryList(query){
-    const lib = readLibrary();
+    const lib = readLibrary(), keep = libKeyMap(lib);
     const q = (query || '').trim().toLowerCase();
     return Object.keys(lib.items).map(function(k){ return lib.items[k]; })
       .filter(function(e){
         if(e.pgb) return false;   /* (saved pre-game boards have their own page) */
+        if(e.practice && keep[libTwinKey(e)] && keep[libTwinKey(e)] !== e) return false;   /* the same practice twice: listed once */
         if(!q) return true;
         const p = e.practice;
         const hay = [p.name, p.focus].concat((p.notes || []).map(function(f){ return f.label + ' ' + f.value; })).join(' ').toLowerCase();
