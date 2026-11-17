@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261117121425">
+<meta name="hufc-build" content="20261117132756">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1422,6 +1422,9 @@ html.view-home #home{display:grid; grid-template-columns:248px minmax(0, 1fr); a
 .hs-nv.on .hs-n{color:#cfcfcb;}
 .hs-sec{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:#8a8d91; padding:14px 10px 4px;}
 .hs-foot{margin-top:auto; padding-top:12px;}
+.hs-sec{margin-top:8px; border-top:1px solid rgba(13,14,15,.17);}
+.hs-foot{border-top:1px solid rgba(13,14,15,.17);}
+.hs-nav{padding-bottom:10px;}
 .hs-foot .home-set-btn{position:relative; top:auto; right:auto; display:flex; width:100%; justify-content:flex-start; gap:12px; padding:9px 10px; border:0; border-radius:8px; background:none; color:#1c1d1f; font-family:inherit; font-size:15px; font-weight:500; letter-spacing:0; text-transform:none;}
 .hs-foot .home-set-btn:hover, .hs-foot .home-set-btn:active, body:has(#setModal:not([hidden])) .hs-foot .home-set-btn{background:#0d0e0f; color:var(--yellow);}
 /* the menu's scrollbar: the club's yellow pill */
@@ -12737,10 +12740,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const rebuild = function(focusId){
       const sel = '.lu-subs[data-period="' + period.id + '"]';
       const cur = luSheet.querySelector(sel) || box;
-      cur.replaceWith(luSubsBox(period, idx));
+      if(!cur.parentNode) return;
+      const fresh = luSubsBox(period, idx);
+      try{ cur.replaceWith(fresh); }catch(e){ const now = luSheet.querySelector(sel); if(now && now !== fresh) now.replaceWith(fresh); }
       luSchedule();
       if(focusId){ const f = luSheet.querySelector(sel + ' [data-sub="' + focusId + '"] .lu-sub-off'); if(f) f.focus(); }
     };
+    let subPend = false;
+    box.addEventListener('focusout', function(e){ if(subPend && !(e.relatedTarget && box.contains(e.relatedTarget))){ subPend = false; setTimeout(function(){ if(box.parentNode) rebuild(); }, 0); } });
     box.classList.toggle('empty', !subs.length);
     box.appendChild(h('span', {class:'lbl', text:'Subs'}));
     const list = h('div', {class:'lu-subs-list'});
@@ -12760,7 +12767,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const minIn = h('input', {type:'text', class:'lu-sub-min', inputmode:'numeric', maxlength:'3', value:sb.min === '' ? '' : String(sb.min), placeholder:'min',
         'aria-label':'Minute of the sub (match minute)',
         oninput:function(){ const v = parseInt(minIn.value, 10); sb.min = isNaN(v) ? '' : Math.max(0, Math.min(200, v)); luSchedule(); },
-        onchange:function(){ rebuild(); }});
+        onchange:function(){
+          /* moving on to this sub's Off… / On… list: redraw when that's picked or the row is left, not under the open list */
+          setTimeout(function(){ if(!box.parentNode) return; const a = document.activeElement; if(a && a !== minIn && box.contains(a)){ subPend = true; return; } rebuild(); }, 0);
+        }});
       const bad = !tl.ok[sb.id];
       list.appendChild(h('div', {class:'lu-sub' + (bad ? ' bad' : ''), 'data-sub':sb.id, title:bad ? (tl.why[sb.id] || '') : ''},
         h('span', {class:'lu-sub-time'}, minIn, h('span', {class:'lu-sub-unit', text:"'"})),
