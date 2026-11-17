@@ -35,7 +35,7 @@ Object.defineProperty(window, 'localStorage', { configurable: true, enumerable: 
 
 const info = ipcRenderer.sendSync('store:info') || {};
 /* the version these helpers were written for: if the program still running is older, it needs a restart */
-const PROGRAM_VERSION = '1.6.7';
+const PROGRAM_VERSION = '1.6.8';
 ipcRenderer.on('program:updated', () => { if (typeof window.hufcProgramUpdated === 'function') window.hufcProgramUpdated(); });
 const onlineCbs = [];
 ipcRenderer.on('online:state', (e, s) => onlineCbs.forEach(cb => { try { cb(s); } catch (err) {} }));
@@ -54,6 +54,7 @@ window.hufcDesktop = {
     connect(client) { return ipcRenderer.invoke('gdrive:connect', client); },
     disconnect() { return ipcRenderer.invoke('gdrive:disconnect'); },
     remove(id) { return ipcRenderer.invoke('gdrive:remove', id); },
+    quota() { return ipcRenderer.invoke('gdrive:quota'); },
     upload(job, localName, bytes, fileName, mime) { return ipcRenderer.invoke('gdrive:upload', job, localName || '', bytes || null, fileName, mime); },
     uploadPath(job, filePath, fileName, mime, resumeKey) { return ipcRenderer.invoke('gdrive:uploadPath', job, filePath, fileName, mime, resumeKey || ''); },
     onProgress(cb) { if (typeof cb === 'function') driveCbs.push(cb); }

@@ -41,7 +41,7 @@ module.exports = function makeDrive(opts) {
   function setConf(g) { const c = opts.getConfig(); c.gdrive = g; opts.saveConfig(c); }
   function err(msg, code) { const e = new Error(msg); e.code = code || msg; return e; }
 
-  function status() { const g = conf(); return { connected: !!g.refresh, email: g.email || '' }; }
+  function status() { const g = conf(); return { connected: !!g.refresh, email: g.email || '', folder: g.folder || '' }; }
 
   async function tokenReq(client, params) {
     const body = new URLSearchParams(Object.assign({ client_id: client.id, client_secret: client.secret || '' }, params));
@@ -209,5 +209,12 @@ module.exports = function makeDrive(opts) {
     return status();
   }
 
-  return { status, connect, upload, remove, disconnect };
+  /* how full this Google Drive is (the whole account: Drive, Gmail and Photos share it) */
+  async function quota() {
+    const j = await json(await api('GET', 'https://www.googleapis.com/drive/v3/about?fields=storageQuota'));
+    const q = j.storageQuota || {};
+    return { limit: q.limit != null ? +q.limit : null, usage: +q.usage || 0, inDrive: +q.usageInDrive || 0, inTrash: +q.usageInDriveTrash || 0 };
+  }
+
+  return { status, connect, upload, remove, disconnect, quota };
 };

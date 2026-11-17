@@ -226,6 +226,7 @@ ipcMain.handle('gdrive:status', () => drive.status());
 ipcMain.handle('gdrive:connect', (e, client) => driveOut(drive.connect(client)));
 ipcMain.handle('gdrive:disconnect', () => driveOut(drive.disconnect()));
 ipcMain.handle('gdrive:remove', (e, id) => driveOut(drive.remove(String(id || ''))));
+ipcMain.handle('gdrive:quota', () => driveOut(drive.quota()));
 /* a video in the planner's Videos folder (by its file name), or sent as bytes */
 /* a full match video, from wherever it is on this computer (it carries on where it got to if it was cut short) */
 ipcMain.handle('gdrive:uploadPath', (e, job, filePath, fileName, mime, resumeKey) => {
@@ -405,6 +406,8 @@ const PROGRAM_FILES = ['main.js', 'preload.js', 'store.js', 'gdrive.js', 'edge-i
 async function webProgram() {
   const j = await (await webGet('app/program.json')).json();
   if (!j || !j.files || !j.version) return { state: 'error' };
+  const newer = (x, y) => { const A = String(x).split('.').map(Number), B = String(y).split('.').map(Number); for (let i = 0; i < 3; i++) { if ((A[i] || 0) !== (B[i] || 0)) return (A[i] || 0) > (B[i] || 0); } return false; };
+  if (!newer(j.version, app.getVersion())) return { state: 'latest', version: app.getVersion() };   /* only ever forward */
   const want = Object.keys(j.files).filter(n => PROGRAM_FILES.indexOf(n) !== -1);
   const todo = want.filter(n => { try { return sha256(fs.readFileSync(path.join(__dirname, n))) !== j.files[n]; } catch (e) { return true; } });
   if (!todo.length) return { state: 'latest', version: j.version };

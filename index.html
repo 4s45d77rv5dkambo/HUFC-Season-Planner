@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261117120446">
+<meta name="hufc-build" content="20261117121425">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -462,10 +462,17 @@ This typically indicates that your device does not have a healthy Internet conne
     signUp:async function(email, pw, name){ newName = String(name || '').trim().slice(0, 60); try{ await FB.createUserWithEmailAndPassword(auth, String(email).trim(), pw); return null; }catch(e){ newName = ''; return friendly(e); } },
     /* about how much of the club library's space is used: every coach's items this device holds */
     libraryBytes:function(){
-      let b = 0, n = 0;
-      sources.forEach(function(src){ src.docs.forEach(function(d, k){ let t = ''; try{ t = src.body(k) || ''; }catch(e){} b += t.length + 2 * String((d && d.path) || k).length + 160; n++; }); });
+      let b = 0, n = 0; const by = [];
+      sources.forEach(function(src, uid){
+        let cb = 0, cn = 0;
+        src.docs.forEach(function(d, k){ let t = ''; try{ t = src.body(k) || ''; }catch(e){} cb += t.length + 2 * String((d && d.path) || k).length + 160; cn++; });
+        const c = coaches.get(uid) || (me && uid === me.uid ? {name:(mine && mine.name) || me.displayName || '', email:me.email} : null);
+        by.push({uid:uid, name:(c && (c.name || String(c.email || '').split('@')[0])) || 'A coach', bytes:cb, items:cn});
+        b += cb; n += cn;
+      });
       coaches.forEach(function(c){ b += 300; });
-      return {bytes:b, items:n, coaches:sources.size, full:sources.size > 1 || !!(me && me.admin)};
+      by.sort(function(x, y){ return y.bytes - x.bytes; });
+      return {bytes:b, items:n, coaches:sources.size, full:sources.size > 1 || !!(me && me.admin), by:by};
     },
     reset:async function(email){ try{ await FB.sendPasswordResetEmail(auth, String(email).trim()); return null; }catch(e){ return friendly(e); } },
     /* change the password: check the current one (by signing in again), then set the new one */
@@ -4179,6 +4186,16 @@ html.print-sim{--rule:21px;}
 
 .upd-msg.good{color:#1f7a45;}
 .club-meter.high span{background:#e0473c;}
+.club-pie-wrap{margin-top:14px; padding-top:12px; border-top:1px solid var(--line, #e3e3e0);}
+.club-pie-title{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:13px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;}
+.club-pie-row{display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+.club-pie{width:132px; height:132px; flex:none;}
+.club-pie-total{font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:15px; fill:var(--ink, #0d0e0f);}
+.club-pie-key{list-style:none; margin:0; padding:0; display:grid; gap:5px; flex:1; min-width:200px;}
+.club-pie-key li{display:flex; align-items:center; gap:8px; font-size:14px;}
+.club-pie-dot{width:12px; height:12px; border-radius:3px; flex:none; border:1px solid rgba(0,0,0,.15);}
+.club-pie-name{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.club-pie-val{color:var(--grey, #6b6e72); font-variant-numeric:tabular-nums; white-space:nowrap;}
 .upd-msg.warn{color:#8a5a00;}
 .token-area.hold-ready{filter:drop-shadow(0 4px 8px rgba(0,0,0,.45));}
 </style>
@@ -17488,7 +17505,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* the club library's space (Google's free plan: 1 GB) */
   function setClubSpace(p){
     if(!CLOUD || !CLOUD.libraryBytes) return;
-    const c = setCard('Club library space', 'Every coach’s sessions, pre-games, lineups, practices, squads and stats share the club library’s 1 GB (Google’s free plan). Videos aren’t in it — they’re in each coach’s Google Drive.');
+    const c = setCard('Club library space', 'Every coach’s sessions, pre-games, lineups, practices, squads and stats share the club library’s 1 GB (Google’s free plan). Videos aren’t in it: video clips are saved to the Google Drive of the coach who added them, and full match videos are saved on each coach’s own computer or phone storage (or their Google Drive if they turn that on).');
     const u = CLOUD.user ? CLOUD.user() : null;
     if(!u){ c.append(h('p', {class:'set-sub', text:'Sign in to see how much of it is used.'})); p.appendChild(c); return; }
     const r = CLOUD.libraryBytes(), GB = 1024 * 1024 * 1024, pct = r.bytes / GB * 100;
@@ -17498,11 +17515,90 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       h('div', {class:'set-meter club-meter' + (pct > 80 ? ' high' : ''), title:'About ' + used + ' of 1 GB'}, h('span', {style:'width:' + Math.min(100, Math.max(1, pct)).toFixed(2) + '%'})),
       h('p', {class:'set-sub', text:'About ' + used + ' of 1 GB used (' + (pct < 0.1 ? 'less than 0.1' : pct.toFixed(pct < 10 ? 1 : 0)) + '%) · ' + (left > 100 ? (left / 1024).toFixed(2) + ' GB' : Math.round(left) + ' MB') + ' free · ' + r.items + ' items' + (r.full ? ' from ' + r.coaches + (r.coaches === 1 ? ' coach' : ' coaches') : ' (your own — the rest of the club shows once you’re approved)')}),
       pct > 80 ? h('p', {class:'set-sub upd-msg warn', text:'The club library is getting full. Ask the club admin about Google’s paid plan (it costs cents a month at this size), or delete old sessions you don’t need.'}) : null);
+    if(r.by && r.by.length > 1) c.append(clubPie(r));
     p.appendChild(c);
+  }
+  /* who uses the club library's space: a pie, one colour per coach */
+  const PIE_COLS = ['#ffd400', '#2b2c2e', '#2f7fd1', '#e0473c', '#1f9d55', '#8e5bd0', '#f08a24', '#8e9399', '#13a3b5', '#c2185b', '#7a5a2f', '#5fb33a'];
+  function clubPie(r){
+    const NS = 'http://www.w3.org/2000/svg', R = 54, cx = 64, cy = 64, tot = r.by.reduce(function(a, x){ return a + x.bytes; }, 0) || 1;
+    const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 128 128'); svg.setAttribute('class', 'club-pie'); svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Club library space by coach: ' + r.by.map(function(x){ return x.name + ' ' + Math.round(x.bytes / tot * 100) + '%'; }).join(', '));
+    const mb = function(b){ return b < 1024 * 1024 ? Math.max(1, Math.round(b / 1024)) + ' KB' : (b / 1024 / 1024).toFixed(b < 100 * 1024 * 1024 ? 1 : 0) + ' MB'; };
+    let a0 = -Math.PI / 2;
+    const legend = h('ul', {class:'club-pie-key'});
+    r.by.forEach(function(x, i){
+      const col = PIE_COLS[i % PIE_COLS.length], f = x.bytes / tot, a1 = a0 + f * Math.PI * 2;
+      let el;
+      if(f >= 0.9999){ el = document.createElementNS(NS, 'circle'); el.setAttribute('cx', cx); el.setAttribute('cy', cy); el.setAttribute('r', R); }
+      else if(f > 0){
+        el = document.createElementNS(NS, 'path');
+        const x0 = cx + R * Math.cos(a0), y0 = cy + R * Math.sin(a0), x1 = cx + R * Math.cos(a1), y1 = cy + R * Math.sin(a1);
+        el.setAttribute('d', 'M' + cx + ',' + cy + ' L' + x0.toFixed(2) + ',' + y0.toFixed(2) + ' A' + R + ',' + R + ' 0 ' + (f > 0.5 ? 1 : 0) + ' 1 ' + x1.toFixed(2) + ',' + y1.toFixed(2) + ' Z');
+      }
+      if(el){
+        el.setAttribute('fill', col); el.setAttribute('stroke', '#fff'); el.setAttribute('stroke-width', '1.5');
+        const t = document.createElementNS(NS, 'title'); t.textContent = x.name + ' · ' + mb(x.bytes) + ' (' + (f * 100).toFixed(1) + '%)'; el.appendChild(t);
+        svg.appendChild(el);
+      }
+      legend.appendChild(h('li', {}, h('span', {class:'club-pie-dot', style:'background:' + col}), h('span', {class:'club-pie-name', text:x.name}),
+        h('span', {class:'club-pie-val', text:mb(x.bytes) + ' · ' + (f * 100 < 1 && f > 0 ? '<1' : Math.round(f * 100)) + '%'})));
+      a0 = a1;
+    });
+    const hole = document.createElementNS(NS, 'circle'); hole.setAttribute('cx', cx); hole.setAttribute('cy', cy); hole.setAttribute('r', 30); hole.setAttribute('fill', 'var(--paper, #fff)'); svg.appendChild(hole);
+    const tx = document.createElementNS(NS, 'text'); tx.setAttribute('x', cx); tx.setAttribute('y', cy + 4); tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('class', 'club-pie-total'); tx.textContent = mb(tot); svg.appendChild(tx);
+    return h('div', {class:'club-pie-wrap'}, h('div', {class:'club-pie-title', text:'Who’s using it'}), h('div', {class:'club-pie-row'}, svg, legend));
+  }
+
+  /* how full the Google Drive is that this device's clips go to */
+  async function driveQuota(){
+    if(driveDesk()){
+      const g = window.hufcDesktop.gdrive;
+      if(!g.quota) return {err:'old'};
+      const r = await g.quota();
+      if(!r || !r.ok) return {err:(r && r.error) || 'error'};
+      return r.v;
+    }
+    if(driveWeb()){
+      if(!driveWebToken()) return {err:'signin'};
+      const r = await driveWebApi('GET', 'https://www.googleapis.com/drive/v3/about?fields=storageQuota');
+      const j = await r.json().catch(function(){ return {}; });
+      if(!r.ok) return {err:(j.error && j.error.message) || ('drive ' + r.status)};
+      const q = j.storageQuota || {};
+      return {limit:q.limit != null ? +q.limit : null, usage:+q.usage || 0, inDrive:+q.usageInDrive || 0, inTrash:+q.usageInDriveTrash || 0};
+    }
+    return {err:'none'};
+  }
+  function setDriveSpace(p){
+    if(!driveAvailable()) return;
+    const c = setCard('Your Google Drive', 'Video clips you add are saved here, so every coach can watch them any time. Full match videos are saved on your own computer or phone storage instead (unless you turn on Full match videos too in Settings → Google Drive) — other coaches download their own copy from the match’s 🔗 Video link.');
+    const body = h('div', {}, h('p', {class:'set-sub', text:'Checking…'}));
+    c.appendChild(body); p.appendChild(c);
+    const fmt = function(b){ b = +b || 0; return b >= 1024 * 1024 * 1024 ? (b / 1024 / 1024 / 1024).toFixed(b >= 10 * 1024 * 1024 * 1024 ? 0 : 1) + ' GB' : Math.max(0, Math.round(b / 1024 / 1024)) + ' MB'; };
+    driveRefreshState().then(async function(st){
+      body.innerHTML = '';
+      if(!st.connected){ body.append(h('p', {class:'set-sub', text:'Not connected on this device yet — clips you add here only play on this device until it is.'}), h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn', text:'Set up Google Drive', onclick:function(){ setTab = 'drive'; renderSettings(); }}))); return; }
+      let q = null; try{ q = await driveQuota(); }catch(e){ q = {err:e.code === 'not-connected' ? 'signin' : (e.message || 'error')}; }
+      if(!q || q.err){
+        const why = q && q.err === 'old' ? 'Restart the Windows program to see your Drive space (an update is on its way).'
+          : q && q.err === 'signin' ? 'Google asks you to sign in again each visit on the app — sign in to see your Drive space.'
+          : 'Couldn’t check your Drive space just now' + (q && q.err && q.err !== 'none' ? ' (' + q.err + ')' : '') + '.';
+        body.append(h('p', {class:'set-sub', text:why}));
+        if(q && q.err === 'signin') body.append(h('div', {class:'set-actions'}, h('button', {type:'button', class:'btn', text:'Sign in to Google', onclick:function(){ driveConnect(); }})));
+        return;
+      }
+      const lim = q.limit, pct = lim ? q.usage / lim * 100 : 0;
+      body.append(
+        lim ? h('div', {class:'set-meter club-meter' + (pct > 85 ? ' high' : ''), title:fmt(q.usage) + ' of ' + fmt(lim)}, h('span', {style:'width:' + Math.min(100, Math.max(1, pct)).toFixed(1) + '%'})) : null,
+        h('p', {class:'set-sub', text:(st.email ? st.email + ' · ' : '') + fmt(q.usage) + (lim ? ' of ' + fmt(lim) + ' used (' + pct.toFixed(pct < 10 ? 1 : 0) + '%) · ' + fmt(Math.max(0, lim - q.usage)) + ' free' : ' used · no limit on this account') + '. Your Drive, Gmail and Google Photos share this space.'}),
+        q.inTrash > 50 * 1024 * 1024 ? h('p', {class:'set-sub', text:fmt(q.inTrash) + ' of it is in your Drive’s bin — emptying the bin gives it back.'}) : null,
+        lim && pct > 85 ? h('p', {class:'set-sub upd-msg warn', text:'Your Google Drive is nearly full — new clips may not go up. Free some space (or get more from Google), then they go up by themselves.'}) : null);
+    });
   }
   /* ---------- Data storage ---------- */
   function setData(p){
     setClubSpace(p);
+    setDriveSpace(p);
     const c = setCard('Backup', 'One file with all your sessions, pre-games, lineups, match videos (tags and clip details), practices and squads.');
     c.append(h('div', {class:'set-actions'},
       h('button', {type:'button', class:'btn btn-primary', text:'Back up everything', onclick:function(){ document.getElementById('backupBtn').click(); }}),
