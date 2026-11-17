@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261117115655">
+<meta name="hufc-build" content="20261117120446">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -460,6 +460,13 @@ This typically indicates that your device does not have a healthy Internet conne
     onAuth:function(cb){ authCbs.push(cb); if(authReady){ try{ cb(me); }catch(e){} } },
     signIn:async function(email, pw){ try{ await FB.signInWithEmailAndPassword(auth, String(email).trim(), pw); return null; }catch(e){ return friendly(e); } },
     signUp:async function(email, pw, name){ newName = String(name || '').trim().slice(0, 60); try{ await FB.createUserWithEmailAndPassword(auth, String(email).trim(), pw); return null; }catch(e){ newName = ''; return friendly(e); } },
+    /* about how much of the club library's space is used: every coach's items this device holds */
+    libraryBytes:function(){
+      let b = 0, n = 0;
+      sources.forEach(function(src){ src.docs.forEach(function(d, k){ let t = ''; try{ t = src.body(k) || ''; }catch(e){} b += t.length + 2 * String((d && d.path) || k).length + 160; n++; }); });
+      coaches.forEach(function(c){ b += 300; });
+      return {bytes:b, items:n, coaches:sources.size, full:sources.size > 1 || !!(me && me.admin)};
+    },
     reset:async function(email){ try{ await FB.sendPasswordResetEmail(auth, String(email).trim()); return null; }catch(e){ return friendly(e); } },
     /* change the password: check the current one (by signing in again), then set the new one */
     changePassword:async function(cur, next){
@@ -4171,6 +4178,7 @@ html.print-sim{--rule:21px;}
 .pw-forgot:disabled{opacity:.5;}
 
 .upd-msg.good{color:#1f7a45;}
+.club-meter.high span{background:#e0473c;}
 .upd-msg.warn{color:#8a5a00;}
 .token-area.hold-ready{filter:drop-shadow(0 4px 8px rgba(0,0,0,.45));}
 </style>
@@ -10787,7 +10795,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     grid.innerHTML = '';
     const all = libraryList('').filter(inView), list = libraryList(document.getElementById('libSearch').value).filter(inView);
     document.getElementById('libCount').textContent = all.length ? all.length + (all.length === 1 ? ' practice' : ' practices') : '';
-    if(!all.length){ grid.appendChild(h('div', {class:'home-empty', text:'Your practices will appear here as you build sessions. Have session files from before? Bring them in from ⚙ Settings → Backup & data.'})); return; }
+    if(!all.length){ grid.appendChild(h('div', {class:'home-empty', text:'Your practices will appear here as you build sessions. Have session files from before? Bring them in from ⚙ Settings → Data storage.'})); return; }
     if(!list.length){ grid.appendChild(h('div', {class:'home-empty', text:'No practices match that search.'})); return; }
     list.forEach(function(e){
       const pos = homeSel.indexOf(e.libId);
@@ -17227,7 +17235,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     {v:'3.4', d:'27 Oct 2026', t:'Bigger folder buttons', n:['My folder, Club library and the age groups are big buttons right across the page', 'They turn black and yellow when you point at them']},
     {v:'3.3', d:'27 Oct 2026', t:'Share the planner', n:['The admin can copy or share the iPhone/iPad link and the Windows download from Settings → Club & sharing', 'A download page for the Windows program']},
     {v:'3.2', d:'27 Oct 2026', t:'Full update history', n:['Every update since v1.0 is listed here', 'Closing Coaches, your teams or sign-in from Settings brings you back to Settings']},
-    {v:'3.1', d:'27 Oct 2026', t:'Cleaner home page', n:['Back up everything, Bring in a backup and Import from session files moved off the home page into Settings → Backup & data']},
+    {v:'3.1', d:'27 Oct 2026', t:'Cleaner home page', n:['Back up everything, Bring in a backup and Import from session files moved off the home page into Settings → Data storage']},
     {v:'3.0', d:'27 Oct 2026', t:'Settings', n:['A Settings window (⚙ on the home page): your account, your teams, and what new sessions and lineups start with', 'Backups, storage on this device, and coach approvals (admin) in one place', 'This update history']},
     {v:'2.9', d:'27 Oct 2026', t:'Delete from inside a plan', n:['A Delete button in the top bar of every session, pre-game and lineup — it asks first, and you can Undo']},
     {v:'2.8', d:'27 Oct 2026', t:'Match videos on their own', n:['A match video no longer needs a lineup', 'Attach or detach a lineup from inside the match video window — its players and opponent come with it', 'Name each match video']},
@@ -17254,7 +17262,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   ];
   const SET_TABS = [
     ['guide', 'How to use', '📖'], ['account', 'Account', '👤'], ['teams', 'My teams', '⚽'], ['drive', 'Google Drive', '☁️'], ['sessions', 'New sessions', '📋'],
-    ['lineups', 'Matchday lineups', {html:'<svg viewBox="0 0 24 24" width="22" height="22"><rect x="3.5" y="1" width="17" height="22" rx="2" fill="#2e9d5b" stroke="#1f7a43" stroke-width=".8"/><path d="M3.5 12h17" stroke="#fff" stroke-width=".9" opacity=".85"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="#fff" stroke-width=".9" opacity=".85"/><path d="M8.5 23v-3h7v3M8.5 1v3h7V1" fill="none" stroke="#fff" stroke-width=".9" opacity=".85"/><circle cx="12" cy="20.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="6.6" cy="16.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="10.2" cy="17.2" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="13.8" cy="17.2" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="17.4" cy="16.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="8" cy="11.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="12" cy="12.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="16" cy="11.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="7.4" cy="5.8" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="12" cy="4.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="16.6" cy="5.8" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/></svg>'}], ['data', 'Backup & data', '💾'], ['club', 'Club & sharing', {crest:true}], ['about', 'About', 'ℹ']
+    ['lineups', 'Matchday lineups', {html:'<svg viewBox="0 0 24 24" width="22" height="22"><rect x="3.5" y="1" width="17" height="22" rx="2" fill="#2e9d5b" stroke="#1f7a43" stroke-width=".8"/><path d="M3.5 12h17" stroke="#fff" stroke-width=".9" opacity=".85"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="#fff" stroke-width=".9" opacity=".85"/><path d="M8.5 23v-3h7v3M8.5 1v3h7V1" fill="none" stroke="#fff" stroke-width=".9" opacity=".85"/><circle cx="12" cy="20.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="6.6" cy="16.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="10.2" cy="17.2" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="13.8" cy="17.2" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="17.4" cy="16.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="8" cy="11.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="12" cy="12.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="16" cy="11.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="7.4" cy="5.8" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="12" cy="4.6" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/><circle cx="16.6" cy="5.8" r="1.45" fill="#ffd400" stroke="#0d0e0f" stroke-width=".55"/></svg>'}], ['data', 'Data storage', '💾'], ['club', 'Club & sharing', {crest:true}], ['about', 'About', 'ℹ']
   ];
   /* a tab's picture: an emoji, a drawing, or the club crest */
   function setTabIco(ic){
@@ -17476,8 +17484,25 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       setRow('Kit colours', 'Outfield shirts and goalkeeper', h('div', {class:'set-inline'}, colour('luShirt', '#ffd400', 'Shirt colour'), h('span', {class:'set-unit', text:'Players'}), colour('luGk', '#6a3d9a', 'Goalkeeper colour'), h('span', {class:'set-unit', text:'Keeper'}))));
     p.appendChild(c);
   }
-  /* ---------- Backup & data ---------- */
+
+  /* the club library's space (Google's free plan: 1 GB) */
+  function setClubSpace(p){
+    if(!CLOUD || !CLOUD.libraryBytes) return;
+    const c = setCard('Club library space', 'Every coach’s sessions, pre-games, lineups, practices, squads and stats share the club library’s 1 GB (Google’s free plan). Videos aren’t in it — they’re in each coach’s Google Drive.');
+    const u = CLOUD.user ? CLOUD.user() : null;
+    if(!u){ c.append(h('p', {class:'set-sub', text:'Sign in to see how much of it is used.'})); p.appendChild(c); return; }
+    const r = CLOUD.libraryBytes(), GB = 1024 * 1024 * 1024, pct = r.bytes / GB * 100;
+    const used = r.bytes < 1024 * 1024 ? Math.max(1, Math.round(r.bytes / 1024)) + ' KB' : (r.bytes / 1024 / 1024).toFixed(r.bytes < 100 * 1024 * 1024 ? 1 : 0) + ' MB';
+    const left = (GB - r.bytes) / 1024 / 1024;
+    c.append(
+      h('div', {class:'set-meter club-meter' + (pct > 80 ? ' high' : ''), title:'About ' + used + ' of 1 GB'}, h('span', {style:'width:' + Math.min(100, Math.max(1, pct)).toFixed(2) + '%'})),
+      h('p', {class:'set-sub', text:'About ' + used + ' of 1 GB used (' + (pct < 0.1 ? 'less than 0.1' : pct.toFixed(pct < 10 ? 1 : 0)) + '%) · ' + (left > 100 ? (left / 1024).toFixed(2) + ' GB' : Math.round(left) + ' MB') + ' free · ' + r.items + ' items' + (r.full ? ' from ' + r.coaches + (r.coaches === 1 ? ' coach' : ' coaches') : ' (your own — the rest of the club shows once you’re approved)')}),
+      pct > 80 ? h('p', {class:'set-sub upd-msg warn', text:'The club library is getting full. Ask the club admin about Google’s paid plan (it costs cents a month at this size), or delete old sessions you don’t need.'}) : null);
+    p.appendChild(c);
+  }
+  /* ---------- Data storage ---------- */
   function setData(p){
+    setClubSpace(p);
     const c = setCard('Backup', 'One file with all your sessions, pre-games, lineups, match videos (tags and clip details), practices and squads.');
     c.append(h('div', {class:'set-actions'},
       h('button', {type:'button', class:'btn btn-primary', text:'Back up everything', onclick:function(){ document.getElementById('backupBtn').click(); }}),
@@ -17570,7 +17595,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       'Settings → My teams: the teams you coach. Settings → New sessions and Matchday lineups: what a new one starts with.'
     ], tips:[
       'Updates arrive by themselves — the planner switches over when you’re on the Home page.',
-      'Backup & data (in Settings) saves a copy of everything to a file, and brings it back.'
+      'Data storage (in Settings) saves a copy of everything to a file, and brings it back.'
     ]},
     {id:'sessions', title:'Training sessions', ico:'📋', open:'homeNewBtn', openText:'Start a session', lead:'A session is the plan for one training: the details at the top, then each practice with its own pitch.', steps:[
       'Home → + New session. Give it a title, then fill in the date, start time, venue, squad / group, head coach/s and how many players. Squad and Head coach take several — tap each one in the list.',
