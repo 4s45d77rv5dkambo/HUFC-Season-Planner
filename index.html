@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261118152302">
+<meta name="hufc-build" content="20261119095946">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1425,6 +1425,15 @@ html.view-home #home{display:grid; grid-template-columns:248px minmax(0, 1fr); a
 .hs-sec{font-family:'Barlow Condensed', sans-serif; font-weight:600; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:#8a8d91; padding:14px 10px 4px;}
 .hs-foot{margin-top:auto; padding-top:12px;}
 .hs-sec{margin-top:8px; border-top:1px solid rgba(13,14,15,.17);}
+#saveBtn.save-state{background:transparent; border:1px solid var(--line); color:var(--grey); font-weight:600; gap:7px; box-shadow:none; cursor:default;}
+#saveBtn.save-state:hover{background:transparent; border-color:var(--line);}
+#saveBtn .ss-ic{display:inline-flex; margin-right:7px; align-items:center; justify-content:center; flex:0 0 auto; width:17px; height:17px; border-radius:50%; background:#1f9d55; color:#fff; font:700 11px/1 'Barlow', sans-serif;}
+#saveBtn.is-saving .ss-ic{background:transparent; border:2px solid var(--muted); border-top-color:transparent; width:13px; height:13px; animation:ssSpin .8s linear infinite;}
+#saveBtn.is-offline{color:#8a5a00; border-color:#e7c26a; background:#fff7e3;}
+#saveBtn.is-offline .ss-ic{background:#d39400;}
+@keyframes ssSpin{to{transform:rotate(360deg);}}
+@media screen and (max-width:640px){ .appbar #saveBtn.save-state{flex:0 0 38px; padding:8px 0;} .appbar #saveBtn .ss-tx{display:none;} .appbar #saveBtn .ss-ic{margin-right:0;} }
+
 .hs-foot{border-top:1px solid rgba(13,14,15,.17);}
 .hs-nav{padding-bottom:10px;}
 .hs-foot .home-set-btn{position:relative; top:auto; right:auto; display:flex; width:100%; justify-content:flex-start; gap:12px; padding:9px 10px; border:0; border-radius:8px; background:none; color:#1c1d1f; font-family:inherit; font-size:15px; font-weight:500; letter-spacing:0; text-transform:none;}
@@ -4435,7 +4444,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       </div>
     </div>
     <button type="button" class="btn btn-del editor-only" id="delBtn" title="Delete this" aria-label="Delete"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg><span class="btn-label"> Delete</span></button>
-    <button type="button" class="btn btn-primary editor-only" id="saveBtn" title="Save in the app (Ctrl+S)">Save</button>
+    <button type="button" class="btn editor-only save-state is-saved" id="saveBtn" title="Saved — everything saves by itself as you go (Ctrl+S saves straight away)" aria-label="Saved"><span class="ss-ic" aria-hidden="true">✓</span><span class="ss-tx">Saved</span></button>
     <input type="file" class="file-input" id="openInput" accept=".hufcsession,.hufcpregame,.html,.htm,.json,text/html,application/json">
   </div>
 </div>
@@ -7426,7 +7435,32 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     mb.addEventListener('click', function(){ const r = mb.getBoundingClientRect(); if(window.hufcDesktop && window.hufcDesktop.menu) window.hufcDesktop.menu(Math.round(r.left), Math.round(r.bottom + 2)); });
   })();
 
+
+  /* ---------- the "Saved ✓" sign (in place of the Save button) ---------- */
+  let ssNow = 'saved';
+  function ssOffline(){
+    if(typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+    let errs = '';
+    try{ errs += String(cloudErr || ''); }catch(e){}
+    try{ errs += String(clubErr || ''); }catch(e){}
+    return /No internet|Couldn’t reach|check your internet/i.test(errs);
+  }
+  function ssSet(s){
+    const b = document.getElementById('saveBtn'); if(!b) return;
+    ssNow = s;
+    b.className = 'btn editor-only save-state is-' + s;
+    const ic = b.querySelector('.ss-ic'), tx = b.querySelector('.ss-tx');
+    if(ic) ic.textContent = s === 'saving' ? '' : s === 'offline' ? '!' : '✓';
+    if(tx) tx.textContent = s === 'saving' ? 'Saving…' : s === 'offline' ? 'Saved here · offline' : 'Saved';
+    b.title = s === 'offline' ? 'Saved on this device. No internet just now — it goes to the club library by itself when you’re back online.'
+      : s === 'saving' ? 'Saving…' : 'Saved — everything saves by itself as you go (Ctrl+S saves straight away)';
+    b.setAttribute('aria-label', b.title);
+  }
+  function ssRefresh(){ if(ssNow !== 'saving') ssSet(ssOffline() ? 'offline' : 'saved'); }
+  window.addEventListener('online', function(){ ssRefresh(); try{ clubSyncSoon(); }catch(e){} });
+  window.addEventListener('offline', ssRefresh);
   function setStatus(text, kind){
+    try{ if(kind === 'saving') ssSet('saving'); else if(/^Saved/.test(text)) ssSet(ssOffline() ? 'offline' : 'saved'); }catch(e){}
     statusText.textContent = text;
     statusEl.className = 'status' + (kind ? ' ' + kind : '');
     const ws = document.getElementById('winStatus'); if(ws){ ws.className = 'winbar-status' + (kind ? ' ' + kind : ''); ws.querySelector('.status-text').textContent = text; }
@@ -11165,13 +11199,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(readOnly){ showToast('This is view only · use “Copy to my folder” to keep your own version'); return; }
     if(isLineupView()){
       luSaveNow();
-      if(storageOK) showToast('Saved · it’s on the Home page under Matchday lineups');
+      if(storageOK) showToast(ssOffline() ? 'Saved on this device · it goes to the club library by itself when you’re back online' : 'Saved · everything saves by itself as you go · it’s on the Home page under Matchday lineups');
       return;
     }
     if(!storageKey) return;
     flush();
     saveLocal();
-    if(storageOK) showToast('Saved · it’s on the Home page under Sessions');
+    if(storageOK) showToast(ssOffline() ? 'Saved on this device · it goes to the club library by itself when you’re back online' : 'Saved · everything saves by itself as you go · it’s on the Home page under Sessions');
     else showToast('This browser can’t keep sessions · use Export → Session file to keep a copy');
   }
   document.getElementById('saveBtn').addEventListener('click', saveToApp);
@@ -17147,6 +17181,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }finally{
       clubBusy = false;
       renderClubStatus();
+      try{ ssRefresh(); }catch(e){}
       if(changed && document.documentElement.classList.contains('view-home')) renderHome();
       if(changed){ try{ tgSynced(); }catch(e){} }   /* Squads: show what Sai / Renato just changed */
       /* pass it on — but never round and round: after a few in a row, wait for the next usual sync */
