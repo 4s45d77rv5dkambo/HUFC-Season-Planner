@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261118093443">
+<meta name="hufc-build" content="20261118142239">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -17156,6 +17156,18 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   window.addEventListener('hufc-club-changed', clubSyncSoon);   /* another coach changed something in the online club library */
   window.addEventListener('hufc-status', function(e){ if(e.detail) setStatus(e.detail, 'warn'); });
   setInterval(function(){ if(document.visibilityState === 'visible') clubSync(); }, 60000);
+  /* the Windows program, linked to the online planner: ask it every few seconds whether another coach changed something,
+     so a collaborator's work comes in straight away (not at the next minute's sync) */
+  let bridgeChanges = -1, bridgeAsking = false;
+  setInterval(async function(){
+    if(bridgeAsking || !(DO && clubDir && clubDir.__bridge && clubState === 'on') || document.visibilityState !== 'visible') return;
+    bridgeAsking = true;
+    try{
+      const s = await ocall('status'), n = s && typeof s.changes === 'number' ? s.changes : null;
+      if(n != null){ if(bridgeChanges !== -1 && n !== bridgeChanges) clubSyncSoon(); bridgeChanges = n; }
+    }catch(e){}
+    bridgeAsking = false;
+  }, 3000);
   window.addEventListener('focus', function(){ clubSyncSoon(); });
 
   /* =====================================================================
