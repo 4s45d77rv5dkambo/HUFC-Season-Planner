@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261118142239">
+<meta name="hufc-build" content="20261118144924">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -125,7 +125,9 @@ This typically indicates that your device does not have a healthy Internet conne
       const b = FB.writeBatch(fs), old = docs.get(k);
       for(let i = 1; i < n; i++) b.set(FB.doc(col, partId(k, i)), {part:true, of:k, i:i, body:text.slice(i * CHUNK, (i + 1) * CHUNK)});
       for(let i = n; i < (old ? +old.n || 1 : 1); i++) b.delete(FB.doc(col, partId(k, i)));
-      b.set(FB.doc(col, k), {path:path, body:text.slice(0, CHUNK), n:n, at:Date.now(), by:me ? me.uid : ''});
+      /* newer than every copy of it already seen (a device whose clock is behind can't hide its save behind an older one) */
+      let at = Date.now(); sources.forEach(function(s){ const d = s.docs.get(k); if(d && +d.at >= at) at = +d.at + 1; });
+      b.set(FB.doc(col, k), {path:path, body:text.slice(0, CHUNK), n:n, at:at, by:me ? me.uid : ''});
       await timed(b.commit());
     }
     async function remove(path){
@@ -7444,13 +7446,35 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(d.anim && Array.isArray(d.anim.steps)) d.anim.steps.forEach(function(st){ Object.keys(st || {}).forEach(function(u){ const p = st[u]; if(Array.isArray(p)){ p[0] = r(p[0] * fx); p[1] = r(p[1] * fy); } }); });
   }
   function syncBoards(){ boards.forEach(function(b){ b.d.items = b.api.serialize(); }); }
+  /* ---------- shared sessions: put changes from two places together when syncing ---------- */
+  /* what a shared session held when this device last matched the club library: the starting point for putting changes together */
+  const SYNC_BASE = 'hufc-syncbase:';
+  function syncShared(o){ return !!(o && Array.isArray(o.collab) && o.collab.length); }
+  function syncBaseGet(id){ try{ const t = hufcStore.getItem(SYNC_BASE + id); return t ? JSON.parse(t) : undefined; }catch(e){ return undefined; } }
+  function syncBaseSet(id, o){ try{ if(syncShared(o)) hufcStore.setItem(SYNC_BASE + id, JSON.stringify(liveStrip(normalize(JSON.parse(JSON.stringify(o)))))); }catch(e){} }
+  /* yours and theirs, both changed since the last sync: each part from whoever changed it (the later, if both did) */
+  function syncMerge(id, local, remote){
+    try{
+      const L = liveStrip(normalize(JSON.parse(JSON.stringify(local)))), R = liveStrip(normalize(JSON.parse(JSON.stringify(remote))));
+      if(liveJ(L) === liveJ(R)) return null;
+      const lt = +local.savedAt || 0, rt = +remote.savedAt || 0;
+      const M = liveM3(syncBaseGet(id), L, R, function(l, r){ return lt > rt ? l : r; });
+      const from = isMineObj(local) ? local : remote, out = JSON.parse(JSON.stringify(M));
+      LIVE_SKIP.forEach(function(k){ if(from[k] !== undefined) out[k] = JSON.parse(JSON.stringify(from[k])); });
+      if(local.owner !== undefined) out.owner = local.owner;
+      out.group = local.group || remote.group;
+      out.savedAt = Math.max(Date.now(), lt + 1, rt + 1);
+      return out;
+    }catch(e){ console.warn('sync merge', e); return null; }
+  }
+
   /* ---------- editing together: bring others' changes into the open session ---------- */
   var liveBase = null, liveKey = null, liveSeen = 0, liveMine = new Set(), liveWait = null, liveTimer = null, liveBusyAt = 0, liveDown = false;
   const LIVE_SKIP = ['savedAt', 'owner', 'group', 'planId', 'author', 'collab', 'collabNames', 'collabGroups'];
   function liveJ(x){ return x === undefined ? '\u0000' : JSON.stringify(x); }
   function liveStrip(x){ const c = JSON.parse(JSON.stringify(x || {})); LIVE_SKIP.forEach(function(k){ delete c[k]; }); return c; }
   function liveReset(){
-    try{ liveKey = storageKey; liveBase = state ? liveStrip(state) : null; liveSeen = state ? (+state.savedAt || 0) : 0; liveMine = new Set(); liveWait = null; }catch(e){ liveBase = null; }
+    try{ liveKey = storageKey; liveBase = state ? ((syncShared(state) && syncBaseGet(String(storageKey).slice(LS_PREFIX.length))) || liveStrip(state)) : null; liveSeen = state ? (+state.savedAt || 0) : 0; liveMine = new Set(); liveWait = null; }catch(e){ liveBase = null; }
   }
   ['keydown', 'input', 'pointerdown', 'pointerup', 'compositionstart'].forEach(function(ev){
     document.addEventListener(ev, function(){ liveBusyAt = Date.now(); if(ev === 'pointerdown') liveDown = true; if(ev === 'pointerup') liveDown = false; }, true);
@@ -7616,7 +7640,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     updateLibrary(state);
     if(!suppressCommit) commitHistory();
     if(liveKey !== storageKey) liveReset();
-    state.savedAt = Date.now(); liveMine.add(state.savedAt);
+    state.savedAt = Math.max(Date.now(), (+state.savedAt || 0) + 1); liveMine.add(state.savedAt);
     try{
       hufcStore.setItem(storageKey, JSON.stringify(state));
       storageOK = true;
@@ -17009,7 +17033,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           if(!local && kind !== 'practices' && wasDeleted(SYNC_KINDS[kind].prefix + id) && rs <= (ix[path] || 0)){ ix[path] = Math.max(rs, ix[path] || 0); continue; }   /* deleted here, waiting to go from the club */
           /* taken off a plan as a collaborator: its coach's copy replaces yours, even if you changed yours since */
           const dropped = local && isCollab(local) && !(Array.isArray(remote.collab) && who && remote.collab.indexOf(who.uid) !== -1);
-          if(!local || ls < rs || dropped){ remote.group = g; localSet(kind, id, remote, lib); changed++; }
+          if(kind === 'sessions' && local && ix[path] && !dropped && (syncShared(local) || syncShared(remote)) && ls !== ix[path]){
+            if(rs !== ix[path]){
+              const m = syncMerge(id, local, remote);
+              if(m){ m.group = g; localSet(kind, id, m, lib); changed++; continue; }   /* (goes up below) */
+            } else if(ls < rs){
+              /* changed only here (this device's clock is behind): it's the newer one — up it goes */
+              local.savedAt = rs + 1; localSet(kind, id, local, lib); continue;
+            }
+          }
+          if(!local || ls < rs || dropped){ remote.group = g; localSet(kind, id, remote, lib); changed++; if(kind === 'sessions') syncBaseSet(id, remote); }
           ix[path] = Math.max(rs, ix[path] || 0);
         }
         /* things removed from the folder by their coach (or moved to another folder) —
@@ -17041,12 +17074,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
               /* online: one refused upload (a view-only coach) shouldn't stop everyone else's work coming in */
               const out = Object.assign({}, it.obj, {group:g});
               if(H.byName && !out.madeBy && (!out.owner || !H.isOther(out.owner))) { const nm = H.byName(); if(nm) out.madeBy = nm; }
-              try{ await writeJSON(kdir, it.id + '.json', out); ix[path] = stamp; }
+              try{ await writeJSON(kdir, it.id + '.json', out); ix[path] = stamp; if(kind === 'sessions') syncBaseSet(it.id, it.obj); }
               catch(err){ pushErr = err; if(err && err.code === 'offline') break; }
               continue;
             }
             await writeJSON(kdir, it.id + '.json', Object.assign({}, it.obj, {group:g}));
-            ix[path] = stamp;
+            ix[path] = stamp; if(kind === 'sessions') syncBaseSet(it.id, it.obj);
           }
         }
       }
