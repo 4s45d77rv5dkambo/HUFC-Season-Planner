@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261118144924">
+<meta name="hufc-build" content="20261118152302">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -9106,7 +9106,19 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return (ts + ps) / 2;
   }
   /* identical copies of one practice (same team, same content): one entry is enough */
-  function libTwinKey(e){ return (e.group || '') + '|' + practiceKey(e.practice); }
+  /* what makes a practice a different practice: its title, its details and its drawing (what's on the pitch and where) —
+     not its time (minutes, split), how the pitch is shown (size, zoom, grass, watermark, 2D/3D), which way players face
+     or the kit colours */
+  function libContentKey(p){
+    p = p || {};
+    const T = function(s){ return String(s == null ? '' : s).trim().replace(/\s+/g, ' '); };
+    const R = function(v){ return typeof v === 'number' ? Math.round(v * 10) / 10 : v; };
+    const notes = (p.notes || []).filter(function(f){ return f && T(f.value); }).map(function(f){ return [T(f.label).toLowerCase(), T(f.value)]; });
+    const drawn = p.showDiagram !== false;
+    const items = drawn ? (p.items || []).map(function(it){ const o = {}; Object.keys(it || {}).sort().forEach(function(k){ if(k === 'k' || k === 'uid' || k === 'id' || k === 'rot' || k === 'color' || k === 'scale') return; const v = it[k]; o[k] = Array.isArray(v) ? v.map(R) : R(v); }); return o; }) : [];
+    return JSON.stringify([T(p.name).toLowerCase(), T(p.focus), T(p.phase), notes, drawn ? (p.layout || '') : '', items, drawn ? (p.anim || null) : null, p.pics || null, p.clips || null]);
+  }
+  function libTwinKey(e){ return (e.group || '') + '|' + libContentKey(e.practice); }
   function libKeepFirst(a, b){   /* which of two identical copies to keep: one crediting another coach, else the newest */
     if(!!a.by !== !!b.by) return !!a.by;
     return (a.updatedAt || 0) > (b.updatedAt || 0);
@@ -9125,12 +9137,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     Object.keys(lib.items).forEach(function(id){
       const e = lib.items[id]; if(!e || e.pgb || !e.practice || lib.removed[id]) return;
       const w = keep[libTwinKey(e)];
-      if(w && w !== e && isMineObj(e) && canEdit(e)){ delete lib.items[id]; lib.removed[id] = true; n++; }
+      if(w && w !== e && (isMineObj(e) || (who && who.admin)) && canEdit(e)){ delete lib.items[id]; lib.removed[id] = true; n++; }
     });
     if(n) writeLibrary(lib);
     return n;
   }
   setTimeout(function(){ try{ if(libCleanDups()){ try{ renderHome(); }catch(e){} } }catch(e){} }, 2500);
+  window.addEventListener('hufc-cloud-changed', function(){ clearTimeout(libCleanDups.t); libCleanDups.t = setTimeout(function(){ try{ libCleanDups(); }catch(e){} }, 8000); });
+  window.addEventListener('hufc-club-changed', function(){ clearTimeout(libCleanDups.u); libCleanDups.u = setTimeout(function(){ try{ libCleanDups(); }catch(e){} }, 9000); });
   function libraryUpsert(plan, lib){
     let n = 0;
     if(isPre(plan)) return pgbUpsert(plan, lib);   /* pre-game boards: kept in Saved boards */
@@ -9140,7 +9154,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(!practiceHasContent(d)) return;
       if(!d.libId) d.libId = d.id;
       const g = groupOf(plan), key = practiceKey(d);
-      let cur = lib.items[d.libId], orig = null;
+      let cur = lib.items[d.libId], orig = null, timeOnly = false;
       const same = cur && practiceKey(cur.practice) === key;
       if(cur && !same){
         /* changed here since it last matched? (an older copy that the library has since moved on from stays as it is) */
@@ -9155,8 +9169,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       }
       /* not in Saved practices yet (or a changed copy): if the very same practice is already there, use that one */
       if(!cur || lib.removed[d.libId]){
-        const tw = kmap()[g + '|' + key];
-        if(tw && tw.libId !== d.libId){ d.libId = tw.libId; d.libHash = key; return; }
+        const tw = kmap()[g + '|' + libContentKey(d)];
+        if(tw && tw.libId !== d.libId){
+          d.libId = tw.libId;
+          if(practiceKey(tw.practice) === key || !canEdit(tw)){ d.libHash = key; return; }
+          cur = tw; timeOnly = true;   /* (its new time is kept as the latest version, below — it stays the practice of the session that made it) */
+        }
       }
       if(lib.removed[d.libId]) return;
       d.libHash = practiceKey(d);
@@ -9172,8 +9190,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         } else if(prev && prev.by){ by = prev.by; base = prev.base; }
         if(by && base && pracSim(base, snap) >= 0.5){ ne.by = by; ne.base = base; }
       }catch(e){}
+      { const was = lib.items[d.libId];
+        if(was && was.owner && !isMineObj(was)){ ne.owner = was.owner; if(was.madeBy) ne.madeBy = was.madeBy; }
+        if(was && timeOnly){ ne.plan = was.plan; ne.source = was.source; if(was.by){ ne.by = was.by; ne.base = was.base; } } }
       lib.items[d.libId] = ne;
-      if(km) km[g + '|' + key] = ne;
+      if(km) km[g + '|' + libContentKey(ne.practice)] = ne;
       n++;
     });
     return n;
