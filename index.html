@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261119124433">
+<meta name="hufc-build" content="20261119145928">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -9103,7 +9103,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function readLibrary(){
     try{
       const l = JSON.parse(hufcStore.getItem(LIB_KEY) || 'null');
-      if(l && l.items){ l.removed = l.removed || {}; Object.keys(l.items).forEach(function(k){ const p = l.items[k] && l.items[k].practice; if(p && p.tv !== 2){ teamKitSwap(p.items); p.tv = 2; } }); return l; }
+      if(l && l.items){ l.removed = l.removed || {}; Object.keys(l.removed).forEach(function(k){ if(l.items[k]) delete l.removed[k]; }); Object.keys(l.items).forEach(function(k){ const p = l.items[k] && l.items[k].practice; if(p && p.tv !== 2){ teamKitSwap(p.items); p.tv = 2; } }); return l; }
     }catch(e){}
     return {v:1, items:{}, removed:{}};
   }
@@ -9157,7 +9157,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
      or the kit colours */
   function libContentKey(p){
     p = p || {};
-    const T = function(s){ return String(s == null ? '' : s).trim().replace(/\s+/g, ' '); };
+    const T = function(s){ return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9\u00c0-\uffff]+/g, ' ').trim(); };
     const R = function(v){ return typeof v === 'number' ? Math.round(v * 10) / 10 : v; };
     const notes = (p.notes || []).filter(function(f){ return f && T(f.value); }).map(function(f){ return [T(f.label).toLowerCase(), T(f.value)]; });
     const drawn = p.showDiagram !== false;
@@ -9183,7 +9183,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     Object.keys(lib.items).forEach(function(id){
       const e = lib.items[id]; if(!e || e.pgb || !e.practice || lib.removed[id]) return;
       const w = keep[libTwinKey(e)];
-      if(w && w !== e && (isMineObj(e) || (who && who.admin)) && canEdit(e)){ delete lib.items[id]; lib.removed[id] = true; n++; }
+      if(w && w !== e && (isMineObj(e) || (who && who.admin)) && canEdit(e)){ delete lib.items[id]; lib.removed[id] = Date.now(); n++; }
     });
     if(n) writeLibrary(lib);
     return n;
@@ -10957,10 +10957,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           if(!(await askDelete('practice', clean(e.practice.name) || 'Untitled practice', 'Sessions that already use it keep their copy.'))) return;
           const lib = readLibrary(), keep = lib.items[e.libId];
           const si = homeSel.indexOf(e.libId); if(si !== -1) homeSel.splice(si, 1);
-          delete lib.items[e.libId]; lib.removed[e.libId] = true; writeLibrary(lib);
+          const tk = libTwinKey(e), twins = {};
+          Object.keys(lib.items).forEach(function(id){ const x = lib.items[id]; if(id !== e.libId && x && !x.pgb && x.practice && libTwinKey(x) === tk && canEdit(x)){ twins[id] = x; delete lib.items[id]; lib.removed[id] = Date.now(); } });
+          delete lib.items[e.libId]; lib.removed[e.libId] = Date.now(); writeLibrary(lib);
           renderLibraryGrid();
           showToast('Removed “' + (clean(e.practice.name) || 'practice') + '” from saved practices', function(){
-            const l2 = readLibrary(); l2.items[e.libId] = keep; delete l2.removed[e.libId]; writeLibrary(l2); renderLibraryGrid();
+            const l2 = readLibrary(); l2.items[e.libId] = keep; delete l2.removed[e.libId]; Object.keys(twins).forEach(function(id){ l2.items[id] = twins[id]; delete l2.removed[id]; }); writeLibrary(l2); renderLibraryGrid();
           });
         }})
       ]});
@@ -17062,6 +17064,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(H.dir.__refresh) await H.dir.__refresh();
     const complete = H.dir.__complete ? !!H.dir.__complete() : (H.online && window.__HUFC_CLUB_COMPLETE ? !!window.__HUFC_CLUB_COMPLETE() : true);
     const ix = H.readIndex(), lib = readLibrary();
+    const lib0 = {}, rm0 = Object.assign({}, lib.removed);
+    Object.keys(lib.items).forEach(function(id){ lib0[id] = JSON.stringify(lib.items[id]); });
     for(const g of AGE_GROUPS){
       const mineG = clubOnline || own.indexOf(g) !== -1;   /* online, what you may change is decided per item */
       const gdir = await subdir(H.dir, g, mineG);
@@ -17077,6 +17081,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           if(openNow(kind, id)){ if(kind === 'sessions'){ collabLive(remote); liveMerge(remote); } continue; }
           const local = localGet(kind, id, lib), ls = local ? (+local[st] || 0) : 0;
           /* deleted on purpose (by its coach or the admin): a "deleted" marker takes it off every device */
+          if(kind === 'practices' && lib.removed[id]){
+            const ra = +lib.removed[id] > 1 ? +lib.removed[id] : Infinity;   /* when it was taken off (older marks: just "taken off") */
+            if(rs <= ra || rs <= (ix[path] || 0)){
+              if(mineG && !remote.deleted && canEdit(remote)){ try{ await kdir.removeEntry(name); delete ix[path]; changed++; }catch(e){ ix[path] = Math.max(rs, ix[path] || 0); } }
+              else ix[path] = Math.max(rs, ix[path] || 0);
+              continue;
+            }
+            delete lib.removed[id];   /* changed somewhere else after it was taken off here: it's back */
+          }
           if(remote && remote.deleted){
             if(local && ls <= rs && !openNow(kind, id)){ localDel(kind, id, lib); changed++; }
             /* remember it was deleted, so your other place (the club library / your HUFC account) is told too —
@@ -17133,6 +17146,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(mineG){
           for(const it of localItems(kind, lib)){
             if(groupOf(it.obj) !== g || (clubOnline && !canEdit(it.obj))) continue;
+            if(kind === 'practices' && lib.removed[it.id]) continue;
             if(!complete && !isMineObj(it.obj)) continue;   /* (someone else's work: only with the whole list in) */
             const path = base + it.id + '.json', stamp = +it.obj[st] || 0;
             if(files[it.id + '.json'] && ix[path] === stamp) continue;
@@ -17151,7 +17165,17 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         }
       }
     }
-    writeLibrary(lib, true); H.writeIndex(ix);
+    { const now = readLibrary();
+      Object.keys(lib.items).forEach(function(id){
+        if(JSON.stringify(lib.items[id]) === lib0[id]) return;              /* not changed by this sync */
+        if(now.removed[id] && !rm0[id]) return;                            /* taken off while it ran */
+        now.items[id] = lib.items[id]; if(!lib.removed[id]) delete now.removed[id];
+      });
+      Object.keys(lib0).forEach(function(id){ if(!lib.items[id]) delete now.items[id]; });
+      Object.keys(lib.removed).forEach(function(id){ if(!rm0[id] && !now.items[id]) now.removed[id] = lib.removed[id]; });
+      Object.keys(rm0).forEach(function(id){ if(!lib.removed[id] && now.removed[id] === rm0[id]) delete now.removed[id]; });
+      writeLibrary(now, true); }
+    H.writeIndex(ix);
     if(pushErr) throw pushErr;
     return changed;
   }
