@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261119095946">
+<meta name="hufc-build" content="20261119115410">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1432,6 +1432,7 @@ html.view-home #home{display:grid; grid-template-columns:248px minmax(0, 1fr); a
 #saveBtn.is-offline{color:#8a5a00; border-color:#e7c26a; background:#fff7e3;}
 #saveBtn.is-offline .ss-ic{background:#d39400;}
 @keyframes ssSpin{to{transform:rotate(360deg);}}
+#saveBtn .ss-ic svg{display:block; width:13px; height:13px; flex:0 0 auto;}
 @media screen and (max-width:640px){ .appbar #saveBtn.save-state{flex:0 0 38px; padding:8px 0;} .appbar #saveBtn .ss-tx{display:none;} .appbar #saveBtn .ss-ic{margin-right:0;} }
 
 .hs-foot{border-top:1px solid rgba(13,14,15,.17);}
@@ -4444,7 +4445,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       </div>
     </div>
     <button type="button" class="btn btn-del editor-only" id="delBtn" title="Delete this" aria-label="Delete"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg><span class="btn-label"> Delete</span></button>
-    <button type="button" class="btn editor-only save-state is-saved" id="saveBtn" title="Saved — everything saves by itself as you go (Ctrl+S saves straight away)" aria-label="Saved"><span class="ss-ic" aria-hidden="true">✓</span><span class="ss-tx">Saved</span></button>
+    <button type="button" class="btn editor-only save-state is-saved" id="saveBtn" title="Saved — everything saves by itself as you go (Ctrl+S saves straight away)" aria-label="Saved"><span class="ss-ic" aria-hidden="true"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.9 8.3l2.8 2.8 5.4-5.9" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="ss-tx">Saved</span></button>
     <input type="file" class="file-input" id="openInput" accept=".hufcsession,.hufcpregame,.html,.htm,.json,text/html,application/json">
   </div>
 </div>
@@ -7450,7 +7451,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     ssNow = s;
     b.className = 'btn editor-only save-state is-' + s;
     const ic = b.querySelector('.ss-ic'), tx = b.querySelector('.ss-tx');
-    if(ic) ic.textContent = s === 'saving' ? '' : s === 'offline' ? '!' : '✓';
+    if(ic) ic.innerHTML = s === 'saving' ? '' : s === 'offline' ? '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.7v5.3" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="8" cy="12.15" r="1.4" fill="#fff"/></svg>' : '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.9 8.3l2.8 2.8 5.4-5.9" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     if(tx) tx.textContent = s === 'saving' ? 'Saving…' : s === 'offline' ? 'Saved here · offline' : 'Saved';
     b.title = s === 'offline' ? 'Saved on this device. No internet just now — it goes to the club library by itself when you’re back online.'
       : s === 'saving' ? 'Saving…' : 'Saved — everything saves by itself as you go (Ctrl+S saves straight away)';
