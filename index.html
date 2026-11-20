@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261120120751">
+<meta name="hufc-build" content="20261120122249">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1419,6 +1419,8 @@ html.view-home #home{display:grid; grid-template-columns:248px minmax(0, 1fr); a
 .hs-menu button:hover, .hs-menu button:active, .hs-nv:hover, .hs-nv:active{background:#0d0e0f; color:var(--yellow);}
 .hs-nv:hover .hs-n, .hs-nv:active .hs-n{color:#cfcfcb;}
 .hs-nv svg, .hs-menu svg{flex:none;}
+.hs-nv > svg{width:23px; height:23px;}   /* the side menu's icons, a size up */
+.hs-nv[data-click="homeGtBigBtn"] > svg{width:30px; height:30px; margin:-3.5px !important;}
 .hs-nv.on, .hs-nv.on:hover{background:#0d0e0f; color:var(--yellow); font-weight:600;}
 .hs-n{margin-left:auto; font-size:12px; color:#8a8d91; font-weight:500;}
 .hs-nv.on .hs-n{color:#cfcfcb;}
@@ -1447,7 +1449,7 @@ html.view-home #home{display:grid; grid-template-columns:248px minmax(0, 1fr); a
 .hs-side::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 .hs-side::-webkit-scrollbar-button{display:none; width:0; height:0;}
 .hs-foot .home-set-btn span{display:inline !important;}
-.hs-foot .home-set-btn svg{width:18px; height:18px;}
+.hs-foot .home-set-btn svg{width:23px; height:23px;}
 .hs-main{min-width:0; width:100%; max-width:1180px; padding:22px 32px 56px;}
 .hs-mtop, .hs-scrim{display:none;}
 .hs-top{position:relative; display:flex; align-items:center; gap:14px; background:#0d0e0f; color:#fff; border-radius:16px; padding:22px 26px; margin-bottom:6px;}
