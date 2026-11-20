@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261120122632">
+<meta name="hufc-build" content="20261120140136">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2630,6 +2630,10 @@ body.doc-pregame .collab-btn{display:none !important;}   /* collaborators are fo
 .collab-btn.on{border-color:var(--black);}
 .collab-n{display:inline-grid; place-items:center; min-width:18px; height:18px; margin-left:5px; padding:0 4px; border-radius:9px; background:var(--yellow); color:var(--black); font-size:11px; font-weight:700; line-height:1;}
 .collab-n[hidden]{display:none;}
+/* number badges: the club font's digits ride low in a small round badge — lift them to the middle */
+.collab-n, .home-set-btn .set-badge, .att-link-i.att-link-i{box-sizing:border-box; padding-bottom:2px;}
+.appbar .collab-btn .collab-n{padding-left:4.5px; padding-right:3.5px;}
+.home-set-btn .set-badge{padding-left:5.5px; padding-right:4.5px;}
 .collab-body .set-sub{margin:0;}
 .collab-q{width:100%;}
 .collab-list{display:flex; flex-direction:column; gap:6px; max-height:46vh; overflow:auto;}
