@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261120143423">
+<meta name="hufc-build" content="20261120143550">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -16233,7 +16233,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function ownerText(x, short, nameOnly){
     const g = nameOnly ? '' : groupOf(x), n = coachFix(coachOf(x)), cs = collabNames(x).map(coachFix);
     /* collaborators by name only: "+ Kristian Popovic", or "+ SN, KP" when short (their age groups show in the Collaborators window) */
-    const withs = cs.length ? ' + ' + (short ? cs.map(initials).join(', ') : cs.join(', ')) : '';
+    const withs = cs.length ? ', ' + (short ? cs.map(initials).join(', ') : cs.join(', ')) : '';   /* (a comma between every coach) */
     return [g || '', n ? (short ? initials(n) : n) + withs : ''].filter(Boolean).join(' – ');
   }
   /* the collaborators' names (from the club list, or as saved with the plan) */
