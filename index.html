@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261120142953">
+<meta name="hufc-build" content="20261120143423">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -4410,6 +4410,7 @@ input[type="checkbox"]:not(.toggle input):focus-visible{outline:2px solid #ffd40
 /* whose it is: white, under the document name in the black header (on phones, under the club line) */
 .doc-owner{display:block; margin-top:6px; max-width:420px; margin-left:auto; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:15px; line-height:1.2; letter-spacing:.08em; text-transform:uppercase; color:var(--white); white-space:nowrap; overflow:hidden;}
 .doc-owner[hidden]{display:none;}
+.doc-owner{white-space:normal; max-width:520px; text-wrap:balance;}
 .doc-owner-m{display:none !important;}
 @media screen and (max-width:640px){ .doc-owner-m:not([hidden]){display:block !important; margin-left:0; max-width:100%; font-size:13px;} }
 .owner-tag{display:block; width:fit-content; max-width:100%; box-sizing:border-box; margin-bottom:6px; padding:2px 9px; border-radius:999px; background:var(--black); color:var(--yellow);
@@ -16232,7 +16233,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function ownerText(x, short, nameOnly){
     const g = nameOnly ? '' : groupOf(x), n = coachFix(coachOf(x)), cs = collabNames(x).map(coachFix);
     /* collaborators by name only: "+ Kristian Popovic", or "+ SN, KP" when short (their age groups show in the Collaborators window) */
-    const withs = cs.length ? ' + ' + (short || cs.length > 1 ? cs.map(initials).join(', ') : cs[0]) : '';
+    const withs = cs.length ? ' + ' + (short ? cs.map(initials).join(', ') : cs.join(', ')) : '';
     return [g || '', n ? (short ? initials(n) : n) + withs : ''].filter(Boolean).join(' – ');
   }
   /* the collaborators' names (from the club list, or as saved with the plan) */
@@ -16251,7 +16252,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function fitOwner(el, x, nameOnly){
     const full = ownerText(x, false, nameOnly);
     el.textContent = full; el.title = full; el.hidden = !full;
-    if(full && el.clientWidth && el.scrollWidth > el.clientWidth + 1) el.textContent = ownerText(x, true, nameOnly);
+    if(!nameOnly && full && el.clientWidth && el.scrollWidth > el.clientWidth + 1) el.textContent = ownerText(x, true, nameOnly);   /* (a plan's own header: full names, on two lines if need be) */
   }
   function ownerTag(x){
     const el = h('div', {class:'owner-tag', text:ownerText(x)});
