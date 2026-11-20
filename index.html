@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261119145928">
+<meta name="hufc-build" content="20261120120751">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -16108,11 +16108,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
      on the desktop app it's by age-group folder */
   let who = null;
   /* a coach the plan's own coach added as a collaborator: they can change it too (not delete it, or change who's on it) */
-  function isCollab(x){ return !!(who && who.uid && x && x.doc !== 'pregame' && Array.isArray(x.collab) && x.collab.indexOf(who.uid) !== -1 && x.owner && x.owner !== who.uid); }
+  /* you: the id this planner is linked with and your HUFC account (in the Windows program these can be two different ids) */
+  function meIds(){ const a = []; if(who && who.uid) a.push(who.uid); try{ const u = CLOUD && CLOUD.user ? CLOUD.user() : null; if(u && u.uid && a.indexOf(u.uid) === -1) a.push(u.uid); }catch(e){} return a; }
+  function isCollab(x){ const ids = meIds(); return !!(ids.length && x && x.doc !== 'pregame' && Array.isArray(x.collab) && x.owner && ids.indexOf(x.owner) === -1 && x.collab.some(function(u){ return ids.indexOf(u) !== -1; })); }
   function canEdit(x){
     if(who){
       if(who.admin) return true;
-      if(x && x.owner) return x.owner === who.uid || isCollab(x);
+      if(x && x.owner) return meIds().indexOf(x.owner) !== -1 || isCollab(x);
       return true;   /* made on this device and not shared yet */
     }
     const g = groupOf(x); return !g || !myGroups().length || isMine(g);
@@ -16879,7 +16881,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         !c.approved && c.roster ? h('span', {class:'coach-match', text:'On your roster: ' + (c.roster.name || c.name) + ' · ' + (c.roster.groups.join(' · ') || 'no teams') + ' — ticked for you'}) : '',
         !c.roster && !c.name && free.length ? whoIsThis(c) : '',
         chips, h('div', {class:'coach-groups'}, tdBtn),
-        h('div', {class:'coach-acts'}, c.approved && !isWaiting ? h('button', {type:'button', class:'btn btn-small', text:'Close', onclick:function(){ delete openRows[c.uid]; renderCoaches(); }}) : '', rm, no, main)));
+        h('div', {class:'coach-acts'}, c.approved && !isWaiting ? h('button', {type:'button', class:'btn btn-small', text:'Close', onclick:function(){ delete openRows[c.uid]; renderCoaches(); }}) : '',
+          c.email && CLOUD.reset ? h('button', {type:'button', class:'btn btn-small', text:'Send password reset', title:'Email ' + c.email + ' a link to set a new password', onclick:async function(e){
+            const b = e.currentTarget; b.disabled = true; const er = await CLOUD.reset(c.email);
+            showToast(er ? 'Couldn’t send it — ' + er : 'Password reset sent to ' + c.email + ' · they may need to check their junk folder'); if(er) b.disabled = false; }}) : '',
+          rm, no, main)));
       paint();
     });
   }
@@ -17080,6 +17086,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           const id = name.replace(/\.json$/, ''), path = base + name, remote = files[name], rs = +remote[st] || 0;
           if(openNow(kind, id)){ if(kind === 'sessions'){ collabLive(remote); liveMerge(remote); } continue; }
           const local = localGet(kind, id, lib), ls = local ? (+local[st] || 0) : 0;
+          if(kind === 'sessions' && !remote.deleted && isCollab(remote) && !(local && isCollab(local)) && rs > Date.now() - 15 * 60 * 1000 && !collabSeen[id]){ collabSeen[id] = 1; collabNewQ.push(remote); }
           /* deleted on purpose (by its coach or the admin): a "deleted" marker takes it off every device */
           if(kind === 'practices' && lib.removed[id]){
             const ra = +lib.removed[id] > 1 ? +lib.removed[id] : Infinity;   /* when it was taken off (older marks: just "taken off") */
@@ -17219,12 +17226,19 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       renderClubStatus();
       try{ ssRefresh(); }catch(e){}
       if(changed && document.documentElement.classList.contains('view-home')) renderHome();
+      if(collabNewQ.length){
+        const nw = collabNewQ.splice(0);
+        try{ if(document.documentElement.classList.contains('view-home')) renderHome(); }catch(e){}
+        showToast(nw.length === 1 ? (coachOf(nw[0]) || 'A coach') + ' added you to “' + (sessionName(nw[0]) || 'a session') + '” — it’s in your Sessions'
+          : 'You were added to ' + nw.length + ' sessions — they’re in your Sessions');
+      }
       if(changed){ try{ tgSynced(); }catch(e){} }   /* Squads: show what Sai / Renato just changed */
       /* pass it on — but never round and round: after a few in a row, wait for the next usual sync */
       if(relay && ++clubRelays <= 3) clubSyncSoon(); else if(!relay) clubRelays = 0;
     }
   }
   let clubRelays = 0;
+  const collabSeen = {}, collabNewQ = [];   /* sessions just shared with you, to tell you about */
   function clubSyncSoon(){ clearTimeout(clubTimer); clubTimer = setTimeout(clubSync, 1500); }
   async function clubSyncNow(){ for(let i = 0; i < 60 && clubBusy; i++) await new Promise(function(r){ setTimeout(r, 500); }); await clubSync(); }
 
