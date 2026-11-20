@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261120141536">
+<meta name="hufc-build" content="20261120142953">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2636,8 +2636,9 @@ body.doc-pregame .collab-btn{display:none !important;}   /* collaborators are fo
 .coach-row.removed .coach-name{color:var(--grey);}
 /* number badges: the club font's digits ride low in a small round badge — lift them to the middle */
 .collab-n, .home-set-btn .set-badge, .att-link-i.att-link-i{box-sizing:border-box; padding-bottom:2px;}
-.appbar .collab-btn .collab-n{padding-left:4.5px; padding-right:3.5px;}
-.home-set-btn .set-badge{padding-left:5.5px; padding-right:4.5px;}
+/* (number badges: the digits are centred by their own shape — see inkCentre) */
+/* the Settings badge in the side menu: a centring box like everywhere else (the menu's rule made it a plain line of text) */
+.hs-foot .home-set-btn .set-badge{display:inline-flex !important; align-items:center; justify-content:center; line-height:1;}
 .collab-body .set-sub{margin:0;}
 .collab-q{width:100%;}
 .collab-list{display:flex; flex-direction:column; gap:6px; max-height:46vh; overflow:auto;}
@@ -2731,6 +2732,12 @@ span.av-chip{cursor:default;}
 .print-ico{display:none; vertical-align:-3px;}
 /* the smallest phones: the toolbar keeps one row (Export → Save as PDF prints) */
 @media screen and (max-width:380px){ .appbar .print-btn{display:none !important;} }
+/* Save as PDF: its own button (under Export only on the smallest phones, where the bar has no room) */
+@media screen and (min-width:381px){ #exportMenu #pdfBtn{display:none;} }
+/* phones: Export as an icon too, so the bar still fits with Save as PDF in it */
+@media screen and (min-width:381px) and (max-width:640px){ .appbar #exportBtn{flex:0 0 34px; justify-content:center; padding:8px 0;} .appbar #exportBtn .btn-label{display:none;} .appbar #exportBtn .print-ico{display:inline-block;} }
+@media screen and (min-width:641px) and (max-width:999px){ .appbar #exportBtn .print-ico{display:inline-block;} }
+@media screen and (max-width:380px){ .appbar #exportBtn .print-ico{display:none !important;} .appbar #exportBtn .btn-label{display:inline !important;} }
 @media screen and (max-width:340px){ .appbar #redoBtn{display:none !important;} }
 
 .sq-table.av-off .sq-c-av{display:none;}
@@ -4495,8 +4502,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     <button type="button" class="btn pg-present-btn editor-only pregame-only" id="presentBtn" title="Show the boards to the players, one at a time, full screen" aria-label="Present to players"><span aria-hidden="true">▶</span><span class="btn-label"> Present</span></button>
     <button type="button" class="btn editor-only collab-btn" id="collabBtn" title="Collaborators: other coaches who can change this session too"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5"/><path d="M16 4.8a3.2 3.2 0 0 1 0 6.4M18 14.8c1.7.7 2.8 2.5 3.2 5.2"/></svg><span class="btn-label"> Collaborators</span><span class="collab-n" id="collabN" hidden></span></button>
     <button type="button" class="btn editor-only print-btn" id="printBtn" title="Print" aria-label="Print"><svg class="print-ico" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg><span class="btn-label">Print</span></button>
+    <button type="button" class="btn editor-only print-btn pdf-btn" id="pdfQuickBtn" title="Save this as a PDF" aria-label="Save as PDF"><svg class="print-ico" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6M9 14l3 3 3-3"/></svg><span class="btn-label">Save as PDF</span></button>
     <div class="menu-wrap editor-only">
-      <button type="button" class="btn" id="exportBtn" aria-haspopup="true" aria-expanded="false" title="Save a copy outside the app: PDF, PowerPoint or a session file">Export ▾</button>
+      <button type="button" class="btn" id="exportBtn" aria-haspopup="true" aria-expanded="false" title="PowerPoint, share with coaches, or a plan file" aria-label="Export"><svg class="print-ico" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg><span class="btn-label">Export ▾</span></button>
       <div class="menu" id="exportMenu" role="menu" hidden>
         <button type="button" role="menuitem" id="pdfBtn">Save as PDF<span>A print-ready copy of this plan</span></button>
         <button type="button" role="menuitem" id="pptOpenBtn" hidden>Open in PowerPoint<span>Builds the slides and opens them straight in PowerPoint</span></button>
@@ -11661,6 +11669,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   });
   /* PDF: the print window, with the file already named after the session */
   let titleBeforePdf = null;
+  document.getElementById('pdfQuickBtn').addEventListener('click', function(){ document.getElementById('pdfBtn').click(); });
   document.getElementById('pdfBtn').addEventListener('click', function(){
     setMenu(false);
     flush();
@@ -17304,6 +17313,47 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   let clubRelays = 0;
   const collabSeen = {}, collabNewQ = [];
+
+  /* ---------- number badges: the digits' own shape in the middle (a "1" is drawn off to one side of its space) ---------- */
+  const INK_SEL = '.collab-n, .set-badge, .acct-badge, .an-who-n, .an-pick-n, .tg-col-n, .idp-num, .pg-show-no, .fc-count, .drill-no, .tg-note-i';
+  let inkCv = null;
+  function inkCentre(el){
+    try{
+      if(!el || el.children.length) return;
+      const t = (el.textContent || '').trim();
+      if(!/^[0-9]{1,3}$/.test(t)){ if(el.style.textIndent) el.style.textIndent = ''; return; }
+      if(!el.getClientRects().length) return;
+      const cs = getComputedStyle(el);
+      if(!inkCv) inkCv = document.createElement('canvas').getContext('2d');
+      const fs = parseFloat(cs.fontSize) || 12, k = fs / 200;   /* (measured large: at small sizes the ink's edges come back rounded to whole pixels) */
+      inkCv.font = cs.fontStyle + ' ' + cs.fontWeight + ' 200px ' + cs.fontFamily;
+      const m = inkCv.measureText(t);
+      if(!m || m.actualBoundingBoxRight == null) return;
+      const before = -m.actualBoundingBoxLeft * k, after = (m.width - m.actualBoundingBoxRight) * k;   /* empty space each side of the ink */
+      const ls = parseFloat(cs.letterSpacing) || 0;                                            /* (spacing after each digit) */
+      const sh = Math.round((after + ls * t.length - before) * 4) / 4;
+      const v = sh ? sh + 'px' : '';
+      if(el.style.textIndent !== v) el.style.textIndent = v;
+    }catch(e){}
+  }
+  function inkAll(root){ try{ (root || document).querySelectorAll(INK_SEL).forEach(inkCentre); }catch(e){} }
+  try{
+    let inkQ = new Set(), inkT = 0;
+    const inkFlush = function(){ inkT = 0; const q = inkQ; inkQ = new Set(); q.forEach(function(el){ if(el.matches && el.matches(INK_SEL)) inkCentre(el); else if(el.querySelectorAll) inkAll(el); }); };
+    new MutationObserver(function(ms){
+      ms.forEach(function(m){
+        let el = m.type === 'characterData' ? m.target.parentElement : m.target;
+        if(!el || !el.closest) return;
+        const b = el.closest(INK_SEL);
+        if(b) inkQ.add(b);
+        else if(m.addedNodes && m.addedNodes.length) m.addedNodes.forEach(function(n){ if(n.nodeType === 1) inkQ.add(n); });
+        else if(m.type === 'attributes' && el.matches(INK_SEL)) inkQ.add(el);
+      });
+      if(inkQ.size && !inkT) inkT = requestAnimationFrame(inkFlush);
+    }).observe(document.documentElement, {subtree:true, childList:true, characterData:true, attributes:true, attributeFilter:['hidden']});
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ inkAll(); });
+    setTimeout(function(){ inkAll(); }, 1500);
+  }catch(e){}
 
   /* ---------- on the app now: tell the club (once a minute, or when it changes) that this planner is open ---------- */
   const LIVE_FRESH = 150000, LIVE_IDLE = 180000;
