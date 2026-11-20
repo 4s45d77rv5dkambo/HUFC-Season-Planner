@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261120140136">
+<meta name="hufc-build" content="20261120141211">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -305,7 +305,7 @@ This typically indicates that your device does not have a healthy Internet conne
       const inv = inviteFor(c);
       out.push({uid:uid, email:c.email || '', name:c.name || (inv && inv.name) || '', at:+c.at || 0, approved:!!ap,
         asked:Array.isArray(c.groups) ? c.groups.slice() : [], given:ap && Array.isArray(ap.groups) ? ap.groups.slice() : [],
-        role:(ap && ap.role) || '',
+        role:(ap && ap.role) || '', removed:!ap && +c.removed ? +c.removed : 0,
         roster:inv ? {name:inv.name || '', groups:Array.isArray(inv.groups) ? inv.groups.slice() : [], role:inv.role || ''} : null});
     });
     return out.sort(function(a, b){ return (a.approved - b.approved) || (b.at - a.at); });
@@ -316,11 +316,13 @@ This typically indicates that your device does not have a healthy Internet conne
     if(role === 'td' || role === 'coach') d.role = role;   /* 'td' technical director: every squad but the Seniors; still not an admin */
     await timed(FB.setDoc(FB.doc(fs, 'approved', uid), d));
     /* what they asked for is now settled */
-    try{ await timed(FB.setDoc(FB.doc(fs, 'users', uid), {groups:groups || []}, {merge:true})); }catch(e){}
+    try{ await timed(FB.setDoc(FB.doc(fs, 'users', uid), {groups:groups || [], removed:0}, {merge:true})); }catch(e){}
   }
   async function revoke(uid){
     adminOnly();
     await timed(FB.deleteDoc(FB.doc(fs, 'approved', uid)));
+    /* taken off on purpose: not someone waiting to be let in */
+    try{ await timed(FB.setDoc(FB.doc(fs, 'users', uid), {removed:Date.now()}, {merge:true})); }catch(e){}
     /* off the roster too, so they can't let themselves back in */
     const c = coaches.get(uid), e = c && norm(c.email);
     if(e && invites.has(e)) await timed(FB.deleteDoc(FB.doc(fs, 'invites', e)));
@@ -2630,6 +2632,8 @@ body.doc-pregame .collab-btn{display:none !important;}   /* collaborators are fo
 .collab-btn.on{border-color:var(--black);}
 .collab-n{display:inline-grid; place-items:center; min-width:18px; height:18px; margin-left:5px; padding:0 4px; border-radius:9px; background:var(--yellow); color:var(--black); font-size:11px; font-weight:700; line-height:1;}
 .collab-n[hidden]{display:none;}
+.coach-row.removed{background:transparent; border-style:dashed;}
+.coach-row.removed .coach-name{color:var(--grey);}
 /* number badges: the club font's digits ride low in a small round badge — lift them to the middle */
 .collab-n, .home-set-btn .set-badge, .att-link-i.att-link-i{box-sizing:border-box; padding-bottom:2px;}
 .appbar .collab-btn .collab-n{padding-left:4.5px; padding-right:3.5px;}
@@ -16611,7 +16615,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     let n = 0, warn = '';
     try{
       const u = CLOUD && CLOUD.ready && CLOUD.ready() ? CLOUD.user() : null;
-      if(u && u.admin) n = CLOUD.coaches().filter(function(c){ return !c.approved || (c.asked.length && c.asked.slice().sort().join() !== c.given.slice().sort().join()); }).length;
+      if(u && u.admin) n = CLOUD.coaches().filter(function(c){ return !c.removed && (!c.approved || (c.asked.length && c.asked.slice().sort().join() !== c.given.slice().sort().join())); }).length;
       if(u && CLOUD.member() === false) warn = 'Waiting for the club admin to approve you';
       else if(u && cloudErr && !/No internet/.test(cloudErr)) warn = cloudErr;
       if(!CLOUD && clubState === 'needs') warn = 'The club folder needs a click to reconnect';
@@ -16634,7 +16638,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       return;
     }
     const waiting = CLOUD.member() === false;
-    const pend = u.admin ? CLOUD.coaches().filter(function(c){ return !c.approved || (c.asked.length && c.asked.slice().sort().join() !== c.given.slice().sort().join()); }).length : 0;
+    const pend = u.admin ? CLOUD.coaches().filter(function(c){ return !c.removed && (!c.approved || (c.asked.length && c.asked.slice().sort().join() !== c.given.slice().sort().join())); }).length : 0;
     const off = cloudErr && /No internet/.test(cloudErr);
     const label = clubBusy ? 'Syncing…' : off ? 'Offline' : cloudErr ? 'Sync problem' : waiting ? 'Awaiting approval' : cloudLast ? 'Synced' : 'Connecting…';
     const dot = off ? ' off' : (cloudErr || waiting) ? ' warn' : '';
@@ -16870,15 +16874,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       };
       return sel;
     };
-    const waitingN = cs.filter(function(c){ return !c.approved || (c.asked.length && !same(c.asked, c.given)); }).length;
+    const waitingN = cs.filter(function(c){ return !c.removed && (!c.approved || (c.asked.length && !same(c.asked, c.given))); }).length;
+    const removedN = cs.filter(function(c){ return !!c.removed; }).length;
+    const rank = function(c){ return c.removed ? 2 : (!c.approved || (c.asked.length && !same(c.asked, c.given))) ? 0 : 1; };
     let secDone = {};
     cs.sort(function(a, b){
-      const wa = !a.approved || (a.asked.length && !same(a.asked, a.given)), wb = !b.approved || (b.asked.length && !same(b.asked, b.given));
-      return (wb - wa) || String(a.name || a.email).localeCompare(String(b.name || b.email));
+      return (rank(a) - rank(b)) || String(a.name || a.email).localeCompare(String(b.name || b.email));
     });
     cs.forEach(function(c){
-      const isWaiting = !c.approved || (c.asked.length && !same(c.asked, c.given));
-      const sec = isWaiting ? 'Waiting for you (' + waitingN + ')' : 'Approved (' + (cs.length - waitingN) + ')';
+      const isWaiting = !c.removed && (!c.approved || (c.asked.length && !same(c.asked, c.given)));
+      const sec = c.removed ? 'Removed (' + removedN + ')' : isWaiting ? 'Waiting for you (' + waitingN + ')' : 'Approved (' + (cs.length - waitingN - removedN) + ')';
       if(!secDone[sec]){ secDone[sec] = 1; list.appendChild(h('h4', {class:'coach-sec', text:sec})); }
       /* the teams to give them: start from what they asked for (or what they have, if they haven't asked) */
       let pick = (c.roster && c.roster.groups.length && (!c.approved || !c.given.length) ? c.roster.groups : c.asked.length ? c.asked : c.given).filter(function(g){ return AGE_GROUPS.indexOf(g) !== -1; });
@@ -16886,7 +16891,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       let td = c.role === 'td' || (!c.role &&  ((c.roster && c.roster.role === 'td') || tdByName(c.name)));
       if(td && c.role !== 'td') pick = TD_SQUADS.slice();
       const changeAsked = c.approved && c.asked.length && !same(c.asked, c.given);
-      const state = !c.approved ? 'Waiting since ' + new Date(c.at || Date.now()).toLocaleDateString(undefined, {day:'numeric', month:'short'}) + (c.asked.length ? ' · asked for ' + c.asked.join(' · ') : ' · hasn’t picked a team yet')
+      const state = c.removed ? 'Access removed ' + new Date(c.removed).toLocaleDateString(undefined, {day:'numeric', month:'short'}) + ' · pick their teams and press Approve to let them back in' : !c.approved ? 'Waiting since ' + new Date(c.at || Date.now()).toLocaleDateString(undefined, {day:'numeric', month:'short'}) + (c.asked.length ? ' · asked for ' + c.asked.join(' · ') : ' · hasn’t picked a team yet')
         : changeAsked ? 'Has ' + (c.given.join(' · ') || 'no teams') + ' · asked for ' + c.asked.join(' · ')
         : 'Approved · ' + (c.given.join(' · ') || 'no teams');
       const chips = h('div', {class:'coach-groups'});
@@ -16910,11 +16915,20 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       };
       const who_ = c.name || c.email;
       main.onclick = function(){ const gs = pick.slice(), role = td ? 'td' : 'coach'; act(main, function(){ return CLOUD.approve(c.uid, gs, role); }, who_ + (td ? ' is a technical director · ' + gs.join(' · ') : (c.approved ? ' now has ' : ' is approved for ') + gs.join(' · '))); };
-      const rm = c.approved ? h('button', {type:'button', class:'btn btn-small', text:'Remove access'}) : '';
+      const rm = c.approved || !c.removed ? h('button', {type:'button', class:'btn btn-small', text:c.approved ? 'Remove access' : 'Remove', title:c.approved ? '' : 'Not letting them in — moves them to Removed'}) : '';
       /* a request for more (or other) teams: Decline keeps the teams they have and clears the request */
       const no = changeAsked ? h('button', {type:'button', class:'btn btn-small btn-danger-ghost', text:'Decline', title:'Keep ' + (c.given.join(' · ') || 'their teams') + ' and clear the request'}) : '';
       if(no) no.onclick = function(){ act(no, function(){ return CLOUD.approve(c.uid, c.given.slice(), c.role); }, 'Declined · ' + (c.name || c.email) + ' stays on ' + (c.given.join(' · ') || 'no teams')); };
-      if(rm) rm.onclick = function(){ act(rm, function(){ return CLOUD.revoke(c.uid); }, who_ + ' can no longer see the club library'); };
+      if(rm) rm.onclick = function(){ act(rm, function(){ return CLOUD.revoke(c.uid); }, c.approved ? who_ + ' can no longer see the club library · moved to Removed' : who_ + ' moved to Removed'); };
+      if(c.removed && !openRows[c.uid]){
+        /* access removed: one quiet line — Give access again opens the teams */
+        list.appendChild(h('div', {class:'coach-row compact removed'},
+          h('div', {class:'coach-line'},
+            h('div', {class:'coach-top'}, h('span', {class:'coach-name', text:c.name || c.email || 'A coach'}),
+              h('span', {class:'coach-mail', text:'Access removed ' + new Date(c.removed).toLocaleDateString(undefined, {day:'numeric', month:'short'}) + (c.name && c.email ? ' · ' + c.email : '')})),
+            h('button', {type:'button', class:'btn btn-small', text:'Give access again', onclick:function(){ openRows[c.uid] = 1; renderCoaches(); }}))));
+        return;
+      }
       if(!isWaiting && !openRows[c.uid]){
         /* approved: one tidy line — Edit opens the teams */
         list.appendChild(h('div', {class:'coach-row compact'},
@@ -16923,12 +16937,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
             h('button', {type:'button', class:'btn btn-small', text:'Edit', onclick:function(){ openRows[c.uid] = 1; renderCoaches(); }}))));
         return;
       }
-      list.appendChild(h('div', {class:'coach-row' + (!c.approved || changeAsked ? ' waiting' : '')},
+      list.appendChild(h('div', {class:'coach-row' + ((!c.approved && !c.removed) || changeAsked ? ' waiting' : '')},
         h('div', {class:'coach-top'}, h('span', {class:'coach-name', text:c.name || c.email || 'A coach'}), c.name ? h('span', {class:'coach-mail', text:c.email}) : '', h('span', {class:'coach-state', text:state})),
         !c.approved && c.roster ? h('span', {class:'coach-match', text:'On your roster: ' + (c.roster.name || c.name) + ' · ' + (c.roster.groups.join(' · ') || 'no teams') + ' — ticked for you'}) : '',
         !c.roster && !c.name && free.length ? whoIsThis(c) : '',
         chips, h('div', {class:'coach-groups'}, tdBtn),
-        h('div', {class:'coach-acts'}, c.approved && !isWaiting ? h('button', {type:'button', class:'btn btn-small', text:'Close', onclick:function(){ delete openRows[c.uid]; renderCoaches(); }}) : '',
+        h('div', {class:'coach-acts'}, (c.approved && !isWaiting) || c.removed ? h('button', {type:'button', class:'btn btn-small', text:'Close', onclick:function(){ delete openRows[c.uid]; renderCoaches(); }}) : '',
           c.email && CLOUD.reset ? h('button', {type:'button', class:'btn btn-small', text:'Send password reset', title:'Email ' + c.email + ' a link to set a new password', onclick:async function(e){
             const b = e.currentTarget; b.disabled = true; const er = await CLOUD.reset(c.email);
             showToast(er ? 'Couldn’t send it — ' + er : 'Password reset sent to ' + c.email + ' · they may need to check their junk folder'); if(er) b.disabled = false; }}) : '',
@@ -18007,7 +18021,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     p.appendChild(sh);
     if(!CLOUD) return;
     const list = CLOUD.coaches ? CLOUD.coaches() : [];
-    const pend = list.filter(function(c){ return !c.approved || (c.asked.length && c.asked.slice().sort().join() !== c.given.slice().sort().join()); }).length;
+    const pend = list.filter(function(c){ return !c.removed && (!c.approved || (c.asked.length && c.asked.slice().sort().join() !== c.given.slice().sort().join())); }).length;
     const c = setCard('Coaches', 'Approve new coaches, confirm their teams, and keep the club roster.');
     c.append(h('div', {class:'set-stats'},
       h('div', {class:'set-stat'}, h('b', {text:String(list.filter(function(x){ return x.approved; }).length)}), h('span', {text:'Approved'})),
