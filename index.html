@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261123092252">
+<meta name="hufc-build" content="20261123095753">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -10724,7 +10724,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* a copy of a saved board for a pre-game */
   function pgbCopy(e){
     const c = JSON.parse(JSON.stringify(e.practice));
-    c.id = newId(); c.pgbId = e.libId; c.clips = []; delete c.lineup; delete c.libId; delete c.libHash;
+    c.id = newId(); c.pgbId = e.libId; c.clips = []; delete c.lineup; delete c.libId; delete c.libHash; delete c.pgbTpl;
+    c.pgbHash = e.k || pgbKey(e.practice);
     (c.notes || []).forEach(function(f){ f.id = newId(); });
     if(c.lineup === undefined && c.showDiagram === undefined) c.showDiagram = true;
     return c;
@@ -10738,14 +10739,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!cur) id = newId();
     const before = cur ? JSON.parse(JSON.stringify(cur)) : null;
     const snap = practiceSnapshot(d);
-    snap.clips = []; delete snap.lineup; delete snap.pgbId; delete snap.libId; delete snap.libHash;
+    snap.clips = []; delete snap.lineup; delete snap.pgbId; delete snap.pgbHash; delete snap.pgbTpl; delete snap.libId; delete snap.libHash;
     if(snap.lineup === undefined && d.lineup){ snap.showDiagram = true; }
     const now = Date.now();
     const entry = {libId:id, practice:snap, updatedAt:now, savedAt:now, source:{theme:sessionName(state), date:clean(state.meta && state.meta.date)}, group:groupOf(state), plan:state.planId, pgb:1};
     try{ if(typeof who !== 'undefined' && who && who.uid) entry.owner = (cur && cur.owner) || who.uid; }catch(e){}
+    entry.k = pgbKey(d);
     lib.items[id] = entry; delete lib.removed[id];
     writeLibrary(lib);
-    d.pgbId = id; saveLocal(); rerender();
+    d.pgbId = id; d.pgbHash = entry.k; saveLocal(); rerender();
     try{ pgbRender(); }catch(e){}
     showToast((before ? 'Updated' : 'Saved') + ' “' + (clean(d.name) || 'board') + '” in Saved boards (menu → Matchday)', function(){
       const l2 = readLibrary();
@@ -10853,9 +10855,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
 
   /* every pre-game board is kept in Saved boards (like practices in Saved practices) */
-  function pgbKey(d){ const c = JSON.parse(JSON.stringify(d || {})); delete c.pgbId; delete c.clips; delete c.lineup; return practiceKey(c); }
+  function pgbKey(d){ const c = JSON.parse(JSON.stringify(d || {})); delete c.pgbId; delete c.pgbHash; delete c.pgbTpl; delete c.clips; delete c.lineup; return practiceKey(c); }
   function pgbHasContent(d){
     if(!d || (d.lineup && !d.showDiagram)) return false;
+    if(d.pgbTpl && pgbKey(d) === d.pgbTpl) return false;   /* a new pre-game's starting board, not changed yet */
     return practiceHasContent(d) || !!(d.anim && d.anim.steps && d.anim.steps.length > 1);
   }
   function pgbUpsert(plan, lib){
@@ -10874,26 +10877,46 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       else if(id) seen[id] = 1;
       if(id && lib.removed[id] && !cur) return;              /* taken off Saved boards: stays off */
       if(cur){
-        if((cur.k || pgbKey(cur.practice)) === key) return;  /* no change */
-        /* brought in from another game (or someone else's) and changed here: a new saved board, the original stays */
-        if(cur.plan !== pid || !canEdit(cur)){ id = null; cur = null; }
+        if((cur.k || pgbKey(cur.practice)) === key){ d.pgbHash = key; return; }  /* no change */
+        /* changed here since it last matched the saved board? (a copy the saved board has since moved on from stays as it is) */
+        const changedHere = d.pgbHash ? d.pgbHash !== key : cur.plan === pid;
+        if(!changedHere) return;
+        /* yours: the saved board takes the change; someone else's: you get your own saved board */
+        if(!canEdit(cur)){ id = null; cur = null; }
       }
       if(!cur){
         if(lib.removedK && lib.removedK[key]) return;          /* this exact board was taken off Saved boards */
         const same = index()[key];
-        if(same){ d.pgbId = same; return; }                    /* the same board is kept already */
+        if(same){ d.pgbId = same; d.pgbHash = key; return; }   /* the same board is kept already */
         id = newId();
       }
       const snap = practiceSnapshot(d);
-      snap.clips = []; delete snap.lineup; delete snap.pgbId; delete snap.libId; delete snap.libHash;
+      snap.clips = []; delete snap.lineup; delete snap.pgbId; delete snap.pgbHash; delete snap.pgbTpl; delete snap.libId; delete snap.libHash;
       const e = {libId:id, practice:snap, k:key, updatedAt:Date.now(), source:src, group:g, plan:pid, pgb:1};
       try{ if(cur && cur.owner) e.owner = cur.owner; else if(typeof who !== 'undefined' && who && who.uid) e.owner = who.uid; }catch(x){}
-      lib.items[id] = e; delete lib.removed[id]; d.pgbId = id;
+      lib.items[id] = e; delete lib.removed[id]; d.pgbId = id; d.pgbHash = key;
       if(byKey) byKey[key] = id;
       n++;
     });
     return n;
   }
+  /* boards saved twice under the same name, phase and team (before boards updated in place): keep the newest, once */
+  function pgbCleanDupsOnce(){
+    try{
+      if(hufcStore.getItem('hufc-pgb-dedup-1')) return 0;
+      const lib = readLibrary(), best = {}, nm = function(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+      let n = 0;
+      const mine = Object.keys(lib.items).map(function(id){ return lib.items[id]; }).filter(function(e){
+        return e && e.pgb && e.practice && !lib.removed[e.libId] && isMineObj(e) && canEdit(e) && (e.practice.notes || []).some(function(f){ return f && clean(f.value); });
+      });
+      mine.forEach(function(e){ const k = (e.group || '') + '|' + nm(e.practice.name) + '|' + (e.practice.phase || ''); if(!best[k] || (e.updatedAt || 0) > (best[k].updatedAt || 0)) best[k] = e; });
+      mine.forEach(function(e){ const k = (e.group || '') + '|' + nm(e.practice.name) + '|' + (e.practice.phase || ''); if(best[k] !== e){ delete lib.items[e.libId]; lib.removed[e.libId] = Date.now(); n++; } });
+      if(n) writeLibrary(lib);
+      hufcStore.setItem('hufc-pgb-dedup-1', String(Date.now()));
+      return n;
+    }catch(e){ return 0; }
+  }
+  setTimeout(function(){ if(pgbCleanDupsOnce()){ try{ pgbRender(); }catch(e){} } }, 6000);
   /* the boards already in your pre-games, the first time (and whenever one was missed) */
   function pgbBackfill(){
     try{
@@ -18472,6 +18495,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       drills:PG_BOARDS.map(function(b){ return pgBoard(b[0], b[1], b[2]); })
     };
     s.drills.forEach(function(d){ pgPlace(s, d, 'us'); });
+    s.drills.forEach(function(d){ try{ d.pgbTpl = pgbKey(d); }catch(e){} });   /* (how each board started) */
     return s;
   }
   function pgNormalize(s){
@@ -19894,6 +19918,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     state.planId = newId();
     storageKey = LS_PREFIX + state.planId;
     renderAll();
+    try{ syncBoards(); state.drills.forEach(function(d){ d.pgbTpl = pgbKey(d); }); }catch(e){}   /* how each board starts, as drawn */
     resetHistory();
     showEditor();
     window.scrollTo(0, 0);
