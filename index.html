@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124145257">
+<meta name="hufc-build" content="20261124145554">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -15403,8 +15403,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* Veo's numbers, made easy to read: the score, one bar per stat (us against them) in groups, and a card per player */
   const AN_VEO_GROUPS = [
     ['Attacking', ['football_goal_total', 'hufc_on_goal', 'football_attempts_total', 'football_dribble_total']],
-    ['Possession and passing', ['football_possession_percentage', 'football_passes_completed_total']],
-    ['Set pieces', ['football_corner_total', 'football_free_kick_total', 'football_penalty_total', 'football_throw_in_total']],
+    ['Possession and passing', ['football_possession_percentage', 'football_possession_minutes_total', 'football_passes_completed_total', 'football_loose_total']],
+    ['Set pieces', ['football_corner_total', 'football_free_kick_total', 'football_penalty_total', 'football_throw_in_total', 'football_goal_kick_total']],
     ['Defending', ['football_tackle_total', 'football_interception_total', 'football_duel_total', 'football_save_total']],
     ['Discipline', ['football_foul_total']]];
   const AN_VEO_SKIP = ['football_shots_total'];            /* (attempts not scored: attempts minus goals, already shown) */
