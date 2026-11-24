@@ -485,7 +485,7 @@ function veoRun(slug, off) {
   const target = 'https://app.veo.co/matches/' + slug + '/#/analysis/';
   return new Promise(resolve => {
     const got = {}, reqs = {};
-    let finished = false, settleT = null, quietT = null, overall = null, nudged = 0, signin = false, userStatus = 0;
+    let finished = false, settleT = null, quietT = null, overall = null, nudged = 0, signin = false, userStatus = 0, statsAnswered = false, statsWait = 0;
     /* off: drawn in memory, so Veo's page runs as it does on screen (a hidden window doesn't, and its stats don't load);
        a window that may need showing (to sign in) can't be drawn in memory */
     const w = new BrowserWindow({ show: false, width: 1400, height: 900, title: 'Sign in to Veo · ' + APP_NAME, icon: path.join(__dirname, 'icon.ico'), autoHideMenuBar: true,
@@ -519,7 +519,8 @@ function veoRun(slug, off) {
           nudged++;
           try { await w.webContents.executeJavaScript('(() => { const els = [...document.querySelectorAll("button, a, [role=tab], [role=button]")]; const b = els.find(e => /analytics|stats/i.test((e.getAttribute("aria-label") || "") + " " + (e.title || "") + " " + (e.textContent || "").trim().slice(0, 40))); if (b) { b.click(); return true; } return false; })()'); } catch (e) {}
           quiet();
-        } else if (has(/\/api\/app\/matches\//)) finishSoon(500);
+        } else if (got.__statsRequest && !has(/\/analysis\/stats\//) && statsWait++ < 4) quiet();   /* (Veo's page asked for the stats: give the answer time to come) */
+        else if (has(/\/api\/app\/matches\//)) finishSoon(500);
       }, 7000);
     };
     try { dbg.attach('1.3'); } catch (e) { log('veo debugger', e.message); try { w.destroy(); } catch (x) {} veoWin = null; resolve({ error: 'internal' }); return; }
@@ -529,13 +530,14 @@ function veoRun(slug, off) {
         else if (method === 'Network.responseReceived') {
           const u = p.response && p.response.url || '';
           if (/^https:\/\/app\.veo\.co\/api\/app\/user\/?(\?|$)/.test(u)) userStatus = p.response.status;
+          if (/\/analysis\/stats\//.test(u)) { statsAnswered = true; log('veo stats answer', p.response.status); }
           if (veoWanted(u)) reqs[p.requestId] = { url: u, status: p.response.status };
         } else if (method === 'Network.loadingFinished') {
           const r = reqs[p.requestId]; if (!r) return; delete reqs[p.requestId];
           if (r.status !== 200) return;
           dbg.sendCommand('Network.getResponseBody', { requestId: p.requestId }).then(b => {
             const t = b.base64Encoded ? Buffer.from(b.body, 'base64').toString('utf8') : b.body;
-            if (t && t.length < 5e6) { try { got[r.url] = JSON.parse(t); } catch (e) {} }
+            if (t && t.length < 5e6) { try { got[r.url] = JSON.parse(t); } catch (e) { if (/analysis\/stats/.test(r.url)) log('veo stats answer unreadable', t.length); } }
             check(); quiet();
           }).catch(() => {});
         }
