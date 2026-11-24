@@ -1,11 +1,11 @@
 {
- "version": "1.6.18",
+ "version": "1.6.19",
  "files": {
-  "main.js": "297b384704d1ae202caaaf0d9d9e0a9da4a9c6ec96089011292456d43f86dfe0",
-  "preload.js": "d0977a1f9104db7962baf5f32a35914f6a2398e4f54369be6a3ff0b5de674e3e",
+  "main.js": "d8ec695d8457e838691ad42cdb84ea0f53be339d2820fb7634407c21b9939913",
+  "preload.js": "0609232cc30fd65f629dd1e78743738bac59bb4106f5daa04c9e6e3f34d9308f",
   "store.js": "6f9ed93db5a4da6350183aa503534b2de38cd6382f5c67603dd0d45fa92e8df6",
   "gdrive.js": "c844288f434f4125c829bc08dcc715f98b41c51eae64c9d8bc769cd8083b09f9",
   "edge-import.js": "9bde76bbde47b7a36651494aa30b30f00ef91e62943ebe3f3c390abb42de054e",
-  "package.json": "462b772750d67be44436d29b4fd397e406e6005320f723e45284efe225a8cd5f"
+  "package.json": "86d78b76e188e8f3a7fba835e8118a07c5f979e31ccbd65a1aa61dddb23f84f0"
  }
 }

@@ -35,7 +35,7 @@ Object.defineProperty(window, 'localStorage', { configurable: true, enumerable: 
 
 const info = ipcRenderer.sendSync('store:info') || {};
 /* the version these helpers were written for: if the program still running is older, it needs a restart */
-const PROGRAM_VERSION = '1.6.18';
+const PROGRAM_VERSION = '1.6.19';
 ipcRenderer.on('program:updated', () => { if (typeof window.hufcProgramUpdated === 'function') window.hufcProgramUpdated(); });
 const onlineCbs = [];
 ipcRenderer.on('online:state', (e, s) => onlineCbs.forEach(cb => { try { cb(s); } catch (err) {} }));
@@ -109,7 +109,7 @@ window.hufcDesktop = {
     onSignin(cb) { if (typeof cb === 'function') ipcRenderer.on('veo:signin', () => { try { cb('signin'); } catch (e) {} }); },
     onWorking(cb) { if (typeof cb === 'function') ipcRenderer.on('veo:working', () => { try { cb('working'); } catch (e) {} }); },
     /* the mini map: Veo's player positions for the halves (ranges: [[start, end], …] in the video's seconds) */
-    fast: 2,   /* (the quick mini map: 1.6.16, four Veo pages, no video loading) */
+    fast: 3,   /* (2: the quick mini map, 1.6.16, four Veo pages, no video loading; 3: with the ball's full path, 1.6.19) */
     track(url, ranges) { return ipcRenderer.invoke('veo:track', String(url || ''), ranges || []); },
     onTrackProgress(cb) { if (typeof cb === 'function') ipcRenderer.on('veo:trackProgress', (e, pct) => { try { cb(pct); } catch (err) {} }); }
   },

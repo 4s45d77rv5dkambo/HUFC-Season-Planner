@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124222838">
+<meta name="hufc-build" content="20261125071117">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -15636,6 +15636,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(!r || !r.ok || !r.data){ try{ anMapRender(); }catch(e){} showToast(r && r.error === 'signin' ? 'The mini map needs you signed in to Veo · press Veo stats ✓ again' : 'Couldn’t get the mini map from Veo this time · press Veo stats ✓ to try again'); return; }
         return pgMedia.put('mvt-' + m.id, r.data).then(function(){
           m.analysis.veoTrack = {at:Date.now(), t0:r.t0, dt:r.dt, n:r.n, cov:typeof r.cov === 'number' ? r.cov : null};
+          if(r.ball){ m.analysis.veoTrack.ball = 1; pgMedia.put('mvb-' + m.id, r.ball).catch(function(){}); }
           if(anM === m){ anSave(); }
           else { try{ const k = MV_PREFIX + m.id; const cur = JSON.parse(hufcStore.getItem(k) || 'null'); if(cur){ cur.analysis = cur.analysis || {}; cur.analysis.veoTrack = m.analysis.veoTrack; hufcStore.setItem(k, JSON.stringify(cur)); } }catch(e){} }
           anTrackFor = null; try{ anTrackLoad(); }catch(e){}
@@ -15650,7 +15651,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         });
       }).catch(function(){ anTrackBusy = null; try{ anMapRender(); }catch(e){} showToast('Couldn’t get the mini map from Veo this time'); });
     };
-    if(force || !a.veoTrack || !(a.veoTrack.cov >= 0.97)) return go();   /* (none yet, or one with gaps: get it again) */
+    if(force || !a.veoTrack || !(a.veoTrack.cov >= 0.97) || (D.veo.fast >= 3 && !a.veoTrack.ball)) return go();   /* (none yet, or one with gaps: get it again) */
     pgMedia.get('mvt-' + m.id).then(function(s){ if(typeof s !== 'string') go(); }).catch(go);
   }
 
@@ -15766,7 +15767,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
             if(!(await askDelete('match video', title, 'Its tags and clips go too. The video file on your device isn’t touched.'))) return;
             const raw = hufcStore.getItem(x.key);
             try{ hufcStore.removeItem(x.key); noteDeleted(x.key); }catch(e){} if(m.drive) driveRemoveLater(m.drive, function(){ return !!hufcStore.getItem(x.key); });
-            setTimeout(function(){ if(!hufcStore.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); pgMedia.del('mvt-' + m.id).catch(function(){}); if(anDl && anDl.id === m.id){ anDl.cancel = true; try{ anDl.stop.abort(); }catch(e){} } anDlDrop(m.id).catch(function(){}); try{ hufcStore.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
+            setTimeout(function(){ if(!hufcStore.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); pgMedia.del('mvt-' + m.id).catch(function(){}); pgMedia.del('mvb-' + m.id).catch(function(){}); if(anDl && anDl.id === m.id){ anDl.cancel = true; try{ anDl.stop.abort(); }catch(e){} } anDlDrop(m.id).catch(function(){}); try{ hufcStore.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
             clubSyncSoon(); renderHome(); if(after) after();
             showToast('Deleted “' + title + '”', function(){ undoDeleted(x.key, raw); clubSyncSoon(); renderHome(); if(after) after(); });
           }}) : null));

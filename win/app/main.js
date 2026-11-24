@@ -501,12 +501,6 @@ function veoRun(slug, off) {
       try { dbg.detach(); } catch (e) {}
       try { if (!w.isDestroyed()) w.destroy(); } catch (e) {}
       veoWin = null;
-      try {
-        if (out.ok && out.data) {
-          const keep = {}; Object.keys(out.data).forEach(u => { if (/\/matches\/|\/mes\/|\/analysis\/|shot|pass|possession|heat/i.test(u) && !/members|mentions|showcase|membership|\/user\//.test(u)) keep[u] = out.data[u]; });
-          fs.writeFileSync(path.join(app.getPath('userData'), 'veo-last.json'), JSON.stringify(keep));
-        }
-      } catch (e) {}
       log('veo', slug, out.error || ('ok' + (out.partial ? ' (partial)' : '')), keys().map(u => u.replace(/^https:\/\/app\.veo\.co\/api\//, '').replace(/[0-9a-f-]{36}|\d{8}-[a-z0-9-]+/g, '…').slice(0, 60)).join(' | '));
       resolve(out);
     };
@@ -515,10 +509,10 @@ function veoRun(slug, off) {
     const complete = () => has(/\/analysis\/stats\//) && has(/\/periods\/?$/) && has(/\/highlights\//) && has(/physical-metrics/);
     const finishSoon = ms => { clearTimeout(settleT); settleT = setTimeout(() => done(keys().length ? { ok: true, partial: !complete(), data: got } : { error: signin ? 'signin' : 'nothing' }), ms); };
     /* everything in: a moment for stragglers, then back to the planner */
-    /* with the stats in: open Veo's Shot map, Pass location, Possession location and Heat map too, so their data comes */
+    /* with the stats in: open Veo's Shot map, Pass location and Possession location too, so their match events come */
     let mapsOpened = false;
     const openMaps = async () => {
-      for (const name of ['Shot map', 'Pass location', 'Possession location', 'Heat map']) {
+      for (const name of ['Shot map', 'Pass location', 'Possession location']) {
         if (finished) return;
         try { await w.webContents.executeJavaScript('(() => { const els = [...document.querySelectorAll("button, a, [role=button], [role=tab], div, span, h2, h3, h4")]; const b = els.find(e => (e.textContent || "").trim() === ' + JSON.stringify(name) + ' && e.children.length < 3); if (b) { b.scrollIntoView({ block: "center" }); b.click(); return true; } return false; })()'); } catch (e) {}
         await new Promise(r => setTimeout(r, 1800));
@@ -643,7 +637,22 @@ function veoPack(frames, ranges) {
     objs.slice(0, c).forEach((o, k) => { const at = 1 + k * 6; b[at] = o[0]; b[at + 1] = o[1]; b.writeUInt16LE(o[2], at + 2); b.writeUInt16LE(o[3], at + 4); });
     parts.push(b);
   }
-  return { t0: t0, dt: dt, n: n, data: Buffer.concat(parts).toString('base64') };
+  return { t0: t0, dt: dt, n: n, data: Buffer.concat(parts).toString('base64'), ball: veoBall(frames, times) };
+}
+/* the ball at every moment Veo has it (not thinned: shots need its exact path), packed: per moment its time
+   (hundredths of a second) and x, y (each 0..65535 over -0.25..1.25 of the pitch) */
+function veoBall(frames, times) {
+  const q = v => Math.max(0, Math.min(65535, Math.round((v + 0.25) / 1.5 * 65535)));
+  const out = [];
+  times.forEach(t => {
+    const o = (frames[t.toFixed(2)] || []).find(o => Array.isArray(o) && o.length >= 4 && o[1] === 6);
+    if (!o || !isFinite(o[2]) || !isFinite(o[3])) return;
+    const b = Buffer.alloc(8); b.writeUInt32LE(Math.round(t * 100), 0); b.writeUInt16LE(q(o[2]), 4); b.writeUInt16LE(q(o[3]), 6); out.push(b);
+  });
+  if (!out.length) return null;
+  const s = Buffer.concat(out).toString('base64');
+  try { fs.writeFileSync(path.join(app.getPath('userData'), 'veo-ball.txt'), s); } catch (e) {}   /* (a copy for checking shot paths; goes in the next version) */
+  return s;
 }
 let veoTrackJob = null;
 function veoTrackRun(slug, ranges) {
