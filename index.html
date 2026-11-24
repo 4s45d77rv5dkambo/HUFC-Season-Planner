@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124221606">
+<meta name="hufc-build" content="20261124222838">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -15369,15 +15369,19 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }
     /* Veo's moments as tags: brought in again, they keep the player and note a coach added */
     const old = {}; a.tags.forEach(function(t){ if(t.veo) old[t.veo] = t; });
-    a.tags = a.tags.filter(function(t){ return !t.veo; });
-    v.moments.forEach(function(x){
+    if(v.moments.length) a.tags = a.tags.filter(function(t){ return !t.veo; });   /* (none came this time: keep the ones there) */
+    if(v.moments.length) v.moments.forEach(function(x){
       if(AN_TYPES.indexOf(x.type) === -1 && a.types.indexOf(x.type) === -1) a.types.push(x.type);
       const o = old[x.id];
       a.tags.push({id:o ? o.id : newId(), t:x.t, type:x.type, side:x.side, pid:o ? o.pid || '' : '', note:o ? o.note || '' : '', veo:x.id});
     });
     a.tags.sort(function(x, y){ return x.t - y.t; });
     const slug = (String(link || '').match(AN_VEO_RE) || [])[1] || '';
-    a.veo = {at:Date.now(), slug:slug, team:v.team, players:v.players, names:v.names, periods:v.periods};
+    /* a fetch that came back without some parts keeps what was already here (never wipes good stats) */
+    const was = a.veo || {};
+    a.veo = {at:Date.now(), slug:slug,
+      team:v.team.length ? v.team : (was.team || []), players:v.players.length ? v.players : (was.players || []),
+      names:Object.keys(v.names || {}).length ? v.names : (was.names || {}), periods:v.periods.length ? v.periods : (was.periods || [])};
     m.savedAt = Date.now();
     const count = function(type){ return v.moments.filter(function(x){ return x.type === type; }).length; };
     return {goals:count('Goal'), shots:count('Shot'), other:v.moments.length - count('Goal') - count('Shot'), halves:halves, players:v.players.length, team:v.team.length};
@@ -18203,7 +18207,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now uses three Veo pages at once and keeps going by itself until it has the whole game)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
+    {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now gets it in about a minute — four Veo pages at once, without loading Veo’s video — and keeps going by itself until it has the whole game)','Fixed: pressing Veo stats ✓ again could empty the Stats tab when Veo sent only part of the stats (what was there now stays, and the stats load properly in the background)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
     {v:'4.13', d:'20 Nov 2026', t:'See who’s on, Save as PDF, coaches in full', n:['The admin can see which coaches are using the planner right now and what they’re working on','Save as PDF beside Print in every plan’s top bar','A plan’s black bar names every coach in full: the coach who made it first, then each collaborator, with commas','Collaborators: a session you’re added to shows up in your planner, with a notice saying who added you','The admin can send a coach a password reset email','Removing a coach’s access moves them to Removed (not Waiting); waiting coaches can be removed too','Side menu icons about 30% bigger','Numbers in every badge sit dead centre (collaborators, Settings, attendance)','Fixed: “2 out” on the attendance link went outside its box']},
     {v:'4.12', d:'19 Nov 2026', t:'Saved sign, deleting practices', n:['A Saved sign in place of the Save button — work done offline goes up as soon as the internet is back','A deleted saved practice stays deleted (identical copies go with it)','Text centred in every bubble: calendar days, Today, This week, age-group tags and small buttons']},

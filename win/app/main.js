@@ -481,13 +481,16 @@ ipcMain.handle('online:call', (e, op, args) => onlineCall(String(op || ''), args
 const VEO_PART = 'persist:hufc-veo';
 let veoJob = null, veoWin = null;
 const veoWanted = u => /^https:\/\/app\.veo\.co\/api\/(app|mes)\//.test(u) && !/player-tracking|step-events|\/i18n\//.test(u);
-function veoRun(slug) {
+function veoRun(slug, off) {
   const target = 'https://app.veo.co/matches/' + slug + '/#/analysis/';
   return new Promise(resolve => {
     const got = {}, reqs = {};
     let finished = false, settleT = null, quietT = null, overall = null, nudged = 0, signin = false, userStatus = 0;
+    /* off: drawn in memory, so Veo's page runs as it does on screen (a hidden window doesn't, and its stats don't load);
+       a window that may need showing (to sign in) can't be drawn in memory */
     const w = new BrowserWindow({ show: false, width: 1400, height: 900, title: 'Sign in to Veo · ' + APP_NAME, icon: path.join(__dirname, 'icon.ico'), autoHideMenuBar: true,
-      webPreferences: { partition: VEO_PART, contextIsolation: true, sandbox: true, backgroundThrottling: false } });
+      webPreferences: { partition: VEO_PART, contextIsolation: true, sandbox: true, backgroundThrottling: false, offscreen: !!off } });
+    if (off) { try { w.webContents.setFrameRate(15); } catch (e) {} try { w.webContents.setAudioMuted(true); } catch (e) {} }
     veoWin = w;
     try { w.webContents.setUserAgent(w.webContents.getUserAgent().replace(/\s*Electron\/\S+/i, '').replace(/\s*hufc-season-planner\/\S+/i, '').replace(/\s*HUFC Season Planner\/\S+/i, '')); } catch (e) {}
     w.webContents.setWindowOpenHandler(() => ({ action: 'allow', overrideBrowserWindowOptions: { autoHideMenuBar: true, webPreferences: { partition: VEO_PART } } }));
@@ -541,6 +544,7 @@ function veoRun(slug) {
     dbg.sendCommand('Network.enable', { maxResourceBufferSize: 10e6, maxTotalBufferSize: 80e6 }).catch(() => {});
     /* not signed in to Veo (or Veo's sign-in page): show the window so the coach signs in; then back to the match */
     const needSignin = () => {
+      if (off) { done({ error: 'signin' }); return; }   /* (in memory: start again in a window the coach can sign in to) */
       if (signin || finished) return; signin = true;
       try { if (!w.isDestroyed()) { w.show(); w.focus(); } } catch (e) {}
       if (win && !win.isDestroyed()) win.webContents.send('veo:signin');
@@ -587,7 +591,8 @@ ipcMain.handle('veo:stats', async (e, url) => {
   const m = String(url || '').match(/^https?:\/\/(?:app\.)?veo\.co\/matches\/([A-Za-z0-9_-]+)/i);
   if (!m) return { error: 'link' };
   if (veoJob) { try { if (veoWin && !veoWin.isDestroyed() && veoWin.isVisible()) veoWin.focus(); } catch (x) {} return { error: 'busy' }; }
-  veoJob = veoRun(m[1]);
+  /* first in memory (quick, and Veo's stats load); if Veo wants a sign-in, again in a window the coach signs in to */
+  veoJob = veoRun(m[1], true).then(r => r && r.error === 'signin' ? veoRun(m[1], false) : r);
   try { return await veoJob; } finally { veoJob = null; }
 });
 /* ---- Veo's player tracking (the mini map): Veo's page only loads it 24 seconds at a time, around where its video is.
@@ -623,7 +628,7 @@ function veoPack(frames, ranges) {
 let veoTrackJob = null;
 function veoTrackRun(slug, ranges) {
   const target = 'https://app.veo.co/matches/' + slug + '/';
-  const WORKERS = 3;   /* three Veo pages at once, each taking its share of the game */
+  const WORKERS = 4;   /* four Veo pages at once, each taking the next piece of the game */
   return new Promise(resolve => {
     const frames = {}, starts = [], workers = [];
     let finished = false, overall = null;
@@ -678,9 +683,20 @@ function veoTrackRun(slug, ranges) {
       }
       return 'load';
     };
+    /* the quick way: tell Veo's page its video is at a new time without moving the video (so no video loads),
+       and the page asks for that piece straight away; the page asks for one piece at a time */
+    const QUICK = '(() => { const v = document.querySelector("video"); if (!v) return false; if (!v.__hufcAt) { const d = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, "currentTime"); v.__hufcAt = { t: null }; Object.defineProperty(v, "currentTime", { configurable: true, get() { return v.__hufcAt.t == null ? d.get.call(this) : v.__hufcAt.t; }, set(x) { v.__hufcAt.t = null; d.set.call(this, x); } }); v.pause(); } v.__hufcAt.t = T; ["seeking", "seeked", "timeupdate"].forEach(e => v.dispatchEvent(new Event(e))); return true; })()';
+    const quickAt = async (k, t) => {
+      if (covered(t)) return true;
+      await k.js(QUICK.replace('= T;', '= ' + t.toFixed(2) + ';'));
+      for (let i = 0; i < 70 && !finished; i++) { await sleep(40); if (covered(t)) return true; }
+      return false;
+    };
     const fetchAt = async (k, t, waitMs) => {
       if (covered(t)) return true;
-      await k.js('(() => { const v = document.querySelector("video"); v.currentTime = ' + t.toFixed(2) + '; return true; })()');
+      if (await quickAt(k, t)) return true;
+      /* the slow way, if the quick one didn't bring it: move Veo's video there */
+      await k.js('(() => { const v = document.querySelector("video"); if (v && v.__hufcAt) v.__hufcAt.t = null; v.currentTime = ' + t.toFixed(2) + '; return true; })()');
       for (let i = 0; i < waitMs / 120 && !finished; i++) { await sleep(120); if (covered(t)) return true; }
       /* a moment of play nudges Veo's page to load it */
       await k.js('(() => { const v = document.querySelector("video"); v.play().catch(() => {}); return true; })()');
