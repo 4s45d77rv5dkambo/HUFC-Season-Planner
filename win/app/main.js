@@ -480,7 +480,7 @@ ipcMain.handle('online:call', (e, op, args) => onlineCall(String(op || ''), args
    Nothing is typed in for the coach: if Veo wants a sign-in, the window shows and the coach signs in there. */
 const VEO_PART = 'persist:hufc-veo';
 let veoJob = null, veoWin = null;
-const veoWanted = u => /^https:\/\/app\.veo\.co\/api\/(app|mes)\//.test(u) && !/player-tracking|step-events|\/i18n\//.test(u);
+const veoWanted = u => /^https:\/\/app\.veo\.co\/api\//.test(u) && !/player-tracking|step-events|\/i18n\/|\/-\/t\//.test(u);
 function veoRun(slug, off) {
   const target = 'https://app.veo.co/matches/' + slug + '/#/analysis/';
   return new Promise(resolve => {
@@ -501,6 +501,12 @@ function veoRun(slug, off) {
       try { dbg.detach(); } catch (e) {}
       try { if (!w.isDestroyed()) w.destroy(); } catch (e) {}
       veoWin = null;
+      try {
+        if (out.ok && out.data) {
+          const keep = {}; Object.keys(out.data).forEach(u => { if (/\/matches\/|\/mes\/|\/analysis\/|shot|pass|possession|heat/i.test(u) && !/members|mentions|showcase|membership|\/user\//.test(u)) keep[u] = out.data[u]; });
+          fs.writeFileSync(path.join(app.getPath('userData'), 'veo-last.json'), JSON.stringify(keep));
+        }
+      } catch (e) {}
       log('veo', slug, out.error || ('ok' + (out.partial ? ' (partial)' : '')), keys().map(u => u.replace(/^https:\/\/app\.veo\.co\/api\//, '').replace(/[0-9a-f-]{36}|\d{8}-[a-z0-9-]+/g, '…').slice(0, 60)).join(' | '));
       resolve(out);
     };
@@ -509,7 +515,19 @@ function veoRun(slug, off) {
     const complete = () => has(/\/analysis\/stats\//) && has(/\/periods\/?$/) && has(/\/highlights\//) && has(/physical-metrics/);
     const finishSoon = ms => { clearTimeout(settleT); settleT = setTimeout(() => done(keys().length ? { ok: true, partial: !complete(), data: got } : { error: signin ? 'signin' : 'nothing' }), ms); };
     /* everything in: a moment for stragglers, then back to the planner */
-    const check = () => { if (complete()) finishSoon(1200); };
+    /* with the stats in: open Veo's Shot map, Pass location, Possession location and Heat map too, so their data comes */
+    let mapsOpened = false;
+    const openMaps = async () => {
+      for (const name of ['Shot map', 'Pass location', 'Possession location', 'Heat map']) {
+        if (finished) return;
+        try { await w.webContents.executeJavaScript('(() => { const els = [...document.querySelectorAll("button, a, [role=button], [role=tab], div, span, h2, h3, h4")]; const b = els.find(e => (e.textContent || "").trim() === ' + JSON.stringify(name) + ' && e.children.length < 3); if (b) { b.scrollIntoView({ block: "center" }); b.click(); return true; } return false; })()'); } catch (e) {}
+        await new Promise(r => setTimeout(r, 1800));
+      }
+    };
+    const check = () => {
+      if (!complete()) return;
+      if (!mapsOpened) { mapsOpened = true; clearTimeout(settleT); settleT = setTimeout(() => {}, 60000); openMaps().then(() => finishSoon(3500)); return; }
+    };
     /* Veo's page loaded and went quiet without its Analytics panel: open it (as a coach would), then settle for what came */
     const quiet = () => {
       clearTimeout(quietT);
