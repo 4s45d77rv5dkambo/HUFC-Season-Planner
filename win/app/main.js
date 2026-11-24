@@ -623,101 +623,110 @@ function veoPack(frames, ranges) {
 let veoTrackJob = null;
 function veoTrackRun(slug, ranges) {
   const target = 'https://app.veo.co/matches/' + slug + '/';
+  const WORKERS = 3;   /* three Veo pages at once, each taking its share of the game */
   return new Promise(resolve => {
-    const frames = {}, reqs = {}, starts = [];
-    let finished = false;
-    /* drawn in memory (offscreen), so Veo's page runs as it does on screen: a hidden window doesn't redraw, and Veo's page then
-       often doesn't load the positions */
-    const w = new BrowserWindow({ show: false, width: 1400, height: 900, title: 'Veo · ' + APP_NAME, icon: path.join(__dirname, 'icon.ico'), autoHideMenuBar: true,
-      webPreferences: { partition: VEO_PART, contextIsolation: true, sandbox: true, backgroundThrottling: false, offscreen: true } });
-    try { w.webContents.setFrameRate(20); } catch (e) {}
-    try { w.webContents.setUserAgent(w.webContents.getUserAgent().replace(/\s*Electron\/\S+/i, '').replace(/\s*hufc-season-planner\/\S+/i, '').replace(/\s*HUFC Season Planner\/\S+/i, '')); } catch (e) {}
-    try { w.webContents.setAudioMuted(true); } catch (e) {}
-    const dbg = w.webContents.debugger;
-    const done = out => {
-      if (finished) return; finished = true;
-      try { dbg.detach(); } catch (e) {}
-      try { if (!w.isDestroyed()) w.destroy(); } catch (e) {}
-      log('veo track', slug, out.error || ('ok ' + starts.length + ' pieces'));
-      resolve(out);
-    };
-    try { dbg.attach('1.3'); } catch (e) { try { w.destroy(); } catch (x) {} resolve({ error: 'internal' }); return; }
-    dbg.on('message', (ev, method, p) => {
-      try {
-        if (method === 'Network.responseReceived') {
-          const u = p.response && p.response.url || '';
-          if (/\/api\/mes\/v2\/[^/]+\/player-tracking\?start=/.test(u) && p.response.status === 200) reqs[p.requestId] = u;
-        } else if (method === 'Network.loadingFinished') {
-          const u = reqs[p.requestId]; if (!u) return; delete reqs[p.requestId];
-          dbg.sendCommand('Network.getResponseBody', { requestId: p.requestId }).then(b => {
-            const t = b.base64Encoded ? Buffer.from(b.body, 'base64').toString('utf8') : b.body;
-            let j = null; try { j = JSON.parse(t); } catch (e) { return; }
-            if (!j || typeof j !== 'object') return;
-            Object.keys(j).forEach(k => { const tt = parseFloat(k); if (isFinite(tt) && Array.isArray(j[k])) frames[tt.toFixed(2)] = j[k]; });
-            const st = parseFloat((u.match(/start=([\d.]+)/) || [])[1]); if (isFinite(st)) starts.push(st);
-          }).catch(() => {});
-        }
-      } catch (e) {}
-    });
-    dbg.sendCommand('Network.enable', { maxResourceBufferSize: 10e6, maxTotalBufferSize: 100e6 }).catch(() => {});
-    const js = c => w.isDestroyed() ? Promise.resolve(null) : w.webContents.executeJavaScript(c).catch(() => null);
+    const frames = {}, starts = [], workers = [];
+    let finished = false, overall = null;
+    const t0run = Date.now();
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     const covered = t => starts.some(s => s <= t + 0.5 && t < s + 23.5);
-    const total = ranges.reduce((a, r) => a + Math.max(0, r[1] - r[0]), 0) || 1;
-    w.loadURL(target).catch(err => done({ error: /ERR_INTERNET|ERR_NAME|ERR_CONNECTION|ERR_NETWORK/.test(err.message) ? 'offline' : 'load' }));
-    (async () => {
-      /* Veo's player ready (or its sign-in wall) */
-      let ready = false;
+    const done = out => {
+      if (finished) return; finished = true;
+      clearTimeout(overall);
+      workers.forEach(k => { try { k.dbg.detach(); } catch (e) {} try { if (!k.w.isDestroyed()) k.w.destroy(); } catch (e) {} });
+      log('veo track', slug, (out.error || ('ok ' + starts.length + ' pieces')) + ' in ' + Math.round((Date.now() - t0run) / 1000) + 's');
+      resolve(out);
+    };
+    /* one Veo page, drawn in memory (offscreen) so it runs as it does on screen, keeping the positions its page loads */
+    const makeWorker = () => {
+      const w = new BrowserWindow({ show: false, width: 1280, height: 800, title: 'Veo · ' + APP_NAME, icon: path.join(__dirname, 'icon.ico'), autoHideMenuBar: true,
+        webPreferences: { partition: VEO_PART, contextIsolation: true, sandbox: true, backgroundThrottling: false, offscreen: true } });
+      try { w.webContents.setFrameRate(15); } catch (e) {}
+      try { w.webContents.setUserAgent(w.webContents.getUserAgent().replace(/\s*Electron\/\S+/i, '').replace(/\s*hufc-season-planner\/\S+/i, '').replace(/\s*HUFC Season Planner\/\S+/i, '')); } catch (e) {}
+      try { w.webContents.setAudioMuted(true); } catch (e) {}
+      const dbg = w.webContents.debugger, reqs = {};
+      try { dbg.attach('1.3'); } catch (e) { try { w.destroy(); } catch (x) {} return null; }
+      dbg.on('message', (ev, method, p) => {
+        try {
+          if (method === 'Network.responseReceived') {
+            const u = p.response && p.response.url || '';
+            if (/\/api\/mes\/v2\/[^/]+\/player-tracking\?start=/.test(u) && p.response.status === 200) reqs[p.requestId] = u;
+          } else if (method === 'Network.loadingFinished') {
+            const u = reqs[p.requestId]; if (!u) return; delete reqs[p.requestId];
+            dbg.sendCommand('Network.getResponseBody', { requestId: p.requestId }).then(b => {
+              const t = b.base64Encoded ? Buffer.from(b.body, 'base64').toString('utf8') : b.body;
+              let j = null; try { j = JSON.parse(t); } catch (e) { return; }
+              if (!j || typeof j !== 'object') return;
+              Object.keys(j).forEach(k => { const tt = parseFloat(k); if (isFinite(tt) && Array.isArray(j[k])) frames[tt.toFixed(2)] = j[k]; });
+              const st = parseFloat((u.match(/start=([\d.]+)/) || [])[1]); if (isFinite(st)) starts.push(st);
+            }).catch(() => {});
+          }
+        } catch (e) {}
+      });
+      dbg.sendCommand('Network.enable', { maxResourceBufferSize: 10e6, maxTotalBufferSize: 100e6 }).catch(() => {});
+      const js = c => w.isDestroyed() ? Promise.resolve(null) : w.webContents.executeJavaScript(c).catch(() => null);
+      w.on('close', () => { if (!finished) done({ error: 'closed' }); });
+      w.loadURL(target).catch(() => {});
+      return { w: w, dbg: dbg, js: js };
+    };
+    const ready = async k => {
       for (let i = 0; i < 60 && !finished; i++) {
         await sleep(500);
-        const st = await js('(() => { const v = document.querySelector("video"); const wall = /log in to access/i.test(document.body ? document.body.innerText.slice(0, 20000) : ""); return { wall: wall, ok: !!(v && v.readyState >= 1 && v.duration > 0) }; })()');
-        if (st && st.wall) { done({ error: 'signin' }); return; }
-        if (st && st.ok) { ready = true; break; }
+        const st = await k.js('(() => { const v = document.querySelector("video"); const wall = /log in to access/i.test(document.body ? document.body.innerText.slice(0, 20000) : ""); return { wall: wall, ok: !!(v && v.readyState >= 1 && v.duration > 0) }; })()');
+        if (st && st.wall) return 'signin';
+        if (st && st.ok) { await k.js('(() => { const v = document.querySelector("video"); v.muted = true; v.pause(); return true; })()'); return 'ok'; }
       }
-      if (!ready) { done({ error: 'load' }); return; }
-      await js('(() => { const v = document.querySelector("video"); v.muted = true; v.pause(); return true; })()');
-      /* each 24-second piece of each half: Veo's page loads the piece starting where its video is put */
+      return 'load';
+    };
+    const fetchAt = async (k, t, waitMs) => {
+      if (covered(t)) return true;
+      await k.js('(() => { const v = document.querySelector("video"); v.currentTime = ' + t.toFixed(2) + '; return true; })()');
+      for (let i = 0; i < waitMs / 120 && !finished; i++) { await sleep(120); if (covered(t)) return true; }
+      /* a moment of play nudges Veo's page to load it */
+      await k.js('(() => { const v = document.querySelector("video"); v.play().catch(() => {}); return true; })()');
+      let ok = false;
+      for (let i = 0; i < 20 && !finished; i++) { await sleep(150); if (covered(t)) { ok = true; break; } }
+      await k.js('(() => { const v = document.querySelector("video"); v.pause(); return true; })()');
+      return ok;
+    };
+    overall = setTimeout(() => done({ error: 'timeout' }), 20 * 60 * 1000);
+    (async () => {
+      for (let i = 0; i < WORKERS; i++) { const k = makeWorker(); if (k) workers.push(k); }
+      if (!workers.length) { done({ error: 'internal' }); return; }
+      const st = await Promise.all(workers.map(ready));
+      if (st.indexOf('signin') !== -1) { done({ error: 'signin' }); return; }
+      const live = workers.filter((k, i) => st[i] === 'ok');
+      if (!live.length) { done({ error: 'load' }); return; }
+      /* every 24-second piece of each half, shared out: one queue, each page taking the next piece */
       const steps = []; ranges.forEach(r => { for (let t = r[0]; t < r[1]; t += 24) steps.push(t); });
-      const fetchAt = async (t, waitMs) => {
-        if (covered(t)) return true;
-        await js('(() => { const v = document.querySelector("video"); v.currentTime = ' + t.toFixed(2) + '; return true; })()');
-        for (let i = 0; i < waitMs / 150 && !finished; i++) { await sleep(150); if (covered(t)) return true; }
-        /* a moment of play nudges Veo's page to load it */
-        await js('(() => { const v = document.querySelector("video"); v.play().catch(() => {}); return true; })()');
-        let ok = false;
-        for (let i = 0; i < 20 && !finished; i++) { await sleep(150); if (covered(t)) { ok = true; break; } }
-        await js('(() => { const v = document.querySelector("video"); v.pause(); return true; })()');
-        return ok;
+      let doneN = 0;
+      const runQueue = async (list, waitMs, pctFrom, pctTo) => {
+        let next = 0, n = 0;
+        await Promise.all(live.map(async k => {
+          while (!finished && next < list.length) {
+            const t = list[next++];
+            await fetchAt(k, t, waitMs);
+            n++;
+            if (win && !win.isDestroyed()) win.webContents.send('veo:trackProgress', Math.min(99, Math.round(pctFrom + n / list.length * (pctTo - pctFrom))));
+          }
+        }));
       };
-      let k = 0;
-      for (const t of steps) {
-        if (finished) return;
-        await fetchAt(t, 4500);
-        k++;
-        if (win && !win.isDestroyed()) win.webContents.send('veo:trackProgress', Math.min(95, Math.round(k / steps.length * 95)));
-        if (k === 12 && !starts.length) { done({ error: 'nothing' }); return; }
-      }
+      await runQueue(steps, 4000, 0, 92);
+      if (finished) return;
+      if (!starts.length) { done({ error: 'nothing' }); return; }
       /* more tries at any piece that didn't come (up to three more rounds, each waiting longer) */
-      for (let round = 1; round <= 3; round++) {
+      for (let round = 1; round <= 3 && !finished; round++) {
         const left = steps.filter(t => !covered(t)); if (!left.length) break;
-        let j = 0;
-        for (const t of left) {
-          if (finished) return;
-          await fetchAt(t, 6000 + round * 3000);
-          j++;
-          if (win && !win.isDestroyed()) win.webContents.send('veo:trackProgress', Math.min(99, 95 + Math.round(j / left.length * 4)));
-        }
+        await runQueue(left, 5000 + round * 3000, 92 + (round - 1) * 2, 92 + round * 2);
       }
-      const cov = steps.filter(t => covered(t)).length / (steps.length || 1);
       await sleep(800);
       if (finished) return;
+      const cov = steps.filter(t => covered(t)).length / (steps.length || 1);
       const pk = veoPack(frames, ranges);
       if (!pk) { done({ error: 'nothing' }); return; }
       log('veo track coverage', Math.round(cov * 100) + '%');
       done(Object.assign({ ok: true, cov: Math.round(cov * 1000) / 1000 }, pk));
-    })().catch(e => done({ error: 'internal' }));
-    w.on('close', () => { if (!finished) done({ error: 'closed' }); });
-    setTimeout(() => done({ error: 'timeout' }), 25 * 60 * 1000);
+    })().catch(() => done({ error: 'internal' }));
   });
 }
 ipcMain.handle('veo:track', async (e, url, ranges) => {
