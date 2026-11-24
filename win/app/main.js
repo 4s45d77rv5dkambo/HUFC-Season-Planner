@@ -657,7 +657,13 @@ function createWindow() {
     saveConfig(config);
   };
   win.on('close', () => { remember(); if (store) store.flush(); });
-  win.on('closed', () => { win = null; quitting = true; if (onlineWin && !onlineWin.isDestroyed()) onlineWin.destroy(); });
+  /* the planner closed: close everything else too (the online link, and Veo if it's still reading a match), so the program really exits */
+  win.on('closed', () => {
+    win = null; quitting = true;
+    if (onlineWin && !onlineWin.isDestroyed()) onlineWin.destroy();
+    BrowserWindow.getAllWindows().forEach(w => { try { if (!w.isDestroyed()) w.destroy(); } catch (e) {} });
+    setTimeout(() => app.quit(), 200);
+  });
 }
 
 async function changeDataFolder() {
@@ -722,6 +728,7 @@ function buildMenu() {
 
 app.on('second-instance', (e, argv) => {
   if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
+  else if (store) { try { createWindow(); } catch (err) { log('reopen', err.message); } }   /* (still running without its window: open it again) */
   if (store) openFiles(fileArgs(argv));
 });
 app.whenReady().then(() => {
