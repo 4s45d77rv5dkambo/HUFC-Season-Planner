@@ -475,8 +475,8 @@ ipcMain.handle('online:disconnect', () => {
 ipcMain.handle('online:call', (e, op, args) => onlineCall(String(op || ''), args));
 
 /* ---- Veo: a match's stats, read the way the Veo website reads them ----
-   A hidden window opens the match's Analytics page in Veo (signed in to Veo inside this program, once), and keeps
-   the stats Veo's own page loads: team stats, each player's running numbers, the halves and Veo's goals and shots.
+   A window drawn in memory opens the match's Analytics page in Veo (signed in to Veo inside this program, once), and keeps
+   what Veo's own page loads: team stats, the halves, Veo's goals and shots, and (its maps opened) the match events.
    Nothing is typed in for the coach: if Veo wants a sign-in, the window shows and the coach signs in there. */
 const VEO_PART = 'persist:hufc-veo';
 let veoJob = null, veoWin = null;
@@ -506,7 +506,7 @@ function veoRun(slug, off) {
     };
     const keys = () => Object.keys(got);
     const has = re => keys().some(u => re.test(u));
-    const complete = () => has(/\/analysis\/stats\//) && has(/\/periods\/?$/) && has(/\/highlights\//) && has(/physical-metrics/);
+    const complete = () => has(/\/analysis\/stats\//) && has(/\/periods\/?$/) && has(/\/highlights\//);   /* (the team stats, halves and moments: what the planner shows) */
     const finishSoon = ms => { clearTimeout(settleT); settleT = setTimeout(() => done(keys().length ? { ok: true, partial: !complete(), data: got } : { error: signin ? 'signin' : 'nothing' }), ms); };
     /* everything in: a moment for stragglers, then back to the planner */
     /* with the stats in: open Veo's Shot map, Pass location and Possession location too, so their match events come */

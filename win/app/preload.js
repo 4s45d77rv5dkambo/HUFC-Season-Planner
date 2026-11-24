@@ -35,7 +35,7 @@ Object.defineProperty(window, 'localStorage', { configurable: true, enumerable: 
 
 const info = ipcRenderer.sendSync('store:info') || {};
 /* the version these helpers were written for: if the program still running is older, it needs a restart */
-const PROGRAM_VERSION = '1.6.20';
+const PROGRAM_VERSION = '1.6.21';
 ipcRenderer.on('program:updated', () => { if (typeof window.hufcProgramUpdated === 'function') window.hufcProgramUpdated(); });
 const onlineCbs = [];
 ipcRenderer.on('online:state', (e, s) => onlineCbs.forEach(cb => { try { cb(s); } catch (err) {} }));
