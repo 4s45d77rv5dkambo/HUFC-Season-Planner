@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124114232">
+<meta name="hufc-build" content="20261124114729">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2087,6 +2087,19 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-video-wrap .pg-vid-bar.an-main-bar[hidden]{display:none;}
 .an-tag-tick{position:absolute; top:-5px; width:3px; height:10px; margin-left:-1.5px; border-radius:2px; background:var(--yellow); opacity:.9;}
 .an-tag-tick.them{background:#ff6b61;}
+.an-tag-tick.goal{top:-8px; width:5px; height:16px; margin-left:-2.5px; background:#2e9a5b; opacity:1;}
+.an-tag-tick.goal.them{background:#e0443a;}
+.an-veo-src{margin:0 0 10px; font-size:12px; color:var(--grey);}
+.an-veo-hint{margin:0 0 12px; padding:9px 11px; border-radius:8px; background:#f3f3f0; font-size:13px; color:#444;}
+.an-table th.an-sort{cursor:pointer; user-select:none;}
+.an-table th.an-sort.on{color:#1a1a1a;}
+.an-table td.an-veo-name{text-align:left; white-space:nowrap;}
+.an-table td.an-veo-best{font-weight:700; color:#1f7a45;}
+.an-veo-own{margin-top:18px;}
+.an-row-veo{display:inline-flex; align-items:center; justify-content:center; margin-left:6px; padding:1px 6px; border-radius:999px; background:#e7f3ea; color:#1f7a45; font-size:10px; font-weight:700; letter-spacing:.06em; line-height:1.4; vertical-align:1px;}
+#anStats > *{flex-shrink:0;}
+.an-table .an-veo-sm{display:none;}
+@media (max-width:640px){ .an-table .an-veo-half{display:none;} .an-table .an-veo-lg{display:none;} .an-table .an-veo-sm{display:inline;} }
 .an-video-wrap .an-flash{z-index:3;}
 
 /* cutting a clip: straight onto a pre-game board */
@@ -4950,6 +4963,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         <label class="an-link" title="Attach this video to a pre-game plan: its clips go straight onto that pre-game, and the pre-game links back here"><span>Pre-game</span><select id="anPgLink" aria-label="Attach to a pre-game"></select></label>
       </div>
       <button type="button" class="btn btn-small" id="anGetBtn" title="Where coaches get this video (a Veo, OneDrive or Google Drive link) — shown on devices that don’t have it">🔗 Video link</button>
+      <button type="button" class="btn btn-small" id="anVeoBtn" hidden title="Bring in this match’s stats from Veo: the halves, Veo’s goals and shots on the timeline, and every player’s running">Get Veo stats</button>
       <button type="button" class="btn btn-small btn-primary" id="anDlBtn" hidden title="Open the link to this match’s video file and download it to this device — then it opens here with every tag and clip">🔗 Open video link</button>
       <button type="button" class="btn btn-small" id="anDriveBtn" hidden title="Put this whole match on Google Drive so it plays on every device (a full match is big — it uses your Drive space)">☁ Put on Drive</button>
       <button type="button" class="btn btn-small" data-an-open>Open match video…</button>
@@ -14368,6 +14382,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     gb.hidden = !ed && !anM.getLink; gb.textContent = anM.getLink ? '🔗 Video link ✓' : '🔗 Video link';
     document.getElementById('anGetRow').hidden = true;
     anRenderDriveBtn();
+    try{ anRenderVeoBtn(); }catch(e){}
   }
   /* a video downloaded from the web: Windows notes where it came from, so the match keeps that link by itself
      (the download address of the exact file, and the page it was downloaded from) */
@@ -14790,10 +14805,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     anMFill.style.width = (f * 100) + '%'; anMKnob.style.left = (f * 100) + '%';
     anMTime.textContent = anClock(anVideo.currentTime) + ' / ' + anClock(d);
     if(!anM || !d) return;
-    const a = anData(), sig = d + '|' + a.tags.length + '|' + [a.ko, a.h1e, a.h2, a.h2e].join(',');
+    const a = anData(), sig = d + '|' + a.tags.length + '|' + (a.veo ? a.veo.at : '') + '|' + [a.ko, a.h1e, a.h2, a.h2e].join(',');
     if(sig === anMTickSig) return; anMTickSig = sig;
     anMTicks.innerHTML = '';
-    a.tags.forEach(function(t){ anMTicks.appendChild(h('span', {class:'an-tag-tick' + (t.side === 'them' ? ' them' : ''), style:'left:' + (t.t / d * 100).toFixed(2) + '%'})); });
+    a.tags.forEach(function(t){ anMTicks.appendChild(h('span', {class:'an-tag-tick' + (t.side === 'them' ? ' them' : '') + (t.type === 'Goal' ? ' goal' : ''), title:t.type + ' · ' + anMinute(t.t), style:'left:' + (t.t / d * 100).toFixed(2) + '%'})); });
     [a.ko, a.h1e, a.h2, a.h2e].forEach(function(t){ if(t != null) anMTicks.appendChild(h('span', {class:'an-cp-tick', style:'left:' + (t / d * 100).toFixed(2) + '%'})); });
   }
   ['timeupdate', 'loadedmetadata', 'durationchange', 'seeked', 'emptied'].forEach(function(ev){ anVideo.addEventListener(ev, function(){ if(!anMDrag) anMainPaint(); }); });
@@ -15081,7 +15096,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const row = h('div', {class:'an-row' + (t.side === 'them' ? ' them' : ''), 'data-id':t.id},
         h('button', {type:'button', class:'an-row-main', title:'Watch this moment', onclick:function(){ anQueue = null; anSeek(t.t - AN_LEAD, true); anMark(t.id); }},
           h('span', {class:'an-row-time', text:anMinute(t.t)}),
-          h('span', {class:'an-row-type', text:t.type}),
+          h('span', {class:'an-row-type'}, t.type, t.veo ? h('span', {class:'an-row-veo', title:'Found by Veo', text:'VEO'}) : ''),
           h('span', {class:'an-row-who', text:t.side === 'them' ? anOppShort() : (anPlayerLabel(t.pid) || anUsShort())})),
         ed ? h('input', {type:'text', class:'an-row-note', value:t.note || '', placeholder:'Note', maxlength:'120', onchange:function(){ t.note = clean(this.value); anSave(); }}) : (t.note ? h('span', {class:'an-row-note ro', text:t.note}) : ''),
         ed && t.side === 'us' ? anWhoSelect(t) : '',
@@ -15104,7 +15119,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function anRenderStats(){
     const box = document.getElementById('anStats'); box.innerHTML = '';
     const tags = anData().tags;
-    if(!tags.length){ box.appendChild(h('p', {class:'an-empty-list', text:'Stats appear here as you tag the match.'})); return; }
+    const veo = anVeoStats(box);
+    if(veo && tags.length) box.appendChild(h('h4', {class:'an-h an-veo-own', text:'From the tags (yours and Veo’s goals and shots)'}));
+    if(!tags.length){ if(!veo) box.appendChild(h('p', {class:'an-empty-list', text:'Stats appear here as you tag the match.'})); return; }
     const opp = anOppShort();
     const types = anTypes().filter(function(t){ return tags.some(function(x){ return x.type === t; }); });
     const n = function(type, side, half){ return tags.filter(function(x){ return x.type === type && x.side === side && (!half || anHalf(x.t) === half); }).length; };
@@ -15129,6 +15146,240 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       box.appendChild(h('h4', {class:'an-h', text:'Players'}));
       box.appendChild(h('div', {class:'an-scroll'}, h('table', {class:'an-table'}, h('thead', null, h('tr', null, h('th', {text:''}), ptypes.map(function(t){ return h('th', {text:t}); }))), pt)));
     }
+  }
+
+  /* ---------- Veo: the match's own stats, paired with the video ----------
+     The Windows program reads the match from Veo (main.js); here they're sorted into the match video:
+     the halves, Veo's goals and shots as tags (tap one to watch it), the team's numbers and each player's running. */
+  const AN_VEO_RE = /^https?:\/\/(?:app\.)?veo\.co\/matches\/([A-Za-z0-9_-]+)/i;
+  const AN_VEO_LABELS = [
+    ['football_goal_total', 'Goals'], ['football_possession_percentage', 'Possession'], ['football_possession_minutes_total', 'Time on the ball'],
+    ['football_attempts_total', 'Attempts at goal'], ['football_shots_total', 'Attempts not scored'], ['football_passes_completed_total', 'Passes completed'],
+    ['football_corner_total', 'Corners'], ['football_free_kick_total', 'Free kicks'], ['football_penalty_total', 'Penalties'],
+    ['football_goal_kick_total', 'Goal kicks'], ['football_throw_in_total', 'Throw-ins'], ['football_save_total', 'Saves'],
+    ['football_tackle_total', 'Tackles'], ['football_interception_total', 'Interceptions'], ['football_duel_total', 'Duels'],
+    ['football_dribble_total', 'Dribbles'], ['football_loose_total', 'Loose balls'], ['football_foul_total', 'Fouls']];
+  let anVeoBusy = null, anVeoSort = 'dist';
+  function anVeoLink(m){ m = m || anM; if(!m) return ''; return [m.getLink, m.getPage].find(function(u){ return u && AN_VEO_RE.test(u); }) || ''; }
+  function anVeoLabel(type){
+    const k = AN_VEO_LABELS.find(function(x){ return x[0] === type; }); if(k) return k[1];
+    const t = String(type || '').replace(/^football_/, '').replace(/_(total|count)$/, '').replace(/_/g, ' ').trim();
+    return t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Stat';
+  }
+  function anVeoNum(v, unit){
+    if(v == null || v === '' || isNaN(+v)) return '–';
+    v = +v;
+    if(unit === 'percent') return Math.round(v) + '%';
+    if(unit === 'minute') return Math.round(v) + ' min';
+    return String(Math.round(v * 10) / 10);
+  }
+  /* Veo's answers (as its page loaded them) → what the match video keeps */
+  function anVeoParse(raw){
+    const urls = Object.keys(raw || {});
+    const get = function(re){ const k = urls.filter(function(u){ return re.test(u); }); return k.length ? raw[k[k.length - 1]] : null; };
+    const list = function(x){ return Array.isArray(x) ? x : (x && (x.items || x.results || x.data || x.events)) || []; };
+    /* team stats, both sides, by half */
+    const team = [], byType = {};
+    list(get(/\/analysis\/stats\//)).forEach(function(it){
+      const side = it.team_association === 'own' ? 'us' : it.team_association === 'opponent' ? 'them' : '';
+      if(!side) return;
+      (it.stats || []).forEach(function(s){
+        if(!s || !s.type) return;
+        let row = byType[s.type];
+        if(!row){ row = byType[s.type] = {type:s.type, label:anVeoLabel(s.type), unit:s.unit || 'count'}; team.push(row); }
+        const ps = {}; (s.periods || []).forEach(function(p){ ps[p.period] = p.value; });
+        row[side] = {v:s.value, p1:ps[1], p2:ps[2]};
+      });
+    });
+    const rank = function(t){ const i = AN_VEO_LABELS.findIndex(function(x){ return x[0] === t; }); return i === -1 ? 99 : i; };
+    team.sort(function(a, b){ return rank(a.type) - rank(b.type); });
+    /* the halves */
+    const periods = list(get(/\/periods\/?(\?|$)/)).map(function(p){ return p && p.timeframe; }).filter(function(t){ return Array.isArray(t) && t.length === 2 && isFinite(t[0]) && isFinite(t[1]); }).sort(function(a, b){ return a[0] - b[0]; });
+    /* Veo's moments: goals, shots, corners, free kicks, penalties */
+    const kind = function(tags){
+      const s = (tags || []).map(function(t){ return String(t && (t.slug || t.name) || '').toLowerCase(); }).join(' ');
+      if(/shot|attempt/.test(s)) return 'Shot';
+      if(/(^|\s)goal($|\s)/.test(s)) return 'Goal';
+      if(/corner/.test(s)) return 'Corner';
+      if(/free.?kick/.test(s)) return 'Free kick';
+      if(/penalt/.test(s)) return 'Penalty';
+      return '';
+    };
+    let moments = list(get(/\/highlights\//)).map(function(x){
+      const type = kind(x.tags), s = +x.start, d = +x.duration || 0;
+      if(!type || !isFinite(s)) return null;
+      return {id:String(x.id || x.public_identifier || (type + s)), type:type, side:x.team_association === 'opponent' ? 'them' : 'us', t:Math.round((s + Math.max(0, Math.min(d - 2, d * 0.6))) * 10) / 10, s:s, d:d};
+    }).filter(Boolean);
+    /* a goal is a shot too: Veo lists both, so the shot just before a goal isn't listed twice */
+    const goals = moments.filter(function(x){ return x.type === 'Goal'; });
+    moments = moments.filter(function(x){ return x.type !== 'Shot' || !goals.some(function(g){ return g.side === x.side && Math.abs((g.s + g.d) - (x.s + x.d)) < 20; }); });
+    moments.sort(function(a, b){ return a.t - b.t; });
+    /* the team's own id (Veo's running numbers are for our players) */
+    const own = list(get(/\/analysis\/stats\//)).find(function(it){ return it.team_association === 'own'; });
+    const ownTeam = own && own.team_id;
+    /* each player's running, by shirt number */
+    const pl = {};
+    list(get(/physical-metrics/)).forEach(function(r){
+      if(!r || r.jerseyNumber == null || (ownTeam && r.teamId && r.teamId !== ownTeam)) return;
+      const n = String(r.jerseyNumber), p = pl[n] || (pl[n] = {n:n});
+      const v = {s:+r.secondsPlayed || 0, dist:+r.distance || 0, top:+r.maxSpeed || 0, sprints:+r.sprints || 0, hsr:+r.hsr || 0};
+      if(r.drill === 'ALL') Object.assign(p, v); else if(r.drill === '1' || r.drill === '2') p['h' + r.drill] = v;
+    });
+    const players = Object.keys(pl).map(function(n){
+      const p = pl[n];
+      if(p.dist == null){ const a = p.h1 || {}, b = p.h2 || {}; p.s = (a.s || 0) + (b.s || 0); p.dist = (a.dist || 0) + (b.dist || 0); p.top = Math.max(a.top || 0, b.top || 0); p.sprints = (a.sprints || 0) + (b.sprints || 0); p.hsr = (a.hsr || 0) + (b.hsr || 0); }
+      return p;
+    }).filter(function(p){ return p.s > 0 || p.dist > 0; });
+    /* Veo's own names for the shirt numbers, when it has them */
+    const names = {};
+    [get(/\/roster\/?(\?|$)/), get(/\/lineup\/players\/?(\?|$)/)].forEach(function(x){
+      list(x).forEach(function(r){
+        const p = r && (r.player || r);
+        const n = p && (p.jersey_number != null ? p.jersey_number : p.jerseyNumber != null ? p.jerseyNumber : p.shirt_number != null ? p.shirt_number : p.number);
+        const nm = p && (p.name || p.display_name || p.full_name || [p.first_name, p.last_name].filter(Boolean).join(' '));
+        if(n != null && clean(nm) && !names[String(n)]) names[String(n)] = clean(nm);
+      });
+    });
+    return {team:team, periods:periods, moments:moments, players:players, names:names};
+  }
+  /* put Veo's match into a match video record (the open one, or one closed while Veo was being read) */
+  function anVeoApply(m, raw, link){
+    const v = anVeoParse(raw);
+    if(!v.team.length && !v.players.length && !v.moments.length && !v.periods.length) return null;
+    if(!m.analysis || typeof m.analysis !== 'object') m.analysis = {};
+    const a = m.analysis;
+    if(!Array.isArray(a.tags)) a.tags = [];
+    if(!Array.isArray(a.types)) a.types = [];
+    /* the halves: Veo's marks, unless the coach set them by hand */
+    let halves = false;
+    const mine = !a.veoHalves && (a.ko != null || a.h1e != null || a.h2 != null || a.h2e != null);
+    if(!mine && v.periods.length){
+      a.ko = v.periods[0][0]; a.h1e = v.periods[0][1];
+      if(v.periods[1]){ a.h2 = v.periods[1][0]; a.h2e = v.periods[1][1]; }
+      a.veoHalves = true; halves = true;
+    }
+    /* Veo's moments as tags: brought in again, they keep the player and note a coach added */
+    const old = {}; a.tags.forEach(function(t){ if(t.veo) old[t.veo] = t; });
+    a.tags = a.tags.filter(function(t){ return !t.veo; });
+    v.moments.forEach(function(x){
+      if(AN_TYPES.indexOf(x.type) === -1 && a.types.indexOf(x.type) === -1) a.types.push(x.type);
+      const o = old[x.id];
+      a.tags.push({id:o ? o.id : newId(), t:x.t, type:x.type, side:x.side, pid:o ? o.pid || '' : '', note:o ? o.note || '' : '', veo:x.id});
+    });
+    a.tags.sort(function(x, y){ return x.t - y.t; });
+    const slug = (String(link || '').match(AN_VEO_RE) || [])[1] || '';
+    a.veo = {at:Date.now(), slug:slug, team:v.team, players:v.players, names:v.names, periods:v.periods};
+    m.savedAt = Date.now();
+    const count = function(type){ return v.moments.filter(function(x){ return x.type === type; }).length; };
+    return {goals:count('Goal'), shots:count('Shot'), other:v.moments.length - count('Goal') - count('Shot'), halves:halves, players:v.players.length, team:v.team.length};
+  }
+  function anRenderVeoBtn(){
+    const b = document.getElementById('anVeoBtn'); if(!b || !anM) return;
+    const D = window.hufcDesktop, a = anData();
+    b.hidden = !anCanEdit() || !(D && (D.veo || D.pathOf));   /* (the Windows program: one from before Veo stats offers a restart) */
+    const busy = anVeoBusy && anVeoBusy === anM.id;
+    b.textContent = busy ? 'Getting Veo stats…' : a.veo ? 'Veo stats ✓' : 'Get Veo stats';
+    b.classList.toggle('btn-primary', !a.veo && !!anVeoLink());
+    b.title = a.veo ? 'Brought in from Veo ' + new Date(a.veo.at).toLocaleString([], {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + ' · press to bring them in again (your notes and players on Veo’s moments stay)' : 'Bring in this match’s stats from Veo: the halves, Veo’s goals and shots on the timeline, and every player’s running';
+  }
+  const anVeoErr = {
+    link:'That link isn’t a Veo match · paste the address of the match on app.veo.co',
+    signin:'Veo stats need you signed in to Veo · press Get Veo stats again and sign in in the window that opens',
+    closed:'Stopped · the Veo window was closed before the stats came in',
+    offline:'Couldn’t reach Veo · check the internet and try again',
+    load:'Veo’s page didn’t open · try again in a minute',
+    nothing:'Veo didn’t send any stats for this match · if it’s new, Veo may still be working on it',
+    busy:'Already getting stats from Veo',
+    internal:'Couldn’t read Veo’s page this time · try again'
+  };
+  let anVeoHooked = false;
+  async function anVeoGet(){
+    if(!anM || !anCanEdit()) return;
+    const D = window.hufcDesktop;
+    if(!D || !D.veo){
+      if(D && D.restart) showToast('Restart the program to get Veo stats · the update that adds it has arrived', function(){ D.restart(); }, 'Restart');
+      else showToast('Veo stats come in through the Windows program');
+      return;
+    }
+    const link = anVeoLink();
+    if(!link){
+      const row = document.getElementById('anGetRow'), inp = document.getElementById('anGetIn');
+      row.hidden = false; inp.value = anM.getLink || ''; setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(e){} }, 0);
+      showToast('Paste this match’s Veo link first (its address on app.veo.co), press Save, then Get Veo stats');
+      return;
+    }
+    if(anVeoBusy) { showToast(anVeoErr.busy); return; }
+    if(!anVeoHooked && D.veo.onSignin){
+      anVeoHooked = true;
+      D.veo.onSignin(function(){ showToast('Sign in to Veo in the window that just opened · only needed the first time'); });
+      if(D.veo.onWorking) D.veo.onWorking(function(){ showToast('Signed in to Veo · getting the stats…'); });
+    }
+    const m = anM, key = anKey;
+    anVeoBusy = m.id; anRenderVeoBtn();
+    showToast('Getting this match’s stats from Veo…');
+    let r = null;
+    try{ r = await D.veo.stats(link); }catch(e){ r = {error:'internal'}; }
+    anVeoBusy = null;
+    const done = r && r.ok && r.data ? anVeoApply(m, r.data, link) : null;
+    if(done){
+      if(anM === m){ anSave(); anMTickSig = ''; anRenderAll(); anTab = 'stats'; anRenderTabs(); }
+      else { try{ hufcStore.setItem(key, JSON.stringify(m)); }catch(e){} clubSyncSoon(); }
+      const bits = [];
+      if(done.goals || done.shots) bits.push(done.goals + ' goal' + (done.goals === 1 ? '' : 's') + ' and ' + done.shots + ' shot' + (done.shots === 1 ? '' : 's') + ' on the timeline');
+      if(done.halves) bits.push('halves marked');
+      if(done.players) bits.push(done.players + ' players’ running');
+      showToast('Veo stats added' + (bits.length ? ' · ' + bits.join(' · ') : '') + (r.partial ? ' · some of Veo’s stats weren’t ready, press Veo stats ✓ later to bring in the rest' : ''));
+    } else {
+      showToast(anVeoErr[r && r.error] || (r && r.ok ? anVeoErr.nothing : anVeoErr.internal));
+    }
+    if(anM) anRenderVeoBtn();
+  }
+  document.getElementById('anVeoBtn').addEventListener('click', anVeoGet);
+  /* the Stats tab: Veo's numbers first, then the coach's own tags (returns whether anything was shown) */
+  function anVeoStats(box){
+    const a = anData(), v = a.veo;
+    if(!v){
+      if(anVeoLink()){
+        const D = window.hufcDesktop;
+        box.appendChild(h('p', {class:'an-veo-hint', text:D && D.veo && anCanEdit() ? 'This match has a Veo link · press Get Veo stats (top right) to bring in Veo’s numbers, goals and shots, and each player’s running.' : 'This match has a Veo link · open it in the Windows program and press Get Veo stats to bring in Veo’s numbers here.'}));
+      }
+      return false;
+    }
+    const us = anUsShort(), opp = anOppShort();
+    box.appendChild(h('h4', {class:'an-h', text:'Team · from Veo'}));
+    if(v.team && v.team.length){
+      const tb = h('tbody');
+      v.team.forEach(function(r){
+        const u = r.us || {}, t = r.them || {};
+        const cells = [anVeoNum(u.p1, r.unit), anVeoNum(u.p2, r.unit), anVeoNum(u.v, r.unit), anVeoNum(t.p1, r.unit), anVeoNum(t.p2, r.unit), anVeoNum(t.v, r.unit)];
+        tb.appendChild(h('tr', null, h('th', {text:r.label}), cells.map(function(c, i){ return h('td', {class:(c === '0' || c === '0%' || c === '–' ? 'zero' : '') + ((i === 2 || i === 5) ? ' tot' : ' an-veo-half'), text:c}); })));
+      });
+      box.appendChild(h('div', {class:'an-scroll'}, h('table', {class:'an-table'}, h('thead', null, h('tr', null, h('th'), h('th', {class:'an-veo-half', text:us + ' 1st'}), h('th', {class:'an-veo-half', text:'2nd'}), h('th', null, h('span', {class:'an-veo-lg', text:'Total'}), h('span', {class:'an-veo-sm', text:us})), h('th', {class:'an-veo-half', text:opp + ' 1st'}), h('th', {class:'an-veo-half', text:'2nd'}), h('th', null, h('span', {class:'an-veo-lg', text:'Total'}), h('span', {class:'an-veo-sm', text:opp})))), tb)));
+    }
+    if(v.players && v.players.length){
+      const sq = anSquad();
+      const nameOf = function(n){
+        const p = sq.find(function(q){ return clean(q.num) === n; });
+        const nm = p ? (luShort(p.name) || clean(p.name)) : (v.names && v.names[n]) || '';
+        return '#' + n + (nm ? ' · ' + nm : '');
+      };
+      const cols = [['n', 'Player'], ['s', 'Mins'], ['dist', 'Distance'], ['top', 'Top speed'], ['sprints', 'Sprints'], ['hsr', 'High-speed runs']];
+      const ps = v.players.slice().sort(function(x, y){ return anVeoSort === 'n' ? (+x.n) - (+y.n) : (y[anVeoSort] || 0) - (x[anVeoSort] || 0); });
+      const best = {}; ['dist', 'top', 'sprints', 'hsr'].forEach(function(k){ best[k] = Math.max.apply(null, ps.map(function(p){ return p[k] || 0; })); });
+      const fmt = {s:function(p){ return String(Math.round((p.s || 0) / 60)); }, dist:function(p){ return ((p.dist || 0) / 1000).toFixed(1) + ' km'; }, top:function(p){ return (p.top || 0).toFixed(1) + ' km/h'; }, sprints:function(p){ return String(p.sprints || 0); }, hsr:function(p){ return String(p.hsr || 0); }};
+      const pt = h('tbody');
+      ps.forEach(function(p){
+        pt.appendChild(h('tr', null, h('td', {class:'an-veo-name', text:nameOf(p.n)}),
+          ['s', 'dist', 'top', 'sprints', 'hsr'].map(function(k){ return h('td', {class:(best[k] && p[k] === best[k] && ps.length > 1 ? 'an-veo-best' : ''), text:fmt[k](p)}); })));
+      });
+      box.appendChild(h('h4', {class:'an-h', text:'Players · running (Veo)'}));
+      box.appendChild(h('div', {class:'an-scroll'}, h('table', {class:'an-table'}, h('thead', null, h('tr', null, cols.map(function(c){
+        const arrow = anVeoSort === c[0] ? (c[0] === 'n' ? ' ↑' : ' ↓') : '';
+        return h('th', {class:'an-sort' + (anVeoSort === c[0] ? ' on' : ''), title:'Sort by ' + c[1].toLowerCase(), onclick:function(){ anVeoSort = c[0]; anRenderStats(); }}, c[0] === 'hsr' ? [h('span', {class:'an-veo-lg', text:c[1] + arrow}), h('span', {class:'an-veo-sm', text:'Fast runs' + arrow})] : c[0] === 'top' ? [h('span', {class:'an-veo-lg', text:c[1] + arrow}), h('span', {class:'an-veo-sm', text:'Top' + arrow})] : c[1] + arrow);
+      }))), pt)));
+    }
+    box.appendChild(h('p', {class:'an-veo-src', text:'From Veo · ' + new Date(v.at).toLocaleString([], {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + ' · Veo’s goals and shots are in Tags (tap one to watch it) · their times match the video downloaded from Veo'}));
+    return true;
   }
 
   /* ---------- tabs, keyboard ---------- */

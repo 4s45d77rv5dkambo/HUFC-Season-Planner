@@ -35,7 +35,7 @@ Object.defineProperty(window, 'localStorage', { configurable: true, enumerable: 
 
 const info = ipcRenderer.sendSync('store:info') || {};
 /* the version these helpers were written for: if the program still running is older, it needs a restart */
-const PROGRAM_VERSION = '1.6.8';
+const PROGRAM_VERSION = '1.6.9';
 ipcRenderer.on('program:updated', () => { if (typeof window.hufcProgramUpdated === 'function') window.hufcProgramUpdated(); });
 const onlineCbs = [];
 ipcRenderer.on('online:state', (e, s) => onlineCbs.forEach(cb => { try { cb(s); } catch (err) {} }));
@@ -102,5 +102,12 @@ window.hufcDesktop = {
   startDrag(file) { ipcRenderer.send('file:drag', String(file || '')); },
   copyFile(file) { return ipcRenderer.invoke('file:copy', String(file || '')); },
   openExternal(url) { ipcRenderer.send('open:external', String(url || '')); },
+  /* Veo: a match's stats, goals and shots, and each player's running (main.js; sign in to Veo once, in the window that shows) */
+  veo: {
+    stats(url) { return ipcRenderer.invoke('veo:stats', String(url || '')); },
+    signOut() { return ipcRenderer.invoke('veo:signOut'); },
+    onSignin(cb) { if (typeof cb === 'function') ipcRenderer.on('veo:signin', () => { try { cb('signin'); } catch (e) {} }); },
+    onWorking(cb) { if (typeof cb === 'function') ipcRenderer.on('veo:working', () => { try { cb('working'); } catch (e) {} }); }
+  },
   fileDataUrl(url) { try { return ipcRenderer.sendSync('file:data', fileURLToPath(url)); } catch (e) { return null; } }
 };
