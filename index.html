@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124140937">
+<meta name="hufc-build" content="20261124141910">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2105,6 +2105,10 @@ html.app-frame .toast, html.app-frame body:has(#anModal:not([hidden])) .toast{to
 .an-vs-score{display:flex; align-items:center; justify-content:center; gap:16px; background:#111; color:#fff; border-radius:10px; padding:10px 12px; margin-bottom:12px;}
 .an-vs-score b{font:700 26px/1 'Barlow Condensed', sans-serif; letter-spacing:.04em;}
 .an-vs-team{font:700 14px/1 'Barlow Condensed', sans-serif; letter-spacing:.08em; text-transform:uppercase;}
+.an-vs-side{display:inline-flex; align-items:center; gap:10px; flex:1; justify-content:flex-end; min-width:0;}
+.an-vs-side.them{justify-content:flex-start;}
+.an-vs-logo{width:34px; height:34px; object-fit:contain; flex:none;}
+.an-vs-logo.none{display:none;}
 .an-vs-seg{display:flex; gap:6px; justify-content:center; margin:0 0 12px;}
 .an-vs-seg button{display:inline-flex; align-items:center; justify-content:center; padding:5px 14px; border-radius:999px; border:1px solid #c9c9c4; background:#fff; color:#1a1a1a; font:600 13px/1.2 'Barlow', sans-serif; cursor:pointer;}
 .an-vs-seg button.on{background:#111; border-color:#111; color:#ffd400;}
@@ -5004,7 +5008,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         <label class="an-link" title="Attach this video to a pre-game plan: its clips go straight onto that pre-game, and the pre-game links back here"><span>Pre-game</span><select id="anPgLink" aria-label="Attach to a pre-game"></select></label>
       </div>
       <button type="button" class="btn btn-small" id="anGetBtn" title="Where coaches get this video (a Veo, OneDrive or Google Drive link) — shown on devices that don’t have it">🔗 Video link</button>
-      <button type="button" class="btn btn-small" id="anVeoBtn" hidden title="Bring in this match’s stats from Veo: the halves, Veo’s goals and shots on the timeline, and every player’s running">Get Veo stats</button>
+      <button type="button" class="btn btn-small" id="anVeoBtn" hidden title="Bring in this match’s stats from Veo: the halves, Veo’s goals and shots on the timeline, and the team stats">Get Veo stats</button>
       <button type="button" class="btn btn-small btn-primary" id="anDlBtn" hidden title="Open the link to this match’s video file and download it to this device — then it opens here with every tag and clip">🔗 Open video link</button>
       <button type="button" class="btn btn-small" id="anDriveBtn" hidden title="Put this whole match on Google Drive so it plays on every device (a full match is big — it uses your Drive space)">☁ Put on Drive</button>
       <button type="button" class="btn btn-small" data-an-open>Open match video…</button>
@@ -13657,7 +13661,19 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   let gtGroupNow = 'all';
   /* 33% or less: red · up to 66%: yellow · more: green */
   function gtBand(pct){ return pct <= 33 ? 'gt-red' : (pct <= 66 ? 'gt-amber' : 'gt-green'); }
-  function gtKey(name){ return clean(name).toLowerCase().replace(/\s+/g, ' '); }
+  /* a player's key (their name, without case or extra spaces); a renamed player's old name leads to their new one */
+  function plRaw(name){ return clean(name).toLowerCase().replace(/\s+/g, ' '); }
+  function gtKey(name){ const k = plRaw(name); return k ? plKey(k) : k; }
+  let plAliasCache = null, plAliasAt = 0;
+  function plBust(){ plAliasCache = null; }
+  function plAliases(){
+    if(plAliasCache && Date.now() - plAliasAt < 1500) return plAliasCache;
+    const m = {};
+    try{ const c = tgClub().players || {}; Object.keys(c).forEach(function(k){ const t = clean(c[k].renamedTo); if(t && t !== k) m[k] = t; }); }catch(e){ return {}; }
+    plAliasCache = m; plAliasAt = Date.now();
+    return m;
+  }
+  function plKey(k){ const m = plAliases(); let n = 0; while(m[k] && n++ < 8) k = m[k]; return k; }
   /* sorting by last name: "Sam Rossi" sorts under R (then by first name), and shows as "Rossi, Sam" */
   function gtLastFirst(name){ const w = clean(name).split(/\s+/).filter(Boolean); return w.length < 2 ? clean(name) : w[w.length - 1] + ', ' + w.slice(0, -1).join(' '); }
   function gtNameCmp(sort){ return sort === 'last' ? function(a, b){ return gtLastFirst(a.name).localeCompare(gtLastFirst(b.name)); } : function(a, b){ return a.name.localeCompare(b.name); }; }
@@ -15328,7 +15344,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const busy = anVeoBusy && anVeoBusy === anM.id;
     b.textContent = busy ? 'Getting Veo stats…' : a.veo ? 'Veo stats ✓' : 'Get Veo stats';
     b.classList.toggle('btn-primary', !a.veo && !!anVeoLink());
-    b.title = a.veo ? 'Brought in from Veo ' + new Date(a.veo.at).toLocaleString([], {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + ' · press to bring them in again (your notes and players on Veo’s moments stay)' : 'Bring in this match’s stats from Veo: the halves, Veo’s goals and shots on the timeline, and every player’s running';
+    b.title = a.veo ? 'Brought in from Veo ' + new Date(a.veo.at).toLocaleString([], {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + ' · press to bring them in again (your notes and players on Veo’s moments stay)' : 'Bring in this match’s stats from Veo: the halves, Veo’s goals and shots on the timeline, and the team stats';
   }
   const anVeoErr = {
     link:'That link isn’t a Veo match · paste the address of the match on app.veo.co',
@@ -15375,7 +15391,6 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const bits = [];
       if(done.goals || done.shots) bits.push(done.goals + ' goal' + (done.goals === 1 ? '' : 's') + ' and ' + done.shots + ' shot' + (done.shots === 1 ? '' : 's') + ' on the timeline');
       if(done.halves) bits.push('halves marked');
-      if(done.players) bits.push(done.players + ' players’ running');
       showToast('Veo stats added' + (bits.length ? ' · ' + bits.join(' · ') : '') + (r.partial ? ' · some of Veo’s stats weren’t ready, press Veo stats ✓ later to bring in the rest' : ''));
     } else {
       showToast(anVeoErr[r && r.error] || (r && r.ok ? anVeoErr.nothing : anVeoErr.internal));
@@ -15399,7 +15414,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!v){
       if(anVeoLink()){
         const D = window.hufcDesktop;
-        box.appendChild(h('p', {class:'an-veo-hint', text:D && D.veo && anCanEdit() ? 'This match has a Veo link · press Get Veo stats (top right) to bring in Veo’s numbers, goals and shots, and each player’s running.' : 'This match has a Veo link · open it in the Windows program and press Get Veo stats to bring in Veo’s numbers here.'}));
+        box.appendChild(h('p', {class:'an-veo-hint', text:D && D.veo && anCanEdit() ? 'This match has a Veo link · press Get Veo stats (top right) to bring in Veo’s numbers, goals and shots.' : 'This match has a Veo link · open it in the Windows program and press Get Veo stats to bring in Veo’s numbers here.'}));
       }
       return false;
     }
@@ -15410,8 +15425,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     /* the score (for the half picked) */
     const g = byType.football_goal_total;
     const gu = g ? pick(g.us) : null, gt = g ? pick(g.them) : null;
+    const logo = function(src, name){ return src ? h('img', {class:'an-vs-logo', alt:name, src:src}) : h('span', {class:'an-vs-logo none', 'aria-hidden':'true'}); };
     wrap.appendChild(h('div', {class:'an-vs-score'},
-      h('span', {class:'an-vs-team', text:us}), h('b', {text:(gu == null ? '–' : gu) + ' – ' + (gt == null ? '–' : gt)}), h('span', {class:'an-vs-team', text:opp})));
+      h('span', {class:'an-vs-side'}, logo(anUsLogo(), anUs()), h('span', {class:'an-vs-team', text:us})),
+      h('b', {text:(gu == null ? '–' : gu) + ' – ' + (gt == null ? '–' : gt)}),
+      h('span', {class:'an-vs-side them'}, h('span', {class:'an-vs-team', text:opp}), logo(anThemLogo(), anOpp()))));
     /* Total · 1st half · 2nd half */
     wrap.appendChild(h('div', {class:'an-vs-seg', role:'group', 'aria-label':'Which part of the game'}, [['t', 'Total'], ['1', '1st half'], ['2', '2nd half']].map(function(x){
       return h('button', {type:'button', class:H === x[0] ? 'on' : '', 'aria-pressed':String(H === x[0]), text:x[1], onclick:function(){ anVeoHalf = x[0]; anRenderStats(); }});
@@ -15438,68 +15456,6 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       });
       const rest = team.filter(function(r){ return !used[r.type] && AN_VEO_SKIP.indexOf(r.type) === -1; }).map(row).filter(Boolean);
       if(rest.length) wrap.appendChild(h('div', {class:'an-vs-grp'}, h('div', {class:'an-vs-gh', text:'More'}), rest));
-    }
-    /* each player's running (for the half picked, where Veo split it by half) */
-    if(v.players && v.players.length){
-      /* who wears each number: picked here for this match, else the lineup's number, else the team's squad (Squads), else Veo's own name */
-      const lu = anSquad(), L = anL();
-      let club = [];
-      try{ const team = (L && L.group) || groupOf(anM) || ''; const q = typeof sqFor === 'function' ? sqFor(team) : null; club = q && q.players ? q.players : []; }catch(e){ club = []; }
-      if(!a.veoWho || typeof a.veoWho !== 'object') a.veoWho = {};
-      const nameKey = function(x){ return clean(x).toLowerCase().replace(/\s+/g, ' '); };
-      const inLineup = {}; lu.forEach(function(q){ if(clean(q.name)) inLineup[nameKey(q.name)] = 1; });
-      const autoName = function(n){
-        const a1 = lu.filter(function(q){ return clean(q.num) === n && clean(q.name); });
-        if(a1.length === 1) return clean(a1[0].name);
-        let a2 = club.filter(function(q){ return clean(q.num) === n && clean(q.name); });
-        if(a2.length > 1) a2 = a2.filter(function(q){ return inLineup[nameKey(q.name)]; });   /* (two with that number: the one who played) */
-        if(a2.length === 1) return clean(a2[0].name);
-        return (v.names && v.names[n]) || '';
-      };
-      const nameOf = function(n){ return clean(a.veoWho[n]) || autoName(n); };
-      /* everyone who could be wearing a number: the lineup first, then the rest of the squad */
-      const pool = []; const seen = {};
-      lu.concat(club).forEach(function(q){ const nm = clean(q.name), k = nameKey(nm); if(nm && !seen[k]){ seen[k] = 1; pool.push(nm); } });
-      const canPick = anCanEdit() && pool.length;
-      const whoPicker = function(n){
-        const cur = nameOf(n);
-        if(!canPick) return h('span', {class:'an-vs-name' + (cur ? '' : ' unknown'), text:cur || 'Player ' + n});
-        const sel = h('select', {class:'an-vs-pick' + (cur ? '' : ' unknown'), 'aria-label':'Who wore number ' + n, title:'Who wore number ' + n + ' in this game', onchange:function(){
-          if(this.value) a.veoWho[n] = this.value; else delete a.veoWho[n];
-          anSave(); anRenderStats();
-        }}, h('option', {value:'', text:cur && !clean(a.veoWho[n]) ? cur + ' (from the squad numbers)' : 'Who is #' + n + '?'}));
-        pool.forEach(function(nm){ const o = h('option', {value:nm, text:nm}); if(clean(a.veoWho[n]) === nm) o.selected = true; sel.appendChild(o); });
-        if(cur && !clean(a.veoWho[n])) sel.options[0].textContent = cur;
-        return sel;
-      };
-      const anyHalves = v.players.some(function(p){ return p.h1 || p.h2; });
-      const ps = v.players.map(function(p){
-        const x = H === 't' || !anyHalves ? p : p['h' + H];
-        return x ? {n:p.n, s:x.s || 0, dist:x.dist || 0, top:x.top || 0, sprints:x.sprints || 0} : null;
-      }).filter(function(p){ return p && (p.s > 0 || p.dist > 0); });
-      const key = anVeoSort === 'hsr' || anVeoSort === 'n' ? 'dist' : anVeoSort;
-      ps.sort(function(x, y){ return (y[key] || 0) - (x[key] || 0); });
-      const mx = {}; ['dist', 'top', 'sprints'].forEach(function(k){ mx[k] = Math.max.apply(null, ps.map(function(p){ return p[k]; }).concat(0)); });
-      const head = function(k, label, cls){ return h('button', {type:'button', class:'an-vs-ph-b' + (cls ? ' ' + cls : '') + (key === k ? ' on' : ''), title:'Sort by ' + label.toLowerCase(), text:label + (key === k ? ' ↓' : ''), onclick:function(){ anVeoSort = k; anRenderStats(); }}); };
-      wrap.appendChild(h('div', {class:'an-vs-gh an-vs-ptitle', text:'Players · running' + (H === 't' || !anyHalves ? '' : H === '1' ? ' · 1st half' : ' · 2nd half')}));
-      wrap.appendChild(h('div', {class:'an-vs-ph'}, h('span'), head('dist', 'Player · distance', 'l'), head('s', 'Mins'), head('top', 'Top speed'), head('sprints', 'Sprints')));
-      ps.forEach(function(p){
-        const tags = [];
-        if(ps.length > 1){
-          if(p.dist && p.dist === mx.dist) tags.push('Most distance');
-          if(p.top && p.top === mx.top) tags.push('Fastest');
-          if(p.sprints && p.sprints === mx.sprints) tags.push('Most sprints');
-        }
-        wrap.appendChild(h('div', {class:'an-vs-pl'},
-          h('div', {class:'an-vs-num', text:p.n}),
-          h('div', {class:'an-vs-who'},
-            h('div', {class:'an-vs-nm'}, whoPicker(p.n), tags.map(function(t){ return h('span', {class:'an-vs-badge', text:t}); })),
-            h('div', {class:'an-vs-db', 'aria-hidden':'true'}, h('i', {style:'width:' + (mx.dist ? p.dist / mx.dist * 100 : 0) + '%'})),
-            h('div', {class:'an-vs-sub', text:(p.dist / 1000).toFixed(1) + ' km'})),
-          h('div', {class:'an-vs-c'}, h('b', {text:String(Math.round(p.s / 60))})),
-          h('div', {class:'an-vs-c'}, h('b', {text:p.top.toFixed(1)}), h('span', {text:'km/h'})),
-          h('div', {class:'an-vs-c'}, h('b', {text:String(p.sprints)}))));
-      });
     }
     box.appendChild(wrap);
     box.appendChild(h('p', {class:'an-veo-src', text:'From Veo · ' + new Date(v.at).toLocaleString([], {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + ' · Veo’s goals and shots are in Tags (tap one to watch it) · their times match the video downloaded from Veo'}));
@@ -22124,7 +22080,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     tgAll().filter(function(o){ return o.tg === 'club'; }).forEach(function(o){
       Object.keys(o.players || {}).forEach(function(k){
         const src = o.players[k], cur = m.players[k] || (m.players[k] = {});
-        ['name', 'squad', 'usual', 'pos', 'num', 'foot', 'dob', 'fix', 'gone'].forEach(function(f){
+        ['name', 'squad', 'usual', 'pos', 'num', 'foot', 'dob', 'fix', 'gone', 'renamedTo'].forEach(function(f){
           if(!(f in src)) return;
           const at = +((src.at || {})[f] || o.savedAt || 0);
           if(!cur.__at) Object.defineProperty(cur, '__at', {value:{}, enumerable:false});
@@ -22145,6 +22101,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     });
     Object.keys(club.players || {}).forEach(function(k){
       const o = club.players[k], p = out.get(k);
+      if(clean(o.renamedTo)) return;   /* (an old name: the player is under their new one) */
       if(p){ if(o.squad && tgRank(o.squad) !== -1) p.squad = o.squad; if(o.usual) p.usual = o.usual;
         if(o.fix){ if(clean(o.name)) p.name = clean(o.name); ['num', 'pos', 'foot', 'dob'].forEach(function(f){ if(f in o) p[f] = clean(o[f]); }); } }
       else if(o.name && o.squad) out.set(k, {key:k, name:o.name, num:o.num || '', pos:o.pos || '', foot:o.foot || '', dob:o.dob || '', squad:o.squad, usual:o.usual || '', av:null, added:true});
@@ -22159,6 +22116,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     Object.keys(ch).forEach(function(f){ p[f] = ch[f]; p.at[f] = now; });
     c.savedAt = now; c.by = tgMeName();
     tgWrite(TG_PRE + id, c);
+    plBust();
   }
 
   /* positions are always capitals ("cb/rb" → "CB/RB"), keeping the cursor where it was */
@@ -22170,7 +22128,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function tgDay(iso){
     let best = null;
     tgAll().forEach(function(o){ if(o.tg === 'day' && o.date === iso && (!best || (+o.savedAt || 0) > (+best.savedAt || 0))) best = o; });
-    return best ? JSON.parse(JSON.stringify(best)) : null;
+    if(!best) return null;
+    const d = JSON.parse(JSON.stringify(best));
+    /* (a renamed player's moves, saved under their old name) */
+    if(d.moves){ const mv = {}; Object.keys(d.moves).forEach(function(k){ const nk = plKey(k); if(!(nk in mv) || k === nk) mv[nk] = d.moves[k]; }); d.moves = mv; }
+    return d;
   }
   function tgDayOrNew(iso){ const d = tgDay(iso) || {teams:tgDefaultTeams(), moves:{}}; d.moves = d.moves || {}; d.teams = Array.isArray(d.teams) ? d.teams : tgDefaultTeams(); d.date = iso; return d; }
   /* saved as this person's own copy for the day (group U13: every TD and the admin can save there) */
@@ -22477,7 +22439,60 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   /* a coach's own team: fixed in its My squad (the list lineups, attendance and stats use), keeping their status.
      Otherwise (a TD or the admin, or a player on the club list): a correction on the club list, which every coach's Squads page shows */
+  /* a player's new details, through everything this coach can change: lineups, every team's saved squad, match videos.
+     A number or position goes where it was blank or still the old one (a number set just for one game is kept). */
+  function plSpread(oldName, name, was, now){
+    const ok = plRaw(oldName), nk = plRaw(name), renamed = ok !== nk;
+    const fix = function(r){
+      if(!r || plRaw(r.name) !== ok && plRaw(r.name) !== nk) return false;
+      let ch = false;
+      if(renamed && clean(r.name) !== name){ r.name = name; ch = true; }
+      ['num', 'pos'].forEach(function(f){
+        const v = clean(now[f]), cur = clean(r[f]);
+        if(v === cur || (!v && !clean(was[f]))) return;
+        if(!cur || cur === clean(was[f])){ r[f] = v; ch = true; }
+      });
+      return ch;
+    };
+    let n = 0;
+    try{
+      for(let i = 0; i < hufcStore.length; i++){
+        const k = hufcStore.key(i); if(!k) continue;
+        const isLu = k.indexOf(LU_PREFIX) === 0, isSq = k.indexOf(SQ_PREFIX) === 0, isMv = k.indexOf(MV_PREFIX) === 0;
+        if(!isLu && !isSq && !isMv) continue;
+        let o = null; try{ o = JSON.parse(hufcStore.getItem(k)); }catch(e){ continue; }
+        if(!o || !canEdit(o)) continue;
+        let ch = false;
+        if(isLu && Array.isArray(o.squad)) o.squad.forEach(function(r){ if(fix(r)) ch = true; });
+        if(isSq && o.kind === 'squad' && Array.isArray(o.players)) o.players.forEach(function(r){ if(fix(r)) ch = true; });
+        if(isMv && renamed && o.analysis && o.analysis.veoWho){ const w = o.analysis.veoWho; Object.keys(w).forEach(function(num){ if(plRaw(w[num]) === ok){ w[num] = name; ch = true; } }); }
+        if(!ch) continue;
+        o.savedAt = Date.now();
+        try{ hufcStore.setItem(k, JSON.stringify(o)); n++; }catch(e){}
+        /* the lineup or match video open right now gets the same change */
+        try{ if(isLu && typeof lu !== 'undefined' && lu && lu.id === o.id && Array.isArray(lu.squad)) lu.squad.forEach(fix); }catch(e){}
+        try{ if(isMv && anM && anM.id === o.id) anM.analysis = o.analysis; }catch(e){}
+      }
+    }catch(e){}
+    sqBust(); plBust();
+    if(n) clubSyncSoon();
+    return n;
+  }
   function tgSavePlayer(p, name, d){
+    const was = {num:p.num || '', pos:p.pos || ''}, oldName = p.name, ok = p.key, nk = plRaw(name);
+    tgSavePlayerOnly(p, name, d);
+    /* a new name: the club list remembers the old one, so every coach's items under it (IDPs, training days, attendance) follow */
+    if(nk && nk !== plRaw(oldName)){
+      const c = tgClub().players[ok] || {}, there = tgClub().players[nk] || {}, carry = {name:name};
+      ['squad', 'usual', 'num', 'pos', 'foot', 'dob', 'fix'].forEach(function(f){ if(c[f] !== undefined && c[f] !== '' && c[f] !== null) carry[f] = c[f]; });
+      if(there.renamedTo) carry.renamedTo = '';   /* (a name used before: it's this player's now) */
+      tgSetPlayer(nk, carry);
+      if(ok !== nk) tgSetPlayer(ok, {renamedTo:nk, name:oldName});
+    }
+    const n = plSpread(oldName, name, was, {num:d.num || '', pos:d.pos || ''});
+    if(n) setTimeout(function(){ try{ showToast('Saved ' + name + ' · also changed in ' + n + ' lineup' + (n === 1 ? '' : 's') + ', squad' + (n === 1 ? '' : 's') + ' or match video' + (n === 1 ? '' : 's')); }catch(e){} }, 60);
+  }
+  function tgSavePlayerOnly(p, name, d){
     const td = !!(CLOUD && CLOUD.isTD && CLOUD.isTD()), nk = gtKey(name);
     const sq = sqFor(p.squad);
     const inSquad = sq && sq.players.some(function(r){ return gtKey(r.name) === p.key; });
@@ -22529,6 +22544,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         sqStore(team, (sq ? sq.players : []).concat([o]));
       } else tgSetPlayer(k, Object.assign({name:n, squad:team}, d));   /* (the admin / a TD adding to a team they don't coach: on the club list) */
       try{ const c = tgClub().players[k]; if(c && c.gone) tgSetPlayer(k, {gone:0, name:n}); }catch(e){}
+      try{ const c = tgClub().players[plRaw(n)]; if(c && c.renamedTo) tgSetPlayer(plRaw(n), {renamedTo:'', name:n}); }catch(e){}   /* (a new player with a name someone used to have) */
       tgRender(); showToast(n + ' added to ' + team);
       const ni = tgPage.querySelector('.tg-add .tg-f-first'); if(ni) ni.focus();
     }});
@@ -22940,7 +22956,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function idpGet(k){
     const out = {f:{}, at:{}, fb:[], l:{}, gone:{}, savedAt:0, by:''};
     tgAll().forEach(function(o){
-      if(o.tg !== 'idp' || o.player !== k) return;
+      if(o.tg !== 'idp' || plKey(o.player) !== k) return;   /* (a renamed player's plan, saved under their old name, too) */
       Object.keys(o.f || {}).forEach(function(n){ const x = o.f[n]; if(!x) return; if(!(n in out.at) || (+x.at || 0) >= out.at[n]){ out.f[n] = x.v; out.at[n] = +x.at || 0; } });
       (o.fb || []).forEach(function(e){ if(e && e.id && !out.fb.some(function(y){ return y.id === e.id; })) out.fb.push(e); });
       Object.keys(o.l || {}).forEach(function(n){ const L = out.l[n] = out.l[n] || []; (o.l[n] || []).forEach(function(e){ if(e && e.id && !L.some(function(y){ return y.id === e.id; })) L.push(e); }); });
