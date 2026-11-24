@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261125072453">
+<meta name="hufc-build" content="20261125093021">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2100,6 +2100,7 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-map-leg span{display:inline-flex; align-items:center; gap:5px;}
 .an-map-leg .dir{margin-left:auto;}
 .an-map-line{font-size:12px; color:#5c5c58; margin-top:6px; min-height:16px;}
+.an-map-f{display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin:-2px 0 8px;}
 .an-map-seg{display:inline-flex; border:1px solid #c9c9c4; border-radius:999px; overflow:hidden;}
 .an-map-seg button{border:0; border-radius:0; background:#fff; color:#1a1a1a; font:600 12px/1.2 'Barlow', sans-serif; padding:5px 11px; cursor:pointer;}
 .an-map-seg button.on{background:#111; color:#ffd400;}
@@ -15734,10 +15735,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const side = function(e){ return e.team === 'Own' ? 0 : 1; };
     const jn = function(e){ const n = parseInt(e.playerJersey, 10); return isFinite(n) ? n : -1; };
     const tt = function(e){ return Math.round((+e.videoTimeMs || 0) / 100) / 10; };
-    const sh = [], sv = [], ps = [], po = {0:{}, 1:{}};
+    const sh = [], sv = [], ps = [], po = {0:{}, 1:{}}, oo = [];
     evs.forEach(function(e){
       if(e.team !== 'Own' && e.team !== 'Opponent') return;
       const t = e.eventType;
+      if(t === 'FootballOutOfPlay') oo.push(tt(e));
       if(t === 'FootballShot' && num(e.x) && num(e.z)){
         const at = {}; (e.attributes || []).forEach(function(x){ if(x && x.label) at[x.label] = x.value; });
         const p = P(e, e.x, e.z); sh.push([side(e), e.periodId, p[0], p[1], at.outcome === 'goal' ? 1 : 0, jn(e), tt(e)]);
@@ -15757,7 +15759,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       }
     });
     if(!sh.length && !ps.length) return null;
-    return {v:1, fl:fl, sh:sh, sv:sv, ps:ps, po:po};
+    return {v:1, fl:fl, sh:sh, sv:sv, ps:ps, po:po, oo:oo};
   }
   /* each shot's end, from the ball's path (Veo's ball tracking, about 2.5 times a second) */
   function anShotEnds(E, b64){
@@ -15802,7 +15804,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(b64) return go(b64);
     pgMedia.get('mvb-' + m.id).then(go).catch(function(){});
   }
-  let anPmSide = 0, anPmNum = '', anPoSide = 0;
+  let anPmSide = 0, anPmNum = '', anPoSide = 0, anSmSide = 'a', anSmRes = 'a', anSmNum = '';
   function anVeoNameOf(n){
     if(n == null || n < 0) return '';
     const p = anSquad().find(function(q){ return clean(q.num) === String(n); });
@@ -15819,6 +15821,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     /* the ends weren't worked out yet, but the ball's path is on this computer: work them out now */
     if(!E.end && a.veoTrack && a.veoTrack.ball && anM && !anShotEndsTried[anM.id]){ anShotEndsTried[anM.id] = 1; anShotEndsFor(anM); }
     const HH = anVeoHalf === 't' ? 0 : +anVeoHalf, inH = function(hf){ return !HH || hf === HH; };
+    /* as it was played (like the video): the halves aren't turned around. (Kept turned, HUFC attacking right; turned back here.) */
+    const asP = function(hf, x, y){ return E.fl && E.fl[hf] === 1 ? [1000 - x, 1000 - y] : [x, y]; };
+    const usLeft = function(hf){ return !!(E.fl && E.fl[hf] === 1); };        /* HUFC attacked to the left in that half */
+    const arrowFor = function(sd, hf){ return usLeft(hf) !== (sd === 1) ? '←' : '→'; };
+    const dirFor = function(sd, hf){ const nm = sd ? opp : us; return arrowFor(sd, hf) === '←' ? '← ' + nm + ' attack' : nm + ' attack →'; };
+    const dirText = function(sd){ return HH ? dirFor(sd, HH) : (sd ? opp : us) + ' attack: 1st half ' + arrowFor(sd, 1) + ' · 2nd half ' + arrowFor(sd, 2); };
     const us = anUsShort(), opp = anOppShort(), YC = '#f5c400', RC = '#e5484d';
     const NS = 'http://www.w3.org/2000/svg';
     const S = function(tag, at, par){ const e = document.createElementNS(NS, tag); Object.keys(at || {}).forEach(function(k){ e.setAttribute(k, at[k]); }); if(par) par.appendChild(e); return e; };
@@ -15844,10 +15852,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
     /* -- shot map: both teams, an arrow for where each shot went -- */
     (function(){
-      const list = E.sh.map(function(s, i){ return {s:s, e:E.end ? E.end[i] : null}; }).filter(function(o){ return inH(o.s[1]); });
+      const base = E.sh.map(function(s, i){ return {s:s, e:E.end ? E.end[i] : null}; }).filter(function(o){ return inH(o.s[1]); });
       const card = h('div', {class:'an-map'});
-      const cnt = [0, 1].map(function(sd){ return list.filter(function(o){ return o.s[0] === sd; }).length; });
-      card.appendChild(h('div', {class:'an-map-h'}, h('span', {class:'an-map-t', text:'Shot map'}), h('span', {class:'an-map-n', text:us + ' ' + cnt[0] + ' · ' + opp + ' ' + cnt[1]})));
       const svg = pitch('Shot map: where each shot was taken from and where it went');
       const line = h('div', {class:'an-map-line', text:'Tap a shot to watch it'});
       const res = function(o){
@@ -15855,7 +15861,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(s[4]) return 2;
         const saved = E.sv.find(function(v){ return v[0] !== sd && v[4] - s[6] >= 0 && v[4] - s[6] <= 4; });
         if(saved) return 1;
-        return o.e ? o.e[2] : -1;                     /* 0 missed, 3 blocked, -1 not known (no ball path) */
+        const k = o.e ? o.e[2] : -1;                  /* 0 missed, 3 blocked, -1 not known (no ball path) */
+        /* reached the goal between the posts, no goal, no save, and the ball didn't go out: off the woodwork, or a save Veo didn't log */
+        if(k === 0 && E.oo && Math.abs(o.e[0] - (sd ? 0 : 1000)) <= 30 && o.e[1] >= 400 && o.e[1] <= 600 && !E.oo.some(function(t){ return t > s[6] && t - s[6] <= 3; })) return 4;
+        return k;
       };
       const endOf = function(o, k){
         const s = o.s, sd = s[0], xg = sd ? 0 : 1000;
@@ -15863,14 +15872,37 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(k === 2){ const y = o.e ? Math.max(446, Math.min(554, o.e[1])) : 500; return [xg + (sd ? -12 : 12), y]; }
         return o.e ? [o.e[0], o.e[1]] : null;
       };
-      const items = list.map(function(o){ const k = res(o); return {o:o, k:k, end:endOf(o, k)}; });
+      /* filters: team, result, player */
+      if(anSmNum !== '' && !base.some(function(o){ return o.s[0] + ':' + o.s[5] === anSmNum; })) anSmNum = '';
+      const all = base.map(function(o){ const k = res(o); return {o:o, k:k, end:endOf(o, k)}; });
+      const items = all.filter(function(it){
+        const s = it.o.s;
+        if(anSmSide !== 'a' && s[0] !== anSmSide) return false;
+        if(anSmRes !== 'a' && !(it.k === anSmRes || (anSmRes === 0 && it.k === -1))) return false;
+        if(anSmNum !== '' && s[0] + ':' + s[5] !== anSmNum) return false;
+        return true;
+      });
+      const cnt = [0, 1].map(function(sd){ return items.filter(function(it){ return it.o.s[0] === sd; }).length; });
+      card.appendChild(h('div', {class:'an-map-h'}, h('span', {class:'an-map-t', text:'Shot map'}),
+        h('span', {class:'an-map-n', text:(anSmSide === 1 ? '' : us + ' ' + cnt[0]) + (anSmSide === 'a' ? ' · ' : '') + (anSmSide === 0 ? '' : opp + ' ' + cnt[1])})));
+      const psel = h('select', {class:'an-map-sel', 'aria-label':'Which player', onchange:function(e){ anSmNum = e.target.value; anRenderStats(); }});
+      psel.appendChild(h('option', {value:'', text:'All players'}));
+      const seenP = [];
+      base.forEach(function(o){ const sd = o.s[0], n = o.s[5]; if(n < 0 || (anSmSide !== 'a' && sd !== anSmSide)) return; const k = sd + ':' + n; if(seenP.indexOf(k) === -1) seenP.push(k); });
+      seenP.sort(function(a, b){ const A = a.split(':'), B = b.split(':'); return (+A[0] - +B[0]) || (+A[1] - +B[1]); });
+      seenP.forEach(function(k){ const A = k.split(':'), sd = +A[0], n = +A[1], nm = sd ? '' : anVeoNameOf(n);
+        const o = h('option', {value:k, text:(anSmSide === 'a' ? (sd ? opp : us) + ' ' : '') + n + (nm ? ' · ' + nm : '')}); if(k === anSmNum) o.selected = true; psel.appendChild(o); });
+      const resOpts = [['a', 'All'], [2, 'Goals'], [1, 'Saved']]; if(all.some(function(it){ return it.k === 4; })) resOpts.push([4, 'Woodwork or save']); resOpts.push([0, E.end ? 'Missed' : 'Missed or blocked']); if(E.end) resOpts.push([3, 'Blocked']);
+      card.appendChild(h('div', {class:'an-map-f'},
+        seg(anSmSide, [['a', 'Both'], [0, us], [1, opp]], function(v){ anSmSide = v; anSmNum = ''; }),
+        seg(anSmRes, resOpts, function(v){ anSmRes = v; }), psel));
       items.sort(function(a, b){ return (a.k === 2) - (b.k === 2); });
       items.forEach(function(it){
-        const s = it.o.s, k = it.k, c = s[0] ? RC : YC, x = X(s[2]), y = Y(s[3]);
+        const s = it.o.s, k = it.k, c = s[0] ? RC : YC, sp = asP(s[1], s[2], s[3]), x = X(sp[0]), y = Y(sp[1]);
         const g = S('g', {class:'shot', tabindex:'0', role:'button'}, svg);
-        const rad = k === 2 ? 2.1 : k === 1 ? 1.6 : 1.4;
+        const rad = k === 2 ? 2.1 : k === 1 || k === 4 ? 1.6 : 1.4;
         if(it.end){
-          const ex = X(it.end[0]), ey = Y(it.end[1]), dx = ex - x, dy = ey - y, Ln = Math.hypot(dx, dy) || 1, ux = dx / Ln, uy = dy / Ln;
+          const ep = asP(s[1], it.end[0], it.end[1]), ex = X(ep[0]), ey = Y(ep[1]), dx = ex - x, dy = ey - y, Ln = Math.hypot(dx, dy) || 1, ux = dx / Ln, uy = dy / Ln;
           if(Ln > rad + 1){
             if(k === 3){
               S('line', {x1:x + ux * rad, y1:y + uy * rad, x2:ex, y2:ey, stroke:c, 'stroke-width':'.45'}, g);
@@ -15884,8 +15916,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         }
         if(k === 2) S('circle', {class:'dot', cx:x, cy:y, r:2.1, fill:c, stroke:'#fff', 'stroke-width':'.7'}, g);
         else if(k === 1) S('circle', {class:'dot', cx:x, cy:y, r:1.6, fill:c}, g);
+        else if(k === 4){ S('circle', {class:'dot', cx:x, cy:y, r:1.6, fill:'#1d201d', stroke:c, 'stroke-width':'.6'}, g); S('circle', {cx:x, cy:y, r:.65, fill:c}, g); }
         else S('circle', {class:'dot', cx:x, cy:y, r:1.4, fill:'#1d201d', stroke:c, 'stroke-width':'.6'}, g);
-        const txt = who(s[0], s[5]) + ' · ' + anClock(s[6]) + ' · ' + (['Missed', 'Saved', 'Goal', 'Blocked'][k] || 'Missed or blocked');
+        const txt = who(s[0], s[5]) + ' · ' + anClock(s[6]) + ' · ' + (['Missed', 'Saved', 'Goal', 'Blocked', 'Woodwork or save'][k] || 'Missed or blocked');
         S('title', {}, g).textContent = txt;
         g.setAttribute('aria-label', txt + ' · watch it');
         const show = function(){ line.textContent = txt + ' · tap to watch it'; };
@@ -15900,10 +15933,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         legI('<svg width="30" height="14" aria-hidden="true"><line x1="6" y1="7" x2="24" y2="7" stroke="' + Yl + '" stroke-width="1.6"/><path d="M28 7 L22 4 L22 10Z" fill="' + Yl + '"/><circle cx="6" cy="7" r="5" fill="' + Yl + '" stroke="#fff" stroke-width="1.5"/></svg>', 'Goal'),
         legI('<svg width="30" height="14" aria-hidden="true"><line x1="6" y1="7" x2="24" y2="7" stroke="' + Yl + '" stroke-width="1.6"/><path d="M28 7 L22 4 L22 10Z" fill="' + Yl + '"/><circle cx="6" cy="7" r="4" fill="' + Yl + '"/></svg>', 'Saved'),
         legI('<svg width="30" height="14" aria-hidden="true"><line x1="6" y1="7" x2="24" y2="7" stroke="' + Yl + '" stroke-width="1.2" stroke-dasharray="2.5 2"/><path d="M28 7 L22 4 L22 10Z" fill="' + Yl + '"/><circle cx="6" cy="7" r="3.6" fill="#1d201d" stroke="' + Yl + '" stroke-width="1.5"/></svg>', E.end ? 'Missed' : 'Missed or blocked'));
+      if(all.some(function(it){ return it.k === 4; })) leg.appendChild(legI('<svg width="30" height="14" aria-hidden="true"><line x1="6" y1="7" x2="24" y2="7" stroke="' + Yl + '" stroke-width="1.6"/><path d="M28 7 L22 4 L22 10Z" fill="' + Yl + '"/><circle cx="6" cy="7" r="4" fill="#1d201d" stroke="' + Yl + '" stroke-width="1.5"/><circle cx="6" cy="7" r="1.7" fill="' + Yl + '"/></svg>', 'Woodwork or save'));
       if(E.end) leg.appendChild(legI('<svg width="30" height="14" aria-hidden="true"><line x1="6" y1="7" x2="20" y2="7" stroke="' + Yl + '" stroke-width="1.6"/><line x1="20" y1="2" x2="20" y2="12" stroke="' + Yl + '" stroke-width="2"/><circle cx="6" cy="7" r="3.6" fill="#1d201d" stroke="' + Yl + '" stroke-width="1.5"/></svg>', 'Blocked'));
-      leg.appendChild(h('span', {class:'dir'}, h('span', {style:'color:#a88600', text:us + ' →'}), h('span', {text:'·'}), h('span', {style:'color:#c33b40', text:'← ' + opp})));
+      leg.appendChild(h('span', {class:'dir', style:'color:' + (anSmSide === 1 ? '#c33b40' : '#a88600'), text:dirText(anSmSide === 1 ? 1 : 0)}));
       card.appendChild(leg);
       card.appendChild(line);
+      if(!E.oo && window.hufcDesktop && window.hufcDesktop.veo && anCanEdit()) card.appendChild(h('div', {class:'an-map-n', text:'Press Veo stats ✓ (top right) once more to bring in the latest shot details.'}));
       if(!E.end && !(a.veoTrack && a.veoTrack.ball)) card.appendChild(h('div', {class:'an-map-n', text:'Arrows for misses and blocks come with the mini map (in the Windows program).'}));
       grp.appendChild(card);
     })();
@@ -15923,12 +15958,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const svg = pitch('Pass map: where each pass was played from and received');
       const c = sd ? RC : YC, miss = sd ? '#c8c8c3' : '#ff8a8a', one = anPmNum !== '', op = one ? '.95' : '.55';
       let ok = 0, no = 0;
-      L.forEach(function(p){
+      const Lp = L.map(function(p){ const a = asP(p[1], p[2], p[3]), b = p[4] === -9999 ? [-9999, -9999] : asP(p[1], p[4], p[5]); return [p[0], p[1], a[0], a[1], b[0], b[1], p[6], p[7]]; });
+      Lp.forEach(function(p){
         if(p[6]) return; no++;
         if(p[4] === -9999){ S('circle', {cx:X(p[2]), cy:Y(p[3]), r:'.6', fill:'none', stroke:miss, 'stroke-width':'.35', opacity:op}, svg); return; }
         S('line', {x1:X(p[2]), y1:Y(p[3]), x2:X(p[4]), y2:Y(p[5]), stroke:miss, 'stroke-width':'.35', 'stroke-dasharray':'1.2 .8', opacity:op}, svg);
       });
-      L.forEach(function(p){
+      Lp.forEach(function(p){
         if(!p[6] || p[4] === -9999) { if(p[6]) ok++; return; } ok++;
         S('line', {x1:X(p[2]), y1:Y(p[3]), x2:X(p[4]), y2:Y(p[5]), stroke:c, 'stroke-width':one ? '.5' : '.32', opacity:op}, svg);
         S('circle', {cx:X(p[4]), cy:Y(p[5]), r:one ? '.75' : '.5', fill:c, opacity:op}, svg);
@@ -15937,7 +15973,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       card.appendChild(h('div', {class:'an-map-leg'},
         legI('<svg width="24" height="10" aria-hidden="true"><line x1="1" y1="5" x2="18" y2="5" stroke="' + c + '" stroke-width="1.6"/><circle cx="19" cy="5" r="2.4" fill="' + c + '"/></svg>', 'Completed ' + ok),
         legI('<svg width="24" height="10" aria-hidden="true"><line x1="1" y1="5" x2="20" y2="5" stroke="' + miss + '" stroke-width="1.6" stroke-dasharray="3 2"/></svg>', 'Missed ' + no),
-        h('span', {class:'dir', text:sd ? '← ' + opp + ' attack' : us + ' attack →'})));
+        h('span', {class:'dir', text:dirText(sd)})));
       grp.appendChild(card);
     })();
 
@@ -15949,20 +15985,20 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const card = h('div', {class:'an-map'});
       card.appendChild(h('div', {class:'an-map-h'}, h('span', {class:'an-map-t', text:'Possession map'}), seg(sd, [[0, us], [1, opp]], function(v){ anPoSide = v; })));
       const svg = pitch('Possession map: where the team had the ball');
-      const c = sd ? RC : YC;
+      const c = sd ? RC : YC, ref = HH || 1, mir = usLeft(ref) !== (sd === 1);
       if(tot){
         for(let j = 0; j < 3; j++) for(let i = 0; i < 3; i++){
-          const v = z[j * 3 + i] / tot, ci = sd ? 2 - i : i, cj = sd ? 2 - j : j, x = ci * 35, y = cj * 68 / 3;
+          const v = z[j * 3 + i] / tot, ci = mir ? 2 - i : i, cj = mir ? 2 - j : j, x = ci * 35, y = cj * 68 / 3;
           S('rect', {x:x + .6, y:y + .6, width:33.8, height:68 / 3 - 1.2, rx:1.2, fill:c, opacity:Math.min(.95, .08 + v * 2.6).toFixed(2)}, svg);
           S('text', {x:x + 17.5, y:y + 68 / 6 + 1.6, 'text-anchor':'middle', 'font-size':'4.6', 'font-weight':'700', 'font-family':'Barlow, sans-serif', fill:v > .13 ? '#141414' : '#fff'}, svg).textContent = Math.round(v * 100) + '%';
         }
         [0, 1, 2].forEach(function(i){
-          const v = (z[i] + z[3 + i] + z[6 + i]) / tot, ci = sd ? 2 - i : i;
+          const v = (z[i] + z[3 + i] + z[6 + i]) / tot, ci = mir ? 2 - i : i;
           S('text', {x:ci * 35 + 17.5, y:66.3, 'text-anchor':'middle', 'font-size':'2.6', 'font-family':'Barlow, sans-serif', fill:'rgba(255,255,255,.85)'}, svg).textContent = ['Defensive third ', 'Middle third ', 'Attacking third '][i] + Math.round(v * 100) + '%';
         });
       }
       card.appendChild(svg);
-      card.appendChild(h('div', {class:'an-map-leg'}, h('span', {text:'Where they had the ball, as a share of all their touches'}), h('span', {class:'dir', text:sd ? '← ' + opp + ' attack' : us + ' attack →'})));
+      card.appendChild(h('div', {class:'an-map-leg'}, h('span', {text:'Where they had the ball, as a share of all their touches' + (HH ? '' : ' (drawn the way they attacked in the 1st half)')}), h('span', {class:'dir', text:dirFor(sd, ref)})));
       grp.appendChild(card);
     })();
     wrap.appendChild(grp);
@@ -18488,7 +18524,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), with HUFC always attacking to the right','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to watch it','Pass map: a line for every pass from where it was played to where it was received (missed ones dashed), for either team, and for one player picked by name','Possession map: where the team had the ball, in thirds and left / centre / right','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
+    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to watch it','Shot map filters: both teams or one, the result (goals, saved, woodwork or save, missed, blocked) and one player. “Woodwork or save”: the ball reached the goal between the posts, didn’t go in and stayed in play — off the frame, or a save Veo didn’t log','Pass map: a line for every pass from where it was played to where it was received (missed ones dashed), for either team, and for one player picked by name','Possession map: where the team had the ball, in thirds and left / centre / right','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
     {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now gets it in about a minute — four Veo pages at once, without loading Veo’s video — and keeps going by itself until it has the whole game)','Fixed: pressing Veo stats ✓ again could empty the Stats tab when Veo sent only part of the stats (what was there now stays, and the stats load properly in the background)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
     {v:'4.13', d:'20 Nov 2026', t:'See who’s on, Save as PDF, coaches in full', n:['The admin can see which coaches are using the planner right now and what they’re working on','Save as PDF beside Print in every plan’s top bar','A plan’s black bar names every coach in full: the coach who made it first, then each collaborator, with commas','Collaborators: a session you’re added to shows up in your planner, with a notice saying who added you','The admin can send a coach a password reset email','Removing a coach’s access moves them to Removed (not Waiting); waiting coaches can be removed too','Side menu icons about 30% bigger','Numbers in every badge sit dead centre (collaborators, Settings, attendance)','Fixed: “2 out” on the attendance link went outside its box']},
