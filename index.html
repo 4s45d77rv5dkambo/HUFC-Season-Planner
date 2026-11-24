@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124210819">
+<meta name="hufc-build" content="20261124212101">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -15589,9 +15589,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     line(function(){ g.rect(P, 54, 11, 28); g.rect(210 - P - 11, 54, 11, 28); });
     /* where everyone is at the video's moment (between two of Veo's moments, in between) */
     const T = anTrack, f = (anVideo.currentTime - T.t0) / T.dt; if(!(f >= 0 && f <= T.n - 1)) return;
-    const i = Math.floor(f), w = f - i, A = anMapFrame(i), B = w > 0.001 ? anMapFrame(i + 1) : [];
+    let i = Math.floor(f), w = f - i, A = anMapFrame(i), B = w > 0.001 ? anMapFrame(i + 1) : [];
+    if(!A.length){ for(let b = 1; b <= 4 && !A.length; b++){ A = anMapFrame(i - b); } w = 0; B = []; }   /* (a short gap in Veo's positions: hold the last ones) */
+    if(!A.length) for(let b = 1; b <= 2 && !A.length; b++){ A = anMapFrame(i + 1 + b); }
     const nb = {}; B.forEach(function(o){ nb[o.k + ':' + o.id] = o; });
-    const X = function(v){ return P + Math.max(-0.02, Math.min(1.02, v)) * PW; }, Y = function(v){ return P + Math.max(-0.02, Math.min(1.02, v)) * PH; };
+    const X = function(v){ return P + Math.max(-0.02, Math.min(1.02, v)) * PW; }, Y = function(v){ return P + Math.max(-0.02, Math.min(1.02, 1 - v)) * PH; };   /* (Veo's width runs the other way up: flipped, as Veo's own mini map draws it) */
     const pts = A.map(function(a){ const b = nb[a.k + ':' + a.id]; const ok = b && Math.abs(b.x - a.x) < 0.1 && Math.abs(b.y - a.y) < 0.1;
       return {k:a.k, x:X(ok ? a.x + (b.x - a.x) * w : a.x), y:Y(ok ? a.y + (b.y - a.y) * w : a.y)}; });
     g.lineWidth = 0.5;
@@ -15627,15 +15629,15 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         anTrackBusy = null;
         if(!r || !r.ok || !r.data){ try{ anMapRender(); }catch(e){} showToast(r && r.error === 'signin' ? 'The mini map needs you signed in to Veo · press Veo stats ✓ again' : 'Couldn’t get the mini map from Veo this time · press Veo stats ✓ to try again'); return; }
         return pgMedia.put('mvt-' + m.id, r.data).then(function(){
-          m.analysis.veoTrack = {at:Date.now(), t0:r.t0, dt:r.dt, n:r.n};
+          m.analysis.veoTrack = {at:Date.now(), t0:r.t0, dt:r.dt, n:r.n, cov:typeof r.cov === 'number' ? r.cov : null};
           if(anM === m){ anSave(); }
           else { try{ const k = MV_PREFIX + m.id; const cur = JSON.parse(hufcStore.getItem(k) || 'null'); if(cur){ cur.analysis = cur.analysis || {}; cur.analysis.veoTrack = m.analysis.veoTrack; hufcStore.setItem(k, JSON.stringify(cur)); } }catch(e){} }
           anTrackFor = null; try{ anTrackLoad(); }catch(e){}
-          showToast('Mini map ready · it sits over the video, top right (Mini map turns it on and off)');
+          showToast(typeof r.cov === 'number' && r.cov < 0.97 ? 'Mini map ready for ' + Math.round(r.cov * 100) + '% of the game · press Veo stats ✓ again to fill the gaps' : 'Mini map ready · it sits over the video, top right (Mini map turns it on and off)');
         });
       }).catch(function(){ anTrackBusy = null; try{ anMapRender(); }catch(e){} showToast('Couldn’t get the mini map from Veo this time'); });
     };
-    if(force || !a.veoTrack) return go();
+    if(force || !a.veoTrack || !(a.veoTrack.cov >= 0.97)) return go();   /* (none yet, or one with gaps: get it again) */
     pgMedia.get('mvt-' + m.id).then(function(s){ if(typeof s !== 'string') go(); }).catch(go);
   }
 
@@ -18192,7 +18194,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
+    {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now gets every piece, and a map with gaps is fetched again with Veo stats ✓)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
     {v:'4.13', d:'20 Nov 2026', t:'See who’s on, Save as PDF, coaches in full', n:['The admin can see which coaches are using the planner right now and what they’re working on','Save as PDF beside Print in every plan’s top bar','A plan’s black bar names every coach in full: the coach who made it first, then each collaborator, with commas','Collaborators: a session you’re added to shows up in your planner, with a notice saying who added you','The admin can send a coach a password reset email','Removing a coach’s access moves them to Removed (not Waiting); waiting coaches can be removed too','Side menu icons about 30% bigger','Numbers in every badge sit dead centre (collaborators, Settings, attendance)','Fixed: “2 out” on the attendance link went outside its box']},
     {v:'4.12', d:'19 Nov 2026', t:'Saved sign, deleting practices', n:['A Saved sign in place of the Save button — work done offline goes up as soon as the internet is back','A deleted saved practice stays deleted (identical copies go with it)','Text centred in every bubble: calendar days, Today, This week, age-group tags and small buttons']},
