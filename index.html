@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124114729">
+<meta name="hufc-build" content="20261124124803">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2098,6 +2098,7 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-veo-own{margin-top:18px;}
 .an-row-veo{display:inline-flex; align-items:center; justify-content:center; margin-left:6px; padding:1px 6px; border-radius:999px; background:#e7f3ea; color:#1f7a45; font-size:10px; font-weight:700; letter-spacing:.06em; line-height:1.4; vertical-align:1px;}
 #anStats > *{flex-shrink:0;}
+html.app-frame .toast, html.app-frame body:has(#anModal:not([hidden])) .toast{top:52px;}
 .an-table .an-veo-sm{display:none;}
 @media (max-width:640px){ .an-table .an-veo-half{display:none;} .an-table .an-veo-lg{display:none;} .an-table .an-veo-sm{display:inline;} }
 .an-video-wrap .an-flash{z-index:3;}
@@ -15160,7 +15161,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     ['football_tackle_total', 'Tackles'], ['football_interception_total', 'Interceptions'], ['football_duel_total', 'Duels'],
     ['football_dribble_total', 'Dribbles'], ['football_loose_total', 'Loose balls'], ['football_foul_total', 'Fouls']];
   let anVeoBusy = null, anVeoSort = 'dist';
-  function anVeoLink(m){ m = m || anM; if(!m) return ''; return [m.getLink, m.getPage].find(function(u){ return u && AN_VEO_RE.test(u); }) || ''; }
+  /* the match on Veo: its page link, or Veo's download link for the video (which carries the match's id) */
+  function anVeoLink(m){
+    m = m || anM; if(!m) return '';
+    const us = [m.getLink, m.getPage].filter(Boolean);
+    const page = us.find(function(u){ return AN_VEO_RE.test(u); }); if(page) return page;
+    for(let i = 0; i < us.length; i++){ const c = String(us[i]).match(/veocdn\.com\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\//i); if(c) return 'https://app.veo.co/matches/' + c[1].toLowerCase() + '/'; }
+    return '';
+  }
   function anVeoLabel(type){
     const k = AN_VEO_LABELS.find(function(x){ return x[0] === type; }); if(k) return k[1];
     const t = String(type || '').replace(/^football_/, '').replace(/_(total|count)$/, '').replace(/_/g, ' ').trim();
@@ -15305,7 +15313,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!link){
       const row = document.getElementById('anGetRow'), inp = document.getElementById('anGetIn');
       row.hidden = false; inp.value = anM.getLink || ''; setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(e){} }, 0);
-      showToast('Paste this match’s Veo link first (its address on app.veo.co), press Save, then Get Veo stats');
+      showToast('Paste this match’s Veo link first (the match on app.veo.co, or Veo’s download link for the video), press Save, then Get Veo stats');
       return;
     }
     if(anVeoBusy) { showToast(anVeoErr.busy); return; }
