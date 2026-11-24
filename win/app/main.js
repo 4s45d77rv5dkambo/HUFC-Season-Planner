@@ -545,28 +545,36 @@ function veoRun(slug) {
       try { if (!w.isDestroyed()) { w.show(); w.focus(); } } catch (e) {}
       if (win && !win.isDestroyed()) win.webContents.send('veo:signin');
     };
+    /* where the window goes (for the log: the address without its query, so nothing private is kept) */
+    const bare = u => String(u || '').split(/[?#]/)[0].slice(0, 120);
     w.webContents.on('did-navigate', (e, url) => {
-      if (/^https:\/\/(auth|login|accounts?)\.veo\.co\//.test(url)) needSignin();
-      /* signed in: Veo goes on to its home or profile page, so back to this match's Analytics */
-      else if (signin && /^https:\/\/([a-z0-9-]+\.)*veo\.co\//.test(url) && url.indexOf('app.veo.co/matches/' + slug) === -1 && !/callback|oauth|sso|login|token|verify/i.test(url)) w.loadURL(target).catch(() => {});
+      log('veo page', bare(url), signin ? '(signing in)' : '');
+      if (/^https:\/\/(auth|login|accounts?|id)\.veo\.co\//.test(url)) needSignin();
+      /* signed in: Veo goes on to the coach's profile page, so back to this match's Analytics */
+      else if (signin && /^https:\/\/profile\.veo\.co\//.test(url)) setTimeout(() => { if (!finished) w.loadURL(target).catch(() => {}); }, 1500);
     });
+    w.webContents.on('did-redirect-navigation', (e, url) => { log('veo redirect', bare(url)); });
+    w.webContents.on('did-fail-load', (e, code, desc, url, main) => { if (main) log('veo load failed', code, desc, bare(url)); });
+    /* each Veo page: signed out (show the window to sign in), part-way through signing in (leave it be),
+       or signed in (hide the window and go to this match's Analytics) */
     w.webContents.on('did-finish-load', () => {
       const u = w.webContents.getURL();
-      if (/^https:\/\/app\.veo\.co\//.test(u)) {
-        setTimeout(async () => {
-          if (finished) return;
-          let wall = false;
-          try { wall = await w.webContents.executeJavaScript('/log in to access/i.test(document.body ? document.body.innerText.slice(0, 20000) : "")'); } catch (e) {}
-          if (userStatus === 401 || userStatus === 403 || wall) { needSignin(); return; }
-          if (signin) {
-            signin = false; nudged = 0;
-            try { w.hide(); } catch (e) {}
-            if (win && !win.isDestroyed()) win.webContents.send('veo:working');
-            if (w.webContents.getURL() !== target) w.loadURL(target).catch(() => {});
-          }
-          quiet();
-        }, 2500);
-      }
+      if (!/^https:\/\/app\.veo\.co\//.test(u)) return;
+      setTimeout(async () => {
+        if (finished) return;
+        let st = {};
+        try { st = await w.webContents.executeJavaScript('(() => { const t = document.body ? document.body.innerText : ""; return { wall: /log in to access/i.test(t.slice(0, 20000)), login: [...document.querySelectorAll("button, a")].some(e => /^\\s*(log ?in|sign ?in)\\s*$/i.test(e.textContent || "")), full: t.length > 150 }; })()') || {}; } catch (e) {}
+        log('veo check', bare(u), (st.wall ? 'wall ' : '') + (st.login ? 'login-button ' : '') + (st.full ? 'page ' : 'blank ') + userStatus);
+        if (st.wall || (!st.full && (userStatus === 401 || userStatus === 403))) { needSignin(); return; }
+        if (signin) {
+          if (!st.full || st.login) return;          /* still on the way through Veo's sign-in */
+          signin = false; nudged = 0;
+          try { w.hide(); } catch (e) {}
+          if (win && !win.isDestroyed()) win.webContents.send('veo:working');
+          if (u !== target) { w.loadURL(target).catch(() => {}); return; }
+        }
+        quiet();
+      }, 2500);
     });
     w.on('close', () => { if (!finished) done(keys().length && complete() ? { ok: true, data: got } : { error: signin ? 'signin' : 'closed' }); });
     /* never more than 10 minutes (signing in), or a minute and a half without */
