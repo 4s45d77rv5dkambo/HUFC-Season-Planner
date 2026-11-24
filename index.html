@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124144311">
+<meta name="hufc-build" content="20261124144624">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -15212,7 +15212,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const AN_VEO_RE = /^https?:\/\/(?:app\.)?veo\.co\/matches\/([A-Za-z0-9_-]+)/i;
   const AN_VEO_LABELS = [
     ['football_goal_total', 'Goals'], ['football_possession_percentage', 'Possession'], ['football_possession_minutes_total', 'Time on the ball'],
-    ['football_attempts_total', 'Attempts at goal'], ['football_shots_total', 'Attempts not scored'], ['football_passes_completed_total', 'Passes completed'],
+    ['football_attempts_total', 'Shots'], ['football_shots_total', 'Attempts not scored'], ['football_passes_completed_total', 'Passes completed'],
     ['football_corner_total', 'Corners'], ['football_free_kick_total', 'Free kicks'], ['football_penalty_total', 'Penalties'],
     ['football_goal_kick_total', 'Goal kicks'], ['football_throw_in_total', 'Throw-ins'], ['football_save_total', 'Saves'],
     ['football_tackle_total', 'Tackles'], ['football_interception_total', 'Interceptions'], ['football_duel_total', 'Duels'],
@@ -15402,7 +15402,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* the Stats tab: Veo's numbers first, then the coach's own tags (returns whether anything was shown) */
   /* Veo's numbers, made easy to read: the score, one bar per stat (us against them) in groups, and a card per player */
   const AN_VEO_GROUPS = [
-    ['Attacking', ['football_goal_total', 'hufc_on_goal', 'football_attempts_total', 'football_dribble_total']],
+    ['Attacking', ['football_goal_total', 'football_attempts_total', 'hufc_on_goal', 'football_dribble_total']],
     ['Possession and passing', ['football_possession_percentage', 'football_passes_completed_total']],
     ['Set pieces', ['football_corner_total', 'football_free_kick_total', 'football_penalty_total', 'football_throw_in_total']],
     ['Defending', ['football_tackle_total', 'football_interception_total', 'football_duel_total', 'football_save_total']],
@@ -15425,11 +15425,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const us = anUsShort(), opp = anOppShort(), H = anVeoHalf;
     const pick = function(side){ if(!side) return null; const x = H === 't' ? side.v : H === '1' ? side.p1 : side.p2; return x == null || isNaN(+x) ? null : +x; };
     const team = (v.team || []).slice(), byType = {}; team.forEach(function(r){ byType[r.type] = r; });
-    /* shots on goal (on target): the goals scored, plus the shots the other keeper saved */
+    /* shots on target: the goals scored, plus the shots the other keeper saved */
     (function(){
       const g = byType.football_goal_total, sv = byType.football_save_total; if(!g || !sv) return;
       const add = function(a, b){ if(!a && !b) return null; const o = {}; ['v', 'p1', 'p2'].forEach(function(k){ const x = a && a[k], y = b && b[k]; o[k] = x == null && y == null ? null : (+x || 0) + (+y || 0); }); return o; };
-      const row = {type:'hufc_on_goal', label:'Shots on goal', unit:'count', us:add(g.us, sv.them), them:add(g.them, sv.us)};
+      const row = {type:'hufc_on_goal', label:'Shots on target', unit:'count', us:add(g.us, sv.them), them:add(g.them, sv.us)};
       byType.hufc_on_goal = row; team.push(row);
     })();
     const wrap = h('div', {class:'an-vs'});
@@ -17996,7 +17996,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for attacking, shots on goal, possession, set pieces, defending and discipline','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
+    {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots, shots on target, possession, set pieces, defending and discipline','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
     {v:'4.13', d:'20 Nov 2026', t:'See who’s on, Save as PDF, coaches in full', n:['The admin can see which coaches are using the planner right now and what they’re working on','Save as PDF beside Print in every plan’s top bar','A plan’s black bar names every coach in full: the coach who made it first, then each collaborator, with commas','Collaborators: a session you’re added to shows up in your planner, with a notice saying who added you','The admin can send a coach a password reset email','Removing a coach’s access moves them to Removed (not Waiting); waiting coaches can be removed too','Side menu icons about 30% bigger','Numbers in every badge sit dead centre (collaborators, Settings, attendance)','Fixed: “2 out” on the attendance link went outside its box']},
     {v:'4.12', d:'19 Nov 2026', t:'Saved sign, deleting practices', n:['A Saved sign in place of the Save button — work done offline goes up as soon as the internet is back','A deleted saved practice stays deleted (identical copies go with it)','Text centred in every bubble: calendar days, Today, This week, age-group tags and small buttons']},
