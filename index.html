@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124145554">
+<meta name="hufc-build" content="20261124150217">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -5047,7 +5047,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         <p class="an-ro" id="anRo" hidden>View only — another coach’s match. Tap a tag to watch it.</p>
       </div>
       <div class="an-right">
-        <div class="an-tabs" role="tablist"><button type="button" class="an-tab" role="tab" data-tab="tags">Tags<span id="anCount"></span></button><button type="button" class="an-tab" role="tab" data-tab="clips">Clips<span id="anClipCount"></span></button><button type="button" class="an-tab" role="tab" data-tab="stats">Stats</button></div>
+        <div class="an-tabs" role="tablist"><button type="button" class="an-tab" role="tab" data-tab="stats">Stats</button><button type="button" class="an-tab" role="tab" data-tab="tags">Tags<span id="anCount"></span></button><button type="button" class="an-tab" role="tab" data-tab="clips">Clips<span id="anClipCount"></span></button></div>
         <div id="anTagsPane"><div class="an-filters" id="anFilters"></div><div class="an-list" id="anList"></div></div>
         <div id="anClipsPane" hidden><div class="an-list" id="anClipList"></div></div>
         <div id="anStatsPane" hidden><div id="anStats"></div></div>
@@ -14252,7 +14252,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   };
   const anModal = document.getElementById('anModal');
   const anVideo = document.getElementById('anVideo');
-  let anSide = 'us', anFilter = {type:'', side:'', pid:''}, anTab = 'tags', anClipEnd = null, anLastTag = null, anWhoTimer = 0, anUrl = null;
+  let anSide = 'us', anFilter = {type:'', side:'', pid:''}, anTab = 'stats', anClipEnd = null, anLastTag = null, anWhoTimer = 0, anUrl = null;
   let anM = null, anKey = null, anSaveT = 0;
 
   function mvList(){
@@ -14387,7 +14387,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     let m = null; try{ m = JSON.parse(hufcStore.getItem(key)); }catch(e){}
     if(!m){ showToast('That match video isn’t on this device'); return; }
     anM = m; anKey = key;
-    anData(); anFilter = {type:'', side:'', pid:''}; anTab = 'tags'; anCut = null;
+    anData(); anFilter = {type:'', side:'', pid:''}; anTab = 'stats'; anCut = null;
     if(anVideo.dataset.for !== anKey){ anVideo.removeAttribute('src'); delete anVideo.dataset.for; try{ anVideo.load(); }catch(e){} }
     anRenderHead();
     anRenderAll();
@@ -15178,8 +15178,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const box = document.getElementById('anStats'); box.innerHTML = '';
     const tags = anData().tags;
     const veo = anVeoStats(box);
-    if(veo && tags.length) box.appendChild(h('h4', {class:'an-h an-veo-own', text:'From the tags (yours and Veo’s goals and shots)'}));
-    if(!tags.length){ if(!veo) box.appendChild(h('p', {class:'an-empty-list', text:'Stats appear here as you tag the match.'})); return; }
+    if(veo) return;   /* (Veo's stats say it all: the tag counts aren't repeated under them) */
+    if(!tags.length){ box.appendChild(h('p', {class:'an-empty-list', text:'Stats appear here as you tag the match.'})); return; }
     const opp = anOppShort();
     const types = anTypes().filter(function(t){ return tags.some(function(x){ return x.type === t; }); });
     const n = function(type, side, half){ return tags.filter(function(x){ return x.type === type && x.side === side && (!half || anHalf(x.t) === half); }).length; };
