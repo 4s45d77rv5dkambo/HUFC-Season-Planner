@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261125093913">
+<meta name="hufc-build" content="20261125101407">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2102,6 +2102,8 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-map-line{font-size:12px; color:#5c5c58; margin-top:6px; min-height:16px;}
 .an-map-f{display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin:-2px 0 8px;}
 .an-map-svg .shot.sel .dot{stroke:#fff; stroke-width:.9; stroke-dasharray:none;}
+.an-map-svg.editing{cursor:crosshair; touch-action:none;}
+.an-map-svg.editing .shot:not(.sel){opacity:.3; pointer-events:none;}
 .an-map-pick{display:flex; align-items:center; gap:6px 8px; flex-wrap:wrap; margin-top:8px; padding:8px 10px; border:1px solid #ececea; border-radius:10px; min-height:20px; font-size:13px; color:#1a1a1a;}
 .an-map-pt{flex:1 1 180px;}
 .an-map-pt b{font-weight:700;}
@@ -15832,7 +15834,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(b64) return go(b64);
     pgMedia.get('mvb-' + m.id).then(go).catch(function(){});
   }
-  let anSmSel = '', anPmSide = 0, anPmNum = '', anPoSide = 0, anSmSide = 'a', anSmRes = 'a', anSmNum = '';
+  let anSmSel = '', anSmEdit = '', anPmSide = 0, anPmNum = '', anPoSide = 0, anSmSide = 'a', anSmRes = 'a', anSmNum = '';
   const anShotKey = function(s){ return s[0] + '@' + s[6]; };
   function anVeoNameOf(n){
     if(n == null || n < 0) return '';
@@ -15894,8 +15896,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(k === 0 && E.oo && Math.abs(o.e[0] - (sd ? 0 : 1000)) <= 30 && o.e[1] >= 400 && o.e[1] <= 600 && !E.oo.some(function(t){ return t > s[6] && t - s[6] <= 3; })) return 4;
         return k;
       };
+      const fixEnd = a.shotEnd || {};
       const endOf = function(o, k){
         const s = o.s, sd = s[0], xg = sd ? 0 : 1000;
+        if(fixEnd[anShotKey(s)]) return fixEnd[anShotKey(s)];          /* the coach's own: where the ball really went */
         if(k === 1){ const v = E.sv.find(function(v){ return v[0] !== sd && v[4] - s[6] >= 0 && v[4] - s[6] <= 4; }); return [v[2], v[3]]; }
         if(k === 2){ const y = o.e ? Math.max(446, Math.min(554, o.e[1])) : 500; return [xg + (sd ? -12 : 12), y]; }
         return o.e ? [o.e[0], o.e[1]] : null;
@@ -15942,20 +15946,22 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         const s = it.o.s, k = it.k, c = s[0] ? RC : YC, sp = asP(s[1], s[2], s[3]), x = X(sp[0]), y = Y(sp[1]);
         const faint = it.st !== 'shot';
         const g = S('g', {class:'shot' + (faint ? ' faint' : '') + (anSmSel === anShotKey(s) ? ' sel' : ''), tabindex:'0', role:'button'}, svg);
-        const rad = k === 2 ? 2.1 : k === 1 || k === 4 ? 1.6 : 1.4;
-        if(it.end){
-          const ep = asP(s[1], it.end[0], it.end[1]), ex = X(ep[0]), ey = Y(ep[1]), dx = ex - x, dy = ey - y, Ln = Math.hypot(dx, dy) || 1, ux = dx / Ln, uy = dy / Ln;
+        const rad = k === 2 ? 2.1 : k === 1 || k === 4 ? 1.6 : 1.4, key = anShotKey(s);
+        const ag = S('g', {}, g);
+        const arrow = function(ex, ey){
+          const dx = ex - x, dy = ey - y, Ln = Math.hypot(dx, dy) || 1, ux = dx / Ln, uy = dy / Ln;
           if(Ln > rad + 1){
             if(k === 3){
-              S('line', {x1:x + ux * rad, y1:y + uy * rad, x2:ex, y2:ey, stroke:c, 'stroke-width':'.45', opacity:faint ? '.4' : '1'}, g);
-              S('line', {x1:ex - uy * 1.6, y1:ey + ux * 1.6, x2:ex + uy * 1.6, y2:ey - ux * 1.6, stroke:c, 'stroke-width':'.75', 'stroke-linecap':'round', opacity:faint ? '.4' : '1'}, g);
+              S('line', {x1:x + ux * rad, y1:y + uy * rad, x2:ex, y2:ey, stroke:c, 'stroke-width':'.45', opacity:faint ? '.4' : '1'}, ag);
+              S('line', {x1:ex - uy * 1.6, y1:ey + ux * 1.6, x2:ex + uy * 1.6, y2:ey - ux * 1.6, stroke:c, 'stroke-width':'.75', 'stroke-linecap':'round', opacity:faint ? '.4' : '1'}, ag);
             } else {
               const hx = ex - ux * 1.6, hy = ey - uy * 1.6, op = faint ? '.4' : k ? '.95' : '.8';
-              S('line', {x1:x + ux * rad, y1:y + uy * rad, x2:hx, y2:hy, stroke:c, 'stroke-width':k ? '.45' : '.32', 'stroke-dasharray':k && !faint ? '' : '1.1 .8', opacity:op}, g);
-              S('path', {d:'M' + ex + ' ' + ey + ' L' + (hx - uy * .8) + ' ' + (hy + ux * .8) + ' L' + (hx + uy * .8) + ' ' + (hy - ux * .8) + 'Z', fill:c, opacity:op}, g);
+              S('line', {x1:x + ux * rad, y1:y + uy * rad, x2:hx, y2:hy, stroke:c, 'stroke-width':k ? '.45' : '.32', 'stroke-dasharray':k && !faint ? '' : '1.1 .8', opacity:op}, ag);
+              S('path', {d:'M' + ex + ' ' + ey + ' L' + (hx - uy * .8) + ' ' + (hy + ux * .8) + ' L' + (hx + uy * .8) + ' ' + (hy - ux * .8) + 'Z', fill:c, opacity:op}, ag);
             }
           }
-        }
+        };
+        if(it.end){ const ep = asP(s[1], it.end[0], it.end[1]); arrow(X(ep[0]), Y(ep[1])); }
         if(faint){ S('circle', {class:'dot', cx:x, cy:y, r:2, fill:'#1d201d', stroke:c, 'stroke-width':'.5', 'stroke-dasharray':'.8 .6'}, g); S('text', {x:x, y:y + 1, 'text-anchor':'middle', 'font-size':'2.8', 'font-weight':'700', 'font-family':'Barlow, sans-serif', fill:c}, g).textContent = it.st === 'cross' ? '×' : '?'; }
         else if(k === 2) S('circle', {class:'dot', cx:x, cy:y, r:2.1, fill:c, stroke:'#fff', 'stroke-width':'.7'}, g);
         else if(k === 1) S('circle', {class:'dot', cx:x, cy:y, r:1.6, fill:c}, g);
@@ -15967,12 +15973,21 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         g.setAttribute('aria-label', txt);
         /* tap: watch it, and (for a coach) say if it was a shot or a cross */
         const choose = function(){
+          if(anSmEdit && anSmEdit !== key) return;
           anSmSel = anShotKey(s);
           [].forEach.call(svg.querySelectorAll('.shot.sel'), function(x){ x.classList.remove('sel'); }); g.classList.add('sel');
           pick.innerHTML = '';
           pick.appendChild(h('span', {class:'an-map-pt'}, h('b', {text:who(s[0], s[5]) + ' · ' + anClock(s[6])}), document.createTextNode(' · ' + what)));
           pick.appendChild(h('button', {type:'button', class:'an-map-b', text:'▶ Watch', onclick:function(){ anSeek(Math.max(0, s[6] - 4)); }}));
           const set = function(v){ a.shotFix = a.shotFix || {}; a.shotFix[anShotKey(s)] = v; if(v === 'cross') anSmSel = ''; anSave(); anRenderStats(); };
+          if(anCanEdit() && anSmEdit === key){
+            pick.innerHTML = '';
+            pick.appendChild(h('span', {class:'an-map-pt'}, h('b', {text:'Fix the arrow · '}), document.createTextNode('tap or drag on the pitch to where the ball went')));
+            if(fixEnd[key]) pick.appendChild(h('button', {type:'button', class:'an-map-b', text:'Back to Veo’s', onclick:function(){ delete a.shotEnd[key]; anSmEdit = ''; anSave(); anRenderStats(); }}));
+            pick.appendChild(h('button', {type:'button', class:'an-map-b y', text:'Done', onclick:function(){ anSmEdit = ''; anRenderStats(); }}));
+            return;
+          }
+          if(anCanEdit()) pick.appendChild(h('button', {type:'button', class:'an-map-b', text:fixEnd[key] ? 'Fix arrow ✓' : 'Fix arrow', onclick:function(){ anSmEdit = key; anRenderStats(); }}));
           if(anCanEdit()){
             if(it.st === 'check'){ pick.appendChild(h('button', {type:'button', class:'an-map-b', text:'It’s a shot', onclick:function(){ set('shot'); }})); pick.appendChild(h('button', {type:'button', class:'an-map-b y', text:'It’s a cross', onclick:function(){ set('cross'); }})); }
             else if(it.st === 'cross') pick.appendChild(h('button', {type:'button', class:'an-map-b', text:'Back to a shot', onclick:function(){ set('shot'); }}));
@@ -15982,6 +15997,18 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         g.addEventListener('click', choose);
         g.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); choose(); } });
         if(anSmSel === anShotKey(s)) ends.push(choose);
+        /* fixing this shot's arrow: tap or drag on the pitch; let go to keep it */
+        if(anSmEdit === key && anCanEdit()){
+          svg.classList.add('editing'); g.classList.add('sel');
+          let down = false;
+          const at = function(e){ const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; const q = p.matrixTransform(svg.getScreenCTM().inverse()); return [Math.max(-2, Math.min(107, q.x)), Math.max(-1, Math.min(69, q.y))]; };
+          const move = function(e){ const q = at(e); ag.innerHTML = ''; arrow(q[0], q[1]); return q; };
+          svg.addEventListener('pointerdown', function(e){ down = true; try{ svg.setPointerCapture(e.pointerId); }catch(x){} move(e); e.preventDefault(); });
+          svg.addEventListener('pointermove', function(e){ if(down) move(e); });
+          const up = function(e){ if(!down) return; down = false; const q = move(e);
+            a.shotEnd = a.shotEnd || {}; a.shotEnd[key] = asP(s[1], Math.round(q[0] / 105 * 1000), Math.round(q[1] / 68 * 1000)); anSave(); anRenderStats(); };
+          svg.addEventListener('pointerup', up); svg.addEventListener('pointercancel', function(){ down = false; });
+        }
       });
       card.appendChild(svg);
       const Yl = YC;
@@ -18582,7 +18609,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to watch it','Shot map filters: both teams or one, the result (goals, saved, woodwork or save, missed, blocked) and one player. “Woodwork or save”: the ball reached the goal between the posts, didn’t go in and stayed in play — off the frame, or a save Veo didn’t log','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to watch it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Pass map: a line for every pass from where it was played to where it was received (missed ones dashed), for either team, and for one player picked by name','Possession map: where the team had the ball, in thirds and left / centre / right','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
+    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to watch it','Shot map filters: both teams or one, the result (goals, saved, woodwork or save, missed, blocked) and one player. “Woodwork or save”: the ball reached the goal between the posts, didn’t go in and stayed in play — off the frame, or a save Veo didn’t log','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to watch it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Pass map: a line for every pass from where it was played to where it was received (missed ones dashed), for either team, and for one player picked by name','Possession map: where the team had the ball, in thirds and left / centre / right','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
     {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now gets it in about a minute — four Veo pages at once, without loading Veo’s video — and keeps going by itself until it has the whole game)','Fixed: pressing Veo stats ✓ again could empty the Stats tab when Veo sent only part of the stats (what was there now stays, and the stats load properly in the background)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
     {v:'4.13', d:'20 Nov 2026', t:'See who’s on, Save as PDF, coaches in full', n:['The admin can see which coaches are using the planner right now and what they’re working on','Save as PDF beside Print in every plan’s top bar','A plan’s black bar names every coach in full: the coach who made it first, then each collaborator, with commas','Collaborators: a session you’re added to shows up in your planner, with a notice saying who added you','The admin can send a coach a password reset email','Removing a coach’s access moves them to Removed (not Waiting); waiting coaches can be removed too','Side menu icons about 30% bigger','Numbers in every badge sit dead centre (collaborators, Settings, attendance)','Fixed: “2 out” on the attendance link went outside its box']},
