@@ -697,8 +697,17 @@ function veoTrackRun(slug, ranges) {
         if (win && !win.isDestroyed()) win.webContents.send('veo:trackProgress', Math.min(95, Math.round(k / steps.length * 95)));
         if (k === 12 && !starts.length) { done({ error: 'nothing' }); return; }
       }
-      /* a second try at any piece that didn't come */
-      for (const t of steps.filter(t => !covered(t))) { if (finished) return; await fetchAt(t, 8000); }
+      /* more tries at any piece that didn't come (up to three more rounds, each waiting longer) */
+      for (let round = 1; round <= 3; round++) {
+        const left = steps.filter(t => !covered(t)); if (!left.length) break;
+        let j = 0;
+        for (const t of left) {
+          if (finished) return;
+          await fetchAt(t, 6000 + round * 3000);
+          j++;
+          if (win && !win.isDestroyed()) win.webContents.send('veo:trackProgress', Math.min(99, 95 + Math.round(j / left.length * 4)));
+        }
+      }
       const cov = steps.filter(t => covered(t)).length / (steps.length || 1);
       await sleep(800);
       if (finished) return;
