@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261125101407">
+<meta name="hufc-build" content="20261125101859">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -15936,9 +15936,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       seenP.forEach(function(k){ const A = k.split(':'), sd = +A[0], n = +A[1], nm = sd ? '' : anVeoNameOf(n);
         const o = h('option', {value:k, text:(anSmSide === 'a' ? (sd ? opp : us) + ' ' : '') + n + (nm ? ' · ' + nm : '')}); if(k === anSmNum) o.selected = true; psel.appendChild(o); });
       const resOpts = [['a', 'All'], [2, 'Goals'], [1, 'Saved']]; if(all.some(function(it){ return it.k === 4; })) resOpts.push([4, 'Woodwork or save']); resOpts.push([0, E.end ? 'Missed' : 'Missed or blocked']); if(E.end) resOpts.push([3, 'Blocked']); if(nCheck) resOpts.push(['c', 'To check']); if(nCross) resOpts.push(['x', 'Crosses']);
+      /* the result: a dropdown (fits the panel, and a phone) */
+      const rsel = h('select', {class:'an-map-sel', 'aria-label':'Which shots', onchange:function(e){ const v = e.target.value; anSmRes = v === 'a' || v === 'c' || v === 'x' ? v : +v; anRenderStats(); }});
+      resOpts.forEach(function(o){ const op = h('option', {value:String(o[0]), text:o[0] === 'a' ? 'All shots' : o[1]}); if(o[0] === anSmRes) op.selected = true; rsel.appendChild(op); });
       card.appendChild(h('div', {class:'an-map-f'},
         seg(anSmSide, [['a', 'Both'], [0, us], [1, opp]], function(v){ anSmSide = v; anSmNum = ''; }),
-        seg(anSmRes, resOpts, function(v){ anSmRes = v; }), psel));
+        rsel, psel));
       items.sort(function(a, b){ return (a.k === 2) - (b.k === 2); });
       const pick = h('div', {class:'an-map-pick'}, h('span', {class:'an-map-n', text:'Tap a shot to watch it' + (nCheck && anCanEdit() ? ', or to say if it was a shot or a cross' : '')}));
       const ends = [];
