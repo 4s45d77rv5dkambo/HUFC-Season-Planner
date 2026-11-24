@@ -590,6 +590,126 @@ ipcMain.handle('veo:stats', async (e, url) => {
   veoJob = veoRun(m[1]);
   try { return await veoJob; } finally { veoJob = null; }
 });
+/* ---- Veo's player tracking (the mini map): Veo's page only loads it 24 seconds at a time, around where its video is.
+   So a hidden Veo window steps its video through each half and keeps what the page loads; the positions are then
+   thinned to one every 0.8 s and packed small (each: who, x, y). Nothing is typed into Veo or asked of it beyond its page. */
+/* Veo's positions, thinned to every 0.8 s and packed: per moment a count, then for each one: who (1 us, 2 our keeper,
+   3 them, 4 their keeper, 5 ball), its track number, x, y (each 0..65535 over -0.25..1.25 of the pitch) */
+function veoPack(frames, ranges) {
+  const times = Object.keys(frames).map(Number).sort((a, b) => a - b);
+  if (!times.length) return null;
+  const dt = 0.8, t0 = Math.max(times[0], ranges[0][0]), tEnd = Math.min(times[times.length - 1], ranges[ranges.length - 1][1]);
+  const n = Math.max(0, Math.floor((tEnd - t0) / dt) + 1);
+  const parts = []; let j = 0;
+  const q = v => Math.max(0, Math.min(65535, Math.round((v + 0.25) / 1.5 * 65535)));
+  for (let i = 0; i < n; i++) {
+    const tt = t0 + i * dt;
+    while (j + 1 < times.length && Math.abs(times[j + 1] - tt) <= Math.abs(times[j] - tt)) j++;
+    const list = Math.abs(times[j] - tt) <= 0.5 ? frames[times[j].toFixed(2)] : null;
+    const objs = [];
+    (list || []).forEach(o => {
+      if (!Array.isArray(o) || o.length < 8) return;
+      const cls = o[1], team = o[7];
+      let kind = 0;
+      if (cls === 6) kind = 5; else if (team === 1) kind = (cls === 0 || cls === 2) ? 2 : 1; else if (team === 2) kind = (cls === 0 || cls === 2) ? 4 : 3;
+      if (kind) objs.push([kind, (o[0] + 1) & 255, q(o[2]), q(o[3])]);
+    });
+    const c = Math.min(255, objs.length), b = Buffer.alloc(1 + c * 6); b[0] = c;
+    objs.slice(0, c).forEach((o, k) => { const at = 1 + k * 6; b[at] = o[0]; b[at + 1] = o[1]; b.writeUInt16LE(o[2], at + 2); b.writeUInt16LE(o[3], at + 4); });
+    parts.push(b);
+  }
+  return { t0: t0, dt: dt, n: n, data: Buffer.concat(parts).toString('base64') };
+}
+let veoTrackJob = null;
+function veoTrackRun(slug, ranges) {
+  const target = 'https://app.veo.co/matches/' + slug + '/';
+  return new Promise(resolve => {
+    const frames = {}, reqs = {}, starts = [];
+    let finished = false;
+    const w = new BrowserWindow({ show: false, width: 1400, height: 900, title: 'Veo · ' + APP_NAME, icon: path.join(__dirname, 'icon.ico'), autoHideMenuBar: true,
+      webPreferences: { partition: VEO_PART, contextIsolation: true, sandbox: true, backgroundThrottling: false } });
+    try { w.webContents.setUserAgent(w.webContents.getUserAgent().replace(/\s*Electron\/\S+/i, '').replace(/\s*hufc-season-planner\/\S+/i, '').replace(/\s*HUFC Season Planner\/\S+/i, '')); } catch (e) {}
+    try { w.webContents.setAudioMuted(true); } catch (e) {}
+    const dbg = w.webContents.debugger;
+    const done = out => {
+      if (finished) return; finished = true;
+      try { dbg.detach(); } catch (e) {}
+      try { if (!w.isDestroyed()) w.destroy(); } catch (e) {}
+      log('veo track', slug, out.error || ('ok ' + starts.length + ' pieces'));
+      resolve(out);
+    };
+    try { dbg.attach('1.3'); } catch (e) { try { w.destroy(); } catch (x) {} resolve({ error: 'internal' }); return; }
+    dbg.on('message', (ev, method, p) => {
+      try {
+        if (method === 'Network.responseReceived') {
+          const u = p.response && p.response.url || '';
+          if (/\/api\/mes\/v2\/[^/]+\/player-tracking\?start=/.test(u) && p.response.status === 200) reqs[p.requestId] = u;
+        } else if (method === 'Network.loadingFinished') {
+          const u = reqs[p.requestId]; if (!u) return; delete reqs[p.requestId];
+          dbg.sendCommand('Network.getResponseBody', { requestId: p.requestId }).then(b => {
+            const t = b.base64Encoded ? Buffer.from(b.body, 'base64').toString('utf8') : b.body;
+            let j = null; try { j = JSON.parse(t); } catch (e) { return; }
+            if (!j || typeof j !== 'object') return;
+            Object.keys(j).forEach(k => { const tt = parseFloat(k); if (isFinite(tt) && Array.isArray(j[k])) frames[tt.toFixed(2)] = j[k]; });
+            const st = parseFloat((u.match(/start=([\d.]+)/) || [])[1]); if (isFinite(st)) starts.push(st);
+          }).catch(() => {});
+        }
+      } catch (e) {}
+    });
+    dbg.sendCommand('Network.enable', { maxResourceBufferSize: 10e6, maxTotalBufferSize: 100e6 }).catch(() => {});
+    const js = c => w.isDestroyed() ? Promise.resolve(null) : w.webContents.executeJavaScript(c).catch(() => null);
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const covered = t => starts.some(s => s <= t + 0.5 && t < s + 23.5);
+    const total = ranges.reduce((a, r) => a + Math.max(0, r[1] - r[0]), 0) || 1;
+    w.loadURL(target).catch(err => done({ error: /ERR_INTERNET|ERR_NAME|ERR_CONNECTION|ERR_NETWORK/.test(err.message) ? 'offline' : 'load' }));
+    (async () => {
+      /* Veo's player ready (or its sign-in wall) */
+      let ready = false;
+      for (let i = 0; i < 60 && !finished; i++) {
+        await sleep(500);
+        const st = await js('(() => { const v = document.querySelector("video"); const wall = /log in to access/i.test(document.body ? document.body.innerText.slice(0, 20000) : ""); return { wall: wall, ok: !!(v && v.readyState >= 1 && v.duration > 0) }; })()');
+        if (st && st.wall) { done({ error: 'signin' }); return; }
+        if (st && st.ok) { ready = true; break; }
+      }
+      if (!ready) { done({ error: 'load' }); return; }
+      await js('(() => { const v = document.querySelector("video"); v.muted = true; v.pause(); return true; })()');
+      let doneSec = 0, misses = 0;
+      for (const r of ranges) {
+        for (let t = r[0]; t < r[1] && !finished; t += 20) {
+          if (!covered(t)) {
+            await js('(() => { const v = document.querySelector("video"); v.currentTime = ' + t.toFixed(2) + '; return true; })()');
+            let ok = false;
+            for (let i = 0; i < 30 && !finished; i++) { await sleep(150); if (covered(t)) { ok = true; break; } }
+            if (!ok) {   /* a little play nudges Veo's page to load it */
+              await js('(() => { const v = document.querySelector("video"); v.play().catch(() => {}); return true; })()');
+              for (let i = 0; i < 25 && !finished; i++) { await sleep(150); if (covered(t)) { ok = true; break; } }
+              await js('(() => { const v = document.querySelector("video"); v.pause(); return true; })()');
+            }
+            if (!ok && ++misses > 12 && !starts.length) { done({ error: 'nothing' }); return; }
+          }
+          doneSec += 20;
+          if (win && !win.isDestroyed()) win.webContents.send('veo:trackProgress', Math.min(99, Math.round(doneSec / total * 100)));
+        }
+      }
+      await sleep(800);
+      if (finished) return;
+      const pk = veoPack(frames, ranges);
+      if (!pk) { done({ error: 'nothing' }); return; }
+      done(Object.assign({ ok: true }, pk));
+    })().catch(e => done({ error: 'internal' }));
+    w.on('close', () => { if (!finished) done({ error: 'closed' }); });
+    setTimeout(() => done({ error: 'timeout' }), 15 * 60 * 1000);
+  });
+}
+ipcMain.handle('veo:track', async (e, url, ranges) => {
+  const m = String(url || '').match(/^https?:\/\/(?:app\.)?veo\.co\/matches\/([A-Za-z0-9_-]+)/i);
+  if (!m) return { error: 'link' };
+  const rs = (Array.isArray(ranges) ? ranges : []).filter(r => Array.isArray(r) && r.length === 2 && isFinite(r[0]) && isFinite(r[1]) && r[1] > r[0]).map(r => [+r[0], +r[1]]);
+  if (!rs.length) return { error: 'nothing' };
+  if (veoTrackJob) return { error: 'busy' };
+  veoTrackJob = veoTrackRun(m[1], rs);
+  try { return await veoTrackJob; } finally { veoTrackJob = null; }
+});
 ipcMain.handle('veo:signOut', async () => {
   try { await session.fromPartition(VEO_PART).clearStorageData(); return { ok: true }; } catch (e) { return { error: e.message }; }
 });

@@ -1,7 +1,7 @@
 {
   "name": "hufc-season-planner",
   "productName": "HUFC Season Planner",
-  "version": "1.6.11",
+  "version": "1.6.12",
   "description": "Heidelberg United FC season planner: sessions, lineups, pre-games, practices and stats",
   "main": "main.js",
   "author": "Heidelberg United FC",

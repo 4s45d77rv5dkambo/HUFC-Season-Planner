@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124150649">
+<meta name="hufc-build" content="20261124151801">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2098,6 +2098,9 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-veo-own{margin-top:18px;}
 .an-row-veo{display:inline-flex; align-items:center; justify-content:center; margin-left:6px; padding:1px 6px; border-radius:999px; background:#e7f3ea; color:#1f7a45; font-size:10px; font-weight:700; letter-spacing:.06em; line-height:1.4; vertical-align:1px;}
 #anStats > *{flex-shrink:0;}
+.an-minimap{position:absolute; top:10px; right:10px; z-index:3; pointer-events:none; border-radius:6px;}
+.an-minimap[hidden]{display:none;}
+.an-map-btn.on{background:#111; border-color:#111; color:#ffd400;}
 /* the match video is a page of its own: the home page behind it doesn't scroll, and its scrollbar doesn't show */
 html:has(#anModal:not([hidden])), html:has(#anModal:not([hidden])) body{overflow:hidden;}
 html.app-frame body:has(#anModal:not([hidden])) .toast{top:52px; bottom:auto;}
@@ -5038,6 +5041,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           <button type="button" class="btn btn-small an-full-btn" id="anFullBtn" title="Full screen (double-tap the video) — the tag buttons come too" aria-label="Full screen"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
           <select id="anSpeed" aria-label="Speed"><option value="0.5">½×</option><option value="1" selected>1×</option><option value="1.5">1½×</option><option value="2">2×</option><option value="4">4×</option></select>
           <button type="button" class="btn btn-small an-cut-btn" id="anCutBtn" title="Cut a part of the match into its own video">✂ Clip</button>
+          <button type="button" class="btn btn-small an-map-btn" id="anMapBtn" hidden aria-pressed="false" title="Show or hide the mini map (Veo’s player positions)">Mini map</button>
           <span class="an-gap"></span>
           <div class="an-halves" id="anHalves" role="group" aria-label="Halves"></div>
         </div>
@@ -15389,6 +15393,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(done){
       if(anM === m){ anSave(); anMTickSig = ''; anRenderAll(); anTab = 'stats'; anRenderTabs(); }
       else { try{ hufcStore.setItem(key, JSON.stringify(m)); }catch(e){} clubSyncSoon(); }
+      setTimeout(function(){ try{ anVeoTrackStart(m, link); }catch(e){} }, 1200);
       const bits = [];
       if(done.goals || done.shots) bits.push(done.goals + ' goal' + (done.goals === 1 ? '' : 's') + ' and ' + done.shots + ' shot' + (done.shots === 1 ? '' : 's') + ' on the timeline');
       if(done.halves) bits.push('halves marked');
@@ -15478,6 +15483,123 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return true;
   }
 
+  /* ---------- the mini map: Veo's player positions over the video (kept on this device only) ---------- */
+  let anTrack = null, anTrackFor = null, anTrackBusy = null, anTrackPct = 0, anTrackHooked = false;
+  function anMapOn(){ try{ return localStorage.getItem('hufc-minimap') !== 'off'; }catch(e){ return true; } }
+  const anMapCv = document.createElement('canvas'); anMapCv.className = 'an-minimap'; anMapCv.setAttribute('aria-hidden', 'true'); anMapCv.hidden = true;
+  try{ document.getElementById('anVideoWrap').appendChild(anMapCv); }catch(e){}
+  function anTrackDecode(meta, b64){
+    const bin = atob(b64), u = new Uint8Array(bin.length);
+    for(let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    const n = meta.n | 0, offs = new Uint32Array(n + 1); let p = 0;
+    for(let i = 0; i < n; i++){ offs[i] = Math.min(p, u.length); p += p < u.length ? 1 + u[p] * 6 : 0; }
+    offs[n] = Math.min(p, u.length);
+    return {t0:+meta.t0, dt:+meta.dt, n:n, u:u, offs:offs};
+  }
+  function anTrackLoad(){
+    const id = anM ? anM.id : null, meta = anM && anM.analysis && anM.analysis.veoTrack;
+    if(anTrackFor === id && (anTrack || !meta)){ anMapRender(); return; }
+    anTrack = null; anTrackFor = id;
+    if(!meta || !id){ anMapRender(); return; }
+    pgMedia.get('mvt-' + id).then(function(s){
+      if(!anM || anM.id !== id) return;
+      if(typeof s === 'string'){ try{ anTrack = anTrackDecode(meta, s); }catch(e){ anTrack = null; } }
+      anMapRender();
+    }).catch(function(){ anMapRender(); });
+  }
+  function anMapRender(){
+    const b = document.getElementById('anMapBtn'); if(!b) return;
+    const busy = anTrackBusy && anM && anTrackBusy === anM.id;
+    b.hidden = !(anTrack || busy);
+    b.textContent = busy ? 'Mini map ' + anTrackPct + '%' : 'Mini map';
+    b.classList.toggle('on', !!anTrack && anMapOn() && !busy);
+    b.setAttribute('aria-pressed', String(!!anTrack && anMapOn()));
+    b.title = busy ? 'Getting the mini map from Veo · you can keep working' : anMapOn() ? 'Hide the mini map' : 'Show the mini map (Veo’s player positions)';
+    anMapCv.hidden = !(anTrack && anMapOn() && anVideo.currentSrc && anVideo.dataset.for === anKey);
+    anMapDraw();
+  }
+  function anMapFrame(i){
+    const T = anTrack, out = []; if(!T || i < 0 || i >= T.n) return out;
+    let p = T.offs[i]; const u = T.u, c = u[p] || 0; p++;
+    for(let k = 0; k < c && p + 5 < u.length + 1; k++, p += 6){
+      out.push({k:u[p], id:u[p + 1], x:(u[p + 2] | (u[p + 3] << 8)) / 65535 * 1.5 - 0.25, y:(u[p + 4] | (u[p + 5] << 8)) / 65535 * 1.5 - 0.25});
+    }
+    return out;
+  }
+  function anMapDraw(){
+    if(anMapCv.hidden || !anTrack) return;
+    const wrap = anMapCv.parentElement; if(!wrap) return;
+    const r = wrap.getBoundingClientRect(); if(!r.width) return;
+    const dpr = window.devicePixelRatio || 1;
+    const W = Math.round(Math.max(170, Math.min(320, r.width * 0.27))), H = Math.round(W * 136 / 210);
+    if(anMapCv.style.width !== W + 'px'){ anMapCv.style.width = W + 'px'; anMapCv.style.height = H + 'px'; }
+    const cw = Math.round(W * dpr), ch = Math.round(H * dpr);
+    if(anMapCv.width !== cw || anMapCv.height !== ch){ anMapCv.width = cw; anMapCv.height = ch; }
+    const g = anMapCv.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cw, ch);
+    const k = cw / 210; g.setTransform(k, 0, 0, k, 0, 0);
+    const P = 4, PW = 210 - 2 * P, PH = 136 - 2 * P;
+    /* the pitch: a faint tint and thin lines, so the video shows through */
+    g.fillStyle = 'rgba(0,0,0,0.22)'; g.beginPath(); if(g.roundRect) g.roundRect(0, 0, 210, 136, 5); else g.rect(0, 0, 210, 136); g.fill();
+    g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = 0.9;
+    const line = function(f){ g.beginPath(); f(); g.stroke(); };
+    line(function(){ g.rect(P, P, PW, PH); });
+    line(function(){ g.moveTo(105, P); g.lineTo(105, 136 - P); });
+    line(function(){ g.arc(105, 68, 17, 0, Math.PI * 2); });
+    line(function(){ g.rect(P, 38, 31, 60); g.rect(210 - P - 31, 38, 31, 60); });
+    line(function(){ g.rect(P, 54, 11, 28); g.rect(210 - P - 11, 54, 11, 28); });
+    /* where everyone is at the video's moment (between two of Veo's moments, in between) */
+    const T = anTrack, f = (anVideo.currentTime - T.t0) / T.dt; if(!(f >= 0 && f <= T.n - 1)) return;
+    const i = Math.floor(f), w = f - i, A = anMapFrame(i), B = w > 0.001 ? anMapFrame(i + 1) : [];
+    const nb = {}; B.forEach(function(o){ nb[o.k + ':' + o.id] = o; });
+    const X = function(v){ return P + Math.max(-0.02, Math.min(1.02, v)) * PW; }, Y = function(v){ return P + Math.max(-0.02, Math.min(1.02, v)) * PH; };
+    const pts = A.map(function(a){ const b = nb[a.k + ':' + a.id]; const ok = b && Math.abs(b.x - a.x) < 0.1 && Math.abs(b.y - a.y) < 0.1;
+      return {k:a.k, x:X(ok ? a.x + (b.x - a.x) * w : a.x), y:Y(ok ? a.y + (b.y - a.y) * w : a.y)}; });
+    g.lineWidth = 0.5;
+    pts.filter(function(o){ return o.k !== 5; }).forEach(function(o){
+      g.beginPath();
+      if(o.k <= 2){ g.arc(o.x, o.y, 3.4, 0, Math.PI * 2); g.fillStyle = '#f5c400'; }
+      else { const R = 4; g.moveTo(o.x, o.y - R); g.lineTo(o.x + R * 0.9, o.y + R * 0.6); g.lineTo(o.x - R * 0.9, o.y + R * 0.6); g.closePath(); g.fillStyle = '#e05555'; }
+      g.fill(); g.strokeStyle = (o.k === 2 || o.k === 4) ? '#ffffff' : '#111111'; g.lineWidth = (o.k === 2 || o.k === 4) ? 1.1 : 0.5; g.stroke();
+    });
+    pts.filter(function(o){ return o.k === 5; }).forEach(function(o){ g.beginPath(); g.arc(o.x, o.y, 2.4, 0, Math.PI * 2); g.fillStyle = '#ffffff'; g.fill(); g.strokeStyle = '#111111'; g.lineWidth = 0.5; g.stroke(); });
+  }
+  let anMapRaf = 0;
+  const anMapLoop = function(){ cancelAnimationFrame(anMapRaf); const step = function(){ anMapDraw(); if(!anVideo.paused && !anVideo.ended) anMapRaf = requestAnimationFrame(step); }; anMapRaf = requestAnimationFrame(step); };
+  ['play', 'playing'].forEach(function(ev){ anVideo.addEventListener(ev, anMapLoop); });
+  ['timeupdate', 'seeked', 'loadedmetadata', 'emptied'].forEach(function(ev){ anVideo.addEventListener(ev, function(){ try{ anMapRender(); }catch(e){} }); });
+  window.addEventListener('resize', function(){ try{ anMapDraw(); }catch(e){} });
+  document.getElementById('anMapBtn').addEventListener('click', function(){
+    if(anTrackBusy && anM && anTrackBusy === anM.id){ showToast('Getting the mini map from Veo (' + anTrackPct + '%) · you can keep working'); return; }
+    try{ localStorage.setItem('hufc-minimap', anMapOn() ? 'off' : 'on'); }catch(e){}
+    anMapRender();
+  });
+  /* after Veo's stats: Veo's player positions for the halves, in the background (a few minutes) */
+  function anVeoTrackStart(m, link, force){
+    const D = window.hufcDesktop, a = m && m.analysis; if(!D || !D.veo || !D.veo.track || !a || !a.veo) return;
+    if(anTrackBusy) return;
+    const per = (a.veo.periods || []).filter(function(r){ return Array.isArray(r) && r[1] > r[0]; });
+    if(!per.length) return;
+    const go = function(){
+      if(!anTrackHooked && D.veo.onTrackProgress){ anTrackHooked = true; D.veo.onTrackProgress(function(p){ anTrackPct = p | 0; try{ anMapRender(); }catch(e){} }); }
+      anTrackBusy = m.id; anTrackPct = 0; try{ anMapRender(); }catch(e){}
+      showToast('Getting the mini map from Veo as well · about 2–3 minutes · you can keep working');
+      D.veo.track(link, per).then(function(r){
+        anTrackBusy = null;
+        if(!r || !r.ok || !r.data){ try{ anMapRender(); }catch(e){} showToast(r && r.error === 'signin' ? 'The mini map needs you signed in to Veo · press Veo stats ✓ again' : 'Couldn’t get the mini map from Veo this time · press Veo stats ✓ to try again'); return; }
+        return pgMedia.put('mvt-' + m.id, r.data).then(function(){
+          m.analysis.veoTrack = {at:Date.now(), t0:r.t0, dt:r.dt, n:r.n};
+          if(anM === m){ anSave(); }
+          else { try{ const k = MV_PREFIX + m.id; const cur = JSON.parse(hufcStore.getItem(k) || 'null'); if(cur){ cur.analysis = cur.analysis || {}; cur.analysis.veoTrack = m.analysis.veoTrack; hufcStore.setItem(k, JSON.stringify(cur)); } }catch(e){} }
+          anTrackFor = null; try{ anTrackLoad(); }catch(e){}
+          showToast('Mini map ready · it sits over the video, top right (Mini map turns it on and off)');
+        });
+      }).catch(function(){ anTrackBusy = null; try{ anMapRender(); }catch(e){} showToast('Couldn’t get the mini map from Veo this time'); });
+    };
+    if(force || !a.veoTrack) return go();
+    pgMedia.get('mvt-' + m.id).then(function(s){ if(typeof s !== 'string') go(); }).catch(go);
+  }
+
+
   /* ---------- tabs, keyboard ---------- */
   function anRenderTabs(){
     anModal.querySelectorAll('.an-tab').forEach(function(b){ const on = b.dataset.tab === anTab; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
@@ -15487,6 +15609,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   anModal.querySelectorAll('.an-tab').forEach(function(b){ b.addEventListener('click', function(){ anTab = b.dataset.tab; anRenderTabs(); }); });
   function anRenderAll(){
+    try{ anTrackLoad(); }catch(e){}
     anMTickSig = ''; try{ anMainPaint(); }catch(e){}
     anRenderVideoState(); anRenderButtons(); anRenderList(); anRenderStats(); anRenderClips(); anRenderCut(); anRenderTabs();
     document.getElementById('anCutBtn').hidden = !anCanEdit();
@@ -17996,7 +18119,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
+    {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
     {v:'4.13', d:'20 Nov 2026', t:'See who’s on, Save as PDF, coaches in full', n:['The admin can see which coaches are using the planner right now and what they’re working on','Save as PDF beside Print in every plan’s top bar','A plan’s black bar names every coach in full: the coach who made it first, then each collaborator, with commas','Collaborators: a session you’re added to shows up in your planner, with a notice saying who added you','The admin can send a coach a password reset email','Removing a coach’s access moves them to Removed (not Waiting); waiting coaches can be removed too','Side menu icons about 30% bigger','Numbers in every badge sit dead centre (collaborators, Settings, attendance)','Fixed: “2 out” on the attendance link went outside its box']},
     {v:'4.12', d:'19 Nov 2026', t:'Saved sign, deleting practices', n:['A Saved sign in place of the Save button — work done offline goes up as soon as the internet is back','A deleted saved practice stays deleted (identical copies go with it)','Text centred in every bubble: calendar days, Today, This week, age-group tags and small buttons']},

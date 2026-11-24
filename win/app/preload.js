@@ -35,7 +35,7 @@ Object.defineProperty(window, 'localStorage', { configurable: true, enumerable: 
 
 const info = ipcRenderer.sendSync('store:info') || {};
 /* the version these helpers were written for: if the program still running is older, it needs a restart */
-const PROGRAM_VERSION = '1.6.11';
+const PROGRAM_VERSION = '1.6.12';
 ipcRenderer.on('program:updated', () => { if (typeof window.hufcProgramUpdated === 'function') window.hufcProgramUpdated(); });
 const onlineCbs = [];
 ipcRenderer.on('online:state', (e, s) => onlineCbs.forEach(cb => { try { cb(s); } catch (err) {} }));
@@ -107,7 +107,10 @@ window.hufcDesktop = {
     stats(url) { return ipcRenderer.invoke('veo:stats', String(url || '')); },
     signOut() { return ipcRenderer.invoke('veo:signOut'); },
     onSignin(cb) { if (typeof cb === 'function') ipcRenderer.on('veo:signin', () => { try { cb('signin'); } catch (e) {} }); },
-    onWorking(cb) { if (typeof cb === 'function') ipcRenderer.on('veo:working', () => { try { cb('working'); } catch (e) {} }); }
+    onWorking(cb) { if (typeof cb === 'function') ipcRenderer.on('veo:working', () => { try { cb('working'); } catch (e) {} }); },
+    /* the mini map: Veo's player positions for the halves (ranges: [[start, end], …] in the video's seconds) */
+    track(url, ranges) { return ipcRenderer.invoke('veo:track', String(url || ''), ranges || []); },
+    onTrackProgress(cb) { if (typeof cb === 'function') ipcRenderer.on('veo:trackProgress', (e, pct) => { try { cb(pct); } catch (err) {} }); }
   },
   fileDataUrl(url) { try { return ipcRenderer.sendSync('file:data', fileURLToPath(url)); } catch (e) { return null; } }
 };
