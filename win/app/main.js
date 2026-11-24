@@ -650,9 +650,7 @@ function veoBall(frames, times) {
     const b = Buffer.alloc(8); b.writeUInt32LE(Math.round(t * 100), 0); b.writeUInt16LE(q(o[2]), 4); b.writeUInt16LE(q(o[3]), 6); out.push(b);
   });
   if (!out.length) return null;
-  const s = Buffer.concat(out).toString('base64');
-  try { fs.writeFileSync(path.join(app.getPath('userData'), 'veo-ball.txt'), s); } catch (e) {}   /* (a copy for checking shot paths; goes in the next version) */
-  return s;
+  return Buffer.concat(out).toString('base64');
 }
 let veoTrackJob = null;
 function veoTrackRun(slug, ranges) {

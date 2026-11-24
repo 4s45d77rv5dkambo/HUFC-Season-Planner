@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261125071117">
+<meta name="hufc-build" content="20261125072453">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2087,6 +2087,25 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-video-wrap .pg-vid-bar.an-main-bar[hidden]{display:none;}
 .an-tag-tick{position:absolute; top:-5px; width:3px; height:10px; margin-left:-1.5px; border-radius:2px; background:var(--yellow); opacity:.9;}
 .an-tag-tick.them{background:#ff6b61;}
+.an-maps{margin-top:4px;}
+.an-map{border:1px solid #ececea; border-radius:10px; padding:10px 12px 8px; margin:8px 0 10px; background:#fff;}
+.an-map-h{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:8px;}
+.an-map-t{font:700 15px/1.2 'Barlow', sans-serif; color:#1a1a1a;}
+.an-map-c{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+.an-map-n{font-size:12px; color:#5c5c58;}
+.an-map-svg{display:block; width:100%; height:auto; border-radius:8px; background:#1d201d;}
+.an-map-svg .shot{cursor:pointer; outline:none;}
+.an-map-svg .shot:hover .dot, .an-map-svg .shot:focus-visible .dot{stroke:#fff; stroke-width:.9;}
+.an-map-leg{display:flex; gap:6px 14px; flex-wrap:wrap; font-size:12px; color:#5c5c58; margin-top:8px; align-items:center;}
+.an-map-leg span{display:inline-flex; align-items:center; gap:5px;}
+.an-map-leg .dir{margin-left:auto;}
+.an-map-line{font-size:12px; color:#5c5c58; margin-top:6px; min-height:16px;}
+.an-map-seg{display:inline-flex; border:1px solid #c9c9c4; border-radius:999px; overflow:hidden;}
+.an-map-seg button{border:0; border-radius:0; background:#fff; color:#1a1a1a; font:600 12px/1.2 'Barlow', sans-serif; padding:5px 11px; cursor:pointer;}
+.an-map-seg button.on{background:#111; color:#ffd400;}
+.an-map-sel{height:28px; max-width:170px; padding:0 8px; border:1px solid #c9c9c4; border-radius:999px; background:#fff; color:#1a1a1a; font:600 12px/1.2 'Barlow', sans-serif;}
+@media (max-width:420px){ .an-map{padding:8px 8px 6px;} .an-map-leg .dir{margin-left:0;} }
+
 #anModal .an-head.an-head-a{display:grid; grid-template-columns:auto minmax(0,1fr); grid-template-areas:"home acts" "meta meta"; align-items:center; gap:10px 12px; padding:12px 16px 12px;}
 #anModal .an-head-a > #anClose{grid-area:home; justify-self:start;}
 #anModal .an-head-a > .an-acts{grid-area:acts; display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; min-width:0;}
@@ -15349,7 +15368,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(n != null && clean(nm) && !names[String(n)]) names[String(n)] = clean(nm);
       });
     });
-    return {team:team, periods:periods, moments:moments, players:players, names:names};
+    const ev = anVeoEvParse(list(get(/\/match-events/)));
+    return {team:team, periods:periods, moments:moments, players:players, names:names, ev:ev};
   }
   /* put Veo's match into a match video record (the open one, or one closed while Veo was being read) */
   function anVeoApply(m, raw, link){
@@ -15382,6 +15402,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     a.veo = {at:Date.now(), slug:slug,
       team:v.team.length ? v.team : (was.team || []), players:v.players.length ? v.players : (was.players || []),
       names:Object.keys(v.names || {}).length ? v.names : (was.names || {}), periods:v.periods.length ? v.periods : (was.periods || [])};
+    /* Veo's match events (the maps): a fetch without them keeps the ones here; with them, the shot arrows again */
+    if(v.ev){ a.veoEv = v.ev; setTimeout(function(){ try{ anShotEndsFor(m); }catch(e){} }, 400); }
     m.savedAt = Date.now();
     const count = function(type){ return v.moments.filter(function(x){ return x.type === type; }).length; };
     return {goals:count('Goal'), shots:count('Shot'), other:v.moments.length - count('Goal') - count('Shot'), halves:halves, players:v.players.length, team:v.team.length};
@@ -15522,6 +15544,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const rest = team.filter(function(r){ return !used[r.type] && AN_VEO_SKIP.indexOf(r.type) === -1; }).map(row).filter(Boolean);
       if(rest.length) wrap.appendChild(h('div', {class:'an-vs-grp'}, h('div', {class:'an-vs-gh', text:'More'}), rest));
     }
+    try{ anVeoMaps(wrap, a); }catch(e){ try{ console.warn('maps', e); }catch(x){} }
     box.appendChild(wrap);
     box.appendChild(h('p', {class:'an-veo-src', text:'From Veo · ' + new Date(v.at).toLocaleString([], {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + ' · Veo’s goals and shots are in Tags (tap one to watch it) · their times match the video downloaded from Veo'}));
     return true;
@@ -15636,7 +15659,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(!r || !r.ok || !r.data){ try{ anMapRender(); }catch(e){} showToast(r && r.error === 'signin' ? 'The mini map needs you signed in to Veo · press Veo stats ✓ again' : 'Couldn’t get the mini map from Veo this time · press Veo stats ✓ to try again'); return; }
         return pgMedia.put('mvt-' + m.id, r.data).then(function(){
           m.analysis.veoTrack = {at:Date.now(), t0:r.t0, dt:r.dt, n:r.n, cov:typeof r.cov === 'number' ? r.cov : null};
-          if(r.ball){ m.analysis.veoTrack.ball = 1; pgMedia.put('mvb-' + m.id, r.ball).catch(function(){}); }
+          if(r.ball){ m.analysis.veoTrack.ball = 1; pgMedia.put('mvb-' + m.id, r.ball).then(function(){ try{ anShotEndsFor(m, r.ball); }catch(e){} }).catch(function(){}); }
           if(anM === m){ anSave(); }
           else { try{ const k = MV_PREFIX + m.id; const cur = JSON.parse(hufcStore.getItem(k) || 'null'); if(cur){ cur.analysis = cur.analysis || {}; cur.analysis.veoTrack = m.analysis.veoTrack; hufcStore.setItem(k, JSON.stringify(cur)); } }catch(e){} }
           anTrackFor = null; try{ anTrackLoad(); }catch(e){}
@@ -15686,6 +15709,263 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     el.textContent = has ? us + ' – ' + them : 'vs';
     el.classList.toggle('score', has);
     el.setAttribute('aria-label', has ? 'Score ' + us + ' to ' + them : 'versus');
+  }
+
+  /* ---------- the maps: Veo's match events, turned so HUFC attacks to the right ---------- */
+  /* Veo's events → kept small: points as whole thousandths of the pitch (x along, y across with the far side at the top) */
+  function anVeoEvParse(evs){
+    evs = (evs || []).filter(function(e){ return e && typeof e === 'object' && e.eventType; });
+    if(!evs.length) return null;
+    const num = function(v){ return typeof v === 'number' && isFinite(v); };
+    /* which way HUFC attacks in each half: from where the shots were taken and the keepers saved */
+    const fl = {};
+    [1, 2, 3, 4].forEach(function(p){
+      let s = 0, n = 0;
+      evs.forEach(function(e){
+        if(e.periodId !== p || !num(e.x)) return;
+        if(e.eventType === 'FootballShot'){ s += e.team === 'Own' ? e.x : 1 - e.x; n++; }
+        else if(e.eventType === 'save'){ s += e.team === 'Own' ? 1 - e.x : e.x; n++; }
+      });
+      if(n) fl[p] = s / n < 0.5 ? 1 : 0;
+    });
+    if(fl[1] == null && fl[2] != null) fl[1] = 1 - fl[2];
+    if(fl[2] == null && fl[1] != null) fl[2] = 1 - fl[1];
+    const P = function(e, x, z){ const f = fl[e.periodId] === 1; if(f){ x = 1 - x; z = 1 - z; } return [Math.round(x * 1000), Math.round((1 - z) * 1000)]; };
+    const side = function(e){ return e.team === 'Own' ? 0 : 1; };
+    const jn = function(e){ const n = parseInt(e.playerJersey, 10); return isFinite(n) ? n : -1; };
+    const tt = function(e){ return Math.round((+e.videoTimeMs || 0) / 100) / 10; };
+    const sh = [], sv = [], ps = [], po = {0:{}, 1:{}};
+    evs.forEach(function(e){
+      if(e.team !== 'Own' && e.team !== 'Opponent') return;
+      const t = e.eventType;
+      if(t === 'FootballShot' && num(e.x) && num(e.z)){
+        const at = {}; (e.attributes || []).forEach(function(x){ if(x && x.label) at[x.label] = x.value; });
+        const p = P(e, e.x, e.z); sh.push([side(e), e.periodId, p[0], p[1], at.outcome === 'goal' ? 1 : 0, jn(e), tt(e)]);
+      } else if(t === 'save' && num(e.x) && num(e.z)){
+        const p = P(e, e.x, e.z); sv.push([side(e), e.periodId, p[0], p[1], tt(e)]);
+      } else if(t === 'pass' && num(e.x) && num(e.z)){
+        const at = {}; (e.attributes || []).forEach(function(x){ if(x && x.label) at[x.label] = x.value; });
+        const p = P(e, e.x, e.z), r = num(at.receiver_x) && num(at.receiver_z) ? P(e, at.receiver_x, at.receiver_z) : [-9999, -9999];
+        ps.push([side(e), e.periodId, p[0], p[1], r[0], r[1], e.outcome === 1 ? 1 : 0, jn(e)]);
+      }
+      /* where each team had the ball (touches: possessions, passes, dribbles), in thirds and channels, as that team attacks */
+      if((t === 'possession' || t === 'pass' || t === 'dribble') && num(e.x) && num(e.z)){
+        const p = P(e, e.x, e.z), s = side(e);
+        let x = p[0] / 1000, y = p[1] / 1000; if(s === 1){ x = 1 - x; y = 1 - y; }
+        const i = Math.max(0, Math.min(2, Math.floor(x * 3))), j = Math.max(0, Math.min(2, Math.floor(y * 3)));
+        const z = po[s][e.periodId] || (po[s][e.periodId] = [0, 0, 0, 0, 0, 0, 0, 0, 0]); z[j * 3 + i]++;
+      }
+    });
+    if(!sh.length && !ps.length) return null;
+    return {v:1, fl:fl, sh:sh, sv:sv, ps:ps, po:po};
+  }
+  /* each shot's end, from the ball's path (Veo's ball tracking, about 2.5 times a second) */
+  function anShotEnds(E, b64){
+    const bin = atob(b64), n = Math.floor(bin.length / 8), T = new Float64Array(n), X = new Float32Array(n), Z = new Float32Array(n);
+    const u16 = function(i){ return bin.charCodeAt(i) | (bin.charCodeAt(i + 1) << 8); };
+    for(let k = 0; k < n; k++){
+      const i = k * 8;
+      T[k] = ((bin.charCodeAt(i) | (bin.charCodeAt(i + 1) << 8) | (bin.charCodeAt(i + 2) << 16)) + bin.charCodeAt(i + 3) * 16777216) / 100;
+      X[k] = u16(i + 4) / 65535 * 1.5 - 0.25; Z[k] = u16(i + 6) / 65535 * 1.5 - 0.25;
+    }
+    const first = function(t){ let lo = 0, hi = n; while(lo < hi){ const mid = (lo + hi) >> 1; if(T[mid] < t) lo = mid + 1; else hi = mid; } return lo; };
+    const L = 105, W = 68;
+    return E.sh.map(function(s){
+      const sd = s[0], half = s[1], t = s[6], dir = sd === 0 ? 1 : -1, xg = dir > 0 ? 1 : 0;
+      const f = E.fl[half] === 1;
+      let px = s[2] / 1000, py = s[3] / 1000, pt = t, best = [px, py], end = null, kind = 'block', seen = 0;
+      for(let k = first(t - 0.2); k < n && T[k] <= t + 2.6; k++){
+        let bx = X[k], bz = Z[k]; if(f){ bx = 1 - bx; bz = 1 - bz; }
+        const by = 1 - bz, dt = Math.max(0.2, T[k] - pt);
+        if(Math.hypot((bx - px) * L, (by - py) * W) > 38 * dt + 2) continue;      /* a jump no kick makes: another ball, or a glitch */
+        seen++;
+        if(dir * (bx - xg) >= 0){ const q = bx !== px ? (xg - px) / (bx - px) : 1; end = [xg, py + (by - py) * q]; kind = 'line'; break; }
+        if(dir * (bx - best[0]) > 0) best = [bx, by];
+        px = bx; py = by; pt = T[k];
+      }
+      if(!end){ if(!seen) return null; end = best; kind = Math.abs(best[0] - xg) * L <= 3 ? 'line' : 'block'; }
+      return [Math.round(end[0] * 1000), Math.round(end[1] * 1000), kind === 'line' ? 0 : 3];
+    });
+  }
+  /* work the shot ends out for a match video (when its events and the ball's path are both here), and keep them */
+  const anShotEndsTried = {};
+  function anShotEndsFor(m, b64){
+    const a = m && m.analysis, E = a && a.veoEv; if(!E || !E.sh || !E.sh.length) return;
+    const go = function(s){
+      if(typeof s !== 'string' || !s) return;
+      let ends = null; try{ ends = anShotEnds(E, s); }catch(e){ return; }
+      if(a.veoEv !== E) return;
+      E.end = ends; E.endAt = Date.now(); m.savedAt = Date.now();
+      if(anM === m){ anSave(); if(anTab === 'stats') anRenderStats(); }
+      else { try{ const k = MV_PREFIX + m.id; const cur = JSON.parse(hufcStore.getItem(k) || 'null'); if(cur){ cur.analysis = cur.analysis || {}; cur.analysis.veoEv = E; hufcStore.setItem(k, JSON.stringify(cur)); } }catch(e){} }
+    };
+    if(b64) return go(b64);
+    pgMedia.get('mvb-' + m.id).then(go).catch(function(){});
+  }
+  let anPmSide = 0, anPmNum = '', anPoSide = 0;
+  function anVeoNameOf(n){
+    if(n == null || n < 0) return '';
+    const p = anSquad().find(function(q){ return clean(q.num) === String(n); });
+    if(p) return luShort(p.name) || clean(p.name);
+    const v = anData().veo; return clean(v && v.names && v.names[String(n)]) || '';
+  }
+  function anVeoMaps(wrap, a){
+    const E = a.veoEv;
+    if(!E){
+      const D = window.hufcDesktop;
+      if(a.veo && D && D.veo && anCanEdit()) wrap.appendChild(h('p', {class:'an-veo-hint', text:'Press Veo stats ✓ (top right) once more to add the shot map, pass map and possession map.'}));
+      return;
+    }
+    /* the ends weren't worked out yet, but the ball's path is on this computer: work them out now */
+    if(!E.end && a.veoTrack && a.veoTrack.ball && anM && !anShotEndsTried[anM.id]){ anShotEndsTried[anM.id] = 1; anShotEndsFor(anM); }
+    const HH = anVeoHalf === 't' ? 0 : +anVeoHalf, inH = function(hf){ return !HH || hf === HH; };
+    const us = anUsShort(), opp = anOppShort(), YC = '#f5c400', RC = '#e5484d';
+    const NS = 'http://www.w3.org/2000/svg';
+    const S = function(tag, at, par){ const e = document.createElementNS(NS, tag); Object.keys(at || {}).forEach(function(k){ e.setAttribute(k, at[k]); }); if(par) par.appendChild(e); return e; };
+    const X = function(v){ return v / 1000 * 105; }, Y = function(v){ return v / 1000 * 68; };
+    const pitch = function(label){
+      const s = S('svg', {class:'an-map-svg', viewBox:'-3 -2 111 72', role:'img', 'aria-label':label});
+      const g = S('g', {fill:'none', stroke:'rgba(255,255,255,.32)', 'stroke-width':'.35'}, s);
+      S('rect', {x:0, y:0, width:105, height:68}, g); S('line', {x1:52.5, y1:0, x2:52.5, y2:68}, g); S('circle', {cx:52.5, cy:34, r:9.15}, g);
+      [0, 1].forEach(function(R){
+        S('rect', {x:R ? 88.5 : 0, y:13.85, width:16.5, height:40.3}, g); S('rect', {x:R ? 99.5 : 0, y:24.85, width:5.5, height:18.3}, g);
+        S('rect', {x:R ? 105 : -1.8, y:30.34, width:1.8, height:7.32}, g); S('circle', {cx:R ? 94 : 11, cy:34, r:.45, fill:'rgba(255,255,255,.4)', stroke:'none'}, g);
+      });
+      return s;
+    };
+    const seg = function(cur, opts, set){
+      return h('div', {class:'an-map-seg', role:'group'}, opts.map(function(o){
+        return h('button', {type:'button', class:cur === o[0] ? 'on' : '', 'aria-pressed':String(cur === o[0]), text:o[1], onclick:function(){ set(o[0]); anRenderStats(); }});
+      }));
+    };
+    const legI = function(svg, text){ const sp = h('span', {}); sp.innerHTML = svg; sp.appendChild(document.createTextNode(text)); return sp; };
+    const who = function(sd, n){ if(n == null || n < 0) return sd ? opp : us; const nm = sd ? '' : anVeoNameOf(n); return (sd ? opp : us) + ' · ' + n + (nm ? ' ' + nm : ''); };
+    const grp = h('div', {class:'an-vs-grp an-maps'}, h('div', {class:'an-vs-gh', text:'Maps'}));
+
+    /* -- shot map: both teams, an arrow for where each shot went -- */
+    (function(){
+      const list = E.sh.map(function(s, i){ return {s:s, e:E.end ? E.end[i] : null}; }).filter(function(o){ return inH(o.s[1]); });
+      const card = h('div', {class:'an-map'});
+      const cnt = [0, 1].map(function(sd){ return list.filter(function(o){ return o.s[0] === sd; }).length; });
+      card.appendChild(h('div', {class:'an-map-h'}, h('span', {class:'an-map-t', text:'Shot map'}), h('span', {class:'an-map-n', text:us + ' ' + cnt[0] + ' · ' + opp + ' ' + cnt[1]})));
+      const svg = pitch('Shot map: where each shot was taken from and where it went');
+      const line = h('div', {class:'an-map-line', text:'Tap a shot to watch it'});
+      const res = function(o){
+        const s = o.s, sd = s[0];
+        if(s[4]) return 2;
+        const saved = E.sv.find(function(v){ return v[0] !== sd && v[4] - s[6] >= 0 && v[4] - s[6] <= 4; });
+        if(saved) return 1;
+        return o.e ? o.e[2] : -1;                     /* 0 missed, 3 blocked, -1 not known (no ball path) */
+      };
+      const endOf = function(o, k){
+        const s = o.s, sd = s[0], xg = sd ? 0 : 1000;
+        if(k === 1){ const v = E.sv.find(function(v){ return v[0] !== sd && v[4] - s[6] >= 0 && v[4] - s[6] <= 4; }); return [v[2], v[3]]; }
+        if(k === 2){ const y = o.e ? Math.max(446, Math.min(554, o.e[1])) : 500; return [xg + (sd ? -12 : 12), y]; }
+        return o.e ? [o.e[0], o.e[1]] : null;
+      };
+      const items = list.map(function(o){ const k = res(o); return {o:o, k:k, end:endOf(o, k)}; });
+      items.sort(function(a, b){ return (a.k === 2) - (b.k === 2); });
+      items.forEach(function(it){
+        const s = it.o.s, k = it.k, c = s[0] ? RC : YC, x = X(s[2]), y = Y(s[3]);
+        const g = S('g', {class:'shot', tabindex:'0', role:'button'}, svg);
+        const rad = k === 2 ? 2.1 : k === 1 ? 1.6 : 1.4;
+        if(it.end){
+          const ex = X(it.end[0]), ey = Y(it.end[1]), dx = ex - x, dy = ey - y, Ln = Math.hypot(dx, dy) || 1, ux = dx / Ln, uy = dy / Ln;
+          if(Ln > rad + 1){
+            if(k === 3){
+              S('line', {x1:x + ux * rad, y1:y + uy * rad, x2:ex, y2:ey, stroke:c, 'stroke-width':'.45'}, g);
+              S('line', {x1:ex - uy * 1.6, y1:ey + ux * 1.6, x2:ex + uy * 1.6, y2:ey - ux * 1.6, stroke:c, 'stroke-width':'.75', 'stroke-linecap':'round'}, g);
+            } else {
+              const hx = ex - ux * 1.6, hy = ey - uy * 1.6, op = k ? '.95' : '.8';
+              S('line', {x1:x + ux * rad, y1:y + uy * rad, x2:hx, y2:hy, stroke:c, 'stroke-width':k ? '.45' : '.32', 'stroke-dasharray':k ? '' : '1.1 .8', opacity:op}, g);
+              S('path', {d:'M' + ex + ' ' + ey + ' L' + (hx - uy * .8) + ' ' + (hy + ux * .8) + ' L' + (hx + uy * .8) + ' ' + (hy - ux * .8) + 'Z', fill:c, opacity:op}, g);
+            }
+          }
+        }
+        if(k === 2) S('circle', {class:'dot', cx:x, cy:y, r:2.1, fill:c, stroke:'#fff', 'stroke-width':'.7'}, g);
+        else if(k === 1) S('circle', {class:'dot', cx:x, cy:y, r:1.6, fill:c}, g);
+        else S('circle', {class:'dot', cx:x, cy:y, r:1.4, fill:'#1d201d', stroke:c, 'stroke-width':'.6'}, g);
+        const txt = who(s[0], s[5]) + ' · ' + anClock(s[6]) + ' · ' + (['Missed', 'Saved', 'Goal', 'Blocked'][k] || 'Missed or blocked');
+        S('title', {}, g).textContent = txt;
+        g.setAttribute('aria-label', txt + ' · watch it');
+        const show = function(){ line.textContent = txt + ' · tap to watch it'; };
+        const play = function(){ anSeek(Math.max(0, s[6] - 4)); line.textContent = '▶ ' + txt; };
+        g.addEventListener('mouseenter', show); g.addEventListener('focus', show);
+        g.addEventListener('click', play);
+        g.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); play(); } });
+      });
+      card.appendChild(svg);
+      const Yl = YC;
+      const leg = h('div', {class:'an-map-leg'},
+        legI('<svg width="30" height="14" aria-hidden="true"><line x1="6" y1="7" x2="24" y2="7" stroke="' + Yl + '" stroke-width="1.6"/><path d="M28 7 L22 4 L22 10Z" fill="' + Yl + '"/><circle cx="6" cy="7" r="5" fill="' + Yl + '" stroke="#fff" stroke-width="1.5"/></svg>', 'Goal'),
+        legI('<svg width="30" height="14" aria-hidden="true"><line x1="6" y1="7" x2="24" y2="7" stroke="' + Yl + '" stroke-width="1.6"/><path d="M28 7 L22 4 L22 10Z" fill="' + Yl + '"/><circle cx="6" cy="7" r="4" fill="' + Yl + '"/></svg>', 'Saved'),
+        legI('<svg width="30" height="14" aria-hidden="true"><line x1="6" y1="7" x2="24" y2="7" stroke="' + Yl + '" stroke-width="1.2" stroke-dasharray="2.5 2"/><path d="M28 7 L22 4 L22 10Z" fill="' + Yl + '"/><circle cx="6" cy="7" r="3.6" fill="#1d201d" stroke="' + Yl + '" stroke-width="1.5"/></svg>', E.end ? 'Missed' : 'Missed or blocked'));
+      if(E.end) leg.appendChild(legI('<svg width="30" height="14" aria-hidden="true"><line x1="6" y1="7" x2="20" y2="7" stroke="' + Yl + '" stroke-width="1.6"/><line x1="20" y1="2" x2="20" y2="12" stroke="' + Yl + '" stroke-width="2"/><circle cx="6" cy="7" r="3.6" fill="#1d201d" stroke="' + Yl + '" stroke-width="1.5"/></svg>', 'Blocked'));
+      leg.appendChild(h('span', {class:'dir'}, h('span', {style:'color:#a88600', text:us + ' →'}), h('span', {text:'·'}), h('span', {style:'color:#c33b40', text:'← ' + opp})));
+      card.appendChild(leg);
+      card.appendChild(line);
+      if(!E.end && !(a.veoTrack && a.veoTrack.ball)) card.appendChild(h('div', {class:'an-map-n', text:'Arrows for misses and blocks come with the mini map (in the Windows program).'}));
+      grp.appendChild(card);
+    })();
+
+    /* -- pass map: one team (and one player, if picked), a line from where each pass was played to where it was received -- */
+    (function(){
+      const sd = anPmSide, all = E.ps.filter(function(p){ return p[0] === sd && inH(p[1]); });
+      const nums = []; all.forEach(function(p){ if(p[7] >= 0 && nums.indexOf(p[7]) === -1) nums.push(p[7]); }); nums.sort(function(a, b){ return a - b; });
+      if(anPmNum !== '' && nums.indexOf(+anPmNum) === -1) anPmNum = '';
+      const L = all.filter(function(p){ return anPmNum === '' || p[7] === +anPmNum; });
+      const card = h('div', {class:'an-map'});
+      const sel = h('select', {class:'an-map-sel', 'aria-label':'Which player', onchange:function(e){ anPmNum = e.target.value; anRenderStats(); }});
+      sel.appendChild(h('option', {value:'', text:'All players'}));
+      nums.forEach(function(n){ const nm = sd ? '' : anVeoNameOf(n); const o = h('option', {value:String(n), text:n + (nm ? ' · ' + nm : '')}); if(String(n) === anPmNum) o.selected = true; sel.appendChild(o); });
+      card.appendChild(h('div', {class:'an-map-h'}, h('span', {class:'an-map-t', text:'Pass map'}),
+        h('div', {class:'an-map-c'}, sel, seg(sd, [[0, us], [1, opp]], function(v){ anPmSide = v; anPmNum = ''; }))));
+      const svg = pitch('Pass map: where each pass was played from and received');
+      const c = sd ? RC : YC, miss = sd ? '#c8c8c3' : '#ff8a8a', one = anPmNum !== '', op = one ? '.95' : '.55';
+      let ok = 0, no = 0;
+      L.forEach(function(p){
+        if(p[6]) return; no++;
+        if(p[4] === -9999){ S('circle', {cx:X(p[2]), cy:Y(p[3]), r:'.6', fill:'none', stroke:miss, 'stroke-width':'.35', opacity:op}, svg); return; }
+        S('line', {x1:X(p[2]), y1:Y(p[3]), x2:X(p[4]), y2:Y(p[5]), stroke:miss, 'stroke-width':'.35', 'stroke-dasharray':'1.2 .8', opacity:op}, svg);
+      });
+      L.forEach(function(p){
+        if(!p[6] || p[4] === -9999) { if(p[6]) ok++; return; } ok++;
+        S('line', {x1:X(p[2]), y1:Y(p[3]), x2:X(p[4]), y2:Y(p[5]), stroke:c, 'stroke-width':one ? '.5' : '.32', opacity:op}, svg);
+        S('circle', {cx:X(p[4]), cy:Y(p[5]), r:one ? '.75' : '.5', fill:c, opacity:op}, svg);
+      });
+      card.appendChild(svg);
+      card.appendChild(h('div', {class:'an-map-leg'},
+        legI('<svg width="24" height="10" aria-hidden="true"><line x1="1" y1="5" x2="18" y2="5" stroke="' + c + '" stroke-width="1.6"/><circle cx="19" cy="5" r="2.4" fill="' + c + '"/></svg>', 'Completed ' + ok),
+        legI('<svg width="24" height="10" aria-hidden="true"><line x1="1" y1="5" x2="20" y2="5" stroke="' + miss + '" stroke-width="1.6" stroke-dasharray="3 2"/></svg>', 'Missed ' + no),
+        h('span', {class:'dir', text:sd ? '← ' + opp + ' attack' : us + ' attack →'})));
+      grp.appendChild(card);
+    })();
+
+    /* -- possession map: where the team had the ball, in thirds and channels -- */
+    (function(){
+      const sd = anPoSide, by = E.po[sd] || {}, z = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+      Object.keys(by).forEach(function(hf){ if(inH(+hf)) by[hf].forEach(function(v, i){ z[i] += v; }); });
+      const tot = z.reduce(function(s, v){ return s + v; }, 0);
+      const card = h('div', {class:'an-map'});
+      card.appendChild(h('div', {class:'an-map-h'}, h('span', {class:'an-map-t', text:'Possession map'}), seg(sd, [[0, us], [1, opp]], function(v){ anPoSide = v; })));
+      const svg = pitch('Possession map: where the team had the ball');
+      const c = sd ? RC : YC;
+      if(tot){
+        for(let j = 0; j < 3; j++) for(let i = 0; i < 3; i++){
+          const v = z[j * 3 + i] / tot, ci = sd ? 2 - i : i, cj = sd ? 2 - j : j, x = ci * 35, y = cj * 68 / 3;
+          S('rect', {x:x + .6, y:y + .6, width:33.8, height:68 / 3 - 1.2, rx:1.2, fill:c, opacity:Math.min(.95, .08 + v * 2.6).toFixed(2)}, svg);
+          S('text', {x:x + 17.5, y:y + 68 / 6 + 1.6, 'text-anchor':'middle', 'font-size':'4.6', 'font-weight':'700', 'font-family':'Barlow, sans-serif', fill:v > .13 ? '#141414' : '#fff'}, svg).textContent = Math.round(v * 100) + '%';
+        }
+        [0, 1, 2].forEach(function(i){
+          const v = (z[i] + z[3 + i] + z[6 + i]) / tot, ci = sd ? 2 - i : i;
+          S('text', {x:ci * 35 + 17.5, y:66.3, 'text-anchor':'middle', 'font-size':'2.6', 'font-family':'Barlow, sans-serif', fill:'rgba(255,255,255,.85)'}, svg).textContent = ['Defensive third ', 'Middle third ', 'Attacking third '][i] + Math.round(v * 100) + '%';
+        });
+      }
+      card.appendChild(svg);
+      card.appendChild(h('div', {class:'an-map-leg'}, h('span', {text:'Where they had the ball, as a share of all their touches'}), h('span', {class:'dir', text:sd ? '← ' + opp + ' attack' : us + ' attack →'})));
+      grp.appendChild(card);
+    })();
+    wrap.appendChild(grp);
   }
 
   /* ---------- tabs, keyboard ---------- */
@@ -18208,6 +18488,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), with HUFC always attacking to the right','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to watch it','Pass map: a line for every pass from where it was played to where it was received (missed ones dashed), for either team, and for one player picked by name','Possession map: where the team had the ball, in thirds and left / centre / right','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
     {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now gets it in about a minute — four Veo pages at once, without loading Veo’s video — and keeps going by itself until it has the whole game)','Fixed: pressing Veo stats ✓ again could empty the Stats tab when Veo sent only part of the stats (what was there now stays, and the stats load properly in the background)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
     {v:'4.13', d:'20 Nov 2026', t:'See who’s on, Save as PDF, coaches in full', n:['The admin can see which coaches are using the planner right now and what they’re working on','Save as PDF beside Print in every plan’s top bar','A plan’s black bar names every coach in full: the coach who made it first, then each collaborator, with commas','Collaborators: a session you’re added to shows up in your planner, with a notice saying who added you','The admin can send a coach a password reset email','Removing a coach’s access moves them to Removed (not Waiting); waiting coaches can be removed too','Side menu icons about 30% bigger','Numbers in every badge sit dead centre (collaborators, Settings, attendance)','Fixed: “2 out” on the attendance link went outside its box']},
