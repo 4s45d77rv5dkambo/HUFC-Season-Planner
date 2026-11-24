@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124141910">
+<meta name="hufc-build" content="20261124143122">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2102,12 +2102,12 @@ td.gt-an{font-size:14px; text-transform:none;}
 html:has(#anModal:not([hidden])), html:has(#anModal:not([hidden])) body{overflow:hidden;}
 html.app-frame .toast, html.app-frame body:has(#anModal:not([hidden])) .toast{top:52px;}
 .an-vs{display:flex; flex-direction:column; background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px 10px;}
-.an-vs-score{display:flex; align-items:center; justify-content:center; gap:16px; background:#111; color:#fff; border-radius:10px; padding:10px 12px; margin-bottom:12px;}
+.an-vs-score{display:flex; align-items:center; justify-content:center; gap:16px; background:#111; color:#fff; border-radius:10px; padding:10px 14px; margin-bottom:12px;}
 .an-vs-score b{font:700 26px/1 'Barlow Condensed', sans-serif; letter-spacing:.04em;}
 .an-vs-team{font:700 14px/1 'Barlow Condensed', sans-serif; letter-spacing:.08em; text-transform:uppercase;}
 .an-vs-side{display:inline-flex; align-items:center; gap:10px; flex:1; justify-content:flex-end; min-width:0;}
 .an-vs-side.them{justify-content:flex-start;}
-.an-vs-logo{width:34px; height:34px; object-fit:contain; flex:none;}
+.an-vs-logo{width:46px; height:46px; object-fit:contain; flex:none; image-rendering:auto;}
 .an-vs-logo.none{display:none;}
 .an-vs-seg{display:flex; gap:6px; justify-content:center; margin:0 0 12px;}
 .an-vs-seg button{display:inline-flex; align-items:center; justify-content:center; padding:5px 14px; border-radius:999px; border:1px solid #c9c9c4; background:#fff; color:#1a1a1a; font:600 13px/1.2 'Barlow', sans-serif; cursor:pointer;}
@@ -15401,7 +15401,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* the Stats tab: Veo's numbers first, then the coach's own tags (returns whether anything was shown) */
   /* Veo's numbers, made easy to read: the score, one bar per stat (us against them) in groups, and a card per player */
   const AN_VEO_GROUPS = [
-    ['Attacking', ['football_goal_total', 'football_attempts_total', 'football_dribble_total']],
+    ['Attacking', ['football_goal_total', 'hufc_on_goal', 'football_attempts_total', 'football_dribble_total']],
     ['Possession and passing', ['football_possession_percentage', 'football_passes_completed_total']],
     ['Set pieces', ['football_corner_total', 'football_free_kick_total', 'football_penalty_total', 'football_throw_in_total']],
     ['Defending', ['football_tackle_total', 'football_interception_total', 'football_duel_total', 'football_save_total']],
@@ -15409,6 +15409,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const AN_VEO_SKIP = ['football_shots_total'];            /* (attempts not scored: attempts minus goals, already shown) */
   const AN_VEO_LOW = ['football_foul_total'];               /* fewer is better */
   let anVeoHalf = 't';
+  /* Heidelberg's own crest at full size (sharp on the black bar), rather than the small copy kept for lineups */
+  function anVsCrest(name){ try{ if(!anIsHufc(name)) return ''; const c = document.querySelector('img.crest'); return c && c.src || ''; }catch(e){ return ''; } }
   function anVeoStats(box){
     const a = anData(), v = a.veo;
     if(!v){
@@ -15420,16 +15422,23 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }
     const us = anUsShort(), opp = anOppShort(), H = anVeoHalf;
     const pick = function(side){ if(!side) return null; const x = H === 't' ? side.v : H === '1' ? side.p1 : side.p2; return x == null || isNaN(+x) ? null : +x; };
-    const team = v.team || [], byType = {}; team.forEach(function(r){ byType[r.type] = r; });
+    const team = (v.team || []).slice(), byType = {}; team.forEach(function(r){ byType[r.type] = r; });
+    /* shots on goal (on target): the goals scored, plus the shots the other keeper saved */
+    (function(){
+      const g = byType.football_goal_total, sv = byType.football_save_total; if(!g || !sv) return;
+      const add = function(a, b){ if(!a && !b) return null; const o = {}; ['v', 'p1', 'p2'].forEach(function(k){ const x = a && a[k], y = b && b[k]; o[k] = x == null && y == null ? null : (+x || 0) + (+y || 0); }); return o; };
+      const row = {type:'hufc_on_goal', label:'Shots on goal', unit:'count', us:add(g.us, sv.them), them:add(g.them, sv.us)};
+      byType.hufc_on_goal = row; team.push(row);
+    })();
     const wrap = h('div', {class:'an-vs'});
     /* the score (for the half picked) */
     const g = byType.football_goal_total;
     const gu = g ? pick(g.us) : null, gt = g ? pick(g.them) : null;
     const logo = function(src, name){ return src ? h('img', {class:'an-vs-logo', alt:name, src:src}) : h('span', {class:'an-vs-logo none', 'aria-hidden':'true'}); };
     wrap.appendChild(h('div', {class:'an-vs-score'},
-      h('span', {class:'an-vs-side'}, logo(anUsLogo(), anUs()), h('span', {class:'an-vs-team', text:us})),
+      h('span', {class:'an-vs-side'}, logo(anVsCrest(anUs()) || anUsLogo(), anUs()), h('span', {class:'an-vs-team', text:us})),
       h('b', {text:(gu == null ? '–' : gu) + ' – ' + (gt == null ? '–' : gt)}),
-      h('span', {class:'an-vs-side them'}, h('span', {class:'an-vs-team', text:opp}), logo(anThemLogo(), anOpp()))));
+      h('span', {class:'an-vs-side them'}, h('span', {class:'an-vs-team', text:opp}), logo(anVsCrest(anOpp()) || anThemLogo(), anOpp()))));
     /* Total · 1st half · 2nd half */
     wrap.appendChild(h('div', {class:'an-vs-seg', role:'group', 'aria-label':'Which part of the game'}, [['t', 'Total'], ['1', '1st half'], ['2', '2nd half']].map(function(x){
       return h('button', {type:'button', class:H === x[0] ? 'on' : '', 'aria-pressed':String(H === x[0]), text:x[1], onclick:function(){ anVeoHalf = x[0]; anRenderStats(); }});
