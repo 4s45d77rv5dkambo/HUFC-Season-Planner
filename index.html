@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124125545">
+<meta name="hufc-build" content="20261124140937">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2101,6 +2101,44 @@ td.gt-an{font-size:14px; text-transform:none;}
 /* the match video is a page of its own: the home page behind it doesn't scroll, and its scrollbar doesn't show */
 html:has(#anModal:not([hidden])), html:has(#anModal:not([hidden])) body{overflow:hidden;}
 html.app-frame .toast, html.app-frame body:has(#anModal:not([hidden])) .toast{top:52px;}
+.an-vs{display:flex; flex-direction:column; background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px 10px;}
+.an-vs-score{display:flex; align-items:center; justify-content:center; gap:16px; background:#111; color:#fff; border-radius:10px; padding:10px 12px; margin-bottom:12px;}
+.an-vs-score b{font:700 26px/1 'Barlow Condensed', sans-serif; letter-spacing:.04em;}
+.an-vs-team{font:700 14px/1 'Barlow Condensed', sans-serif; letter-spacing:.08em; text-transform:uppercase;}
+.an-vs-seg{display:flex; gap:6px; justify-content:center; margin:0 0 12px;}
+.an-vs-seg button{display:inline-flex; align-items:center; justify-content:center; padding:5px 14px; border-radius:999px; border:1px solid #c9c9c4; background:#fff; color:#1a1a1a; font:600 13px/1.2 'Barlow', sans-serif; cursor:pointer;}
+.an-vs-seg button.on{background:#111; border-color:#111; color:#ffd400;}
+.an-vs-leg{display:flex; justify-content:space-between; font:700 12px/1 'Barlow Condensed', sans-serif; letter-spacing:.08em; text-transform:uppercase; margin-bottom:2px;}
+.an-vs-leg .us{color:#a68400;} .an-vs-leg .them{color:#b94545;}
+.an-vs-gh{margin:12px 0 2px; font:700 12px/1.2 'Barlow Condensed', sans-serif; letter-spacing:.1em; text-transform:uppercase; color:var(--grey);}
+.an-vs-row{display:grid; grid-template-columns:52px minmax(0,1fr) 52px; align-items:center; column-gap:10px; padding:4px 0;}
+.an-vs-lab{grid-column:1 / 4; text-align:center; font-size:13px; color:#555; margin-bottom:1px;}
+.an-vs-v{text-align:center; font:700 16px/1 'Barlow', sans-serif; color:#1a1a1a;}
+.an-vs-v.lose{color:#9a9a96; font-weight:500;}
+.an-vs-bars{display:flex; height:10px; border-radius:999px; overflow:hidden; background:#eeeeea;}
+.an-vs-bars i{display:block; height:100%;}
+.an-vs-bars .us{background:#f5c400;} .an-vs-bars .them{background:#d85a5a;}
+.an-vs-ptitle{margin-top:20px;}
+.an-vs-ph, .an-vs-pl{display:grid; grid-template-columns:32px minmax(0,1fr) 46px 72px 58px; align-items:center; column-gap:8px;}
+.an-vs-ph{padding:4px 0 5px; border-bottom:1px solid var(--line);}
+.an-vs-ph-b{border:0; background:none; padding:0; text-align:right; font:600 11px/1.2 'Barlow', sans-serif; letter-spacing:.05em; text-transform:uppercase; color:#8a8a86; cursor:pointer;}
+.an-vs-ph-b.l{text-align:left;} .an-vs-ph-b.on{color:#1a1a1a;}
+.an-vs-pl{padding:8px 0; border-bottom:1px solid var(--line);}
+.an-vs-num{width:28px; height:28px; border-radius:50%; background:#111; color:#ffd400; display:flex; align-items:center; justify-content:center; font:700 13px/1 'Barlow', sans-serif;}
+.an-vs-who{min-width:0;}
+.an-vs-nm{display:flex; align-items:center; flex-wrap:wrap; gap:4px 6px; font:600 14px/1.25 'Barlow', sans-serif; color:#1a1a1a;}
+.an-vs-name{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
+.an-vs-name.unknown{color:#8a6d00;}
+.an-vs-pick{field-sizing:content; appearance:none; -webkit-appearance:none; max-width:100%; min-width:0; border:0; border-radius:6px; margin:0 0 0 -4px; padding:2px 20px 2px 4px; background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23777' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 6px center; font:600 14px/1.25 'Barlow', sans-serif; color:#1a1a1a; text-overflow:ellipsis; white-space:nowrap; overflow:hidden; cursor:pointer;}
+.an-vs-pick:hover{background-color:#f3f3f0;}
+.an-vs-pick.unknown{color:#8a6d00;}
+.an-vs-badge{display:inline-flex; align-items:center; justify-content:center; padding:2px 7px; border-radius:999px; background:#fdf0c2; color:#6b5200; font:700 10px/1.2 'Barlow', sans-serif; letter-spacing:.03em;}
+.an-vs-db{height:6px; border-radius:999px; background:#eeeeea; margin-top:5px; overflow:hidden;}
+.an-vs-db i{display:block; height:100%; background:#f5c400; border-radius:999px;}
+.an-vs-sub{margin-top:3px; font-size:12px; color:#666;}
+.an-vs-c{text-align:right; font-size:11px; color:#777; line-height:1.15;}
+.an-vs-c b{display:block; font:700 15px/1.15 'Barlow', sans-serif; color:#1a1a1a;}
+@media (max-width:420px){ .an-vs{padding:12px 10px 8px;} .an-vs-ph, .an-vs-pl{grid-template-columns:28px minmax(0,1fr) 36px 58px 46px; column-gap:6px;} }
 .an-table .an-veo-sm{display:none;}
 @media (max-width:640px){ .an-table .an-veo-half{display:none;} .an-table .an-veo-lg{display:none;} .an-table .an-veo-sm{display:inline;} }
 .an-video-wrap .an-flash{z-index:3;}
@@ -15346,6 +15384,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   document.getElementById('anVeoBtn').addEventListener('click', anVeoGet);
   /* the Stats tab: Veo's numbers first, then the coach's own tags (returns whether anything was shown) */
+  /* Veo's numbers, made easy to read: the score, one bar per stat (us against them) in groups, and a card per player */
+  const AN_VEO_GROUPS = [
+    ['Attacking', ['football_goal_total', 'football_attempts_total', 'football_dribble_total']],
+    ['Possession and passing', ['football_possession_percentage', 'football_passes_completed_total']],
+    ['Set pieces', ['football_corner_total', 'football_free_kick_total', 'football_penalty_total', 'football_throw_in_total']],
+    ['Defending', ['football_tackle_total', 'football_interception_total', 'football_duel_total', 'football_save_total']],
+    ['Discipline', ['football_foul_total']]];
+  const AN_VEO_SKIP = ['football_shots_total'];            /* (attempts not scored: attempts minus goals, already shown) */
+  const AN_VEO_LOW = ['football_foul_total'];               /* fewer is better */
+  let anVeoHalf = 't';
   function anVeoStats(box){
     const a = anData(), v = a.veo;
     if(!v){
@@ -15355,39 +15403,105 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       }
       return false;
     }
-    const us = anUsShort(), opp = anOppShort();
-    box.appendChild(h('h4', {class:'an-h', text:'Team · from Veo'}));
-    if(v.team && v.team.length){
-      const tb = h('tbody');
-      v.team.forEach(function(r){
-        const u = r.us || {}, t = r.them || {};
-        const cells = [anVeoNum(u.p1, r.unit), anVeoNum(u.p2, r.unit), anVeoNum(u.v, r.unit), anVeoNum(t.p1, r.unit), anVeoNum(t.p2, r.unit), anVeoNum(t.v, r.unit)];
-        tb.appendChild(h('tr', null, h('th', {text:r.label}), cells.map(function(c, i){ return h('td', {class:(c === '0' || c === '0%' || c === '–' ? 'zero' : '') + ((i === 2 || i === 5) ? ' tot' : ' an-veo-half'), text:c}); })));
-      });
-      box.appendChild(h('div', {class:'an-scroll'}, h('table', {class:'an-table'}, h('thead', null, h('tr', null, h('th'), h('th', {class:'an-veo-half', text:us + ' 1st'}), h('th', {class:'an-veo-half', text:'2nd'}), h('th', null, h('span', {class:'an-veo-lg', text:'Total'}), h('span', {class:'an-veo-sm', text:us})), h('th', {class:'an-veo-half', text:opp + ' 1st'}), h('th', {class:'an-veo-half', text:'2nd'}), h('th', null, h('span', {class:'an-veo-lg', text:'Total'}), h('span', {class:'an-veo-sm', text:opp})))), tb)));
-    }
-    if(v.players && v.players.length){
-      const sq = anSquad();
-      const nameOf = function(n){
-        const p = sq.find(function(q){ return clean(q.num) === n; });
-        const nm = p ? (luShort(p.name) || clean(p.name)) : (v.names && v.names[n]) || '';
-        return '#' + n + (nm ? ' · ' + nm : '');
+    const us = anUsShort(), opp = anOppShort(), H = anVeoHalf;
+    const pick = function(side){ if(!side) return null; const x = H === 't' ? side.v : H === '1' ? side.p1 : side.p2; return x == null || isNaN(+x) ? null : +x; };
+    const team = v.team || [], byType = {}; team.forEach(function(r){ byType[r.type] = r; });
+    const wrap = h('div', {class:'an-vs'});
+    /* the score (for the half picked) */
+    const g = byType.football_goal_total;
+    const gu = g ? pick(g.us) : null, gt = g ? pick(g.them) : null;
+    wrap.appendChild(h('div', {class:'an-vs-score'},
+      h('span', {class:'an-vs-team', text:us}), h('b', {text:(gu == null ? '–' : gu) + ' – ' + (gt == null ? '–' : gt)}), h('span', {class:'an-vs-team', text:opp})));
+    /* Total · 1st half · 2nd half */
+    wrap.appendChild(h('div', {class:'an-vs-seg', role:'group', 'aria-label':'Which part of the game'}, [['t', 'Total'], ['1', '1st half'], ['2', '2nd half']].map(function(x){
+      return h('button', {type:'button', class:H === x[0] ? 'on' : '', 'aria-pressed':String(H === x[0]), text:x[1], onclick:function(){ anVeoHalf = x[0]; anRenderStats(); }});
+    })));
+    if(team.length){
+      wrap.appendChild(h('div', {class:'an-vs-leg'}, h('span', {class:'us', text:us}), h('span', {class:'them', text:opp})));
+      const used = {};
+      const row = function(r){
+        used[r.type] = 1;
+        const u = pick(r.us), t = pick(r.them); if(u == null && t == null) return null;
+        const uu = u || 0, tt = t || 0, sum = uu + tt, low = AN_VEO_LOW.indexOf(r.type) !== -1;
+        const uw = low ? uu < tt : uu > tt, tw = low ? tt < uu : tt > uu;
+        const fmt = function(x){ return x == null ? '–' : anVeoNum(x, r.unit); };
+        return h('div', {class:'an-vs-row'},
+          h('div', {class:'an-vs-lab', text:r.label}),
+          h('div', {class:'an-vs-v' + (uw ? ' win' : tw ? ' lose' : ''), text:fmt(u)}),
+          h('div', {class:'an-vs-bars', 'aria-hidden':'true'},
+            h('i', {class:'us', style:'width:' + (sum ? uu / sum * 100 : 50) + '%'}), h('i', {class:'them', style:'width:' + (sum ? tt / sum * 100 : 50) + '%'})),
+          h('div', {class:'an-vs-v' + (tw ? ' win' : uw ? ' lose' : ''), text:fmt(t)}));
       };
-      const cols = [['n', 'Player'], ['s', 'Mins'], ['dist', 'Distance'], ['top', 'Top speed'], ['sprints', 'Sprints'], ['hsr', 'High-speed runs']];
-      const ps = v.players.slice().sort(function(x, y){ return anVeoSort === 'n' ? (+x.n) - (+y.n) : (y[anVeoSort] || 0) - (x[anVeoSort] || 0); });
-      const best = {}; ['dist', 'top', 'sprints', 'hsr'].forEach(function(k){ best[k] = Math.max.apply(null, ps.map(function(p){ return p[k] || 0; })); });
-      const fmt = {s:function(p){ return String(Math.round((p.s || 0) / 60)); }, dist:function(p){ return ((p.dist || 0) / 1000).toFixed(1) + ' km'; }, top:function(p){ return (p.top || 0).toFixed(1) + ' km/h'; }, sprints:function(p){ return String(p.sprints || 0); }, hsr:function(p){ return String(p.hsr || 0); }};
-      const pt = h('tbody');
-      ps.forEach(function(p){
-        pt.appendChild(h('tr', null, h('td', {class:'an-veo-name', text:nameOf(p.n)}),
-          ['s', 'dist', 'top', 'sprints', 'hsr'].map(function(k){ return h('td', {class:(best[k] && p[k] === best[k] && ps.length > 1 ? 'an-veo-best' : ''), text:fmt[k](p)}); })));
+      AN_VEO_GROUPS.forEach(function(gr){
+        const rows = gr[1].map(function(t){ return byType[t] ? row(byType[t]) : null; }).filter(Boolean);
+        if(rows.length) wrap.appendChild(h('div', {class:'an-vs-grp'}, h('div', {class:'an-vs-gh', text:gr[0]}), rows));
       });
-      box.appendChild(h('h4', {class:'an-h', text:'Players · running (Veo)'}));
-      box.appendChild(h('div', {class:'an-scroll'}, h('table', {class:'an-table'}, h('thead', null, h('tr', null, cols.map(function(c){
-        const arrow = anVeoSort === c[0] ? (c[0] === 'n' ? ' ↑' : ' ↓') : '';
-        return h('th', {class:'an-sort' + (anVeoSort === c[0] ? ' on' : ''), title:'Sort by ' + c[1].toLowerCase(), onclick:function(){ anVeoSort = c[0]; anRenderStats(); }}, c[0] === 'hsr' ? [h('span', {class:'an-veo-lg', text:c[1] + arrow}), h('span', {class:'an-veo-sm', text:'Fast runs' + arrow})] : c[0] === 'top' ? [h('span', {class:'an-veo-lg', text:c[1] + arrow}), h('span', {class:'an-veo-sm', text:'Top' + arrow})] : c[1] + arrow);
-      }))), pt)));
+      const rest = team.filter(function(r){ return !used[r.type] && AN_VEO_SKIP.indexOf(r.type) === -1; }).map(row).filter(Boolean);
+      if(rest.length) wrap.appendChild(h('div', {class:'an-vs-grp'}, h('div', {class:'an-vs-gh', text:'More'}), rest));
     }
+    /* each player's running (for the half picked, where Veo split it by half) */
+    if(v.players && v.players.length){
+      /* who wears each number: picked here for this match, else the lineup's number, else the team's squad (Squads), else Veo's own name */
+      const lu = anSquad(), L = anL();
+      let club = [];
+      try{ const team = (L && L.group) || groupOf(anM) || ''; const q = typeof sqFor === 'function' ? sqFor(team) : null; club = q && q.players ? q.players : []; }catch(e){ club = []; }
+      if(!a.veoWho || typeof a.veoWho !== 'object') a.veoWho = {};
+      const nameKey = function(x){ return clean(x).toLowerCase().replace(/\s+/g, ' '); };
+      const inLineup = {}; lu.forEach(function(q){ if(clean(q.name)) inLineup[nameKey(q.name)] = 1; });
+      const autoName = function(n){
+        const a1 = lu.filter(function(q){ return clean(q.num) === n && clean(q.name); });
+        if(a1.length === 1) return clean(a1[0].name);
+        let a2 = club.filter(function(q){ return clean(q.num) === n && clean(q.name); });
+        if(a2.length > 1) a2 = a2.filter(function(q){ return inLineup[nameKey(q.name)]; });   /* (two with that number: the one who played) */
+        if(a2.length === 1) return clean(a2[0].name);
+        return (v.names && v.names[n]) || '';
+      };
+      const nameOf = function(n){ return clean(a.veoWho[n]) || autoName(n); };
+      /* everyone who could be wearing a number: the lineup first, then the rest of the squad */
+      const pool = []; const seen = {};
+      lu.concat(club).forEach(function(q){ const nm = clean(q.name), k = nameKey(nm); if(nm && !seen[k]){ seen[k] = 1; pool.push(nm); } });
+      const canPick = anCanEdit() && pool.length;
+      const whoPicker = function(n){
+        const cur = nameOf(n);
+        if(!canPick) return h('span', {class:'an-vs-name' + (cur ? '' : ' unknown'), text:cur || 'Player ' + n});
+        const sel = h('select', {class:'an-vs-pick' + (cur ? '' : ' unknown'), 'aria-label':'Who wore number ' + n, title:'Who wore number ' + n + ' in this game', onchange:function(){
+          if(this.value) a.veoWho[n] = this.value; else delete a.veoWho[n];
+          anSave(); anRenderStats();
+        }}, h('option', {value:'', text:cur && !clean(a.veoWho[n]) ? cur + ' (from the squad numbers)' : 'Who is #' + n + '?'}));
+        pool.forEach(function(nm){ const o = h('option', {value:nm, text:nm}); if(clean(a.veoWho[n]) === nm) o.selected = true; sel.appendChild(o); });
+        if(cur && !clean(a.veoWho[n])) sel.options[0].textContent = cur;
+        return sel;
+      };
+      const anyHalves = v.players.some(function(p){ return p.h1 || p.h2; });
+      const ps = v.players.map(function(p){
+        const x = H === 't' || !anyHalves ? p : p['h' + H];
+        return x ? {n:p.n, s:x.s || 0, dist:x.dist || 0, top:x.top || 0, sprints:x.sprints || 0} : null;
+      }).filter(function(p){ return p && (p.s > 0 || p.dist > 0); });
+      const key = anVeoSort === 'hsr' || anVeoSort === 'n' ? 'dist' : anVeoSort;
+      ps.sort(function(x, y){ return (y[key] || 0) - (x[key] || 0); });
+      const mx = {}; ['dist', 'top', 'sprints'].forEach(function(k){ mx[k] = Math.max.apply(null, ps.map(function(p){ return p[k]; }).concat(0)); });
+      const head = function(k, label, cls){ return h('button', {type:'button', class:'an-vs-ph-b' + (cls ? ' ' + cls : '') + (key === k ? ' on' : ''), title:'Sort by ' + label.toLowerCase(), text:label + (key === k ? ' ↓' : ''), onclick:function(){ anVeoSort = k; anRenderStats(); }}); };
+      wrap.appendChild(h('div', {class:'an-vs-gh an-vs-ptitle', text:'Players · running' + (H === 't' || !anyHalves ? '' : H === '1' ? ' · 1st half' : ' · 2nd half')}));
+      wrap.appendChild(h('div', {class:'an-vs-ph'}, h('span'), head('dist', 'Player · distance', 'l'), head('s', 'Mins'), head('top', 'Top speed'), head('sprints', 'Sprints')));
+      ps.forEach(function(p){
+        const tags = [];
+        if(ps.length > 1){
+          if(p.dist && p.dist === mx.dist) tags.push('Most distance');
+          if(p.top && p.top === mx.top) tags.push('Fastest');
+          if(p.sprints && p.sprints === mx.sprints) tags.push('Most sprints');
+        }
+        wrap.appendChild(h('div', {class:'an-vs-pl'},
+          h('div', {class:'an-vs-num', text:p.n}),
+          h('div', {class:'an-vs-who'},
+            h('div', {class:'an-vs-nm'}, whoPicker(p.n), tags.map(function(t){ return h('span', {class:'an-vs-badge', text:t}); })),
+            h('div', {class:'an-vs-db', 'aria-hidden':'true'}, h('i', {style:'width:' + (mx.dist ? p.dist / mx.dist * 100 : 0) + '%'})),
+            h('div', {class:'an-vs-sub', text:(p.dist / 1000).toFixed(1) + ' km'})),
+          h('div', {class:'an-vs-c'}, h('b', {text:String(Math.round(p.s / 60))})),
+          h('div', {class:'an-vs-c'}, h('b', {text:p.top.toFixed(1)}), h('span', {text:'km/h'})),
+          h('div', {class:'an-vs-c'}, h('b', {text:String(p.sprints)}))));
+      });
+    }
+    box.appendChild(wrap);
     box.appendChild(h('p', {class:'an-veo-src', text:'From Veo · ' + new Date(v.at).toLocaleString([], {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + ' · Veo’s goals and shots are in Tags (tap one to watch it) · their times match the video downloaded from Veo'}));
     return true;
   }
