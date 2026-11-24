@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124204215">
+<meta name="hufc-build" content="20261124210819">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -15751,7 +15751,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
             if(!(await askDelete('match video', title, 'Its tags and clips go too. The video file on your device isn’t touched.'))) return;
             const raw = hufcStore.getItem(x.key);
             try{ hufcStore.removeItem(x.key); noteDeleted(x.key); }catch(e){} if(m.drive) driveRemoveLater(m.drive, function(){ return !!hufcStore.getItem(x.key); });
-            setTimeout(function(){ if(!hufcStore.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); if(anDl && anDl.id === m.id){ anDl.cancel = true; try{ anDl.stop.abort(); }catch(e){} } anDlDrop(m.id).catch(function(){}); try{ hufcStore.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
+            setTimeout(function(){ if(!hufcStore.getItem(x.key)){ pgMedia.del('mvf-' + m.id).catch(function(){}); pgMedia.del('mvh-' + m.id).catch(function(){}); pgMedia.del('mvt-' + m.id).catch(function(){}); if(anDl && anDl.id === m.id){ anDl.cancel = true; try{ anDl.stop.abort(); }catch(e){} } anDlDrop(m.id).catch(function(){}); try{ hufcStore.removeItem(AN_PATH_PREFIX + m.id); }catch(e){} } }, 12000);
             clubSyncSoon(); renderHome(); if(after) after();
             showToast('Deleted “' + title + '”', function(){ undoDeleted(x.key, raw); clubSyncSoon(); renderHome(); if(after) after(); });
           }}) : null));
