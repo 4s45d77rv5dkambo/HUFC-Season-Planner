@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261124151801">
+<meta name="hufc-build" content="20261124204215">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2087,6 +2087,44 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-video-wrap .pg-vid-bar.an-main-bar[hidden]{display:none;}
 .an-tag-tick{position:absolute; top:-5px; width:3px; height:10px; margin-left:-1.5px; border-radius:2px; background:var(--yellow); opacity:.9;}
 .an-tag-tick.them{background:#ff6b61;}
+#anModal .an-head.an-head-a{display:grid; grid-template-columns:auto minmax(0,1fr); grid-template-areas:"home acts" "meta meta"; align-items:center; gap:10px 12px; padding:12px 16px 12px;}
+#anModal .an-head-a > #anClose{grid-area:home; justify-self:start;}
+#anModal .an-head-a > .an-acts{grid-area:acts; display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; min-width:0;}
+#anModal .an-head-a > .an-meta{grid-area:meta; display:flex; flex-direction:column; align-items:stretch; gap:10px; order:initial; flex:none; min-width:0;}
+#anModal .an-head-a .an-name{display:none;}
+#anModal .an-head-a .an-teams{order:initial; flex:none; max-width:none; width:100%; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:14px; background:#111; border-radius:10px; padding:8px 14px; box-sizing:border-box;}
+#anModal .an-head-a .an-team-side{display:flex; align-items:center; gap:10px; min-width:0; flex:none;}
+#anModal .an-head-a .an-team-side:first-child{justify-content:flex-end;}
+#anModal .an-head-a .an-team-side:last-child{flex-direction:row-reverse; justify-content:flex-end;}
+#anModal .an-head-a .an-team-logo, #anModal .an-head-a .an-team-logo img{width:34px; max-width:34px; max-height:34px; height:34px;}
+#anModal .an-head-a .an-team-logo.dark img{max-width:30px; max-height:30px;}
+#anModal .an-head-a .an-team-box{flex:0 1 auto; min-width:0; max-width:100%;}
+#anModal .an-head-a .an-team-side:first-child .an-team-box input{text-align:right;}
+#anModal .an-head-a .an-team-box .lu-combo{background:transparent;}
+#anModal .an-head-a .an-team-box input{field-sizing:content; min-width:6ch; max-width:100%; background:transparent; border:1px solid transparent; border-radius:7px; color:#fff; font:700 17px/1.2 'Barlow', sans-serif; padding:5px 8px; text-overflow:ellipsis;}
+#anModal .an-head-a .an-team-box input:hover{border-color:rgba(255,255,255,.25);}
+#anModal .an-head-a .an-team-box input:focus{border-color:#ffd400; outline:none; background:rgba(255,255,255,.06);}
+#anModal .an-head-a .an-team-box input::placeholder{color:rgba(255,255,255,.45); font-weight:500;}
+#anModal .an-head-a .an-team-box .lu-combo-btn{color:#fff; opacity:.7; background:transparent; border-color:transparent;}
+#anModal .an-head-a .an-team-box .lu-combo-btn:hover{opacity:1;}
+#anModal .an-head-a .an-vs{display:inline-flex; align-items:center; justify-content:center; align-self:center; background:none; border:0; border-radius:0; padding:0 6px; min-width:44px; font:700 14px/1 'Barlow Condensed', sans-serif; letter-spacing:.1em; text-transform:uppercase; color:#9a9a96;}
+#anModal .an-head-a .an-vs.score{font-size:26px; letter-spacing:.04em; color:#ffd400;}
+#anModal .an-head-a .an-links{display:flex; justify-content:center; align-items:center; gap:10px 22px; flex-wrap:wrap;}
+#anModal .an-head-a .an-link{flex:0 1 380px; min-width:0; order:initial;}
+#anModal .an-head-a .an-link select{min-width:0; flex:1;}
+@media (max-width:700px){
+  #anModal .an-head.an-head-a{grid-template-columns:auto minmax(0,1fr); padding:10px 12px;}
+  #anModal .an-head-a .an-teams{grid-template-columns:minmax(0,1fr); gap:4px; padding:8px 10px;}
+  #anModal .an-head-a .an-team-side, #anModal .an-head-a .an-team-side:first-child, #anModal .an-head-a .an-team-side:last-child{flex-direction:row; justify-content:flex-start;}
+  #anModal .an-head-a .an-team-side:first-child .an-team-box input{text-align:left;}
+  #anModal .an-head-a .an-vs{justify-self:start; padding:0 0 0 44px; min-width:0;}
+  #anModal .an-head-a .an-link{flex:1 1 100%;}
+  #anModal .an-head-a > .an-acts{justify-content:flex-start; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding:2px 0;}
+  #anModal .an-head-a > .an-acts::-webkit-scrollbar{display:none;}
+  #anModal .an-head-a > .an-acts > *{flex:none;}
+  #anModal .an-head-a .an-link > span{flex:none; width:68px;}
+  #anModal .an-head-a .an-links{gap:8px;}
+}
 .an-tag-tick.goal{top:-8px; width:5px; height:16px; margin-left:-2.5px; background:#2e9a5b; opacity:1;}
 .an-tag-tick.goal.them{background:#e0443a;}
 .an-veo-src{margin:0 0 10px; font-size:12px; color:var(--grey);}
@@ -2104,7 +2142,7 @@ td.gt-an{font-size:14px; text-transform:none;}
 /* the match video is a page of its own: the home page behind it doesn't scroll, and its scrollbar doesn't show */
 html:has(#anModal:not([hidden])), html:has(#anModal:not([hidden])) body{overflow:hidden;}
 html.app-frame body:has(#anModal:not([hidden])) .toast{top:52px; bottom:auto;}
-.an-vs{display:flex; flex-direction:column; background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px 10px;}
+.an-vst{display:flex; flex-direction:column; background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px 10px;}
 .an-vs-score{display:flex; align-items:center; justify-content:center; gap:16px; background:#111; color:#fff; border-radius:10px; padding:10px 14px; margin-bottom:12px;}
 .an-vs-score b{font:700 26px/1 'Barlow Condensed', sans-serif; letter-spacing:.04em;}
 .an-vs-team{font:700 14px/1 'Barlow Condensed', sans-serif; letter-spacing:.08em; text-transform:uppercase;}
@@ -2146,7 +2184,7 @@ html.app-frame body:has(#anModal:not([hidden])) .toast{top:52px; bottom:auto;}
 .an-vs-sub{margin-top:3px; font-size:12px; color:#666;}
 .an-vs-c{text-align:right; font-size:11px; color:#777; line-height:1.15;}
 .an-vs-c b{display:block; font:700 15px/1.15 'Barlow', sans-serif; color:#1a1a1a;}
-@media (max-width:420px){ .an-vs{padding:12px 10px 8px;} .an-vs-ph, .an-vs-pl{grid-template-columns:28px minmax(0,1fr) 36px 58px 46px; column-gap:6px;} }
+@media (max-width:420px){ .an-vst{padding:12px 10px 8px;} .an-vs-ph, .an-vs-pl{grid-template-columns:28px minmax(0,1fr) 36px 58px 46px; column-gap:6px;} }
 .an-table .an-veo-sm{display:none;}
 @media (max-width:640px){ .an-table .an-veo-half{display:none;} .an-table .an-veo-lg{display:none;} .an-table .an-veo-sm{display:inline;} }
 .an-video-wrap .an-flash{z-index:3;}
@@ -14445,6 +14483,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     document.getElementById('anGetRow').hidden = true;
     anRenderDriveBtn();
     try{ anRenderVeoBtn(); }catch(e){}
+    try{ anHeadScore(); }catch(e){}
   }
   /* a video downloaded from the web: Windows notes where it came from, so the match keeps that link by itself
      (the download address of the exact file, and the page it was downloaded from) */
@@ -15180,6 +15219,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   /* ---------- stats ---------- */
   function anRenderStats(){
     const box = document.getElementById('anStats'); box.innerHTML = '';
+    try{ anHeadScore(); }catch(e){}
     const tags = anData().tags;
     const veo = anVeoStats(box);
     if(veo) return;   /* (Veo's stats say it all: the tag counts aren't repeated under them) */
@@ -15437,7 +15477,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const row = {type:'hufc_on_goal', label:'Shots on target', unit:'count', us:add(g.us, sv.them), them:add(g.them, sv.us)};
       byType.hufc_on_goal = row; team.push(row);
     })();
-    const wrap = h('div', {class:'an-vs'});
+    const wrap = h('div', {class:'an-vst'});
     /* the score (for the half picked) */
     const g = byType.football_goal_total;
     const gu = g ? pick(g.us) : null, gt = g ? pick(g.them) : null;
@@ -15600,6 +15640,38 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
 
 
+  /* ---------- the top of a match video: Home and the actions, a scoreboard, then Lineup and Pre-game ---------- */
+  (function anHeadA(){
+    try{
+      const head = document.querySelector('#anModal .an-head'), meta = head && head.querySelector('.an-meta'), home = document.getElementById('anClose');
+      if(!head || !meta || !home) return;
+      const acts = document.createElement('div'); acts.className = 'an-acts';
+      ['anGetBtn', 'anVeoBtn', 'anDlBtn', 'anDriveBtn'].forEach(function(id){ const b = document.getElementById(id); if(b) acts.appendChild(b); });
+      const open = head.querySelector('[data-an-open]'); if(open) acts.appendChild(open);
+      head.insertBefore(home, meta);
+      head.insertBefore(acts, meta);
+      const links = document.createElement('div'); links.className = 'an-links';
+      meta.querySelectorAll('.an-link').forEach(function(l){ links.appendChild(l); });
+      meta.appendChild(links);
+      head.classList.add('an-head-a');
+    }catch(e){}
+  })();
+  /* the score in the bar: Veo's goals if it has them, else the goal tags; "vs" before any */
+  function anHeadScore(){
+    const el = document.querySelector('#anModal .an-head-a .an-vs'); if(!el || !anM) return;
+    const a = anData(); let us = null, them = null;
+    const g = a.veo && (a.veo.team || []).find(function(r){ return r.type === 'football_goal_total'; });
+    if(g && g.us && g.them && g.us.v != null && g.them.v != null){ us = +g.us.v; them = +g.them.v; }
+    else {
+      const goals = (a.tags || []).filter(function(t){ return t.type === 'Goal'; });
+      if(goals.length){ us = goals.filter(function(t){ return t.side !== 'them'; }).length; them = goals.length - us; }
+    }
+    const has = us != null && them != null;
+    el.textContent = has ? us + ' – ' + them : 'vs';
+    el.classList.toggle('score', has);
+    el.setAttribute('aria-label', has ? 'Score ' + us + ' to ' + them : 'versus');
+  }
+
   /* ---------- tabs, keyboard ---------- */
   function anRenderTabs(){
     anModal.querySelectorAll('.an-tab').forEach(function(b){ const on = b.dataset.tab === anTab; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
@@ -15610,6 +15682,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   anModal.querySelectorAll('.an-tab').forEach(function(b){ b.addEventListener('click', function(){ anTab = b.dataset.tab; anRenderTabs(); }); });
   function anRenderAll(){
     try{ anTrackLoad(); }catch(e){}
+    try{ anHeadScore(); }catch(e){}
     anMTickSig = ''; try{ anMainPaint(); }catch(e){}
     anRenderVideoState(); anRenderButtons(); anRenderList(); anRenderStats(); anRenderClips(); anRenderCut(); anRenderTabs();
     document.getElementById('anCutBtn').hidden = !anCanEdit();
@@ -18119,7 +18192,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
+    {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
     {v:'4.13', d:'20 Nov 2026', t:'See who’s on, Save as PDF, coaches in full', n:['The admin can see which coaches are using the planner right now and what they’re working on','Save as PDF beside Print in every plan’s top bar','A plan’s black bar names every coach in full: the coach who made it first, then each collaborator, with commas','Collaborators: a session you’re added to shows up in your planner, with a notice saying who added you','The admin can send a coach a password reset email','Removing a coach’s access moves them to Removed (not Waiting); waiting coaches can be removed too','Side menu icons about 30% bigger','Numbers in every badge sit dead centre (collaborators, Settings, attendance)','Fixed: “2 out” on the attendance link went outside its box']},
     {v:'4.12', d:'19 Nov 2026', t:'Saved sign, deleting practices', n:['A Saved sign in place of the Save button — work done offline goes up as soon as the internet is back','A deleted saved practice stays deleted (identical copies go with it)','Text centred in every bubble: calendar days, Today, This week, age-group tags and small buttons']},
