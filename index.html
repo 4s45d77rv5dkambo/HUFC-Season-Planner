@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261125151850">
+<meta name="hufc-build" content="20261126090541">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2777,6 +2777,7 @@ body.doc-pregame .collab-btn{display:none !important;}   /* collaborators are fo
 .att-link{padding-right:8px;}
 .att-link-main{display:inline-flex; align-items:center; gap:5px; white-space:nowrap; min-width:0;}
 .att-link-out{flex:none; white-space:nowrap;}
+.att-link-by{flex:none; white-space:nowrap; font-size:11px; font-weight:600; color:var(--grey);}
 
 /* status chips: Available / Injured / Unavailable */
 .av-chip{flex:none; display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 9px; border-radius:12px; border:1px solid var(--line); background:var(--white); color:var(--grey);
@@ -18909,7 +18910,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to play it','Shot map filters: both teams or one, the result (goals, saved, woodwork, missed, blocked) and one player. “Woodwork”: the ball reached the goal between the posts, didn’t go in and stayed in play','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to play it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Change a shot’s result: tap it and pick Missed, Woodwork, Blocked or Saved (goals stay as Veo has them; Veo’s own is marked, pick it to undo). Kept with the match video','Goals Veo logged without a shot now go on the shot map too, from where the ball tracking shows they were hit; Move shot: tap a shot and tap or drag to where it was really taken from','Pass map: an arrow for every pass from where it was played to where it was received (missed ones dashed, with a little red x where they ended), for either team, and for one player picked by name','Pass map and possession map: their own Full game / 1st half / 2nd half buttons (each half drawn the way it was played)','Possession map: where the team had the ball, in thirds and left / centre / right','Two or more coaches can work on one session at the same time without interrupting each other: their changes appear straight away, and only the part they changed is redrawn — what you’re in the middle of (an animation playing, a step you’re on, something picked, a box you’re typing in) carries on and catches up with their change the moment you stop. Undo still works after their changes come in, and the page no longer jumps','Saved practices stay yours: two identical copies (yours and another coach’s) are no longer tidied into one — that let each planner take its own copy off, so both went (how Arrival activities, ATT vs DEF and Transfer rondo were lost). Practices and boards are saved only from your own sessions and pre-games (a collaborator’s planner no longer saves copies under their name), and a practice in your session whose saved copy went is saved again as yours','Saved boards: one board per name, phase and team — a board in a pre-game with the same name as one of your saved boards updates it (your boards already saved twice were merged, keeping the newest)','Fixes from a full check of the week: the shot map starts fresh each time a match video opens (leaving part-way through fixing an arrow no longer stops taps working); a shirt number two players share shows both names; a match whose Veo video has no ball tracking doesn’t fetch the mini map again every time; boards in your pre-games are gathered into Saved boards when the planner starts (they were only gathered when Saved boards was opened); left-over code from the player cards removed; the program opens Veo’s maps without waiting for the running stats (program 1.6.21)','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
+    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to play it','Shot map filters: both teams or one, the result (goals, saved, woodwork, missed, blocked) and one player. “Woodwork”: the ball reached the goal between the posts, didn’t go in and stayed in play','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to play it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Change a shot’s result: tap it and pick Missed, Woodwork, Blocked or Saved (goals stay as Veo has them; Veo’s own is marked, pick it to undo). Kept with the match video','Goals Veo logged without a shot now go on the shot map too, from where the ball tracking shows they were hit; Move shot: tap a shot and tap or drag to where it was really taken from','Pass map: an arrow for every pass from where it was played to where it was received (missed ones dashed, with a little red x where they ended), for either team, and for one player picked by name','Pass map and possession map: their own Full game / 1st half / 2nd half buttons (each half drawn the way it was played)','Possession map: where the team had the ball, in thirds and left / centre / right','Attendance for a combined session (e.g. U18s, U20s and U23s together): the session shows the total of everyone there and each age group’s count, the Players box fills in with the total, and each group’s ticks are kept while you switch between them in the attendance window (Save saves them all)','Two or more coaches can work on one session at the same time without interrupting each other: their changes appear straight away, and only the part they changed is redrawn — what you’re in the middle of (an animation playing, a step you’re on, something picked, a box you’re typing in) carries on and catches up with their change the moment you stop. Undo still works after their changes come in, and the page no longer jumps','Saved practices stay yours: two identical copies (yours and another coach’s) are no longer tidied into one — that let each planner take its own copy off, so both went (how Arrival activities, ATT vs DEF and Transfer rondo were lost). Practices and boards are saved only from your own sessions and pre-games (a collaborator’s planner no longer saves copies under their name), and a practice in your session whose saved copy went is saved again as yours','Saved boards: one board per name, phase and team — a board in a pre-game with the same name as one of your saved boards updates it (your boards already saved twice were merged, keeping the newest)','Fixes from a full check of the week: the shot map starts fresh each time a match video opens (leaving part-way through fixing an arrow no longer stops taps working); a shirt number two players share shows both names; a match whose Veo video has no ball tracking doesn’t fetch the mini map again every time; boards in your pre-games are gathered into Saved boards when the planner starts (they were only gathered when Saved boards was opened); left-over code from the player cards removed; the program opens Veo’s maps without waiting for the running stats (program 1.6.21)','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
     {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now gets it in about a minute — four Veo pages at once, without loading Veo’s video — and keeps going by itself until it has the whole game)','Fixed: pressing Veo stats ✓ again could empty the Stats tab when Veo sent only part of the stats (what was there now stays, and the stats load properly in the background)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
     {v:'4.13', d:'20 Nov 2026', t:'See who’s on, Save as PDF, coaches in full', n:['The admin can see which coaches are using the planner right now and what they’re working on','Save as PDF beside Print in every plan’s top bar','A plan’s black bar names every coach in full: the coach who made it first, then each collaborator, with commas','Collaborators: a session you’re added to shows up in your planner, with a notice saying who added you','The admin can send a coach a password reset email','Removing a coach’s access moves them to Removed (not Waiting); waiting coaches can be removed too','Side menu icons about 30% bigger','Numbers in every badge sit dead centre (collaborators, Settings, attendance)','Fixed: “2 out” on the attendance link went outside its box']},
@@ -22711,6 +22712,20 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   }
   /* the team a session's attendance is for: the one it was taken for (if still ticked), else the first ticked */
   function attTeamOf(x){ const ts = attTeams(x), t = x && x.attend && x.attend.team; return t && ts.indexOf(t) !== -1 ? t : ts[0]; }
+  /* a combined session (U18s, U20s and U23s together): who's there from each group, and everyone (a player ticked in two groups counts once) */
+  function attTotal(x, live){
+    const day = attSessionDay(x), seen = {}, per = [];
+    let any = false;
+    attTeams(x).forEach(function(t){
+      let names = live && live[t];
+      if(!names){ const rec = attDayRec(t, day, x); names = rec ? rec.here : null; }
+      if(names) any = true;
+      (names || []).forEach(function(nm){ const k = gtKey(nm); if(k) seen[k] = 1; });
+      per.push({team:t, n:(names || []).length, taken:!!names});
+    });
+    return {total:Object.keys(seen).length, per:per, any:any};
+  }
+  function attShort(t){ return String(t).replace(/^U(\d+)$/, '$1s'); }
   /* the link under the session's Players box: "Take attendance", then "12 here · 2 out" */
   function renderAttendBtn(){
     const b = document.getElementById('attendBtn'); if(!b) return;
@@ -22718,16 +22733,20 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const x = typeof state !== 'undefined' ? state : null;
     if(!x || isPre(x)){ b.hidden = true; return; }
     b.hidden = false;
+    const teams = attTeams(x), multi = teams.length > 1;
     const team0 = attTeamOf(x), rec = attDayRec(team0, attSessionDay(x), x);
-    const at = rec && rec.here.length ? rec : null, n = at ? at.here.length : 0;
-    const team = team0, sq = sqFor(team);
-    const out = sq ? sq.players.filter(function(r){ return avOf(team, r.name); }).length : 0;
+    const tot = multi ? attTotal(x) : null;
+    const at = multi ? (tot.total ? tot : null) : (rec && rec.here.length ? rec : null), n = multi ? tot.total : (at ? at.here.length : 0);
+    let out = 0;
+    (multi ? teams : [team0]).forEach(function(team){ const sq = sqFor(team); out += sq ? sq.players.filter(function(r){ return avOf(team, r.name); }).length : 0; });
+    const by = multi && at ? tot.per.map(function(p){ return attShort(p.team) + ' ' + (p.taken ? p.n : '–'); }).join(' · ') : '';
     b.classList.toggle('on', !!at);
     b.innerHTML = '';
     b.append(h('span', {class:'att-link-main'}, h('span', {class:'att-link-i', 'aria-hidden':'true', text:'✓'}),
       h('span', {text:at ? n + ' here' : 'Take attendance'})),
+      by ? h('span', {class:'att-link-by', text:by}) : null,
       out ? h('span', {class:'att-link-out', text:out + ' out'}) : null);
-    b.title = at ? n + (n === 1 ? ' player' : ' players') + ' at this session' + (out ? ' · ' + out + ' injured or unavailable' : '') + ' · tap to change' : 'Attendance: tick off who turned up, and who’s injured or unavailable';
+    b.title = at ? n + (n === 1 ? ' player' : ' players') + ' at this session' + (by ? ' (' + by + ')' : '') + (out ? ' · ' + out + ' injured or unavailable' : '') + ' · tap to change' : 'Attendance: tick off who turned up, and who’s injured or unavailable';
     try{ renderTgNote(); }catch(e){}
   }
   /* each player's attendance across the team's sessions (the ones where it was taken) */
@@ -22747,10 +22766,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const day = opts ? opts.day : attSessionDay(x);
     let team = opts ? opts.team : attTeamOf(x);
     /* one attendance a team a day: whatever was ticked last — here, or in Training groups — is what you start from */
-    const here = {};
-    const loadHere = function(){ Object.keys(here).forEach(function(k){ delete here[k]; }); const rec = attDayRec(team, day, x); ((rec && rec.here) || []).forEach(function(n){ here[gtKey(n)] = clean(n); }); };
+    /* each age group's ticks, kept while you switch between them (Save saves them all) */
+    const hereBy = {}, extraBy = {}, namesBy = {};
+    let here = {}, extra = [];   /* (extra: players added here who aren't in the squad list yet) */
+    const loadHere = function(){
+      if(!hereBy[team]){ const m = hereBy[team] = {}, rec = attDayRec(team, day, x); ((rec && rec.here) || []).forEach(function(n){ m[gtKey(n)] = clean(n); }); }
+      here = hereBy[team]; extra = extraBy[team] = extraBy[team] || [];
+    };
     loadHere();
-    let extra = [];   /* players added here who aren't in the squad list yet */
     /* the day's training groups (Squads): who's joining this team, and who's training elsewhere */
     let tg = null;
     const tgLoad = function(){ try{ tg = tgFor(team, opts ? day : tgSessionDay(x)); }catch(e){ tg = null; } };
@@ -22770,10 +22793,23 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       Object.keys(here).forEach(function(k){ if(!seen[k] && !gone[k]){ seen[k] = 1; out.push({name:here[k], num:'', pos:''}); } });   /* (ticked before, since taken off the squad) */
       return out;
     };
+    const namesNow = function(){ return players().filter(function(r){ return here[gtKey(r.name)]; }).map(function(r){ return clean(r.name); }); };
+    const liveNames = function(){
+      const o = {}; Object.keys(namesBy).forEach(function(t){ o[t] = namesBy[t]; });
+      Object.keys(hereBy).forEach(function(t){ if(!o[t]) o[t] = Object.keys(hereBy[t]).map(function(k){ return hereBy[t][k]; }); });
+      o[team] = namesNow(); return o;
+    };
     const paintCount = function(){
       const ps = players(), n = ps.filter(function(r){ return here[gtKey(r.name)]; }).length;
       const out = ps.filter(function(r){ return avOf(team, r.name); }).length;
-      count.textContent = n + ' of ' + ps.length + ' here' + (out ? ' · ' + out + ' out' : '');
+      let txt = n + ' of ' + ps.length + ' here' + (out ? ' · ' + out + ' out' : '');
+      if(teams.length > 1 && x){
+        const tot = attTotal(x, liveNames());
+        txt = (teams.length > 1 ? attShort(team) + ': ' : '') + txt + ' · ' + tot.total + ' here in all';
+        const sel = head.querySelector('.att-team');
+        if(sel) Array.prototype.forEach.call(sel.options, function(op){ const p = tot.per.find(function(q){ return q.team === op.value; }); op.textContent = op.value + (p && p.n ? ' · ' + p.n + ' here' : ''); });
+      }
+      count.textContent = txt;
     };
     const render = function(){
       tgLoad();
@@ -22781,7 +22817,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(teams.length > 1){
         const sel = h('select', {class:'set-input att-team', 'aria-label':'Team'});
         teams.forEach(function(t){ sel.appendChild(h('option', {value:t, text:t, selected:t === team})); });
-        sel.addEventListener('change', function(){ team = sel.value; loadHere(); render(); });
+        sel.addEventListener('change', function(){ namesBy[team] = namesNow(); team = sel.value; loadHere(); render(); });
         head.append(h('label', {class:'se-field att-team-f'}, h('span', {class:'se-field-l', text:'Team'}), sel));
       }
       const hist = attHistory(team);
@@ -22834,11 +22870,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       return [count, h('span', {class:'se-sp'}),
         ro ? h('button', {type:'button', class:'btn btn-primary', text:'Close', onclick:close}) : h('button', {type:'button', class:'btn', text:'Cancel', onclick:close}),
         ro ? null : h('button', {type:'button', class:'btn btn-primary', text:'Save', onclick:function(){
-          const names = players().filter(function(r){ return here[gtKey(r.name)]; }).map(function(r){ return clean(r.name); });
-          const before0 = attDayRec(team, day, x);
-          const same = before0 ? JSON.stringify(before0.here) === JSON.stringify(names) : !names.length;
-          /* the day's record in Squads (so a session and Training groups share it) */
-          if(!same){ try{ attSaveDay(team, day, names); }catch(e){} }
+          const names = namesNow();
+          namesBy[team] = names;
+          let same = true;
+          /* the day's record in Squads (so a session and Training groups share it) — for each age group you ticked */
+          Object.keys(namesBy).forEach(function(t){
+            const nm = namesBy[t], before0 = attDayRec(t, day, x);
+            const s1 = before0 ? JSON.stringify(before0.here) === JSON.stringify(nm) : !nm.length;
+            if(!s1){ same = false; try{ attSaveDay(t, day, nm); }catch(e){} }
+          });
+          const multi = !opts && teams.length > 1, tot = multi ? attTotal(x, namesBy) : null;
           if(opts){
             close();
             if(same) return;
@@ -22847,13 +22888,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
             return;
           }
           const before = JSON.stringify(x.attend || null);
-          if(names.length) x.attend = {team:team, here:names, at:Date.now()}; else delete x.attend;
-          /* the "Players" box in the header fills in with the number here (unless you've typed something else in it) */
-          if(names.length && (!clean(x.meta.players) || /^\d+$/.test(clean(x.meta.players)))) x.meta.players = String(names.length);
+          /* the session keeps the group you finished on (or, if that's empty, the first you ticked) */
+          const keepT = names.length ? team : Object.keys(namesBy).find(function(t){ return namesBy[t].length; });
+          if(keepT) x.attend = {team:keepT, here:namesBy[keepT], at:Date.now()}; else delete x.attend;
+          const total = multi ? tot.total : names.length;
+          /* the "Players" box in the header fills in with the number here — everyone, for a combined session (unless you've typed something else in it) */
+          if(total && (!clean(x.meta.players) || /^\d+$/.test(clean(x.meta.players)))) x.meta.players = String(total);
           close();
-          if(JSON.stringify(x.attend || null) === before){ renderAttendBtn(); return; }
+          if(JSON.stringify(x.attend || null) === before && same){ renderAttendBtn(); return; }
           saveLocal(); try{ commitHistory(); }catch(e){} try{ renderTop(); }catch(e){} renderAttendBtn();
-          showToast(names.length ? names.length + (names.length === 1 ? ' player' : ' players') + ' at this session' : 'Attendance cleared');
+          showToast(total ? total + (total === 1 ? ' player' : ' players') + ' at this session' + (multi ? ' (' + tot.per.map(function(p){ return attShort(p.team) + ' ' + (p.taken ? p.n : '–'); }).join(' · ') + ')' : '') : 'Attendance cleared');
         }})];
     }, true);
   }
