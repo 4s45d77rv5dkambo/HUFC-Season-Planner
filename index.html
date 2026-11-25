@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261125130744">
+<meta name="hufc-build" content="20261125135621">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -15899,7 +15899,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(b64) return go(b64);
     pgMedia.get('mvb-' + m.id).then(go).catch(function(){});
   }
-  let anSmSel = '', anSmEdit = '', anPmSide = 0, anPmNum = '', anPoSide = 0, anSmSide = 'a', anSmRes = 'a', anSmNum = '';
+  let anSmSel = '', anSmEdit = '', anPmSide = 0, anPmNum = '', anPoSide = 0, anSmSide = 'a', anSmRes = 'a', anSmNum = '', anPmHalf = null, anPoHalf = null, anMapsTop = null;
   const anShotKey = function(s){ return s[0] + '@' + s[6]; };
   function anVeoNameOf(n){
     if(n == null || n < 0) return '';
@@ -15912,7 +15912,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function anVeoMaps(wrap, a){
     const E = a.veoEv;
     /* a match video opened (another, or this one again): its maps start fresh (filters, the picked shot, fixing an arrow) */
-    if(anM && anMapsFor !== anM){ anMapsFor = anM; anSmSel = ''; anSmEdit = ''; anSmSide = 'a'; anSmRes = 'a'; anSmNum = ''; anPmSide = 0; anPmNum = ''; anPoSide = 0; }
+    if(anM && anMapsFor !== anM){ anMapsFor = anM; anSmSel = ''; anSmEdit = ''; anSmSide = 'a'; anSmRes = 'a'; anSmNum = ''; anPmSide = 0; anPmNum = ''; anPoSide = 0; anPmHalf = null; anPoHalf = null; }
+    /* the halves picked at the top: the pass and possession maps follow (until one is switched on its own) */
+    if(anMapsTop !== anVeoHalf){ anMapsTop = anVeoHalf; anPmHalf = null; anPoHalf = null; }
     if(!E){
       const D = window.hufcDesktop;
       if(a.veo && D && D.veo && anCanEdit()) wrap.appendChild(h('p', {class:'an-veo-hint', text:'Press Veo stats ✓ (top right) once more to add the shot map, pass map and possession map.'}));
@@ -15926,7 +15928,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const usLeft = function(hf){ return !!(E.fl && E.fl[hf] === 1); };        /* HUFC attacked to the left in that half */
     const arrowFor = function(sd, hf){ return usLeft(hf) !== (sd === 1) ? '←' : '→'; };
     const dirFor = function(sd, hf){ const nm = sd ? opp : us; return arrowFor(sd, hf) === '←' ? '← ' + nm + ' attack' : nm + ' attack →'; };
-    const dirText = function(sd){ return HH ? dirFor(sd, HH) : (sd ? opp : us) + ' attack: 1st half ' + arrowFor(sd, 1) + ' · 2nd half ' + arrowFor(sd, 2); };
+    const dirText = function(sd, hh){ hh = hh === undefined ? HH : hh; return hh ? dirFor(sd, hh) : (sd ? opp : us) + ' attack: 1st half ' + arrowFor(sd, 1) + ' · 2nd half ' + arrowFor(sd, 2); };
+    /* its own Full game / 1st half / 2nd half (the pass and possession maps) */
+    const halfSeg = function(cur, set){ return seg(cur, [[0, 'Full game'], [1, '1st half'], [2, '2nd half']], set); };
     const us = anUsShort(), opp = anOppShort(), YC = '#f5c400', RC = '#e5484d';
     const NS = 'http://www.w3.org/2000/svg';
     const S = function(tag, at, par){ const e = document.createElementNS(NS, tag); Object.keys(at || {}).forEach(function(k){ e.setAttribute(k, at[k]); }); if(par) par.appendChild(e); return e; };
@@ -16140,7 +16144,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
     /* -- pass map: one team (and one player, if picked), a line from where each pass was played to where it was received -- */
     (function(){
-      const sd = anPmSide, all = E.ps.filter(function(p){ return p[0] === sd && inH(p[1]); });
+      const PH = anPmHalf == null ? HH : anPmHalf, inP = function(hf){ return !PH || hf === PH; };
+      const sd = anPmSide, all = E.ps.filter(function(p){ return p[0] === sd && inP(p[1]); });
       const nums = []; all.forEach(function(p){ if(p[7] >= 0 && nums.indexOf(p[7]) === -1) nums.push(p[7]); }); nums.sort(function(a, b){ return a - b; });
       if(anPmNum !== '' && nums.indexOf(+anPmNum) === -1) anPmNum = '';
       const L = all.filter(function(p){ return anPmNum === '' || p[7] === +anPmNum; });
@@ -16150,6 +16155,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       nums.forEach(function(n){ const nm = sd ? '' : anVeoNameOf(n); const o = h('option', {value:String(n), text:n + (nm ? ' · ' + nm : '')}); if(String(n) === anPmNum) o.selected = true; sel.appendChild(o); });
       card.appendChild(h('div', {class:'an-map-h'}, h('span', {class:'an-map-t', text:'Pass map'}),
         h('div', {class:'an-map-c'}, sel, seg(sd, [[0, us], [1, opp]], function(v){ anPmSide = v; anPmNum = ''; }))));
+      card.appendChild(h('div', {class:'an-map-f'}, halfSeg(PH, function(v){ anPmHalf = v; })));
       const svg = pitch('Pass map: where each pass was played from and received');
       const c = sd ? RC : YC, miss = sd ? '#c8c8c3' : '#ff8a8a', one = anPmNum !== '', op = one ? '.95' : '.55';
       let ok = 0, no = 0;
@@ -16173,19 +16179,21 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       card.appendChild(h('div', {class:'an-map-leg'},
         legI('<svg width="24" height="10" aria-hidden="true"><line x1="1" y1="5" x2="17" y2="5" stroke="' + c + '" stroke-width="1.6"/><path d="M23 5L16 1.5L16 8.5Z" fill="' + c + '"/></svg>', 'Completed ' + ok),
         legI('<svg width="26" height="10" aria-hidden="true"><line x1="1" y1="5" x2="18" y2="5" stroke="' + miss + '" stroke-width="1.6" stroke-dasharray="3 2"/><path d="M19 2L25 8M25 2L19 8" stroke="#ff4d4d" stroke-width="1.6" stroke-linecap="round"/></svg>', 'Missed ' + no),
-        h('span', {class:'dir', text:dirText(sd)})));
+        h('span', {class:'dir', text:dirText(sd, PH)})));
       grp.appendChild(card);
     })();
 
     /* -- possession map: where the team had the ball, in thirds and channels -- */
     (function(){
+      const OH = anPoHalf == null ? HH : anPoHalf, inO = function(hf){ return !OH || hf === OH; };
       const sd = anPoSide, by = E.po[sd] || {}, z = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-      Object.keys(by).forEach(function(hf){ if(inH(+hf)) by[hf].forEach(function(v, i){ z[i] += v; }); });
+      Object.keys(by).forEach(function(hf){ if(inO(+hf)) by[hf].forEach(function(v, i){ z[i] += v; }); });
       const tot = z.reduce(function(s, v){ return s + v; }, 0);
       const card = h('div', {class:'an-map'});
       card.appendChild(h('div', {class:'an-map-h'}, h('span', {class:'an-map-t', text:'Possession map'}), seg(sd, [[0, us], [1, opp]], function(v){ anPoSide = v; })));
+      card.appendChild(h('div', {class:'an-map-f'}, halfSeg(OH, function(v){ anPoHalf = v; })));
       const svg = pitch('Possession map: where the team had the ball');
-      const c = sd ? RC : YC, ref = HH || 1, mir = usLeft(ref) !== (sd === 1);
+      const c = sd ? RC : YC, ref = OH || 1, mir = usLeft(ref) !== (sd === 1);
       if(tot){
         for(let j = 0; j < 3; j++) for(let i = 0; i < 3; i++){
           const v = z[j * 3 + i] / tot, ci = mir ? 2 - i : i, cj = mir ? 2 - j : j, x = ci * 35, y = cj * 68 / 3;
@@ -16198,7 +16206,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         });
       }
       card.appendChild(svg);
-      card.appendChild(h('div', {class:'an-map-leg'}, h('span', {text:'Where they had the ball, as a share of all their touches' + (HH ? '' : ' (drawn the way they attacked in the 1st half)')}), h('span', {class:'dir', text:dirFor(sd, ref)})));
+      card.appendChild(h('div', {class:'an-map-leg'}, h('span', {text:'Where they had the ball, as a share of all their touches' + (OH ? '' : ' (drawn the way they attacked in the 1st half)')}), h('span', {class:'dir', text:dirFor(sd, ref)})));
       grp.appendChild(card);
     })();
     wrap.appendChild(grp);
@@ -18727,7 +18735,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to play it','Shot map filters: both teams or one, the result (goals, saved, woodwork, missed, blocked) and one player. “Woodwork”: the ball reached the goal between the posts, didn’t go in and stayed in play','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to play it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Change a shot’s result: tap it and pick Missed, Woodwork, Blocked or Saved (goals stay as Veo has them; Veo’s own is marked, pick it to undo). Kept with the match video','Goals Veo logged without a shot now go on the shot map too, from where the ball tracking shows they were hit; Move shot: tap a shot and tap or drag to where it was really taken from','Pass map: an arrow for every pass from where it was played to where it was received (missed ones dashed, with a little red x where they ended), for either team, and for one player picked by name','Possession map: where the team had the ball, in thirds and left / centre / right','Saved practices stay yours: two identical copies (yours and another coach’s) are no longer tidied into one — that let each planner take its own copy off, so both went (how Arrival activities, ATT vs DEF and Transfer rondo were lost). Practices and boards are saved only from your own sessions and pre-games (a collaborator’s planner no longer saves copies under their name), and a practice in your session whose saved copy went is saved again as yours','Saved boards: one board per name, phase and team — a board in a pre-game with the same name as one of your saved boards updates it (your boards already saved twice were merged, keeping the newest)','Fixes from a full check of the week: the shot map starts fresh each time a match video opens (leaving part-way through fixing an arrow no longer stops taps working); a shirt number two players share shows both names; a match whose Veo video has no ball tracking doesn’t fetch the mini map again every time; boards in your pre-games are gathered into Saved boards when the planner starts (they were only gathered when Saved boards was opened); left-over code from the player cards removed; the program opens Veo’s maps without waiting for the running stats (program 1.6.21)','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
+    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to play it','Shot map filters: both teams or one, the result (goals, saved, woodwork, missed, blocked) and one player. “Woodwork”: the ball reached the goal between the posts, didn’t go in and stayed in play','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to play it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Change a shot’s result: tap it and pick Missed, Woodwork, Blocked or Saved (goals stay as Veo has them; Veo’s own is marked, pick it to undo). Kept with the match video','Goals Veo logged without a shot now go on the shot map too, from where the ball tracking shows they were hit; Move shot: tap a shot and tap or drag to where it was really taken from','Pass map: an arrow for every pass from where it was played to where it was received (missed ones dashed, with a little red x where they ended), for either team, and for one player picked by name','Pass map and possession map: their own Full game / 1st half / 2nd half buttons (each half drawn the way it was played)','Possession map: where the team had the ball, in thirds and left / centre / right','Saved practices stay yours: two identical copies (yours and another coach’s) are no longer tidied into one — that let each planner take its own copy off, so both went (how Arrival activities, ATT vs DEF and Transfer rondo were lost). Practices and boards are saved only from your own sessions and pre-games (a collaborator’s planner no longer saves copies under their name), and a practice in your session whose saved copy went is saved again as yours','Saved boards: one board per name, phase and team — a board in a pre-game with the same name as one of your saved boards updates it (your boards already saved twice were merged, keeping the newest)','Fixes from a full check of the week: the shot map starts fresh each time a match video opens (leaving part-way through fixing an arrow no longer stops taps working); a shirt number two players share shows both names; a match whose Veo video has no ball tracking doesn’t fetch the mini map again every time; boards in your pre-games are gathered into Saved boards when the planner starts (they were only gathered when Saved boards was opened); left-over code from the player cards removed; the program opens Veo’s maps without waiting for the running stats (program 1.6.21)','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
     {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now gets it in about a minute — four Veo pages at once, without loading Veo’s video — and keeps going by itself until it has the whole game)','Fixed: pressing Veo stats ✓ again could empty the Stats tab when Veo sent only part of the stats (what was there now stays, and the stats load properly in the background)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
     {v:'4.13', d:'20 Nov 2026', t:'See who’s on, Save as PDF, coaches in full', n:['The admin can see which coaches are using the planner right now and what they’re working on','Save as PDF beside Print in every plan’s top bar','A plan’s black bar names every coach in full: the coach who made it first, then each collaborator, with commas','Collaborators: a session you’re added to shows up in your planner, with a notice saying who added you','The admin can send a coach a password reset email','Removing a coach’s access moves them to Removed (not Waiting); waiting coaches can be removed too','Side menu icons about 30% bigger','Numbers in every badge sit dead centre (collaborators, Settings, attendance)','Fixed: “2 out” on the attendance link went outside its box']},
