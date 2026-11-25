@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261125105901">
+<meta name="hufc-build" content="20261125110601">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -10985,7 +10985,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       let id = d.pgbId, cur = id ? lib.items[id] : null;
       if(id && seen[id]){ id = null; cur = null; }           /* a second copy of a saved board in the same pre-game: its own board once changed */
       else if(id) seen[id] = 1;
-      if(id && lib.removed[id] && !cur) return;              /* taken off Saved boards: stays off */
+      if(id && lib.removed[id] && !cur){ if(lib.removed[id] !== 'merged') return; id = null; }   /* taken off Saved boards: stays off (merged into a same-named board: find that one) */
       if(cur){
         if((cur.k || pgbKey(cur.practice)) === key){ d.pgbHash = key; return; }  /* no change */
         /* changed here since it last matched the saved board? (a copy the saved board has since moved on from stays as it is) */
@@ -10998,7 +10998,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         if(lib.removedK && lib.removedK[key]) return;          /* this exact board was taken off Saved boards */
         const same = index()[key];
         if(same){ d.pgbId = same; d.pgbHash = key; return; }   /* the same board is kept already */
-        id = newId();
+        /* one of your saved boards with this name, phase and team: this is that board (one board per name) */
+        const nk = pgbNameKey(g, d), twin = nk ? pgbNames(lib)[nk] : null;
+        if(twin && !seen[twin] && lib.items[twin]){
+          seen[twin] = 1;
+          if(d.pgbHash && d.pgbHash === key){ d.pgbId = twin; return; }   /* (unchanged here since it was last saved: just linked, not wound back) */
+          id = twin; cur = lib.items[twin];
+        }
+        else id = newId();
       }
       const snap = practiceSnapshot(d);
       snap.clips = []; delete snap.lineup; delete snap.pgbId; delete snap.pgbHash; delete snap.pgbTpl; delete snap.libId; delete snap.libHash;
@@ -11010,6 +11017,36 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     });
     return n;
   }
+  /* a board's name, phase and team, for finding your saved board of the same name */
+  const pgbNm = function(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+  function pgbNameKey(g, d){ const n = pgbNm(d && d.name); return n ? (g || '') + '|' + n + '|' + ((d && d.phase) || '') : ''; }
+  function pgbNames(lib){
+    const out = {}, at = {};
+    Object.keys(lib.items).forEach(function(id){
+      const e = lib.items[id]; if(!e || !e.pgb || !e.practice || lib.removed[id]) return;
+      try{ if(!isMineObj(e) || !canEdit(e)) return; }catch(x){ return; }
+      const k = pgbNameKey(e.group, e.practice); if(!k) return;
+      if(!out[k] || (e.updatedAt || 0) > at[k]){ out[k] = id; at[k] = e.updatedAt || 0; }
+    });
+    return out;
+  }
+  /* your boards saved twice under one name, phase and team: merged into one (the most recently changed), once */
+  function pgbMergeNamesOnce(){
+    try{
+      if(hufcStore.getItem('hufc-pgb-dedup-2')) return 0;
+      const lib = readLibrary(), keep = pgbNames(lib); let n = 0;
+      Object.keys(lib.items).forEach(function(id){
+        const e = lib.items[id]; if(!e || !e.pgb || !e.practice) return;
+        try{ if(!isMineObj(e) || !canEdit(e)) return; }catch(x){ return; }
+        const k = pgbNameKey(e.group, e.practice);
+        if(k && keep[k] && keep[k] !== id){ delete lib.items[id]; lib.removed[id] = 'merged'; n++; }
+      });
+      if(n) writeLibrary(lib);
+      hufcStore.setItem('hufc-pgb-dedup-2', String(Date.now()));
+      return n;
+    }catch(e){ return 0; }
+  }
+  setTimeout(function(){ if(pgbMergeNamesOnce()){ try{ pgbBackfill(); pgbRender(); }catch(e){} } }, 6500);
   /* boards saved twice under the same name, phase and team (before boards updated in place): keep the newest, once */
   function pgbCleanDupsOnce(){
     try{
@@ -16094,8 +16131,10 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const Lp = L.map(function(p){ const a = asP(p[1], p[2], p[3]), b = p[4] === -9999 ? [-9999, -9999] : asP(p[1], p[4], p[5]); return [p[0], p[1], a[0], a[1], b[0], b[1], p[6], p[7]]; });
       Lp.forEach(function(p){
         if(p[6]) return; no++;
-        if(p[4] === -9999){ S('circle', {cx:X(p[2]), cy:Y(p[3]), r:'.6', fill:'none', stroke:miss, 'stroke-width':'.35', opacity:op}, svg); return; }
-        S('line', {x1:X(p[2]), y1:Y(p[3]), x2:X(p[4]), y2:Y(p[5]), stroke:miss, 'stroke-width':'.35', 'stroke-dasharray':'1.2 .8', opacity:op}, svg);
+        /* a missed pass: a dashed line to where it went, and a little red x where it ended (just the x where Veo has no end) */
+        const xx = p[4] === -9999 ? X(p[2]) : X(p[4]), xy = p[4] === -9999 ? Y(p[3]) : Y(p[5]), xs = one ? .85 : .65;
+        if(p[4] !== -9999) S('line', {x1:X(p[2]), y1:Y(p[3]), x2:xx, y2:xy, stroke:miss, 'stroke-width':'.35', 'stroke-dasharray':'1.2 .8', opacity:op}, svg);
+        S('path', {d:'M' + (xx - xs) + ' ' + (xy - xs) + 'L' + (xx + xs) + ' ' + (xy + xs) + 'M' + (xx + xs) + ' ' + (xy - xs) + 'L' + (xx - xs) + ' ' + (xy + xs), stroke:'#ff4d4d', 'stroke-width':one ? '.45' : '.35', 'stroke-linecap':'round', fill:'none', opacity:one ? '1' : '.85'}, svg);
       });
       Lp.forEach(function(p){
         if(!p[6] || p[4] === -9999) { if(p[6]) ok++; return; } ok++;
@@ -16105,7 +16144,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       card.appendChild(svg);
       card.appendChild(h('div', {class:'an-map-leg'},
         legI('<svg width="24" height="10" aria-hidden="true"><line x1="1" y1="5" x2="18" y2="5" stroke="' + c + '" stroke-width="1.6"/><circle cx="19" cy="5" r="2.4" fill="' + c + '"/></svg>', 'Completed ' + ok),
-        legI('<svg width="24" height="10" aria-hidden="true"><line x1="1" y1="5" x2="20" y2="5" stroke="' + miss + '" stroke-width="1.6" stroke-dasharray="3 2"/></svg>', 'Missed ' + no),
+        legI('<svg width="26" height="10" aria-hidden="true"><line x1="1" y1="5" x2="18" y2="5" stroke="' + miss + '" stroke-width="1.6" stroke-dasharray="3 2"/><path d="M19 2L25 8M25 2L19 8" stroke="#ff4d4d" stroke-width="1.6" stroke-linecap="round"/></svg>', 'Missed ' + no),
         h('span', {class:'dir', text:dirText(sd)})));
       grp.appendChild(card);
     })();
@@ -18656,7 +18695,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to play it','Shot map filters: both teams or one, the result (goals, saved, woodwork, missed, blocked) and one player. “Woodwork”: the ball reached the goal between the posts, didn’t go in and stayed in play','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to play it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Change a shot’s result: tap it and pick Missed, Woodwork, Blocked or Saved (goals stay as Veo has them; Veo’s own is marked, pick it to undo). Kept with the match video','Goals Veo logged without a shot now go on the shot map too, from where the ball tracking shows they were hit; Move shot: tap a shot and tap or drag to where it was really taken from','Pass map: a line for every pass from where it was played to where it was received (missed ones dashed), for either team, and for one player picked by name','Possession map: where the team had the ball, in thirds and left / centre / right','Fixes from a full check of the week: the shot map starts fresh each time a match video opens (leaving part-way through fixing an arrow no longer stops taps working); a shirt number two players share shows both names; a match whose Veo video has no ball tracking doesn’t fetch the mini map again every time; boards in your pre-games are gathered into Saved boards when the planner starts (they were only gathered when Saved boards was opened); left-over code from the player cards removed; the program opens Veo’s maps without waiting for the running stats (program 1.6.21)','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
+    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to play it','Shot map filters: both teams or one, the result (goals, saved, woodwork, missed, blocked) and one player. “Woodwork”: the ball reached the goal between the posts, didn’t go in and stayed in play','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to play it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Change a shot’s result: tap it and pick Missed, Woodwork, Blocked or Saved (goals stay as Veo has them; Veo’s own is marked, pick it to undo). Kept with the match video','Goals Veo logged without a shot now go on the shot map too, from where the ball tracking shows they were hit; Move shot: tap a shot and tap or drag to where it was really taken from','Pass map: a line for every pass from where it was played to where it was received (missed ones dashed, with a little red x where they ended), for either team, and for one player picked by name','Possession map: where the team had the ball, in thirds and left / centre / right','Saved boards: one board per name, phase and team — a board in a pre-game with the same name as one of your saved boards updates it (your boards already saved twice were merged, keeping the newest)','Fixes from a full check of the week: the shot map starts fresh each time a match video opens (leaving part-way through fixing an arrow no longer stops taps working); a shirt number two players share shows both names; a match whose Veo video has no ball tracking doesn’t fetch the mini map again every time; boards in your pre-games are gathered into Saved boards when the planner starts (they were only gathered when Saved boards was opened); left-over code from the player cards removed; the program opens Veo’s maps without waiting for the running stats (program 1.6.21)','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
     {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now gets it in about a minute — four Veo pages at once, without loading Veo’s video — and keeps going by itself until it has the whole game)','Fixed: pressing Veo stats ✓ again could empty the Stats tab when Veo sent only part of the stats (what was there now stays, and the stats load properly in the background)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
     {v:'4.13', d:'20 Nov 2026', t:'See who’s on, Save as PDF, coaches in full', n:['The admin can see which coaches are using the planner right now and what they’re working on','Save as PDF beside Print in every plan’s top bar','A plan’s black bar names every coach in full: the coach who made it first, then each collaborator, with commas','Collaborators: a session you’re added to shows up in your planner, with a notice saying who added you','The admin can send a coach a password reset email','Removing a coach’s access moves them to Removed (not Waiting); waiting coaches can be removed too','Side menu icons about 30% bigger','Numbers in every badge sit dead centre (collaborators, Settings, attendance)','Fixed: “2 out” on the attendance link went outside its box']},
