@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261125150501">
+<meta name="hufc-build" content="20261125151850">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -7698,13 +7698,98 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   function liveReset(){
     try{ liveKey = storageKey; liveBase = state ? ((syncShared(state) && syncBaseGet(String(storageKey).slice(LS_PREFIX.length))) || liveStrip(state)) : null; liveSeen = state ? (+state.savedAt || 0) : 0; liveMine = new Set(); liveWait = null; }catch(e){ liveBase = null; }
   }
-  ['keydown', 'input', 'pointerdown', 'pointerup', 'compositionstart'].forEach(function(ev){
-    document.addEventListener(ev, function(){ liveBusyAt = Date.now(); if(ev === 'pointerdown') liveDown = true; if(ev === 'pointerup') liveDown = false; }, true);
+  /* which part of the plan something is in: a practice ('d:<id>'), a section ('s:<id>'), the top ('top'), or anywhere else ('x') */
+  var liveZAt = {}, liveDownZ = 'x', liveDownAt = 0;
+  function liveZoneOf(el){
+    try{
+      if(el && el.nodeType !== 1) el = el.parentElement;
+      const sheet = document.querySelector('.sheet:not(.lu-sheet)');
+      if(!el || !el.closest || !sheet || !sheet.contains(el)) return 'x';
+      const dr = el.closest('article.drill[id^="drill-"]'); if(dr) return 'd:' + dr.id.slice(6);
+      const sec = el.closest('#sections > section[data-id]'); if(sec) return 's:' + sec.getAttribute('data-id');
+      return 'top';
+    }catch(e){ return 'x'; }
+  }
+  ['keydown', 'input', 'pointerdown', 'pointerup', 'pointercancel', 'compositionstart'].forEach(function(ev){
+    document.addEventListener(ev, function(e){
+      const z = liveZoneOf(e.target), t = Date.now();
+      liveBusyAt = t; liveZAt[z] = t;
+      if(ev === 'pointerdown'){ liveDown = true; liveDownZ = z; liveDownAt = t; }
+      if(ev === 'pointerup' || ev === 'pointercancel') liveDown = false;
+    }, true);
   });
-  function liveBusy(){
-    if(liveDown || Date.now() - liveBusyAt < 1500) return true;
-    try{ if(typeof boards !== 'undefined' && boards.some(function(b){ return b.api && b.api.busy && b.api.busy(); })) return true; }catch(e){}   /* (a diagram: playing, on a step, something picked) */
-    return false;
+  window.addEventListener('blur', function(){ liveDown = false; });
+  /* the parts being worked on right now: typed in / clicked in the last moment, held down, or a diagram playing / on a later step / something picked */
+  function liveBusyZones(){
+    const z = new Set(), now = Date.now();
+    if(liveDown && now - liveDownAt < 30000) z.add(liveDownZ);
+    Object.keys(liveZAt).forEach(function(k){ if(now - liveZAt[k] < 1500) z.add(k); });
+    try{ boards.forEach(function(b){ if(b.api && b.api.busy && b.api.busy()) z.add('d:' + b.d.id); }); }catch(e){}
+    return z;
+  }
+  function liveBusy(){ return liveBusyZones().size > 0; }
+  function liveSize(el){ try{ el.querySelectorAll('textarea.txt').forEach(autosize); }catch(e){} }
+  /* the page stays where it is when something above is redrawn */
+  function liveAnchor(){
+    try{
+      const all = document.querySelectorAll('#titleBar, #sections > section[data-id]:not(.drills-section), #sections article.drill[id]');
+      for(let i = 0; i < all.length; i++){
+        const r = all[i].getBoundingClientRect();
+        if(r.bottom > 0 && r.height) return {id:all[i].id || '', did:all[i].getAttribute('data-id') || '', top:r.top, y:window.scrollY};
+      }
+    }catch(e){}
+    return null;
+  }
+  function liveAnchorBack(a){
+    try{
+      if(!a) return;
+      const el = a.id ? document.getElementById(a.id) : Array.prototype.find.call(root.children, function(c){ return c.getAttribute('data-id') === a.did; });
+      if(!el){ window.scrollTo(0, a.y); return; }
+      const d = el.getBoundingClientRect().top - a.top;
+      if(Math.abs(d) > 0.5) window.scrollBy(0, d);
+    }catch(e){}
+  }
+  /* the practices: redraw only the ones that changed, add new ones, take out removed ones — the rest (and a diagram playing) untouched */
+  function liveDrills(oldDrills){
+    const list = root.querySelector('.drills-section .drill-list');
+    if(!list) return false;
+    const was = new Set(oldDrills || []);
+    const want = state.drills.map(function(d, i){
+      let el = document.getElementById('drill-' + d.id);
+      if(el && el.parentNode !== list) el = null;
+      if(!el || !was.has(d)){
+        const nel = renderDrill(d, i);
+        if(el) el.replaceWith(nel);
+        el = nel; liveSize(nel);
+      }
+      return el;
+    });
+    Array.prototype.slice.call(list.children).forEach(function(c){ if(want.indexOf(c) === -1) c.remove(); });
+    want.forEach(function(el, k){ const cur = list.children[k]; if(cur !== el) list.insertBefore(el, cur || null); });
+    boards = boards.filter(function(b){ return state.drills.indexOf(b.d) !== -1; });
+    const n = want.length;
+    want.forEach(function(el, k){
+      const no = el.querySelector('.drill-head .drill-no'); if(no) no.textContent = k + 1;
+      const up = el.querySelector('.drill-actions [aria-label="Move up"]'), dn = el.querySelector('.drill-actions [aria-label="Move down"]');
+      if(up) up.disabled = k === 0;
+      if(dn) dn.disabled = k === n - 1;
+    });
+    return true;
+  }
+  /* undo keeps working after their change comes in: each of your steps gets their change put into it */
+  function liveRebase(B, A){
+    try{
+      if(undoStack.length > 25) undoStack.splice(0, undoStack.length - 25);
+      undoStack.forEach(function(e){
+        if(e.key !== storageKey) return;
+        const o = JSON.parse(e.json), k = {};
+        LIVE_SKIP.forEach(function(x){ if(o[x] !== undefined) k[x] = o[x]; });
+        e.json = JSON.stringify(Object.assign(liveM3(B, liveStrip(o), A, function(l, r){ return r; }), k));
+      });
+      redoStack.length = 0;
+      if(undoStack.length) undoStack[undoStack.length - 1] = entry(); else undoStack.push(entry());
+      updateHistoryButtons();
+    }catch(e){ resetHistory(); }
   }
   function liveIsObj(x){ return x && typeof x === 'object' && !Array.isArray(x); }
   function liveIds(a){ return Array.isArray(a) && a.length && a.every(function(x){ return liveIsObj(x) && x.id != null; }); }
@@ -7757,36 +7842,117 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const el = box.querySelectorAll('input, textarea')[c.i]; if(!el) return;
     try{ el.focus({preventScroll:true}); if(c.s != null) el.setSelectionRange(c.s, c.e); }catch(x){}
   }
-  function liveMerge(remote){
+  function liveMerge(remote, again){
     try{
       if(!remote || remote.deleted || typeof state === 'undefined' || !state || !storageKey) return;
       if(liveKey !== storageKey || !liveBase) liveReset();
       const rs = +remote.savedAt || 0;
-      if(rs <= liveSeen || liveMine.has(rs)) return;           /* seen already, or it's what this device saved */
-      if(liveBusy() || (typeof isLineupView === 'function' && isLineupView())){
+      if(again ? rs < liveSeen : (rs <= liveSeen || liveMine.has(rs))) return;   /* seen already, or it's what this device saved */
+      const later = function(){
         liveWait = remote; clearTimeout(liveTimer);
-        liveTimer = setTimeout(function(){ const w = liveWait; liveWait = null; if(w) liveMerge(w); }, 1600);
-        return;
-      }
+        liveTimer = setTimeout(function(){ const w = liveWait; liveWait = null; if(w) liveMerge(w, true); }, 1600);
+      };
+      const fin = function(){ liveSeen = Math.max(liveSeen, rs); if(!liveWait || (+liveWait.savedAt || 0) <= rs){ liveWait = null; clearTimeout(liveTimer); } };
+      if(typeof isLineupView === 'function' && isLineupView()){ later(); return; }
+      const zones = liveBusyZones();
+      if(zones.has('x')){ later(); return; }                    /* in a window or menu of its own: in a moment */
       syncBoards();
       let rN; try{ rN = normalize(JSON.parse(JSON.stringify(remote))); }catch(e){ return; }
       const R = liveStrip(rN), L = liveStrip(state), B = liveBase;
-      liveSeen = rs;
-      if(liveJ(R) === liveJ(L)){ liveBase = R; return; }
-      if(liveJ(R) === liveJ(B)) return;                         /* nothing new from them */
+      if(liveJ(R) === liveJ(L)){ liveBase = R; fin(); return; }
+      if(liveJ(R) === liveJ(B)){ fin(); return; }               /* nothing new from them */
       const mine = saveTimer ? Date.now() : (+state.savedAt || 0);
       const M = readOnly ? R : liveM3(B, L, R, function(l, r){ return mine > rs ? l : r; });
       const keep = {};
       LIVE_SKIP.forEach(function(k){ if(state[k] !== undefined) keep[k] = state[k]; });
-      const caret = liveCaret(), y = window.scrollY;
+      const N = normalize(Object.assign(JSON.parse(JSON.stringify(M)), keep));
+      /* took: what of theirs is now in (a part you're in the middle of keeps its old starting point, so their change to it still comes in later) */
+      const old = state, took = JSON.parse(JSON.stringify(R)), Bo = B || {}, held = [];
+      const plan = {full:false, top:false, secs:[], dsec:null, drills:false};
+      const ids = function(a){ return (a || []).map(function(x){ return x && x.id; }).join('|'); };
+      const holdIn = function(k, id){
+        const a = took[k], b = (Bo[k] || []).find(function(x){ return x && x.id === id; });
+        const i = Array.isArray(a) ? a.findIndex(function(x){ return x && x.id === id; }) : -1;
+        if(i !== -1 && b) a[i] = JSON.parse(JSON.stringify(b));
+      };
+      /* the top of the plan (title, date, squad …) */
+      if(isPre(old) !== isPre(N)) plan.full = true;
+      Object.keys(Object.assign({}, old, N)).forEach(function(k){
+        if(k === 'sections' || k === 'drills') return;
+        if(liveJ(old[k]) === liveJ(N[k])){ if(k in old) N[k] = old[k]; return; }
+        if(zones.has('top')){
+          if(k in old) N[k] = old[k]; else delete N[k];
+          if(k in Bo) took[k] = JSON.parse(JSON.stringify(Bo[k])); else delete took[k];
+          held.push(k); return;
+        }
+        if(isPre(N)) plan.full = true; else plan.top = true;
+      });
+      /* the sections */
+      if(ids(old.sections) !== ids(N.sections)) plan.full = true;
+      else N.sections = N.sections.map(function(s, i){
+        const o = old.sections[i];
+        if(liveJ(o) === liveJ(s)) return o;
+        if(zones.has('s:' + s.id)){ holdIn('sections', s.id); held.push('s:' + s.id); return o; }
+        if(s.type === 'drills'){ plan.dsec = {o:o, s:s}; return o; }
+        plan.secs.push(s.id); return s;
+      });
+      /* the practices */
+      const busyD = []; zones.forEach(function(z){ if(z.indexOf('d:') === 0) busyD.push(z.slice(2)); });
+      const oldD = {}, inN = {};
+      (old.drills || []).forEach(function(d){ oldD[d.id] = d; });
+      (N.drills || []).forEach(function(d){ inN[d.id] = 1; });
+      if(busyD.some(function(id){ return oldD[id] && !inN[id]; })){ later(); return; }      /* the practice you're on was taken out: when you stop */
+      const keptOld = (old.drills || []).filter(function(d){ return inN[d.id]; }).map(function(d){ return d.id; }).join('|');
+      const keptNew = (N.drills || []).filter(function(d){ return oldD[d.id]; }).map(function(d){ return d.id; }).join('|');
+      if(keptOld !== keptNew && busyD.length){ later(); return; }                            /* practices moved round: when you stop */
+      if(ids(old.drills) !== ids(N.drills)) plan.drills = true;
+      N.drills = (N.drills || []).map(function(d){
+        const o = oldD[d.id];
+        if(!o) return d;
+        if(liveJ(o) === liveJ(d)) return o;
+        if(busyD.indexOf(d.id) !== -1){ holdIn('drills', d.id); held.push('d:' + d.id); return o; }
+        plan.drills = true; return d;
+      });
+      if(plan.drills && !root.querySelector('.drills-section .drill-list')) plan.full = true;
+      if(plan.full && zones.size){ later(); return; }           /* a change that needs the whole plan redrawn: when you stop */
+      liveSeen = Math.max(liveSeen, rs); liveBase = took;
+      if(!(plan.full || plan.top || plan.secs.length || plan.dsec || plan.drills)){
+        /* nothing to redraw (it's all in the part you're on, or yours already has it) */
+        if(!again && !readOnly && liveJ(L) !== liveJ(took)){ saveLocal(); }
+        if(held.length) later(); else fin();
+        return;
+      }
+      const caret = liveCaret(), anc = liveAnchor();
       clearTimeout(saveTimer); saveTimer = null;
-      state = normalize(Object.assign(JSON.parse(JSON.stringify(M)), keep));
-      liveBase = R;
-      renderAll(); window.scrollTo(0, y); liveCaretBack(caret);
-      resetHistory();
-      if(!readOnly && liveJ(liveStrip(state)) !== liveJ(R)) saveLocal();      /* yours and theirs together: save it so they get yours too */
-      else { state.savedAt = rs; try{ hufcStore.setItem(storageKey, JSON.stringify(state)); }catch(e){} }
-      setStatus('Up to date with the latest changes · ' + clock());
+      state = N;
+      let all = plan.full;
+      if(!all){
+        if(plan.top){ pgApplyDoc(); renderTop(); }
+        plan.secs.forEach(function(id){
+          const i = state.sections.findIndex(function(x){ return x.id === id; }), s = state.sections[i];
+          const el = Array.prototype.find.call(root.children, function(c){ return c.getAttribute('data-id') === id; });
+          if(!el || !s){ all = true; return; }
+          const nel = s.type === 'runsheet' ? renderRunsheet(s, i) : renderFieldsSection(s, i);
+          el.replaceWith(nel); liveSize(nel);
+        });
+        if(plan.dsec){
+          const o = plan.dsec.o, s = plan.dsec.s;
+          Object.keys(o).forEach(function(k){ if(!(k in s)) delete o[k]; });
+          Object.assign(o, JSON.parse(JSON.stringify(s)));
+          const sec = Array.prototype.find.call(root.children, function(c){ return c.getAttribute('data-id') === o.id; }), t = sec && sec.querySelector('.sec-title');
+          if(t && t !== document.activeElement) t.value = o.title || '';
+        }
+        if(plan.drills && !liveDrills(old.drills)) all = true;
+      }
+      if(all) renderAll();
+      else refreshComputed();
+      liveAnchorBack(anc);
+      if(!document.activeElement || document.activeElement === document.body) liveCaretBack(caret);
+      liveRebase(B, took);
+      if(!readOnly && liveJ(liveStrip(state)) !== liveJ(took)) saveLocal();      /* yours and theirs together: save it so they get yours too */
+      else { if(!held.length) state.savedAt = rs; try{ hufcStore.setItem(storageKey, JSON.stringify(state)); }catch(e){} }
+      setStatus((held.length ? 'Up to date · what you’re working on catches up when you stop' : 'Up to date with the latest changes') + ' · ' + clock());
+      if(held.length) later(); else fin();
     }catch(e){ console.warn('live merge', e); }
   }
 
@@ -9138,8 +9304,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const namePrint = h('span', {class:'drill-name-print', 'aria-hidden':'true', text:d.name || ''});
     function move(delta){
       syncBoards();
-      const j = idx + delta;
-      state.drills.splice(idx, 1); state.drills.splice(j, 0, d);
+      const i0 = state.drills.indexOf(d); if(i0 === -1) return;
+      const j = i0 + delta; if(j < 0 || j >= state.drills.length) return;
+      state.drills.splice(i0, 1); state.drills.splice(j, 0, d);
       rerender(); saveLocal();
     }
     const head = h('div', {class:'drill-head'},
@@ -9161,12 +9328,13 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           const copy = JSON.parse(JSON.stringify(d));
           copy.id = newId(); delete copy.libId; copy.name = (d.name || 'Practice') + ' (copy)';
           copy.notes.forEach(function(f){ f.id = newId(); });
-          state.drills.splice(idx + 1, 0, copy);
+          const i0 = state.drills.indexOf(d); state.drills.splice(i0 === -1 ? state.drills.length : i0 + 1, 0, copy);
           rerender(); saveLocal();
         }}),
         h('button', {type:'button', class:'icon-btn danger reveal', title:'Remove practice', 'aria-label':'Remove practice', text:'✕', onclick:function(){
           flush();
-          state.drills.splice(idx, 1);
+          const i0 = state.drills.indexOf(d); if(i0 === -1) return;
+          state.drills.splice(i0, 1);
           rerender(); saveLocal();
           showToast('Removed “' + (d.name || 'practice') + '”', undo);
         }})
@@ -18741,7 +18909,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to play it','Shot map filters: both teams or one, the result (goals, saved, woodwork, missed, blocked) and one player. “Woodwork”: the ball reached the goal between the posts, didn’t go in and stayed in play','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to play it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Change a shot’s result: tap it and pick Missed, Woodwork, Blocked or Saved (goals stay as Veo has them; Veo’s own is marked, pick it to undo). Kept with the match video','Goals Veo logged without a shot now go on the shot map too, from where the ball tracking shows they were hit; Move shot: tap a shot and tap or drag to where it was really taken from','Pass map: an arrow for every pass from where it was played to where it was received (missed ones dashed, with a little red x where they ended), for either team, and for one player picked by name','Pass map and possession map: their own Full game / 1st half / 2nd half buttons (each half drawn the way it was played)','Possession map: where the team had the ball, in thirds and left / centre / right','Working on a session at the same time as another coach: their changes no longer interrupt you — a playing animation no longer jumps back to step 1, and a step you’re working on or something you’ve picked on a diagram isn’t lost. Their changes come in as soon as you stop','Saved practices stay yours: two identical copies (yours and another coach’s) are no longer tidied into one — that let each planner take its own copy off, so both went (how Arrival activities, ATT vs DEF and Transfer rondo were lost). Practices and boards are saved only from your own sessions and pre-games (a collaborator’s planner no longer saves copies under their name), and a practice in your session whose saved copy went is saved again as yours','Saved boards: one board per name, phase and team — a board in a pre-game with the same name as one of your saved boards updates it (your boards already saved twice were merged, keeping the newest)','Fixes from a full check of the week: the shot map starts fresh each time a match video opens (leaving part-way through fixing an arrow no longer stops taps working); a shirt number two players share shows both names; a match whose Veo video has no ball tracking doesn’t fetch the mini map again every time; boards in your pre-games are gathered into Saved boards when the planner starts (they were only gathered when Saved boards was opened); left-over code from the player cards removed; the program opens Veo’s maps without waiting for the running stats (program 1.6.21)','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
+    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to play it','Shot map filters: both teams or one, the result (goals, saved, woodwork, missed, blocked) and one player. “Woodwork”: the ball reached the goal between the posts, didn’t go in and stayed in play','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to play it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Change a shot’s result: tap it and pick Missed, Woodwork, Blocked or Saved (goals stay as Veo has them; Veo’s own is marked, pick it to undo). Kept with the match video','Goals Veo logged without a shot now go on the shot map too, from where the ball tracking shows they were hit; Move shot: tap a shot and tap or drag to where it was really taken from','Pass map: an arrow for every pass from where it was played to where it was received (missed ones dashed, with a little red x where they ended), for either team, and for one player picked by name','Pass map and possession map: their own Full game / 1st half / 2nd half buttons (each half drawn the way it was played)','Possession map: where the team had the ball, in thirds and left / centre / right','Two or more coaches can work on one session at the same time without interrupting each other: their changes appear straight away, and only the part they changed is redrawn — what you’re in the middle of (an animation playing, a step you’re on, something picked, a box you’re typing in) carries on and catches up with their change the moment you stop. Undo still works after their changes come in, and the page no longer jumps','Saved practices stay yours: two identical copies (yours and another coach’s) are no longer tidied into one — that let each planner take its own copy off, so both went (how Arrival activities, ATT vs DEF and Transfer rondo were lost). Practices and boards are saved only from your own sessions and pre-games (a collaborator’s planner no longer saves copies under their name), and a practice in your session whose saved copy went is saved again as yours','Saved boards: one board per name, phase and team — a board in a pre-game with the same name as one of your saved boards updates it (your boards already saved twice were merged, keeping the newest)','Fixes from a full check of the week: the shot map starts fresh each time a match video opens (leaving part-way through fixing an arrow no longer stops taps working); a shirt number two players share shows both names; a match whose Veo video has no ball tracking doesn’t fetch the mini map again every time; boards in your pre-games are gathered into Saved boards when the planner starts (they were only gathered when Saved boards was opened); left-over code from the player cards removed; the program opens Veo’s maps without waiting for the running stats (program 1.6.21)','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
     {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now gets it in about a minute — four Veo pages at once, without loading Veo’s video — and keeps going by itself until it has the whole game)','Fixed: pressing Veo stats ✓ again could empty the Stats tab when Veo sent only part of the stats (what was there now stays, and the stats load properly in the background)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
     {v:'4.13', d:'20 Nov 2026', t:'See who’s on, Save as PDF, coaches in full', n:['The admin can see which coaches are using the planner right now and what they’re working on','Save as PDF beside Print in every plan’s top bar','A plan’s black bar names every coach in full: the coach who made it first, then each collaborator, with commas','Collaborators: a session you’re added to shows up in your planner, with a notice saying who added you','The admin can send a coach a password reset email','Removing a coach’s access moves them to Removed (not Waiting); waiting coaches can be removed too','Side menu icons about 30% bigger','Numbers in every badge sit dead centre (collaborators, Settings, attendance)','Fixed: “2 out” on the attendance link went outside its box']},
