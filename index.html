@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261126190500">
+<meta name="hufc-build" content="20261127094538">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1127,6 +1127,10 @@ svg.th-playing .th-line{display:none;}
 .div-handle.div-x{cursor:ew-resize;}
 .div-handle.div-y{cursor:ns-resize;}
 .div-knob{fill:#ffffff; stroke:#2b6fff; stroke-width:1.8;}
+.div-handle.picked .div-knob{fill:#2b6fff; stroke:#ffffff; stroke-width:2;}
+.div-handle.picked .div-arrows{fill:#ffffff;}
+.area-line-hint{font-size:12px; color:var(--grey); font-weight:500;}
+.area-line-hint:empty{display:none;}
 .div-arrows{fill:#2b6fff; pointer-events:none;}
 .div-handle:hover .div-knob{fill:#dbe6ff;}
 .bend-handle{cursor:grab;}
@@ -5314,7 +5318,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         <span class="ctl-group"><span class="lbl">Across</span><button type="button" class="size-btn js-cols-down" aria-label="Fewer boxes across">−</button><span class="ctl-num js-cols">1</span><button type="button" class="size-btn js-cols-up" aria-label="More boxes across">+</button></span>
         <span class="ctl-group"><span class="lbl">Down</span><button type="button" class="size-btn js-rows-down" aria-label="Fewer boxes down">−</button><span class="ctl-num js-rows">1</span><button type="button" class="size-btn js-rows-up" aria-label="More boxes down">+</button></span>
         <span class="ctl-group"><span class="lbl">Outline</span><span class="seg js-outline"><button type="button" data-v="solid">Solid</button><button type="button" data-v="dashed">Broken</button></span></span>
-        <span class="ctl-group js-inner-group"><span class="lbl">Dividers</span><span class="seg js-inner"><button type="button" data-v="solid">Solid</button><button type="button" data-v="dashed">Broken</button></span></span>
+        <span class="ctl-group area-line-hint js-area-line-hint"></span><span class="ctl-group js-inner-group"><span class="lbl">Dividers</span><span class="seg js-inner"><button type="button" data-v="solid">Solid</button><button type="button" data-v="dashed">Broken</button></span></span>
       </span>
       <span class="transform-controls js-line-controls" style="display:none;">
         <button type="button" class="text-btn js-flip" title="Swap the start and end">Flip</button>
@@ -5478,7 +5482,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     'gk-a':'#6a3d9a', 'gk-b':'#4f7cff',   /* HUFC keepers wear purple */
     'cone':'#ffd400', 'ball':'#0d0e0f', 'balls':'#0d0e0f', 'flat':'#ffd400', 'mannequin':'#2b2c2e',
     'goal-big':'#ffffff', 'goal-small':'#ffffff',
-    'coach':'#ffffff', 'text':'#0d0e0f', 'area':'#ffd400'   /* (the coach is white) */
+    'coach':'#ffffff', 'text':'#0d0e0f', 'area':'#ffffff'   /* (the coach is white) */
   };
   const DEFAULT_SHAPE = {
     'player-a':'cap','player-b':'cap','player-c':'cap','gk-a':'cap','gk-b':'cap',
@@ -5796,19 +5800,24 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     for(let i = 0; i < a.length; i++){ if(a[i] <= (i ? a[i - 1] : 0) || a[i] >= 1) return even; }
     return a;
   }
+  function areaLineCols(v, n){
+    const a = (Array.isArray(v) ? v : String(v == null ? '' : v).split(',')).map(function(c){ c = String(c || '').trim(); return /^#[0-9a-fA-F]{3,8}$/.test(c) ? c : ''; });
+    const out = []; for(let i = 0; i < n - 1; i++) out.push(a[i] || ''); return out;
+  }
   function areaOpts(o){
     const n = function(v){ v = parseInt(v, 10); return isNaN(v) ? 1 : Math.max(1, Math.min(6, v)); };
     const cols = n(o && o.cols), rows = n(o && o.rows);
     return {cols:cols, rows:rows, xs:divPositions(o && o.xs, cols), ys:divPositions(o && o.ys, rows),
-      outline:(o && o.outline === 'solid') ? 'solid' : 'dashed', inner:(o && o.inner === 'solid') ? 'solid' : 'dashed'};
+      outline:(o && o.outline === 'solid') ? 'solid' : 'dashed', inner:(o && o.inner === 'solid') ? 'solid' : 'dashed',
+      xc:areaLineCols(o && o.xc, cols), yc:areaLineCols(o && o.yc, rows)};
   }
   function areaMarkup(w, h, color, o){
     o = areaOpts(o);
     const x0 = -w / 2, y0 = -h / 2;
     let out = '<rect class="color-target" x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="' + h + '" fill="rgba(255,255,255,0.08)" stroke="' + color + '" stroke-width="2"' + (o.outline === 'dashed' ? ' stroke-dasharray="6,4"' : '') + '/>';
     const dash = o.inner === 'dashed' ? ' stroke-dasharray="5,4"' : '';
-    o.xs.forEach(function(f){ const x = (x0 + w * f).toFixed(2); out += '<line class="color-target" x1="' + x + '" y1="' + y0 + '" x2="' + x + '" y2="' + (-y0) + '" stroke="' + color + '" stroke-width="1.6"' + dash + '/>'; });
-    o.ys.forEach(function(f){ const y = (y0 + h * f).toFixed(2); out += '<line class="color-target" x1="' + x0 + '" y1="' + y + '" x2="' + (-x0) + '" y2="' + y + '" stroke="' + color + '" stroke-width="1.6"' + dash + '/>'; });
+    o.xs.forEach(function(f, i){ const x = (x0 + w * f).toFixed(2), lc = o.xc[i]; out += '<line class="' + (lc ? 'own-color' : 'color-target') + '" x1="' + x + '" y1="' + y0 + '" x2="' + x + '" y2="' + (-y0) + '" stroke="' + (lc || color) + '" stroke-width="1.6"' + dash + '/>'; });
+    o.ys.forEach(function(f, i){ const y = (y0 + h * f).toFixed(2), lc = o.yc[i]; out += '<line class="' + (lc ? 'own-color' : 'color-target') + '" x1="' + x0 + '" y1="' + y + '" x2="' + (-x0) + '" y2="' + y + '" stroke="' + (lc || color) + '" stroke-width="1.6"' + dash + '/>'; });
     return out;
   }
   const AREA_PRESETS = [[1,1],[2,1],[3,1],[1,2],[1,3],[2,2],[3,2],[3,3]];
@@ -6742,7 +6751,33 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const t = parseTransform(g), a = -t.rot * Math.PI / 180, x = p.x - t.x, y = p.y - t.y;
       return {x:(x * Math.cos(a) - y * Math.sin(a)) / t.scale, y:(x * Math.sin(a) + y * Math.cos(a)) / t.scale};
     }
+    /* one line of an area picked (tap its handle): the colours then go on that line only */
+    let areaLine = null;
+    function pickAreaLine(g, ax, i){
+      areaLine = (areaLine && areaLine.g === g && areaLine.ax === ax && areaLine.i === i) ? null : {g:g, ax:ax, i:i};
+      handles.querySelectorAll('.div-handle').forEach(function(x){ x.classList.toggle('picked', !!areaLine && x.dataset.axis === areaLine.ax && +x.dataset.i === areaLine.i); });
+      syncAreaLineUI(g);
+    }
+    function syncAreaLineUI(g){
+      try{
+        const o = areaOpts(g.dataset), c = areaLine ? ((areaLine.ax === 'x' ? o.xc : o.yc)[areaLine.i] || g.dataset.color) : g.dataset.color;
+        swatchesWrap.querySelectorAll('.swatch').forEach(function(s){ s.classList.toggle('active', s.getAttribute('aria-label') === 'Colour ' + c); });
+        if(/^#[0-9a-fA-F]{6}$/.test(c)) colorPicker.value = c;
+        colorCode.value = c || ''; colorCode.classList.remove('bad');
+        inspectorLabel.textContent = areaLine ? 'Area · this line' : (TOOL_NAMES.area || 'Area').split(' — ')[0];
+        const hint = q('.js-area-line-hint');
+        if(hint) hint.textContent = areaLine ? 'Colouring this line only · tap its handle again for the whole area' : ((o.cols > 1 || o.rows > 1) ? 'Tap a line’s square handle to give it its own colour' : '');
+      }catch(e){}
+    }
+    function setAreaLineColor(g, ax, i, color){
+      const o = areaOpts(g.dataset), list = ax === 'x' ? o.xc : o.yc;
+      if(i >= list.length) return;
+      list[i] = color;
+      if(list.some(Boolean)) g.dataset[ax + 'c'] = list.join(','); else delete g.dataset[ax + 'c'];
+      renderToken(g);
+    }
     function showDividerHandles(g){
+      if(areaLine && areaLine.g !== g) areaLine = null;
       handles.querySelectorAll('.div-handle').forEach(function(e){ e.remove(); });
       if(!g || g.dataset.type !== 'area') return;
       const o = areaOpts(g.dataset);
@@ -6751,13 +6786,16 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           const h = document.createElementNS(NS, 'g');
           h.classList.add('div-handle', 'div-' + pair[0]);
           h.dataset.axis = pair[0]; h.dataset.i = i;
+          if(areaLine && areaLine.g === g && areaLine.ax === pair[0] && areaLine.i === i) h.classList.add('picked');
           h.innerHTML = '<circle class="handle-hit" r="12"/><rect class="div-knob" x="-6" y="-6" width="12" height="12" rx="3"/>' +
             (pair[0] === 'x' ? '<path class="div-arrows" d="M-3.6,0 L-1.2,-2.4 L-1.2,2.4 Z M3.6,0 L1.2,-2.4 L1.2,2.4 Z"/>' : '<path class="div-arrows" d="M0,-3.6 L-2.4,-1.2 L2.4,-1.2 Z M0,3.6 L-2.4,1.2 L2.4,1.2 Z"/>');
           h.addEventListener('pointerdown', function(e){
             e.stopPropagation();
             h.setPointerCapture(e.pointerId);
             let moved = false;
+            const sx = e.clientX, sy = e.clientY;
             function onMove(ev){
+              if(!moved && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 4) return;
               moved = true;
               const ax = h.dataset.axis, idx = +h.dataset.i, oo = areaOpts(g.dataset);
               const W = +g.dataset.w, H = +g.dataset.h, lp = boardToArea(g, svgPoint(ev));
@@ -6772,6 +6810,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
             function onUp(){
               h.removeEventListener('pointermove', onMove); h.removeEventListener('pointerup', onUp);
               if(moved) onStep();
+              else pickAreaLine(g, h.dataset.axis, +h.dataset.i);
             }
             h.addEventListener('pointermove', onMove);
             h.addEventListener('pointerup', onUp);
@@ -6924,6 +6963,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const ao = areaOpts(opts);
       g.dataset.cols = ao.cols; g.dataset.rows = ao.rows; g.dataset.outline = ao.outline; g.dataset.inner = ao.inner;
       g.dataset.xs = ao.xs.map(function(f){ return +f.toFixed(4); }).join(','); g.dataset.ys = ao.ys.map(function(f){ return +f.toFixed(4); }).join(',');
+      if(ao.xc.some(Boolean)) g.dataset.xc = ao.xc.join(','); if(ao.yc.some(Boolean)) g.dataset.yc = ao.yc.join(',');
       setTransform(g, cx, cy, rot || 0, scale || 1);
       renderToken(g);
       if(keepOrder) board.appendChild(g); else board.insertBefore(g, board.firstChild);   /* new areas go underneath; saved ones keep their order */
@@ -7027,6 +7067,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     /* selection / inspector */
     let group = [];   /* every item of one kind, picked with a double-tap */
     function deselect(){
+      areaLine = null;
       if(selected) selected.classList.remove('selected');
       group.forEach(function(x){ x.classList.remove('selected'); }); group = [];
       selected = null;
@@ -7070,6 +7111,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       if(list.length > 1) showToast('Removed ' + list.length + ' items', function(){ undo(); });
     }
     function applyColor(g, color){
+      if(areaLine && areaLine.g === g && g === selected && !group.length && g.dataset.type === 'area'){ setAreaLineColor(g, areaLine.ax, areaLine.i, color); return; }
       if(group.length && group.indexOf(g) !== -1 && !applyColor.inner){
         applyColor.inner = true;
         try{ group.forEach(function(x){ applyColor(x, color); }); } finally { applyColor.inner = false; }
@@ -7167,7 +7209,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       goalSizeWrap.style.display = (cat === 'goal') ? '' : 'none';
       q('.js-line-controls').style.display = (cat === 'line') ? '' : 'none';
       q('.js-area-controls').style.display = (cat === 'area') ? '' : 'none';
-      if(cat === 'area') syncAreaControls();
+      if(cat === 'area'){ syncAreaControls(); syncAreaLineUI(g); }
       inspector.hidden = false;
     }
     /* ---- drill-area options: split into boxes, solid or broken lines ---- */
@@ -7179,6 +7221,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       q('.js-outline').querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v === o.outline); });
       q('.js-inner').querySelectorAll('button').forEach(function(b){ b.classList.toggle('active', b.dataset.v === o.inner); });
       q('.js-inner-group').style.opacity = (o.cols > 1 || o.rows > 1) ? '' : '.45';
+      try{ syncAreaLineUI(selected); }catch(e){}
     }
     function setArea(changes){
       if(!selected || selected.dataset.type !== 'area') return;
@@ -7188,6 +7231,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const o = areaOpts(next);
       selected.dataset.cols = o.cols; selected.dataset.rows = o.rows; selected.dataset.outline = o.outline; selected.dataset.inner = o.inner;
       selected.dataset.xs = o.xs.map(function(f){ return +f.toFixed(4); }).join(','); selected.dataset.ys = o.ys.map(function(f){ return +f.toFixed(4); }).join(',');
+      if(o.xc.some(Boolean)) selected.dataset.xc = o.xc.join(','); else delete selected.dataset.xc;
+      if(o.yc.some(Boolean)) selected.dataset.yc = o.yc.join(','); else delete selected.dataset.yc;
+      if(areaLine && areaLine.g === selected && areaLine.i >= (areaLine.ax === 'x' ? o.xs : o.ys).length) areaLine = null;
       renderToken(selected);
       showDividerHandles(selected);
       syncAreaControls();
@@ -7341,7 +7387,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           /* while a later animation step is showing, the diagram itself (step 1) keeps its own positions */
           const b = baseMap && baseMap[ds.uid];
           const o = {k:'t', type:ds.type, color:ds.color, x:b ? b.x : t.x, y:b ? b.y : t.y, rot:b ? b.rot : t.rot, scale:t.scale};
-          ['shape','label','w','h','content','cols','rows','outline','inner','xs','ys','uid'].forEach(function(k){ if(ds[k] !== undefined) o[k] = ds[k]; });
+          ['shape','label','w','h','content','cols','rows','outline','inner','xs','ys','xc','yc','uid'].forEach(function(k){ if(ds[k] !== undefined) o[k] = ds[k]; });
           return o;
         })(g);
     }
@@ -8543,13 +8589,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         const w = (+it.w) * sc, h = (+it.h) * sc, ao = areaOpts(it);
         rect(cx - w / 2, cy - h / 2, w, h, {fill:{color:'FFFFFF', transparency:92}, line:Object.assign({color:col, width:pt(2 * sc)}, ao.outline === 'dashed' ? {dashType:'dash'} : {}), rotate:rot, name:tn('area')});
         const dv = Object.assign({color:col, width:pt(1.6 * sc)}, ao.inner === 'dashed' ? {dash:'dash'} : {});
-        ao.xs.forEach(function(f){
+        const dvc = function(c){ return c ? Object.assign({}, dv, {color:c.replace('#', '').toUpperCase()}) : dv; };
+        ao.xs.forEach(function(f, i){
           const x = cx - w / 2 + w * f, a = rotPt(x, cy - h / 2, cx, cy, rot), b = rotPt(x, cy + h / 2, cx, cy, rot);
-          line(a[0], a[1], b[0], b[1], dv, tn('divider'));
+          line(a[0], a[1], b[0], b[1], dvc(ao.xc[i]), tn('divider'));
         });
-        ao.ys.forEach(function(f){
+        ao.ys.forEach(function(f, i){
           const y = cy - h / 2 + h * f, a = rotPt(cx - w / 2, y, cx, cy, rot), b = rotPt(cx + w / 2, y, cx, cy, rot);
-          line(a[0], a[1], b[0], b[1], dv, tn('divider'));
+          line(a[0], a[1], b[0], b[1], dvc(ao.yc[i]), tn('divider'));
         });
         return;
       }
@@ -19079,6 +19126,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'4.18', d:'27 Nov 2026', t:'Grids: white, and a colour for each line', n:['New areas and grids are drawn in white instead of yellow','Each dividing line in a grid can have its own colour: tap the line’s square handle (it turns blue), then pick a colour. Tap the handle again to colour the whole area — that changes the outline and any lines you haven’t coloured yourself']},
     {v:'4.17', d:'26 Nov 2026', t:'Fixes', n:['The Home page, Settings and the welcome screen now say HUFC Season Planner','Club library: opening a session straight after the planner starts no longer keeps your work on this device only — it goes to the club library as usual','Lineups: a new lineup you open and leave without changing anything isn’t saved (no more empty “Untitled lineup”s)','Undo: the Undo message goes away when you move to another screen, so it can’t change something you’re no longer looking at','Match videos: one opened from a lineup or pre-game and closed with nothing in it isn’t kept','Saved practices: when a practice’s time comes from another session, the card says which session','Start time: typing just an hour reads as the evening on weeknights (“8” is 8:00pm, “7” is 7:00pm); on Saturdays and Sundays 8–11 are mornings','Saved practices: changing the colours of the players in a drawing makes it a new saved practice']},
     {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to play it','Shot map filters: both teams or one, the result (goals, saved, woodwork, missed, blocked) and one player. “Woodwork”: the ball reached the goal between the posts, didn’t go in and stayed in play','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to play it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Change a shot’s result: tap it and pick Missed, Woodwork, Blocked or Saved (goals stay as Veo has them; Veo’s own is marked, pick it to undo). Kept with the match video','Goals Veo logged without a shot now go on the shot map too, from where the ball tracking shows they were hit; Move shot: tap a shot and tap or drag to where it was really taken from','Pass map: an arrow for every pass from where it was played to where it was received (missed ones dashed, with a little red x where they ended), for either team, and for one player picked by name','Pass map and possession map: their own Full game / 1st half / 2nd half buttons (each half drawn the way it was played)','Possession map: where the team had the ball, in thirds and left / centre / right','Fixed: tapping the team, half, result or player on the shot, pass or possession map no longer sends the match stats back to the top','When a goal goes in on the match video, a GOAL! banner in the scoring team’s colours sweeps over the scoreboard with the club and scorer, then pulls away to show the new score','A scoreboard on the match video (top left): both clubs, the score at that moment of the match (it goes up as each goal goes in, from Veo’s goals or the goals you tagged) and the match minute. The Score button beside Mini map turns it off or on','Attendance for a combined session (e.g. U18s, U20s and U23s together): the session shows the total of everyone there and each age group’s count, the Players box fills in with the total, and each group’s ticks are kept while you switch between them in the attendance window (Save saves them all)','Two or more coaches can work on one session at the same time without interrupting each other: their changes appear straight away, and only the part they changed is redrawn — what you’re in the middle of (an animation playing, a step you’re on, something picked, a box you’re typing in) carries on and catches up with their change the moment you stop. Undo still works after their changes come in, and the page no longer jumps','Saved practices stay yours: two identical copies (yours and another coach’s) are no longer tidied into one — that let each planner take its own copy off, so both went (how Arrival activities, ATT vs DEF and Transfer rondo were lost). Practices and boards are saved only from your own sessions and pre-games (a collaborator’s planner no longer saves copies under their name), and a practice in your session whose saved copy went is saved again as yours','Saved boards: one board per name, phase and team — a board in a pre-game with the same name as one of your saved boards updates it (your boards already saved twice were merged, keeping the newest)','Fixes from a full check of the week: the shot map starts fresh each time a match video opens (leaving part-way through fixing an arrow no longer stops taps working); a shirt number two players share shows both names; a match whose Veo video has no ball tracking doesn’t fetch the mini map again every time; boards in your pre-games are gathered into Saved boards when the planner starts (they were only gathered when Saved boards was opened); left-over code from the player cards removed; the program opens Veo’s maps without waiting for the running stats (program 1.6.21)','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
     {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now gets it in about a minute — four Veo pages at once, without loading Veo’s video — and keeps going by itself until it has the whole game)','Fixed: pressing Veo stats ✓ again could empty the Stats tab when Veo sent only part of the stats (what was there now stays, and the stats load properly in the background)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
