@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261126121901">
+<meta name="hufc-build" content="20261126190500">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -8887,13 +8887,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const toast = document.getElementById('toast');
   const toastMsg = toast.querySelector('.toast-msg');
   const toastUndo = toast.querySelector('.toast-undo');
-  let toastTimer = null, toastAction = null;
+  let toastTimer = null, toastAction = null, toastView = '';
   function hideToast(){ toast.classList.remove('show'); toastAction = null; }
   function showToast(msg, onUndo, label){
     toastMsg.textContent = msg;
     toastAction = onUndo || null;
     toastUndo.hidden = !onUndo; toastUndo.textContent = label || 'Undo';
     toast.classList.add('show');
+    try{ toastView = toastViewSig(); }catch(e){ toastView = ''; }
     clearTimeout(toastTimer);
     toastTimer = setTimeout(hideToast, 8000);
   }
@@ -8903,6 +8904,22 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(fn) fn();
   });
   toast.querySelector('.toast-close').addEventListener('click', hideToast);
+  /* an Undo belongs to the screen it was shown on: moving to another screen takes it away (so it can't change something you're no longer looking at) */
+  function toastViewSig(){
+    try{
+      if(document.documentElement.classList.contains('view-home')) return 'home';
+      if(document.body.classList.contains('view-lineup')) return 'lu:' + luKey;
+      return 'ed';
+    }catch(e){ return ''; }
+  }
+  (function(){
+    const check = function(){ if(toastAction && toast.classList.contains('show') && toastView && toastViewSig() !== toastView) hideToast(); };
+    try{
+      const mo = new MutationObserver(check);
+      mo.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+      mo.observe(document.body, {attributes:true, attributeFilter:['class']});
+    }catch(e){}
+  })();
 
   /* =====================================================================
      Rendering helpers
@@ -9022,7 +9039,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       };
       let field;
       if(m[0] === 'date') field = luDateBox(state.meta.date, set);
-      else if(META_LISTS[m[0]]) field = luCombo({value:clean(state.meta[m[0]]), ph:m[0] === 'coach' ? 'Choose or type' : m[2], label:m[1], options:META_LISTS[m[0]](), multi:m[0] === 'squad' || m[0] === 'coach', show:m[0] === 'coach' ? coachShort : null, onChange:set});
+      else if(META_LISTS[m[0]]) field = luCombo({value:clean(state.meta[m[0]]), ph:m[0] === 'coach' ? 'Choose or type' : m[2], label:m[1], options:META_LISTS[m[0]](), prefer:m[0] === 'time' ? sessionTimePrefer : null, multi:m[0] === 'squad' || m[0] === 'coach', show:m[0] === 'coach' ? coachShort : null, onChange:set});
       else field = textField({value:state.meta[m[0]], ph:m[2], label:m[1], oneline:true, onInput:set});
       info.appendChild(h('div', {class:'cell' + (m[0] === 'players' ? ' cell-players' : '')}, h('span', {class:'lbl', text:m[1]}), field,
         /* under Players: take attendance */
@@ -9069,12 +9086,24 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(!m) return null;
     let hh = +m[1]; const mm = +(m[2] || 0); let ap = m[3];
     if(mm > 59) return null;
-    /* no am/pm on 1–11 (and no leading zero): training is usually afternoon or evening,
-       so 1–7 reads as pm and 8–11 as am — shown as e.g. 4:00pm so it's easy to check */
-    if(!ap && m[1][0] !== '0' && hh >= 1 && hh <= 11) ap = hh <= 7 ? 'pm' : 'am';
+    /* no am/pm on 1–11 (and no leading zero): training is usually afternoon or evening.
+       On a Saturday or Sunday 1–7 reads as pm and 8–11 as am (morning sessions);
+       on other days (or with no date yet) 1–9 reads as pm, so “8” is an 8pm session — shown as e.g. 8:00pm so it's easy to check */
+    if(!ap && m[1][0] !== '0' && hh >= 1 && hh <= 11){
+      let wkEnd = false;
+      try{ const iso = luDateToIso(state && state.meta && state.meta.date); if(iso){ const dy = new Date(iso + 'T12:00:00').getDay(); wkEnd = dy === 0 || dy === 6; } }catch(e){}
+      ap = hh <= (wkEnd ? 7 : 9) ? 'pm' : 'am';
+    }
     if(ap){ if(hh < 1 || hh > 12) return null; if(ap[0] === 'p' && hh !== 12) hh += 12; if(ap[0] === 'a' && hh === 12) hh = 0; }
     else if(hh > 23) return null;
     return {min:hh*60 + mm, twelve:!!ap};
+  }
+  /* the start-time list: typing just an hour picks the likely am/pm (as parseTime reads it), not the first in the list — so “8” is 8:00pm on a weeknight */
+  function sessionTimePrefer(typed, options){
+    const m = /^(\d{1,2})(?:[:.](\d{0,2}))?$/.exec(String(typed || '').trim()); if(!m || m[1][0] === '0') return null;
+    const t = parseTime(m[1]); if(!t) return null;
+    const H = Math.floor(t.min / 60), want = (H % 12 || 12) + ':' + (m[2] || ''), suf = H < 12 ? 'am' : 'pm';
+    return (options || []).find(function(x){ return x.indexOf(want) === 0 && x.slice(-2) === suf; }) || null;
   }
   function fmtTime(min, twelve){
     min = ((Math.round(min * 60) / 60 % 1440) + 1440) % 1440;   /* (to the second, so 6.9999… can't show as “:60”) */
@@ -9540,7 +9569,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const R = function(v){ return typeof v === 'number' ? Math.round(v * 10) / 10 : v; };
     const notes = (p.notes || []).filter(function(f){ return f && T(f.value); }).map(function(f){ return [T(f.label).toLowerCase(), T(f.value)]; });
     const drawn = p.showDiagram !== false;
-    const items = drawn ? (p.items || []).map(function(it){ const o = {}; Object.keys(it || {}).sort().forEach(function(k){ if(k === 'k' || k === 'uid' || k === 'id' || k === 'rot' || k === 'color' || k === 'scale') return; const v = it[k]; o[k] = Array.isArray(v) ? v.map(R) : R(v); }); return o; }) : [];
+    const items = drawn ? (p.items || []).map(function(it){ const o = {}; Object.keys(it || {}).sort().forEach(function(k){ if(k === 'k' || k === 'uid' || k === 'id' || k === 'rot' || k === 'scale') return;   /* (a colour change is a different drawing: a new saved practice) */ const v = it[k]; o[k] = Array.isArray(v) ? v.map(R) : R(v); }); return o; }) : [];
     return JSON.stringify([T(p.name).toLowerCase(), T(p.focus), T(p.phase), notes, drawn ? (p.layout || '') : '', items, drawn ? (p.anim || null) : null, p.pics || null, p.clips || null]);
   }
   function libTwinKey(e){ return (e.group || '') + '|' + libContentKey(e.practice); }
@@ -9621,7 +9650,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       }catch(e){}
       { const was = lib.items[d.libId];
         if(was && was.owner && !isMineObj(was)){ ne.owner = was.owner; if(was.madeBy) ne.madeBy = was.madeBy; }
-        if(was && timeOnly){ ne.plan = was.plan; ne.source = was.source; if(was.by){ ne.by = was.by; ne.base = was.base; } } }
+        if(was && timeOnly){ ne.plan = was.plan; ne.source = was.source; if(was.by){ ne.by = was.by; ne.base = was.base; }
+          /* (its time now comes from this other session: the card says so, so it doesn't look like the first session's time) */
+          if(ne.plan !== pid) ne.timeFrom = src; } }
       lib.items[d.libId] = ne;
       if(km) km[g + '|' + libContentKey(ne.practice)] = ne;
       n++;
@@ -10301,6 +10332,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         clean(p.focus) ? h('div', {class:'lib-focus', text:clean(p.focus)}) : null,
         desc ? h('div', {class:'lib-desc', text:desc}) : null,
         (e.source && (e.source.theme || e.source.date)) ? h('div', {class:'lib-source', text:'From: ' + [e.source.theme, e.source.date].filter(Boolean).join(' · ')}) : null,
+        (e.timeFrom && (e.timeFrom.theme || e.timeFrom.date)) ? h('div', {class:'lib-source', text:'Latest time (' + fmtMin(dur(p)) + ' min) from: ' + [e.timeFrom.theme, e.timeFrom.date].filter(Boolean).join(' · ')}) : null,
         h('div', {class:'lib-actions'}, opts.actions)
       )
     );
@@ -12856,6 +12888,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           else if(t.toLowerCase().split(/[^a-z0-9]+/).some(function(w){ return w && w.indexOf(q) === 0; })) word.push(t);
           else if(k.indexOf(q) !== -1) has.push(t);
         });
+        const pf = o.prefer ? o.prefer(query, o.options) : null;   /* (the likely one first, so Enter picks it) */
+        if(pf){ const i = pre.indexOf(pf); if(i > 0){ pre.splice(i, 1); pre.unshift(pf); } }
         items = pre.concat(word, has);
       }
       shown = items; list.innerHTML = '';
@@ -12916,8 +12950,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       query = typed;
       /* fill in the rest of the first choice that starts with what was typed (the added part stays selected, so typing on replaces it) */
       if(e.inputType && e.inputType.indexOf('insert') === 0 && typed.trim() && at === typed.length){
-        const low = typed.toLowerCase();
-        const m = o.options.find(function(t){ return t.toLowerCase().indexOf(low) === 0; });
+        const low = typed.toLowerCase(), pf = o.prefer ? o.prefer(typed, o.options) : null;
+        const m = pf && pf.toLowerCase().indexOf(low) === 0 ? pf : o.options.find(function(t){ return t.toLowerCase().indexOf(low) === 0; });
         if(m && m.length > typed.length){ inp.value = m; inp.setSelectionRange(typed.length, m.length); }
       }
       paint(); o.onChange(inp.value); render();
@@ -13805,7 +13839,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     lu.periods.forEach(function(p){ p.slots.forEach(function(sl){ sl.pid = null; }); });      /* ...and an empty pitch: just the positions, you put the players on */
     luRender(); luShow();
     lu.savedAt = Date.now();
-    try{ hufcStore.setItem(luKey, JSON.stringify(lu)); }catch(e){}
+    /* (not kept until something is changed: a new lineup opened and left straight away isn't saved) */
     const t = document.querySelector('#luInfo textarea'); if(t) setTimeout(function(){ t.focus(); }, 0);
     setStatus('New matchday lineup · start with the opponent and round');
     setTimeout(luMatchSquad, 0);   /* (a lineup started already dated, e.g. from the Season calendar) */
@@ -14717,13 +14751,18 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     try{ document.getElementById('anClipClose').click(); }catch(e){}
     closeModal(anModal);
     /* a new match video with nothing in it isn't kept */
-    if(anM && anCanEdit() && !anM.luId && !anM.pgId && !clean(anM.title) && !mvHasWork(anM)){ try{ hufcStore.removeItem(anKey); }catch(e){} }
+    if(anM && anCanEdit() && !mvIsReal(anM)){ try{ hufcStore.removeItem(anKey); }catch(e){} }   /* (even one opened from a lineup or pre-game and left empty) */
     renderAnButton();
     if(document.documentElement.classList.contains('view-home')) renderHome();
     else if(typeof isPre === 'function' && isPre()) { try{ pgRenderMatchCell(); }catch(e){} }
   }
   /* a match video worth showing: it has a video, tags, clips, a name, teams, a link, or is attached to a lineup or pre-game (an empty one opened and left isn't) */
-  function mvIsReal(m){ return !!(m && (mvHasWork(m) || m.luId || m.pgId || clean(m.title) || clean(m.them) || clean(m.getLink))); }
+  function mvIsReal(m){
+    if(!m) return false;
+    const a = m.analysis || {};
+    return !!(mvHasWork(m) || clean(m.title) || clean(m.them) || clean(m.us) || clean(m.getLink) || clean(m.getPage) || m.drive ||
+      a.veo || a.veoEv || a.veoTrack || a.ko != null || a.h2 != null || (a.types && a.types.length));
+  }
   function mvHasWork(m){ const a = m.analysis || {}; return !!((a.file && a.file.name) || (a.tags && a.tags.length) || (a.clips && a.clips.length)); }
   /* the top of the window: its name, and the lineup it's attached to */
   function anRenderHead(){
@@ -17939,8 +17978,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     if(window.__HUFC_CLUB){
       const c = await window.__HUFC_CLUB;
       if(c && c.dir){ clubDir = c.dir; clubOnline = true; clubState = 'on'; if(c.who && c.who.uid) who = c.who; }
-      if(who && document.documentElement.classList.contains('view-home')) renderHome();
-      else clubState = 'local';
+      /* (fix: the library stays on even if a session was opened before it connected) */
+      if(!who || !(c && c.dir)) clubState = 'local';
+      else if(document.documentElement.classList.contains('view-home')) renderHome();
       renderClubStatus(); return;
     }
     if(window.__HUFC_TEST_DIR){ clubDir = await window.__HUFC_TEST_DIR; clubState = 'on'; renderClubStatus(); return; }
@@ -19039,6 +19079,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
+    {v:'4.17', d:'26 Nov 2026', t:'Fixes', n:['Club library: opening a session straight after the planner starts no longer keeps your work on this device only — it goes to the club library as usual','Lineups: a new lineup you open and leave without changing anything isn’t saved (no more empty “Untitled lineup”s)','Undo: the Undo message goes away when you move to another screen, so it can’t change something you’re no longer looking at','Match videos: one opened from a lineup or pre-game and closed with nothing in it isn’t kept','Saved practices: when a practice’s time comes from another session, the card says which session','Start time: typing just an hour reads as the evening on weeknights (“8” is 8:00pm, “7” is 7:00pm); on Saturdays and Sundays 8–11 are mornings','Saved practices: changing the colours of the players in a drawing makes it a new saved practice']},
     {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to play it','Shot map filters: both teams or one, the result (goals, saved, woodwork, missed, blocked) and one player. “Woodwork”: the ball reached the goal between the posts, didn’t go in and stayed in play','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to play it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Change a shot’s result: tap it and pick Missed, Woodwork, Blocked or Saved (goals stay as Veo has them; Veo’s own is marked, pick it to undo). Kept with the match video','Goals Veo logged without a shot now go on the shot map too, from where the ball tracking shows they were hit; Move shot: tap a shot and tap or drag to where it was really taken from','Pass map: an arrow for every pass from where it was played to where it was received (missed ones dashed, with a little red x where they ended), for either team, and for one player picked by name','Pass map and possession map: their own Full game / 1st half / 2nd half buttons (each half drawn the way it was played)','Possession map: where the team had the ball, in thirds and left / centre / right','Fixed: tapping the team, half, result or player on the shot, pass or possession map no longer sends the match stats back to the top','When a goal goes in on the match video, a GOAL! banner in the scoring team’s colours sweeps over the scoreboard with the club and scorer, then pulls away to show the new score','A scoreboard on the match video (top left): both clubs, the score at that moment of the match (it goes up as each goal goes in, from Veo’s goals or the goals you tagged) and the match minute. The Score button beside Mini map turns it off or on','Attendance for a combined session (e.g. U18s, U20s and U23s together): the session shows the total of everyone there and each age group’s count, the Players box fills in with the total, and each group’s ticks are kept while you switch between them in the attendance window (Save saves them all)','Two or more coaches can work on one session at the same time without interrupting each other: their changes appear straight away, and only the part they changed is redrawn — what you’re in the middle of (an animation playing, a step you’re on, something picked, a box you’re typing in) carries on and catches up with their change the moment you stop. Undo still works after their changes come in, and the page no longer jumps','Saved practices stay yours: two identical copies (yours and another coach’s) are no longer tidied into one — that let each planner take its own copy off, so both went (how Arrival activities, ATT vs DEF and Transfer rondo were lost). Practices and boards are saved only from your own sessions and pre-games (a collaborator’s planner no longer saves copies under their name), and a practice in your session whose saved copy went is saved again as yours','Saved boards: one board per name, phase and team — a board in a pre-game with the same name as one of your saved boards updates it (your boards already saved twice were merged, keeping the newest)','Fixes from a full check of the week: the shot map starts fresh each time a match video opens (leaving part-way through fixing an arrow no longer stops taps working); a shirt number two players share shows both names; a match whose Veo video has no ball tracking doesn’t fetch the mini map again every time; boards in your pre-games are gathered into Saved boards when the planner starts (they were only gathered when Saved boards was opened); left-over code from the player cards removed; the program opens Veo’s maps without waiting for the running stats (program 1.6.21)','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
     {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now gets it in about a minute — four Veo pages at once, without loading Veo’s video — and keeps going by itself until it has the whole game)','Fixed: pressing Veo stats ✓ again could empty the Stats tab when Veo sent only part of the stats (what was there now stays, and the stats load properly in the background)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
