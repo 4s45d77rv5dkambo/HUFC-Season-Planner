@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261126114043">
+<meta name="hufc-build" content="20261126121123">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -2175,8 +2175,27 @@ td.gt-an{font-size:14px; text-transform:none;}
 .an-sb-score{display:flex; align-items:center; gap:.28em; padding:0 .6em; background:#ffd400; color:#0e0e0e; font-size:1.18em; font-variant-numeric:tabular-nums;}
 .an-sb-dash{opacity:.55; font-size:.85em;}
 .an-sb-clock{display:flex; align-items:center; padding:0 .65em; background:rgba(255,255,255,.14); font-variant-numeric:tabular-nums; text-transform:none;}
-.an-sb.goal .an-sb-score{animation:anSbGoal .8s ease-out 3;}
-@keyframes anSbGoal{0%{background:#fff;} 100%{background:#ffd400;}}
+.an-sb.pop .an-sb-score{animation:anSbPop .6s cubic-bezier(.2,1.6,.4,1);}
+@keyframes anSbPop{0%{transform:scale(1);} 40%{transform:scale(1.22);} 100%{transform:scale(1);}}
+.an-sb-gb{position:absolute; top:.6em; left:.6em; z-index:4; height:2.5em; display:flex; align-items:center; gap:.55em; padding:0 .9em 0 .6em; box-sizing:border-box;
+  font-family:'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight:600; line-height:1; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap;
+  border-radius:.35em; overflow:hidden; pointer-events:none; box-shadow:0 3px 16px rgba(0,0,0,.45);
+  transform-origin:left center; animation:anGbIn .5s cubic-bezier(.2,.9,.25,1.05) both;}
+.an-sb-gb.us{background:#ffd400; color:#0e0e0e;}
+.an-sb-gb.them{background:#f4f4f4; color:#0e0e0e;}
+.an-sb-gb.out{animation:anGbOut .5s cubic-bezier(.6,0,.8,.4) both;}
+.an-sb-gb-logo{height:1.45em; width:auto; max-width:2em; object-fit:contain; display:block;}
+.an-sb-gb-logo.dark{background:#000; border-radius:.2em;}
+.an-sb-gb-word{font-size:1.5em; font-style:italic; letter-spacing:.06em; animation:anGbWord .9s ease-out .35s both;}
+.an-sb-gb-who{display:flex; align-items:center; gap:.45em; padding-left:.6em; border-left:2px solid rgba(0,0,0,.25); animation:anGbWho .5s ease-out .6s both;}
+.an-sb-gb-team{opacity:.75;}
+.an-sb-gb-shine{position:absolute; top:0; bottom:0; left:-40%; width:30%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.75), transparent); transform:skewX(-18deg); animation:anGbShine 1.1s ease-in-out .5s 2;}
+@keyframes anGbIn{0%{clip-path:inset(0 100% 0 0); transform:scaleY(.7);} 100%{clip-path:inset(0 0 0 0); transform:scaleY(1);}}
+@keyframes anGbOut{0%{clip-path:inset(0 0 0 0);} 100%{clip-path:inset(0 0 0 100%);}}
+@keyframes anGbWord{0%{transform:scale(1.6); opacity:0;} 60%{transform:scale(.94); opacity:1;} 100%{transform:scale(1);}}
+@keyframes anGbWho{0%{opacity:0; transform:translateX(-.6em);} 100%{opacity:1; transform:none;}}
+@keyframes anGbShine{0%{left:-40%;} 100%{left:120%;}}
+.an-clip-player:not([hidden]) ~ .an-sb-gb{display:none;}
 .an-map-btn.on{background:#111; border-color:#111; color:#ffd400;}
 /* the match video is a page of its own: the home page behind it doesn't scroll, and its scrollbar doesn't show */
 html:has(#anModal:not([hidden])), html:has(#anModal:not([hidden])) body{overflow:hidden;}
@@ -15894,14 +15913,14 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
   const anSbBtn = h('button', {type:'button', class:'btn btn-small an-map-btn an-sb-btn', id:'anSbBtn', 'aria-pressed':'false', text:'Score'}); anSbBtn.hidden = true;
   try{ const mb = document.getElementById('anMapBtn'); mb.parentNode.insertBefore(anSbBtn, mb.nextSibling); }catch(e){}
   anSbBtn.addEventListener('click', function(){ try{ localStorage.setItem('hufc-scorebug', anSbOn() ? 'off' : 'on'); }catch(e){} anSbKey = ''; anSbRender(); });
-  let anSbKey = '', anSbLast = null, anSbFlashT = 0;
+  let anSbKey = '', anSbLast = null, anSbGbT = 0;
   /* the goals and when they went in: Veo's match events, else Veo's goal moments, else the goals tagged on the video */
   function anSbGoals(a){
     const E = a.veoEv;
-    if(E && Array.isArray(E.gl) && E.gl.length) return E.gl.map(function(g){ return {us:g[0] === 0, t:+g[3] || 0}; });
+    if(E && Array.isArray(E.gl) && E.gl.length) return E.gl.map(function(g){ let who = ''; try{ if(g[0] === 0 && g[2] >= 0) who = (g[2] + ' ' + (anVeoNameOf(g[2]) || '')).trim(); }catch(e){} return {us:g[0] === 0, t:+g[3] || 0, who:who}; });
     const mo = a.veo && Array.isArray(a.veo.moments) ? a.veo.moments.filter(function(x){ return x && x.type === 'Goal'; }) : [];
     if(mo.length) return mo.map(function(x){ return {us:x.side !== 'them', t:+x.t || 0}; });
-    return (a.tags || []).filter(function(t){ return t.type === 'Goal'; }).map(function(t){ return {us:t.side !== 'them', t:+t.t || 0}; });
+    return (a.tags || []).filter(function(t){ return t.type === 'Goal'; }).map(function(t){ let who = ''; try{ if(t.pid) who = anPlayerLabel(t.pid); }catch(e){} return {us:t.side !== 'them', t:+t.t || 0, who:who}; });
   }
   function anSbRender(){
     const ready = !!(anM && anVideo.currentSrc && anVideo.dataset.for === anKey && !anVideo.hidden);
@@ -15916,16 +15935,20 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     let us = 0, them = 0;
     goals.forEach(function(g){ if(g.t <= t){ if(g.us) us++; else them++; } });
     const clock = a.ko != null && t >= a.ko - 0.5 ? anMinute(t) : '';
-    /* a goal going in while it plays (not a jump along the video): the score flashes */
+    /* a goal going in while it plays (not a jump along the video): the GOAL banner sweeps over the scoreboard */
     const n = us + them;
-    if(anSbLast && anSbLast.k === anKey && n > anSbLast.n && !anVideo.paused && t - anSbLast.t >= 0 && t - anSbLast.t < 2) anSbFlashT = Date.now();
+    let gNew = null;
+    if(anSbLast && anSbLast.k === anKey && n > anSbLast.n && !anVideo.paused && t - anSbLast.t >= 0 && t - anSbLast.t < 2){
+      const lt = anSbLast.t;
+      gNew = goals.filter(function(g){ return g.t > lt && g.t <= t; }).sort(function(x, y){ return y.t - x.t; })[0] || null;
+    }
     anSbLast = {k:anKey, n:n, t:t};
     const w = (anSb.parentElement && anSb.parentElement.clientWidth) || 900;
     anSb.style.fontSize = Math.max(11, Math.min(24, Math.round(w / 58))) + 'px';
     const usL = anUsLogo(), thL = anThemLogo();
     const key = [anKey, us, them, clock, anUs(), anOpp(), usL ? usL.length : 0, thL ? thL.length : 0].join('|');
     anSb.hidden = false;
-    anSb.classList.toggle('goal', Date.now() - anSbFlashT < 2400);
+    if(gNew) anSbBanner(gNew);
     if(key === anSbKey) return;
     anSbKey = key;
     const team = function(name, short, src, cls){
@@ -15939,6 +15962,29 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       team(anOpp(), anOppShort(), thL, 'them'),
       clock ? h('span', {class:'an-sb-clock', text:clock}) : null);
   }
+  /* GOAL: a banner in the scoring team's colours sweeps across and covers the scoreboard, then pulls away to show the new score */
+  function anSbBanner(g){
+    anSbGbEnd();
+    const name = g.us ? anUs() : anOpp(), short = g.us ? anUsShort() : anOppShort(), src = g.us ? anUsLogo() : anThemLogo();
+    const b = h('div', {class:'an-sb-gb ' + (g.us ? 'us' : 'them'), 'aria-hidden':'true'},
+      src ? h('img', {class:'an-sb-gb-logo' + (anIsHufc(name) ? ' dark' : ''), alt:'', src:src}) : null,
+      h('span', {class:'an-sb-gb-word', text:'Goal!'}),
+      h('span', {class:'an-sb-gb-who'}, h('span', {class:'an-sb-gb-team', text:short}), g.who ? h('span', {class:'an-sb-gb-pl', text:g.who}) : null),
+      h('span', {class:'an-sb-gb-shine'}));
+    b.style.fontSize = anSb.style.fontSize;
+    b.style.minWidth = 'calc(' + Math.ceil(anSb.getBoundingClientRect().width) + 'px + .4em)';
+    anSb.parentElement.appendChild(b);
+    anSb.classList.add('under');
+    const my = anSbGbT = Date.now();
+    setTimeout(function(){ if(anSbGbT === my) b.classList.add('out'); }, 3700);
+    setTimeout(function(){ if(anSbGbT === my) anSbGbEnd(true); }, 4250);
+  }
+  function anSbGbEnd(pop){
+    document.querySelectorAll('.an-sb-gb').forEach(function(x){ x.remove(); });
+    anSb.classList.remove('under');
+    if(pop){ anSb.classList.remove('pop'); void anSb.offsetWidth; anSb.classList.add('pop'); setTimeout(function(){ anSb.classList.remove('pop'); }, 700); }
+  }
+  ['seeked', 'emptied'].forEach(function(ev){ anVideo.addEventListener(ev, function(){ anSbGbT = 0; anSbGbEnd(); }); });
   ['timeupdate', 'seeked', 'loadedmetadata', 'emptied', 'play', 'pause'].forEach(function(ev){ anVideo.addEventListener(ev, function(){ try{ anSbRender(); }catch(e){} }); });
   window.addEventListener('resize', function(){ anSbKey = ''; try{ anSbRender(); }catch(e){} });
   document.addEventListener('fullscreenchange', function(){ anSbKey = ''; setTimeout(function(){ try{ anSbRender(); }catch(e){} }, 60); });
@@ -18978,7 +19024,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to play it','Shot map filters: both teams or one, the result (goals, saved, woodwork, missed, blocked) and one player. “Woodwork”: the ball reached the goal between the posts, didn’t go in and stayed in play','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to play it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Change a shot’s result: tap it and pick Missed, Woodwork, Blocked or Saved (goals stay as Veo has them; Veo’s own is marked, pick it to undo). Kept with the match video','Goals Veo logged without a shot now go on the shot map too, from where the ball tracking shows they were hit; Move shot: tap a shot and tap or drag to where it was really taken from','Pass map: an arrow for every pass from where it was played to where it was received (missed ones dashed, with a little red x where they ended), for either team, and for one player picked by name','Pass map and possession map: their own Full game / 1st half / 2nd half buttons (each half drawn the way it was played)','Possession map: where the team had the ball, in thirds and left / centre / right','A scoreboard on the match video (top left): both clubs, the score at that moment of the match (it goes up as each goal goes in, from Veo’s goals or the goals you tagged) and the match minute. The Score button beside Mini map turns it off or on','Attendance for a combined session (e.g. U18s, U20s and U23s together): the session shows the total of everyone there and each age group’s count, the Players box fills in with the total, and each group’s ticks are kept while you switch between them in the attendance window (Save saves them all)','Two or more coaches can work on one session at the same time without interrupting each other: their changes appear straight away, and only the part they changed is redrawn — what you’re in the middle of (an animation playing, a step you’re on, something picked, a box you’re typing in) carries on and catches up with their change the moment you stop. Undo still works after their changes come in, and the page no longer jumps','Saved practices stay yours: two identical copies (yours and another coach’s) are no longer tidied into one — that let each planner take its own copy off, so both went (how Arrival activities, ATT vs DEF and Transfer rondo were lost). Practices and boards are saved only from your own sessions and pre-games (a collaborator’s planner no longer saves copies under their name), and a practice in your session whose saved copy went is saved again as yours','Saved boards: one board per name, phase and team — a board in a pre-game with the same name as one of your saved boards updates it (your boards already saved twice were merged, keeping the newest)','Fixes from a full check of the week: the shot map starts fresh each time a match video opens (leaving part-way through fixing an arrow no longer stops taps working); a shirt number two players share shows both names; a match whose Veo video has no ball tracking doesn’t fetch the mini map again every time; boards in your pre-games are gathered into Saved boards when the planner starts (they were only gathered when Saved boards was opened); left-over code from the player cards removed; the program opens Veo’s maps without waiting for the running stats (program 1.6.21)','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
+    {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to play it','Shot map filters: both teams or one, the result (goals, saved, woodwork, missed, blocked) and one player. “Woodwork”: the ball reached the goal between the posts, didn’t go in and stayed in play','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to play it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Change a shot’s result: tap it and pick Missed, Woodwork, Blocked or Saved (goals stay as Veo has them; Veo’s own is marked, pick it to undo). Kept with the match video','Goals Veo logged without a shot now go on the shot map too, from where the ball tracking shows they were hit; Move shot: tap a shot and tap or drag to where it was really taken from','Pass map: an arrow for every pass from where it was played to where it was received (missed ones dashed, with a little red x where they ended), for either team, and for one player picked by name','Pass map and possession map: their own Full game / 1st half / 2nd half buttons (each half drawn the way it was played)','Possession map: where the team had the ball, in thirds and left / centre / right','When a goal goes in on the match video, a GOAL! banner in the scoring team’s colours sweeps over the scoreboard with the club and scorer, then pulls away to show the new score','A scoreboard on the match video (top left): both clubs, the score at that moment of the match (it goes up as each goal goes in, from Veo’s goals or the goals you tagged) and the match minute. The Score button beside Mini map turns it off or on','Attendance for a combined session (e.g. U18s, U20s and U23s together): the session shows the total of everyone there and each age group’s count, the Players box fills in with the total, and each group’s ticks are kept while you switch between them in the attendance window (Save saves them all)','Two or more coaches can work on one session at the same time without interrupting each other: their changes appear straight away, and only the part they changed is redrawn — what you’re in the middle of (an animation playing, a step you’re on, something picked, a box you’re typing in) carries on and catches up with their change the moment you stop. Undo still works after their changes come in, and the page no longer jumps','Saved practices stay yours: two identical copies (yours and another coach’s) are no longer tidied into one — that let each planner take its own copy off, so both went (how Arrival activities, ATT vs DEF and Transfer rondo were lost). Practices and boards are saved only from your own sessions and pre-games (a collaborator’s planner no longer saves copies under their name), and a practice in your session whose saved copy went is saved again as yours','Saved boards: one board per name, phase and team — a board in a pre-game with the same name as one of your saved boards updates it (your boards already saved twice were merged, keeping the newest)','Fixes from a full check of the week: the shot map starts fresh each time a match video opens (leaving part-way through fixing an arrow no longer stops taps working); a shirt number two players share shows both names; a match whose Veo video has no ball tracking doesn’t fetch the mini map again every time; boards in your pre-games are gathered into Saved boards when the planner starts (they were only gathered when Saved boards was opened); left-over code from the player cards removed; the program opens Veo’s maps without waiting for the running stats (program 1.6.21)','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
     {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now gets it in about a minute — four Veo pages at once, without loading Veo’s video — and keeps going by itself until it has the whole game)','Fixed: pressing Veo stats ✓ again could empty the Stats tab when Veo sent only part of the stats (what was there now stays, and the stats load properly in the background)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
     {v:'4.14', d:'23 Nov 2026', t:'Saved boards, centred calendar pills', n:['Saved boards: a board brought into a pre-game and changed there updates the saved one instead of making a copy; a pre-game’s starting boards aren’t saved until you change them; doubles already made were merged','Season calendar: TRAINING, MATCH, TODAY and THIS WEEK sit exactly in the middle of their pills at every screen scale']},
     {v:'4.13', d:'20 Nov 2026', t:'See who’s on, Save as PDF, coaches in full', n:['The admin can see which coaches are using the planner right now and what they’re working on','Save as PDF beside Print in every plan’s top bar','A plan’s black bar names every coach in full: the coach who made it first, then each collaborator, with commas','Collaborators: a session you’re added to shows up in your planner, with a notice saying who added you','The admin can send a coach a password reset email','Removing a coach’s access moves them to Removed (not Waiting); waiting coaches can be removed too','Side menu icons about 30% bigger','Numbers in every badge sit dead centre (collaborators, Settings, attendance)','Fixed: “2 out” on the attendance link went outside its box']},
