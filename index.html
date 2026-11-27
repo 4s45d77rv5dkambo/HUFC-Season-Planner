@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="hufc-build" content="20261127124752">
+<meta name="hufc-build" content="20261127203210">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -3053,6 +3053,9 @@ html.tg-open, html.tg-open body{overflow:hidden;}
 .tg-f-since-w{display:inline-flex; align-items:center; gap:6px;}
 .tg-f-since-l{font-size:12px; font-weight:600; color:var(--grey); white-space:nowrap;}
 .tg-f-since{width:150px;}
+.tg-c-rm{width:34px; text-align:center;}
+.tg-rm-x{opacity:.45;}
+tr:hover .tg-rm-x, .tg-rm-x:focus-visible{opacity:1;}
 .att-joined{display:block; font-size:11px; font-weight:500; color:var(--grey); margin-top:1px;}
 .tg-add .tg-add-pos, .tg-ed .tg-add-pos{width:170px;}
 .tg-table .tg-c-first, .tg-table .tg-c-last{white-space:nowrap;}
@@ -14481,7 +14484,25 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
         h('td', null, inp('name', 'Player name')),
         h('td', {class:'sq-c-pos'}, inp('pos', 'Pos')),
         h('td', {class:'sq-c-av'}, clean(r.name) ? avChip(team, r.name) : null),
-        h('td', {class:'sq-c-x'}, h('button', {type:'button', class:'icon-btn danger', title:'Remove from the saved squad', 'aria-label':'Remove ' + (r.name || 'player'), text:'✕', onclick:function(){
+        h('td', {class:'sq-c-x'}, h('button', {type:'button', class:'icon-btn danger', title:clean(r.name) ? 'Remove ' + clean(r.name) + ' from the squad (and everywhere else, for every coach)' : 'Remove this row', 'aria-label':'Remove ' + (r.name || 'player'), text:'✕', onclick:function(){
+          /* a named player: taken off properly, everywhere (as Squads → Players → Remove) */
+          if(clean(r.name) && typeof tgRemovePlayer === 'function'){
+            clearTimeout(sqRender._t); sqStore(team, sqWork);
+            const k = gtKey(r.name), nm = clean(r.name);
+            tgRemovePlayer({key:k, name:nm, squad:team || ''}, function(removed){
+              const sq = sqFor(team), keep = {};
+              if(removed){
+                const j = sqWork.findIndex(function(o){ return gtKey(o.name) === k; });
+                if(j !== -1){ sqWork.splice(j, 1); const t = {}; Object.keys(sqTick).forEach(function(q){ const n = +q; if(n < j) t[n] = sqTick[q]; else if(n > j) t[n - 1] = sqTick[q]; }); sqTick = t; }
+              } else if(sq){
+                sqWork.forEach(function(o, n){ if(sqTick[n]) keep[gtKey(o.name)] = 1; });
+                sqWork = sqSorted(sq.players).map(function(o){ return Object.assign({}, o); });
+                sqTick = {}; sqWork.forEach(function(o, n){ if(keep[gtKey(o.name)]) sqTick[n] = true; });
+              }
+              if(!sqModal.hidden) sqRender();
+            });
+            return;
+          }
           const gone = sqWork.splice(i, 1)[0];
           const t = {}; Object.keys(sqTick).forEach(function(k){ const n = +k; if(n < i) t[n] = sqTick[k]; else if(n > i) t[n - 1] = sqTick[k]; }); sqTick = t;
           sqStore(team, sqWork); sqRender();
@@ -14556,7 +14577,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       players = players.slice();
       luList().forEach(function(x){ if((groupOf(x.lu) || '') === team && canEdit(x.lu)) players.push.apply(players, x.lu.squad); });
     }
-    const named = players.filter(function(p){ return gtKey(p.name); });
+    let gone = {}; try{ gone = tgGoneKeys(); }catch(e){}
+    const named = players.filter(function(p){ return gtKey(p.name) && !gone[gtKey(p.name)]; });   /* (a removed player isn't put back) */
     if(!named.length) return;
     const list = sq ? sq.players.map(function(r){ return Object.assign({}, r); }) : [];
     const at = {}; list.forEach(function(r, i){ at[gtKey(r.name)] = i; });
@@ -19147,7 +19169,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
 
   /* Update history — newest first. Add an entry with each update (v, date, title, what changed). */
   const SET_HISTORY = [
-    {v:'4.18', d:'27 Nov 2026', t:'Grids: white, and a colour for each line', n:['The match clock on the video scoreboard shows the seconds too (e.g. 23:14), like on TV','Training attendance counts from when a player joined: a new signing isn’t marked absent for sessions before they were at the club. A player’s Joined date is set when they’re added to a squad and can be changed in Squads → Players (players already in a squad count from the first session they were ticked at)','Taking attendance shows just the names — the faint sessions count beside each player is gone (it’s in Stats → Training attendance)','New areas and grids are drawn in white instead of yellow','Each dividing line in a grid can have its own colour: tap the line’s square handle (it turns blue), then pick a colour. Tap the handle again to colour the whole area — that changes the outline and any lines you haven’t coloured yourself']},
+    {v:'4.18', d:'27 Nov 2026', t:'Grids: white, and a colour for each line', n:['The match clock on the video scoreboard shows the seconds too (e.g. 23:14), like on TV','Training attendance counts from when a player joined: a new signing isn’t marked absent for sessions before they were at the club. A player’s Joined date is set when they’re added to a squad and can be changed in Squads → Players (players already in a squad count from the first session they were ticked at)','Taking attendance shows just the names — the faint sessions count beside each player is gone (it’s in Stats → Training attendance)','Players from other teams are listed first: playing or training down, then up, then the team’s own squad — in Matchday squads, Training groups and when taking attendance','Removing a player: the ✕ beside a player in My squad now takes them off everywhere for every coach (Squads, Training groups, Stats, attendance, IDPs and lineups still to be played) — before, they came straight back. Squads → Players has a ✕ on each row too. Undo is on the message that pops up','New areas and grids are drawn in white instead of yellow','Each dividing line in a grid can have its own colour: tap the line’s square handle (it turns blue), then pick a colour. Tap the handle again to colour the whole area — that changes the outline and any lines you haven’t coloured yourself']},
     {v:'4.17', d:'26 Nov 2026', t:'Fixes', n:['The Home page, Settings and the welcome screen now say HUFC Season Planner','Club library: opening a session straight after the planner starts no longer keeps your work on this device only — it goes to the club library as usual','Lineups: a new lineup you open and leave without changing anything isn’t saved (no more empty “Untitled lineup”s)','Undo: the Undo message goes away when you move to another screen, so it can’t change something you’re no longer looking at','Match videos: one opened from a lineup or pre-game and closed with nothing in it isn’t kept','Saved practices: when a practice’s time comes from another session, the card says which session','Start time: typing just an hour reads as the evening on weeknights (“8” is 8:00pm, “7” is 7:00pm); on Saturdays and Sundays 8–11 are mornings','Saved practices: changing the colours of the players in a drawing makes it a new saved practice']},
     {v:'4.16', d:'25 Nov 2026', t:'Shot, pass and possession maps', n:['Match video Stats: a shot map, pass map and possession map under Veo’s stats, from Veo’s match events (Total / 1st half / 2nd half change them too), shown the way it was played, like the video (in the 2nd half HUFC attack the other way)','Shot map: both teams, an arrow for where each shot went — into the net for a goal, to where the keeper saved it, dashed for a miss, and a short bar where a shot was blocked (worked out from Veo’s ball tracking). Tap a shot to play it','Shot map filters: both teams or one, the result (goals, saved, woodwork, missed, blocked) and one player. “Woodwork”: the ball reached the goal between the posts, didn’t go in and stayed in play','Shot or cross: Veo sometimes logs a cross as a shot. Likely crosses (hit from out wide, or the ball set off across the box) show faded with a “?” — tap one to play it and mark it as a shot or a cross (any shot can be changed). Crosses come off the shot map and the Shots number, and stay with the match video; “Crosses” lists them to undo','Fix arrow: tap a shot, press Fix arrow and tap or drag on the pitch to where the ball really went (Veo’s ball tracking can lose a high ball in a crowded box). Kept with the match video; Back to Veo’s undoes it','Change a shot’s result: tap it and pick Missed, Woodwork, Blocked or Saved (goals stay as Veo has them; Veo’s own is marked, pick it to undo). Kept with the match video','Goals Veo logged without a shot now go on the shot map too, from where the ball tracking shows they were hit; Move shot: tap a shot and tap or drag to where it was really taken from','Pass map: an arrow for every pass from where it was played to where it was received (missed ones dashed, with a little red x where they ended), for either team, and for one player picked by name','Pass map and possession map: their own Full game / 1st half / 2nd half buttons (each half drawn the way it was played)','Possession map: where the team had the ball, in thirds and left / centre / right','Fixed: tapping the team, half, result or player on the shot, pass or possession map no longer sends the match stats back to the top','When a goal goes in on the match video, a GOAL! banner in the scoring team’s colours sweeps over the scoreboard with the club and scorer, then pulls away to show the new score','A scoreboard on the match video (top left): both clubs, the score at that moment of the match (it goes up as each goal goes in, from Veo’s goals or the goals you tagged) and the match minute. The Score button beside Mini map turns it off or on','Attendance for a combined session (e.g. U18s, U20s and U23s together): the session shows the total of everyone there and each age group’s count, the Players box fills in with the total, and each group’s ticks are kept while you switch between them in the attendance window (Save saves them all)','Two or more coaches can work on one session at the same time without interrupting each other: their changes appear straight away, and only the part they changed is redrawn — what you’re in the middle of (an animation playing, a step you’re on, something picked, a box you’re typing in) carries on and catches up with their change the moment you stop. Undo still works after their changes come in, and the page no longer jumps','Saved practices stay yours: two identical copies (yours and another coach’s) are no longer tidied into one — that let each planner take its own copy off, so both went (how Arrival activities, ATT vs DEF and Transfer rondo were lost). Practices and boards are saved only from your own sessions and pre-games (a collaborator’s planner no longer saves copies under their name), and a practice in your session whose saved copy went is saved again as yours','Saved boards: one board per name, phase and team — a board in a pre-game with the same name as one of your saved boards updates it (your boards already saved twice were merged, keeping the newest)','Fixes from a full check of the week: the shot map starts fresh each time a match video opens (leaving part-way through fixing an arrow no longer stops taps working); a shirt number two players share shows both names; a match whose Veo video has no ball tracking doesn’t fetch the mini map again every time; boards in your pre-games are gathered into Saved boards when the planner starts (they were only gathered when Saved boards was opened); left-over code from the player cards removed; the program opens Veo’s maps without waiting for the running stats (program 1.6.21)','The Windows program keeps the ball’s full path with the mini map, for the shot arrows (a match whose mini map came before gets it again once, at the next Veo stats)']},
     {v:'4.15', d:'24 Nov 2026', t:'Veo stats in the match video', n:['Match video: Get Veo stats brings the game in from Veo — the halves marked, Veo’s goals and shots on the timeline and in Tags (tap one to watch it), and the team stats','Stats: the score with both clubs’ logos, Total / 1st half / 2nd half, and one bar a stat (us against them) for goals, shots on target, shots, possession, set pieces, defending and discipline','Mini map: after the stats, the Windows program also brings in Veo’s player positions (2–3 minutes, in the background) — a see-through mini map over the video, top right, that moves with it (Mini map turns it on and off; it’s kept on that computer)','Fixed: the mini map had the two flanks swapped, and went blank where Veo’s positions hadn’t all come through (the program now gets it in about a minute — four Veo pages at once, without loading Veo’s video — and keeps going by itself until it has the whole game)','Fixed: pressing Veo stats ✓ again could empty the Stats tab when Veo sent only part of the stats (what was there now stays, and the stats load properly in the background)','Works from the match’s Veo link or Veo’s download link. The Windows program signs in to Veo once (a Veo window opens the first time)','Changing a player in Squads now goes everywhere: a new number or position goes into every lineup and squad where it was blank or the old one, and a new name follows through lineups, match videos, IDPs, training days and attendance','The match video’s top is laid out as a scoreboard: Home and the buttons in one row, then a black bar with both crests, the teams and the score, then Lineup and Pre-game','The match video is a page of its own (the home page behind it no longer shows its scrollbar)','Fixed: messages were half hidden under the Windows program’s title bar','Fixed: closing the planner while Veo stats were coming in kept the program running without a window, so it wouldn’t open again']},
@@ -23030,9 +23052,9 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const addBtn = h('button', {type:'button', class:'btn', text:'Add'});
     const players = function(){
       const sq = sqFor(team), seen = {}, out = [];
-      const joiners = tg ? tg.joining.map(function(p){ return {name:p.name, num:p.num, pos:p.pos}; }) : [];
+      const joiners = tg ? tg.joining.slice().sort(function(a, b){ return ((a.dir === 'down' ? 0 : 1) - (b.dir === 'down' ? 0 : 1)) || (tgRank(b.from) - tgRank(a.from)); }).map(function(p){ return {name:p.name, num:p.num, pos:p.pos}; }) : [];
       let gone = {}; try{ gone = tgGoneKeys(); }catch(e){}
-      (sq ? sqSorted(sq.players) : []).concat(extra, joiners).forEach(function(r){ const k = gtKey(r.name); if(k && !seen[k] && !gone[k]){ seen[k] = 1; out.push(r); } });
+      joiners.concat(sq ? sqSorted(sq.players) : [], extra).forEach(function(r){ const k = gtKey(r.name); if(k && !seen[k] && !gone[k]){ seen[k] = 1; out.push(r); } });   /* (training down, then up, then the squad) */
       Object.keys(here).forEach(function(k){ if(!seen[k] && !gone[k]){ seen[k] = 1; out.push({name:here[k], num:'', pos:''}); } });   /* (ticked before, since taken off the squad) */
       return out;
     };
@@ -23303,6 +23325,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return out;
   }
   const tgRank = function(g){ return AGE_GROUPS.indexOf(g); };
+  /* the order players are listed in a team: playing / training down (from an older team) 0, up (from a younger team) 1, the team's own squad 2 */
+  const tgDirOrder = function(sq, g){ return sq === g ? 2 : tgRank(sq) > tgRank(g) ? 0 : 1; };
 
   /* ---- the club's players: every team's saved squad, plus what's been set here ---- */
   /* everyone's Players changes together: for each player, the newest change to each thing wins */
@@ -23505,8 +23529,8 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       /* their own players first, then the ones training up or down with them */
       /* the players joining this group today first (so the moves stand out), then the group's own players */
       show.sort(function(a, b){
-        const ga = a.squad === g ? 1 : 0, gb = b.squad === g ? 1 : 0;
-        return (ga - gb) || (tgRank(a.squad) - tgRank(b.squad)) || ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || a.name.localeCompare(b.name);
+        const ga = g === TG_OFF ? (a.squad === g ? 1 : 0) : tgDirOrder(a.squad, g), gb = g === TG_OFF ? (b.squad === g ? 1 : 0) : tgDirOrder(b.squad, g);
+        return (ga - gb) || (g === TG_OFF ? tgRank(a.squad) - tgRank(b.squad) : tgRank(b.squad) - tgRank(a.squad)) || ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || a.name.localeCompare(b.name);
       });
       const up = inCol.filter(function(p){ return g !== TG_OFF && tgRank(p.squad) < tgRank(g); }).length;
       const down = inCol.filter(function(p){ return g !== TG_OFF && tgRank(p.squad) > tgRank(g); }).length;
@@ -23638,7 +23662,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       tgEditing = ''; tgRender(); showToast('Saved ' + n);
     };
     const f = tgFields(p, save, close);
-    return h('tr', {class:'tg-edrow'}, h('td', {colspan:'10'}, h('div', {class:'tg-ed'},
+    return h('tr', {class:'tg-edrow'}, h('td', {colspan:'11'}, h('div', {class:'tg-ed'},
       h('span', {class:'tg-lbl', text:'Change player'}), f.list,
       h('button', {type:'button', class:'btn btn-small', text:'Cancel', onclick:close}),
       h('button', {type:'button', class:'btn btn-small btn-primary', text:'Save', onclick:save}),
@@ -23651,7 +23675,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     return g;
   }
   /* take a player off: on the club list (so every coach's Squads and lineups leave them out), and out of your own team's My squad */
-  async function tgRemovePlayer(p){
+  async function tgRemovePlayer(p, after){
     const yes = document.getElementById('confirmYes');
     const ask = askDelete('player', p.name, '', {title:'Remove ' + p.name + ' from the squad?', text:'For a player who has left. They come off everywhere, for every coach: the ' + p.squad + ' squad, Squads, Stats & game time, training attendance, IDPs and lineups still to be played. Lineups of games already played stay as they were. Nothing is deleted — add them back any time with + Add player and it all comes back.', yes:'Remove player'});
     try{ if(yes.dataset.cls) yes.className = yes.dataset.cls; }catch(e){}
@@ -23665,10 +23689,12 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     }
     tgSetPlayer(p.key, {gone:Date.now(), name:p.name});
     tgEditing = ''; sqBust(); tgRender();
+    try{ if(after) after(true); }catch(e){}
     showToast(p.name + ' removed from the ' + p.squad + ' squad', function(){
       tgSetPlayer(p.key, {gone:0, name:p.name});
       if(before) sqStore(p.squad, before);
       sqBust(); tgRender();
+      try{ if(after) after(false); }catch(e){}
     });
   }
   /* a coach's own team: fixed in its My squad (the list lineups, attendance and stats use), keeping their status.
@@ -23799,7 +23825,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
     const tb = h('tbody');
     let lastSq = '';
     list.forEach(function(p){
-      if(!tgFilter && p.squad !== lastSq){ lastSq = p.squad; tb.append(h('tr', {class:'tg-sqrow'}, h('td', {colspan:'10', text:p.squad}))); }
+      if(!tgFilter && p.squad !== lastSq){ lastSq = p.squad; tb.append(h('tr', {class:'tg-sqrow'}, h('td', {colspan:'11', text:p.squad}))); }
       const sqSel = h('select', {class:'tg-cell-sel', 'aria-label':p.name + '’s squad', disabled:!edit, onchange:function(){ tgSetPlayer(p.key, {squad:this.value, name:p.name}); tgRender(); showToast(p.name + ' is in the ' + this.value + ' squad'); }},
         AGE_GROUPS.map(function(g){ return h('option', {value:g, text:g, selected:p.squad === g}); }));
       const usSel = h('select', {class:'tg-cell-sel' + (p.usual && p.usual !== p.squad ? ' tg-sel-up' : ''), 'aria-label':'Who ' + p.name + ' usually trains with', disabled:!edit, onchange:function(){ const v = this.value; tgSetPlayer(p.key, {usual:v === p.squad ? '' : v, name:p.name}); tgRender(); showToast(p.name + (v === p.squad ? ' trains with their own squad' : ' usually trains with ' + v)); }},
@@ -23824,10 +23850,11 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
           const d = idpGet(p.key), ov = d.f.overall || '', has = d.savedAt > 0;
           const lbl = {track:'On track', support:'Needs support', excel:'Excelling'}[ov] || (has ? 'IDP' : '+ IDP');
           return h('button', {type:'button', class:'tg-idp-btn ' + (ov ? 'idp-' + ov : has ? '' : 'idp-none'), title:'Open ' + p.name + '’s individual development plan', onclick:function(){ idpOpen(p.key, 'squads'); }}, has ? h('i') : '', lbl);
-        })() : '')));
+        })() : ''),
+        h('td', {class:'tg-c-rm'}, canFix ? h('button', {type:'button', class:'icon-btn danger tg-rm-x', title:'Remove ' + p.name + ' from the squad — for a player who has left', 'aria-label':'Remove ' + p.name, text:'✕', onclick:function(){ tgRemovePlayer(p); }}) : '')));
     });
     body.append(h('div', {class:'gt-table-wrap'}, h('table', {class:'runsheet gt-table tg-table'},
-      h('thead', null, h('tr', null, h('th', {class:'tg-c-first', text:'First name'}), h('th', {class:'tg-c-last', text:'Last name'}), h('th', {class:'tg-c-pos', text:'Position'}), h('th', {class:'tg-c-foot', text:'Foot'}), h('th', {class:'tg-c-no', text:'No.'}), h('th', {class:'tg-c-dob', text:'DOB'}), h('th', {text:'Squad'}), h('th', {text:'Usually trains with'}), h('th', {class:'tg-c-n', text:'Days moved'}), h('th', {class:'tg-c-idp', text:'IDP'}))),
+      h('thead', null, h('tr', null, h('th', {class:'tg-c-first', text:'First name'}), h('th', {class:'tg-c-last', text:'Last name'}), h('th', {class:'tg-c-pos', text:'Position'}), h('th', {class:'tg-c-foot', text:'Foot'}), h('th', {class:'tg-c-no', text:'No.'}), h('th', {class:'tg-c-dob', text:'DOB'}), h('th', {text:'Squad'}), h('th', {text:'Usually trains with'}), h('th', {class:'tg-c-n', text:'Days moved'}), h('th', {class:'tg-c-idp', text:'IDP'}), h('th', {class:'tg-c-rm', 'aria-label':'Remove'}))),
       tb)));
     body.append(h('p', {class:'gt-note tg-note', text:'Every player from each team’s saved squad (My squad). “Usually trains with” puts a player in that group every day — they can still be moved for a single day.'}));
   }
@@ -23975,7 +24002,7 @@ html.app-frame::-webkit-scrollbar-thumb:hover{background:#f2c700;}
       const inCol = cur.map(function(r){ const k = gtKey(r.name), p = byKey[k]; return p ? p : {key:k, name:r.name, num:r.num, pos:r.pos, squad:g, av:null}; });
       const up = inCol.filter(function(p){ return tgRank(p.squad) < tgRank(g); }).length, down = inCol.filter(function(p){ return tgRank(p.squad) > tgRank(g); }).length;
       ups += up; downs += down;
-      inCol.sort(function(a, b){ return ((a.squad === g ? 1 : 0) - (b.squad === g ? 1 : 0)) || ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || a.name.localeCompare(b.name); });
+      inCol.sort(function(a, b){ return (tgDirOrder(a.squad, g) - tgDirOrder(b.squad, g)) || ((parseInt(a.num, 10) || 99) - (parseInt(b.num, 10) || 99)) || a.name.localeCompare(b.name); });
       const save = function(list, msg){ tgMdSave(iso, g, list); tgRender(); if(msg) showToast(msg); };
       const curList = function(){ const d = tgMdDay(iso)[g]; return d ? (d.players || []).slice() : []; };
       const list = h('div', {class:'tg-list'});
